@@ -21,7 +21,7 @@ export default function ListShelves(props: ListShelvesProps) {
     const [currentPage, setCurrentPage] = useState(
         Number(searchParams.get("page")) || 1,
     );
-    const pageSize = Number(searchParams.get("pageSize")) || 5;
+    const pageSize = Number(searchParams.get("pageSize")) || 4;
     const totalPages = Math.ceil(totalData / pageSize);
     const [query, setQuery] = useState(
         `?page=${currentPage}&pageSize=${pageSize}`,

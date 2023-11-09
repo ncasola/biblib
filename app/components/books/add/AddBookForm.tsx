@@ -2,7 +2,14 @@
 
 import { ErrorMessage } from "@hookform/error-message";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Alert, Button, Label, Select, TextInput } from "flowbite-react";
+import {
+    Alert,
+    Button,
+    Label,
+    Select,
+    Spinner,
+    TextInput,
+} from "flowbite-react";
 import { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import z from "zod";
@@ -28,6 +35,7 @@ export default function AddBookForm(props: Props) {
     const { shelves, user } = props;
     const prvBook = usePrvBookStore();
     const [message, setMessage] = useState("");
+    const [loading, setLoading] = useState(false);
     const {
         register,
         handleSubmit,
@@ -40,12 +48,14 @@ export default function AddBookForm(props: Props) {
         },
     });
     const onSubmit: SubmitHandler<ValidationSchema> = async (data) => {
+        setLoading(true);
         const newBook = await createBook(data);
         if (newBook instanceof Object && "error" in newBook) {
             setMessage(newBook.error);
         } else {
             setMessage(`Book added successfully`);
         }
+        setLoading(false);
     };
     return (
         <form
@@ -110,7 +120,19 @@ export default function AddBookForm(props: Props) {
             </div>
             <input type="hidden" {...register("user")} />
 
-            <Button type="submit">Add new Book</Button>
+            <Button type="submit">
+                {loading ? (
+                    <>
+                        <Spinner
+                            aria-label="Spinner button example"
+                            size="sm"
+                        />
+                        <span className="pl-3">Loading...</span>
+                    </>
+                ) : (
+                    "Add Book"
+                )}
+            </Button>
             {message && (
                 <Alert color="success" className="mt-4">
                     {message}

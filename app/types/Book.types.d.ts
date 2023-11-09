@@ -14,4 +14,5 @@ export interface BookItem {
     title: string;
     publishDate: string;
     image: string;
+    shelf: string;
 }

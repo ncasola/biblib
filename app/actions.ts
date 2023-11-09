@@ -26,6 +26,7 @@ export const createBook = async (data: PersonalBookDTO) => {
     }
     const newPersonalBook = new PersonalBook({
         book: booksCreated[0]._id,
+        title: booksCreated[0].data.title,
         user,
         status,
         shelf,

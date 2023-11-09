@@ -5,49 +5,86 @@ import ListBooks from "@/app/components/books/view/ListBooks";
 import ButtonLink from "@/app/components/ButtonLink";
 import Heading from "@/app/components/Heading";
 import { connectToDb } from "@/app/config/connectToDb";
-import { PersonalBook } from "@/app/models";
+import { PersonalBook, Shelf } from "@/app/models";
 import type { IPersonalBook } from "@/app/models/PersonalBook.model";
+import type { IShelf } from "@/app/models/Shelf.model";
 import { extractCover } from "@/app/utils/extractCover";
 
 export default async function Page({
     searchParams,
 }: {
-    searchParams: { page: string; pageSize: string };
+    searchParams: {
+        page: string;
+        pageSize: string;
+        search: string;
+        shelf: string;
+    };
 }) {
     const session = await getServerSession(authOptions);
+    const fetchShelves = async (email: string) => {
+        "use server";
+        await connectToDb();
+        const dataShelves: IShelf[] = await Shelf.find({ user: email });
+        const shelves = dataShelves.map((shelf) => {
+            return {
+                id: shelf.id,
+                title: shelf.title,
+            };
+        });
+        return {
+            dataShelves: shelves,
+        };
+    };
     const fetchBooks = async (
         page: number,
         pageSize: number,
         email: string,
+        search: string,
+        shelf: string,
     ) => {
         "use server";
         await connectToDb();
-        const data: IPersonalBook[] = await PersonalBook.find({ user: email })
+        const query: Record<string, any> = {
+            user: email,
+        };
+        if (search) {
+            query.title = { $regex: search, $options: "i" };
+        }
+        if (shelf) {
+            query.shelf = shelf;
+        }
+        const dataBooks: IPersonalBook[] = await PersonalBook.find(query)
             .skip((page - 1) * pageSize)
             .limit(pageSize)
-            .populate("book");
-        const books = data.map((book) => {
+            .populate(["book", "shelf"]);
+        const books = dataBooks.map((book) => {
             return {
                 id: book.id,
-                title: book.book.data.title,
+                title: book.title,
                 publishDate: book.book.data.publish_date,
                 image: extractCover(book.book.data.cover),
+                shelf: book.shelf.title,
             };
         });
-        const totalBooks = await PersonalBook.countDocuments({ user: email });
+        const totalBooks = await PersonalBook.countDocuments(query);
         return {
-            data: books,
+            dataBooks: books,
             totalData: totalBooks,
         };
     };
     const page = parseInt(searchParams.page) || 1;
-    const pageSize = parseInt(searchParams.pageSize) || 5;
+    const pageSize = parseInt(searchParams.pageSize) || 4;
+    const search = searchParams.search || "";
+    const shelf = searchParams.shelf || "";
     const email = session?.user?.email;
-    const { data: books, totalData } = await fetchBooks(
+    const { dataBooks: books, totalData } = await fetchBooks(
         page,
         pageSize,
         email as string,
+        search,
+        shelf,
     );
+    const { dataShelves: shelves } = await fetchShelves(email as string);
     return (
         <div className="flex flex-col gap-4">
             <div className="flex flex-row justify-start gap-4">
@@ -58,8 +95,9 @@ export default async function Page({
                 />
             </div>
             <ListBooks
-                data={books}
-                columns={["Title", "Publish date", "Image"]}
+                books={books}
+                shelves={shelves}
+                columns={["Title", "Publish date", "Image", "Shelf"]}
                 totalData={totalData}
             />
         </div>

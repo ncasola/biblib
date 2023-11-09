@@ -2,7 +2,7 @@
 
 import { ErrorMessage } from "@hookform/error-message";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Alert, Button, Label, TextInput } from "flowbite-react";
+import { Alert, Button, Label, Spinner, TextInput } from "flowbite-react";
 import { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import z from "zod";
@@ -22,6 +22,7 @@ type Props = {
 
 export default function AddShelfForm(props: Props) {
     const { user } = props;
+    const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState("");
     const {
         register,
@@ -34,12 +35,14 @@ export default function AddShelfForm(props: Props) {
         },
     });
     const onSubmit: SubmitHandler<ValidationSchema> = async (data) => {
+        setLoading(true);
         const newShelf = await createShelf(data);
         if (newShelf instanceof Object && "error" in newShelf) {
             setMessage(newShelf.error);
         } else {
             setMessage(`Shelf added successfully`);
         }
+        setLoading(false);
     };
     return (
         <form
@@ -65,7 +68,19 @@ export default function AddShelfForm(props: Props) {
             </div>
             <input type="hidden" {...register("user")} />
 
-            <Button type="submit">Add new Shelf</Button>
+            <Button type="submit">
+                {loading ? (
+                    <>
+                        <Spinner
+                            aria-label="Spinner button example"
+                            size="sm"
+                        />
+                        <span className="pl-3">Loading...</span>
+                    </>
+                ) : (
+                    "Add Shelf"
+                )}
+            </Button>
             {message && (
                 <Alert color="success" className="mt-4">
                     {message}

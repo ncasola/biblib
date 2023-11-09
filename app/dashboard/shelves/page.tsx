@@ -43,7 +43,7 @@ export default async function Page({
         };
     };
     const page = parseInt(searchParams.page) || 1;
-    const pageSize = parseInt(searchParams.pageSize) || 5;
+    const pageSize = parseInt(searchParams.pageSize) || 4;
     const email = session?.user?.email;
     const { data: shelves, totalData } = await fetchShelves(
         page,
