@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import ButtonLink from "@/app/components/ButtonLink";
+import HeaderWithBg from "@/app/components/HeaderWithBg";
 import Heading from "@/app/components/Heading";
 import AddShelfForm from "@/app/components/shelves/add/AddShelfForm";
 
@@ -10,17 +11,15 @@ export default async function Page() {
     const email = session?.user?.email;
     return (
         <>
-            <div className="flex flex-row justify-start gap-4">
-                <Heading title="Add" subtitle="Book" />
+            <HeaderWithBg>
+                <Heading title="Add" subtitle="Shelf" />
                 <ButtonLink
                     title="Return to Shelves"
                     href="/dashboard/shelves"
                 />
-            </div>
-            <div className="add-book">
-                <div className="form-add-book">
-                    <AddShelfForm user={email as string} />
-                </div>
+            </HeaderWithBg>
+            <div className="flex flex-col gap-4 mt-4">
+                <AddShelfForm user={email as string} />
             </div>
         </>
     );

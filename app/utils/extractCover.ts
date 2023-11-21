@@ -12,7 +12,7 @@ export const extractCover = (cover: {
         if (url) {
             image.url = url;
         } else {
-            image.url = "/images/cover-placeholder.png";
+            image.url = "/bookCover.webp";
         }
     });
     return image.url;

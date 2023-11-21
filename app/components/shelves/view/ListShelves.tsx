@@ -38,12 +38,15 @@ export default function ListShelves(props: ListShelvesProps) {
     }, [currentPage]);
     return (
         <>
-            <Pagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={onPageChange}
-                showIcons={true}
-            />
+            {totalPages > 1 && (
+                <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={onPageChange}
+                    showIcons={true}
+                    className="bg-white dark:bg-gray-800 p-2 rounded-md shadow-md max-w-max"
+                />
+            )}
             <ListTableView data={rows} columns={columns} />
         </>
     );

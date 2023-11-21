@@ -1,7 +1,7 @@
 "use client";
 
-import { ListGroup } from "flowbite-react";
-import React from "react";
+import { useEffect, useState } from "react";
+import { HiArrowCircleRight } from "react-icons/hi";
 
 import type { Isbn } from "@/app/schemas/Isbn.schema";
 
@@ -10,20 +10,27 @@ interface Props {
 }
 
 const TableDetails: React.FC<Props> = ({ data }) => {
-    const title = data.title.slice(0, 50);
-    const trimmedTitle =
-        title.length < data.title.length ? `${title}...` : title;
+    const [trimmedTitle, setTrimmedTitle] = useState("");
+    const [url, setUrl] = useState("");
+    useEffect(() => {
+        if (data && data.title) {
+            const title = data.title.slice(0, 50);
+            const trimmedTitle =
+                title.length < data.title.length ? `${title}...` : title;
+            setTrimmedTitle(trimmedTitle);
+        }
+        if (data && data.url) {
+            setUrl(data.url);
+        }
+    }, [data]);
     return (
-        <div className="flex justify-center">
-            <ListGroup className="w-48">
-                <ListGroup.Item>
-                    <strong>ISBN:</strong> {data.identifiers.isbn_10}
-                </ListGroup.Item>
-                <ListGroup.Item>
-                    <strong>Title:</strong> {trimmedTitle}
-                </ListGroup.Item>
-            </ListGroup>
-        </div>
+        <span className="font-bold text-gray-700 dark:text-gray-300">
+            {trimmedTitle} |{" "}
+            <a href={url} target="_blank" rel="noreferrer">
+                <HiArrowCircleRight className="inline-block" />
+                <span className="text-blue-500">OpenLibrary Page</span>
+            </a>
+        </span>
     );
 };
 

@@ -13,6 +13,7 @@
     "dependencies": {
         "@hookform/error-message": "^2.0.1",
         "@hookform/resolvers": "3.3.2",
+        "@uidotdev/usehooks": "^2.4.1",
         "axios": "^1.6.0",
         "commander": "^11.1.0",
         "flowbite": "2.0.0",

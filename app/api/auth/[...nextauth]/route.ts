@@ -11,6 +11,9 @@ export const authOptions: AuthOptions = {
             clientSecret: config.GITHUB_SECRET,
         }),
     ],
+    pages: {
+        signIn: "/login",
+    },
 };
 
 const handler = NextAuth(authOptions);

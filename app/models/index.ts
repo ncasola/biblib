@@ -14,6 +14,4 @@ const PersonalBook =
 const Shelf =
     mongoose.models.Shelf || mongoose.model<IShelf>("Shelf", ShelfSchema);
 
-PersonalBook.createIndexes();
-
 export { Book, PersonalBook, Shelf };

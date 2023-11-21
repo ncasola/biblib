@@ -2,40 +2,34 @@
 
 import { ErrorMessage } from "@hookform/error-message";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-    Alert,
-    Button,
-    Label,
-    Select,
-    Spinner,
-    TextInput,
-} from "flowbite-react";
-import { useState } from "react";
+import { Alert, Button, Label, Select, TextInput } from "flowbite-react";
+import { useEffect, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
+import { useDebounce } from "use-debounce";
 import z from "zod";
 
-import { createBook } from "@/app/actions";
-import { usePrvBookStore } from "@/app/stores/PrvBookStore";
+import { createBook, getShelvesCurrentUser } from "@/app/actions";
+import { ShelfSelect } from "@/app/types/Shelf.types";
+
+import PreviewBook from "./PreviewBook";
 
 const validationSchema = z.object({
     isbn: z.string().max(13).min(13).max(13),
     status: z.string(),
-    user: z.string().max(200).min(5).max(200),
     shelf: z.string().max(200).min(5).max(200),
 });
 
 type ValidationSchema = z.infer<typeof validationSchema>;
-
-type Props = {
-    shelves: { value: string; label: string }[];
-    user: string;
-};
-
-export default function AddBookForm(props: Props) {
-    const { shelves, user } = props;
-    const prvBook = usePrvBookStore();
+export default function AddBookForm() {
+    const [actualIsbn, setActualIsbn] = useState("");
+    const [debouncedIsbn] = useDebounce(actualIsbn, 1000);
+    useEffect(() => {
+        setIsbn(debouncedIsbn);
+    }, [debouncedIsbn]);
     const [message, setMessage] = useState("");
     const [loading, setLoading] = useState(false);
+    const [shelves, setShelves] = useState<ShelfSelect[]>([]);
+    const [isbn, setIsbn] = useState("");
     const {
         register,
         handleSubmit,
@@ -43,7 +37,6 @@ export default function AddBookForm(props: Props) {
     } = useForm<ValidationSchema>({
         resolver: zodResolver(validationSchema),
         defaultValues: {
-            user,
             status: "reading",
         },
     });
@@ -57,15 +50,20 @@ export default function AddBookForm(props: Props) {
         }
         setLoading(false);
     };
+    useEffect(() => {
+        const getShelves = async () => {
+            const shelves = await getShelvesCurrentUser();
+            setShelves(shelves);
+        };
+        getShelves();
+    }, []);
     return (
         <form
-            className="flex max-w-md flex-col gap-4 p-4 border-2 border-gray-200 rounded-lg"
+            className="flex w-full flex-col gap-2 p-4 border-2 border-gray-200 rounded-lg bg-white dark:bg-gray-800"
             onSubmit={handleSubmit(onSubmit)}
         >
-            <div>
-                <div className="mb-2 block">
-                    <Label htmlFor="ISBN" value="ISBN" />
-                </div>
+            <Label htmlFor="ISBN" value="ISBN" />
+            <div className="grid grid-cols-[2fr_1fr] gap-2">
                 <TextInput
                     type="text"
                     placeholder="ISBN"
@@ -76,7 +74,7 @@ export default function AddBookForm(props: Props) {
                         maxLength: 13,
                     })}
                     onChange={(e) => {
-                        prvBook.replaceBook(e.target.value);
+                        setActualIsbn(e.target.value);
                     }}
                 />
                 <ErrorMessage
@@ -84,54 +82,40 @@ export default function AddBookForm(props: Props) {
                     name="isbn"
                     render={({ message }) => <p>{message}</p>}
                 />
+                <PreviewBook isbn={isbn} />
             </div>
-            <div>
-                <div className="mb-2 block">
-                    <Label htmlFor="Status" value="Status" />
-                </div>
-                <Select {...register("status")}>
-                    <option value="reading">Reading</option>
-                    <option value="read">Read</option>
-                    <option value="to-read">To-Read</option>
-                    <option value="unread">Unread</option>
-                </Select>
-                <ErrorMessage
-                    errors={errors}
-                    name="status"
-                    render={({ message }) => <p>{message}</p>}
-                />
+            <div className="block">
+                <Label htmlFor="Status" value="Status" />
             </div>
-            <div>
-                <div className="mb-2 block">
-                    <Label htmlFor="Shelf" value="Shelf" />
-                </div>
-                <Select {...register("shelf")}>
-                    {shelves.map((shelf) => (
-                        <option key={shelf.value} value={shelf.value}>
-                            {shelf.label}
-                        </option>
-                    ))}
-                </Select>
-                <ErrorMessage
-                    errors={errors}
-                    name="shelf"
-                    render={({ message }) => <p>{message}</p>}
-                />
+            <Select {...register("status")}>
+                <option value="reading">Reading</option>
+                <option value="read">Read</option>
+                <option value="to-read">To-Read</option>
+                <option value="unread">Unread</option>
+            </Select>
+            <ErrorMessage
+                errors={errors}
+                name="status"
+                render={({ message }) => <p>{message}</p>}
+            />
+            <div className="block">
+                <Label htmlFor="Shelf" value="Shelf" />
             </div>
-            <input type="hidden" {...register("user")} />
+            <Select {...register("shelf")}>
+                {shelves.map((shelf) => (
+                    <option key={shelf.value} value={shelf.value}>
+                        {shelf.label}
+                    </option>
+                ))}
+            </Select>
+            <ErrorMessage
+                errors={errors}
+                name="shelf"
+                render={({ message }) => <p>{message}</p>}
+            />
 
-            <Button type="submit">
-                {loading ? (
-                    <>
-                        <Spinner
-                            aria-label="Spinner button example"
-                            size="sm"
-                        />
-                        <span className="pl-3">Loading...</span>
-                    </>
-                ) : (
-                    "Add Book"
-                )}
+            <Button type="submit" isProcessing={loading} pill>
+                Add Book
             </Button>
             {message && (
                 <Alert color="success" className="mt-4">

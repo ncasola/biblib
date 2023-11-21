@@ -1,8 +1,10 @@
+import { SortOrder } from "mongoose";
 import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import ListBooks from "@/app/components/books/view/ListBooks";
 import ButtonLink from "@/app/components/ButtonLink";
+import HeaderWithBg from "@/app/components/HeaderWithBg";
 import Heading from "@/app/components/Heading";
 import { connectToDb } from "@/app/config/connectToDb";
 import { PersonalBook, Shelf } from "@/app/models";
@@ -16,6 +18,8 @@ export default async function Page({
     searchParams: {
         page: string;
         pageSize: string;
+        sort: string;
+        direction: string;
         search: string;
         shelf: string;
     };
@@ -38,6 +42,7 @@ export default async function Page({
     const fetchBooks = async (
         page: number,
         pageSize: number,
+        sort: { column: string; direction: string },
         email: string,
         search: string,
         shelf: string,
@@ -55,6 +60,7 @@ export default async function Page({
         }
         const dataBooks: IPersonalBook[] = await PersonalBook.find(query)
             .skip((page - 1) * pageSize)
+            .sort([[sort.column, sort.direction as SortOrder]])
             .limit(pageSize)
             .populate(["book", "shelf"]);
         const books = dataBooks.map((book) => {
@@ -74,12 +80,17 @@ export default async function Page({
     };
     const page = parseInt(searchParams.page) || 1;
     const pageSize = parseInt(searchParams.pageSize) || 4;
+    const sort = {
+        column: searchParams.sort || "title",
+        direction: searchParams.direction || "asc",
+    };
     const search = searchParams.search || "";
     const shelf = searchParams.shelf || "";
     const email = session?.user?.email;
     const { dataBooks: books, totalData } = await fetchBooks(
         page,
         pageSize,
+        sort,
         email as string,
         search,
         shelf,
@@ -87,13 +98,13 @@ export default async function Page({
     const { dataShelves: shelves } = await fetchShelves(email as string);
     return (
         <div className="flex flex-col gap-4">
-            <div className="flex flex-row justify-start gap-4">
+            <HeaderWithBg>
                 <Heading title="Books" subtitle="List" />
                 <ButtonLink
                     title="Add a new book"
                     href="/dashboard/books/add"
                 />
-            </div>
+            </HeaderWithBg>
             <ListBooks
                 books={books}
                 shelves={shelves}

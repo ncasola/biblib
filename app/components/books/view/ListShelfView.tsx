@@ -1,6 +1,8 @@
 "use client";
 
+import { Badge } from "flowbite-react";
 import Image from "next/image";
+import Link from "next/link";
 
 import { NoData } from "@/app/components/NoData";
 import type { BookItem } from "@/app/types/Book.types";
@@ -25,12 +27,25 @@ const ListShelfView = (props: Props) => {
                     {books.map((book) => (
                         <div className="book-container" key={book.id}>
                             <div className="book">
-                                <Image
-                                    src={book.image}
-                                    alt={book.title}
-                                    width={200}
-                                    height={300}
-                                />
+                                <Link href={`/dashboard/books/${book.id}`}>
+                                    <Image
+                                        src={book.image}
+                                        alt={book.title}
+                                        width={200}
+                                        height={300}
+                                    />
+                                </Link>
+                            </div>
+                            <div className="grid grid-cols-2 p-4 gap-2 bg-gray-100 rounded-md dark:bg-gray-700">
+                                <Badge color="indigo" className="max-w-max">
+                                    {book.title}
+                                </Badge>
+                                <Badge color="indigo" className="max-w-max">
+                                    {book.publishDate}
+                                </Badge>
+                                <Badge color="indigo" className="max-w-max">
+                                    {book.shelf}
+                                </Badge>
                             </div>
                         </div>
                     ))}

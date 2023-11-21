@@ -2,7 +2,7 @@
 
 import { ErrorMessage } from "@hookform/error-message";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Alert, Button, Label, Spinner, TextInput } from "flowbite-react";
+import { Alert, Button, Label, TextInput } from "flowbite-react";
 import { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import z from "zod";
@@ -46,7 +46,7 @@ export default function AddShelfForm(props: Props) {
     };
     return (
         <form
-            className="flex max-w-md flex-col gap-4 p-4 border-2 border-gray-200 rounded-lg"
+            className="flex w-full flex-col gap-4 p-4 border-2 border-gray-200 rounded-lg bg-white dark:bg-gray-800"
             onSubmit={handleSubmit(onSubmit)}
         >
             <div>
@@ -68,18 +68,8 @@ export default function AddShelfForm(props: Props) {
             </div>
             <input type="hidden" {...register("user")} />
 
-            <Button type="submit">
-                {loading ? (
-                    <>
-                        <Spinner
-                            aria-label="Spinner button example"
-                            size="sm"
-                        />
-                        <span className="pl-3">Loading...</span>
-                    </>
-                ) : (
-                    "Add Shelf"
-                )}
+            <Button type="submit" isProcessing={loading} pill>
+                Add Shelf
             </Button>
             {message && (
                 <Alert color="success" className="mt-4">

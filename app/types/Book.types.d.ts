@@ -4,7 +4,6 @@ export interface IBookInputDTO {
 
 export interface PersonalBookDTO {
     isbn: string;
-    user: string;
     status: string;
     shelf: string;
 }

@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import ButtonLink from "@/app/components/ButtonLink";
+import HeaderWithBg from "@/app/components/HeaderWithBg";
 import Heading from "@/app/components/Heading";
 import ListShelves from "@/app/components/shelves/view/ListShelves";
 import { connectToDb } from "@/app/config/connectToDb";
@@ -52,13 +53,13 @@ export default async function Page({
     );
     return (
         <div className="flex flex-col gap-4">
-            <div className="flex flex-row justify-start gap-4">
+            <HeaderWithBg>
                 <Heading title="Shelfs" subtitle="List" />
                 <ButtonLink
                     title="Add a new Shelf"
                     href="/dashboard/shelves/add"
                 />
-            </div>
+            </HeaderWithBg>
             <ListShelves
                 data={shelves}
                 columns={["Title", "Number of Books"]}

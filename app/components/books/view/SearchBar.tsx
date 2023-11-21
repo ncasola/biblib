@@ -13,11 +13,16 @@ type Props = {
     }[];
     setSelectShelf: (shelf: string) => void;
     setSearch: (search: string) => void;
+    setSort: (sort: { column: string; direction: string }) => void;
 };
 
 const SearchBar = (props: Props) => {
-    const { setSearch, setSelectShelf } = props;
+    const { setSearch, setSelectShelf, setSort } = props;
     const searchParams = useSearchParams();
+    const [column, setColumn] = useState(searchParams.get("column") || "");
+    const [direction, setDirection] = useState(
+        searchParams.get("direction") || "",
+    );
     const [actualSearch, setActualSearch] = useState(
         searchParams.get("search") || "",
     );
@@ -26,43 +31,66 @@ const SearchBar = (props: Props) => {
     useEffect(() => {
         setSearch(debouncedSearch);
     }, [debouncedSearch, setSearch]);
+    useEffect(() => {
+        if (column && direction) {
+            setSort({ column, direction });
+        }
+    }, [column, direction, setSort]);
     return (
         <>
-            <div className="max-w-md">
-                <TextInput
-                    id="search"
-                    placeholder="Search"
-                    value={actualSearch}
-                    onChange={(e) => setActualSearch(e.target.value)}
-                    rightIcon={HiSearch}
-                />
-            </div>
-            <div className="max-w-md">
-                <Select
-                    id="shelf"
-                    placeholder="Shelf"
-                    onChange={(e) => setSelectShelf(e.target.value)}
-                    value={actualShelf}
-                >
-                    <option value="">All</option>
-                    {props.shelves.map((shelf) => (
-                        <option key={shelf.id} value={shelf.id}>
-                            {shelf.title}
-                        </option>
-                    ))}
-                </Select>
-            </div>
-            <div className="max-w-md">
-                <Button
-                    className="ml-2"
-                    onClick={() => {
-                        setSearch("");
-                        setSelectShelf("");
-                    }}
-                >
-                    <HiRefresh className="h-5 w-5" />
-                </Button>
-            </div>
+            <TextInput
+                id="search"
+                placeholder="Search"
+                value={actualSearch}
+                onChange={(e) => setActualSearch(e.target.value)}
+                rightIcon={HiSearch}
+                className="w-full"
+            />
+            <Select
+                id="shelf"
+                placeholder="Shelf"
+                onChange={(e) => setSelectShelf(e.target.value)}
+                value={actualShelf}
+                className="w-full"
+            >
+                <option value="">All</option>
+                {props.shelves.map((shelf) => (
+                    <option key={shelf.id} value={shelf.id}>
+                        {shelf.title}
+                    </option>
+                ))}
+            </Select>
+            <Select
+                id="column"
+                placeholder="Sort by"
+                onChange={(e) => setColumn(e.target.value)}
+                value={column}
+                className="w-full"
+            >
+                <option value="">None</option>
+                <option value="title">Title</option>
+                <option value="publishDate">Publish Date</option>
+            </Select>
+            <Select
+                id="direction"
+                placeholder="Direction"
+                onChange={(e) => setDirection(e.target.value)}
+                value={direction}
+                className="w-full"
+            >
+                <option value="">None</option>
+                <option value="asc">Ascending</option>
+                <option value="desc">Descending</option>
+            </Select>
+            <Button
+                className="ml-2 w-full md:w-1/2"
+                onClick={() => {
+                    setSearch("");
+                    setSelectShelf("");
+                }}
+            >
+                <HiRefresh className="h-5 w-5" />
+            </Button>
         </>
     );
 };

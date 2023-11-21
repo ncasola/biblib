@@ -3,3 +3,8 @@ export interface ShelfItem {
     title: string;
     totalBooks: number;
 }
+
+export interface ShelfSelect {
+    value: string;
+    label: string;
+}

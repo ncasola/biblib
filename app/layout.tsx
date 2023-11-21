@@ -20,12 +20,12 @@ export default async function RootLayout({
     const session = await getServerSession(authOptions);
     return (
         <html lang="es">
-            <body>
+            <body className="dot-tile">
                 <Provider session={session}>
                     <Menu />
-                    <hr className="border-gray-400 dark:border-gray-700 mb-4" />
-                    <main className="flex justify-center items-center">
-                        <div className="w-11/12 h-5/6 md:w-9/12 md:h-5/6">
+                    <hr className="border-gray-400 dark:border-gray-700" />
+                    <main className="flex justify-center items-center mt-4">
+                        <div className="w-11/12 md:w-9/12 md:h-5/6">
                             {children}
                         </div>
                     </main>
