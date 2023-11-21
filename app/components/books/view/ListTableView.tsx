@@ -84,7 +84,15 @@ const ListTableView = (props: Props) => {
                                 key={row.id}
                             >
                                 <Table.Cell>{row.title}</Table.Cell>
-                                <Table.Cell>{row.publishDate}</Table.Cell>
+                                <Table.Cell>
+                                    {new Date(
+                                        row.publishDate,
+                                    ).toLocaleDateString("en-US", {
+                                        year: "numeric",
+                                        month: "long",
+                                        day: "numeric",
+                                    })}
+                                </Table.Cell>
                                 <Table.Cell>
                                     <Image
                                         src={row.image}
