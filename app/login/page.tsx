@@ -3,9 +3,9 @@ import { getServerSession } from "next-auth/next";
 import { getProviders } from "next-auth/react";
 import { redirect } from "next/navigation";
 
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/app/auth/[...nextauth]/route";
 
-import LoginForm from "../components/auth/LoginForm";
+import LoginForm from "@/app/components/auth/LoginForm";
 
 export default async function LoginPage() {
     const session = await getServerSession(authOptions);

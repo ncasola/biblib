@@ -2,15 +2,14 @@
 
 import { getServerSession } from "next-auth";
 
+import { authOptions } from "@/app/auth/[...nextauth]/route";
+import { connectToDb } from "@/app/config/connectToDb";
 import { Book, PersonalBook, Shelf } from "@/app/models";
 import type { IBook } from "@/app/models/Book.model";
+import type { IPersonalBook } from "@/app/models/PersonalBook.model";
+import { IShelf } from "@/app/models/Shelf.model";
 import OpenLibrary from "@/app/sdk/OpenLibrary";
 import type { PersonalBookDTO } from "@/app/types/Book.types";
-
-import { authOptions } from "./api/auth/[...nextauth]/route";
-import { connectToDb } from "./config/connectToDb";
-import type { IPersonalBook } from "./models/PersonalBook.model";
-import { IShelf } from "./models/Shelf.model";
 
 export const getCurrentUser = async () => {
     const session = await getServerSession(authOptions);

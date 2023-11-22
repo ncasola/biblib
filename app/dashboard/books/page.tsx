@@ -1,7 +1,7 @@
 import { SortOrder } from "mongoose";
 import { getServerSession } from "next-auth";
 
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/app/auth/[...nextauth]/route";
 import ListBooks from "@/app/components/books/view/ListBooks";
 import ButtonLink from "@/app/components/ButtonLink";
 import HeaderWithBg from "@/app/components/HeaderWithBg";

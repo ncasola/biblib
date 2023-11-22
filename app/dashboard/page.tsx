@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth";
 
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/app/auth/[...nextauth]/route";
 import { CardInfo } from "@/app/components/CardInfo";
 import HeaderWithBg from "@/app/components/HeaderWithBg";
 import Heading from "@/app/components/Heading";

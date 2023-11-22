@@ -4,7 +4,7 @@ import Heading from "@/app/components/Heading";
 import { getServerSession } from "next-auth/next";
 import { redirect } from "next/navigation";
 
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/app/auth/[...nextauth]/route";
 import HeaderWithBg from "@/app/components/HeaderWithBg";
 
 export default async function Home() {
