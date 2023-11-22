@@ -4,7 +4,7 @@ import { Spinner } from "flowbite-react";
 import { useEffect, useState } from "react";
 
 import { getBookByISBN } from "@/app/actions";
-import TableDetails from "@/app/components/TableDetails";
+import TableDetails from "@/app/components/books/view/TableDetails";
 import type { Isbn } from "@/app/schemas/Isbn.schema";
 
 type Props = {
