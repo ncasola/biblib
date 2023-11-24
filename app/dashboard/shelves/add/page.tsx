@@ -1,14 +1,13 @@
-import { getServerSession } from "next-auth";
+import { currentUser } from "@clerk/nextjs";
 
-import { authOptions } from "@/app/auth/[...nextauth]/route";
 import ButtonLink from "@/app/components/ButtonLink";
 import HeaderWithBg from "@/app/components/HeaderWithBg";
 import Heading from "@/app/components/Heading";
 import AddShelfForm from "@/app/components/shelves/add/AddShelfForm";
 
 export default async function Page() {
-    const session = await getServerSession(authOptions);
-    const email = session?.user?.email;
+    const user = await currentUser();
+    const email = user?.emailAddresses[0].emailAddress as string;
     return (
         <>
             <HeaderWithBg>
@@ -19,7 +18,7 @@ export default async function Page() {
                 />
             </HeaderWithBg>
             <div className="flex flex-col gap-4 mt-4">
-                <AddShelfForm user={email as string} />
+                <AddShelfForm />
             </div>
         </>
     );

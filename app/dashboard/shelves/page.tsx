@@ -1,6 +1,5 @@
-import { getServerSession } from "next-auth";
+import { currentUser } from "@clerk/nextjs";
 
-import { authOptions } from "@/app/auth/[...nextauth]/route";
 import ButtonLink from "@/app/components/ButtonLink";
 import HeaderWithBg from "@/app/components/HeaderWithBg";
 import Heading from "@/app/components/Heading";
@@ -15,7 +14,6 @@ export default async function Page({
 }: {
     searchParams: { page: string; pageSize: string };
 }) {
-    const session = await getServerSession(authOptions);
     const fetchShelves = async (
         page: number,
         pageSize: number,
@@ -45,11 +43,12 @@ export default async function Page({
     };
     const page = parseInt(searchParams.page) || 1;
     const pageSize = parseInt(searchParams.pageSize) || 4;
-    const email = session?.user?.email;
+    const user = await currentUser();
+    const email = user?.emailAddresses[0].emailAddress as string;
     const { data: shelves, totalData } = await fetchShelves(
         page,
         pageSize,
-        email as string,
+        email,
     );
     return (
         <div className="flex flex-col gap-4">

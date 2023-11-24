@@ -11,17 +11,11 @@ import { createShelf } from "@/app/actions";
 
 const validationSchema = z.object({
     title: z.string().min(3).max(50),
-    user: z.string(),
 });
 
 type ValidationSchema = z.infer<typeof validationSchema>;
 
-type Props = {
-    user: string;
-};
-
-export default function AddShelfForm(props: Props) {
-    const { user } = props;
+export default function AddShelfForm() {
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState("");
     const {
@@ -30,9 +24,6 @@ export default function AddShelfForm(props: Props) {
         formState: { errors },
     } = useForm<ValidationSchema>({
         resolver: zodResolver(validationSchema),
-        defaultValues: {
-            user,
-        },
     });
     const onSubmit: SubmitHandler<ValidationSchema> = async (data) => {
         setLoading(true);
@@ -66,7 +57,6 @@ export default function AddShelfForm(props: Props) {
                     render={({ message }) => <p>{message}</p>}
                 />
             </div>
-            <input type="hidden" {...register("user")} />
 
             <Button type="submit" isProcessing={loading} pill>
                 Add Shelf

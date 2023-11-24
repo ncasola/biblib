@@ -1,8 +1,8 @@
 "use server";
 
-import { getServerSession } from "next-auth";
+import { currentUser } from "@clerk/nextjs";
+import { revalidatePath } from "next/cache";
 
-import { authOptions } from "@/app/auth/[...nextauth]/route";
 import { connectToDb } from "@/app/config/connectToDb";
 import { Book, PersonalBook, Shelf } from "@/app/models";
 import type { IBook } from "@/app/models/Book.model";
@@ -12,12 +12,11 @@ import OpenLibrary from "@/app/sdk/OpenLibrary";
 import type { PersonalBookDTO } from "@/app/types/Book.types";
 
 export const getCurrentUser = async () => {
-    const session = await getServerSession(authOptions);
-    const user = session?.user?.email;
+    const user = await currentUser();
     if (!user) {
         throw new Error("User not found");
     }
-    return user;
+    return user.emailAddresses[0].emailAddress;
 };
 
 export const createBook = async (data: PersonalBookDTO) => {
@@ -59,6 +58,7 @@ export const createBook = async (data: PersonalBookDTO) => {
         shelf,
     });
     const personalBookCreated = await newPersonalBook.save();
+    revalidatePath("/dashboard/books");
     return personalBookCreated;
 };
 
@@ -74,22 +74,19 @@ export const getBookByISBN = async (isbn: string) => {
 export const deleteBook = async (id: string) => {
     await connectToDb();
     await PersonalBook.findByIdAndDelete(id);
+    revalidatePath("/dashboard/books");
     return true;
 };
 
-export const createShelf = async ({
-    title,
-    user,
-}: {
-    title: string;
-    user: string;
-}) => {
+export const createShelf = async ({ title }: { title: string }) => {
     await connectToDb();
+    const user = await getCurrentUser();
     const newShelf = new Shelf({
         title,
         user,
     });
     const shelfCreated = await newShelf.save();
+    revalidatePath("/dashboard/shelves");
     return shelfCreated;
 };
 
@@ -118,6 +115,7 @@ export const changeShelf = async (id: string, shelf: string) => {
     }
     book.shelf = shelf;
     await book.save();
+    revalidatePath("/dashboard/shelves");
     return true;
 };
 
@@ -149,6 +147,7 @@ export const deleteShelf = async (id: string) => {
             await book.save();
         }
         await Shelf.findByIdAndDelete(id);
+        revalidatePath("/dashboard/shelves");
         return true;
     }
 };

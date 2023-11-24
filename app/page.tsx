@@ -1,23 +1,31 @@
-/* eslint-disable simple-import-sort/imports */
-import ButtonLink from "@/app/components/ButtonLink";
-import Heading from "@/app/components/Heading";
-import { getServerSession } from "next-auth/next";
-import { redirect } from "next/navigation";
+import { SignedIn, SignedOut, SignIn } from "@clerk/nextjs";
 
-import { authOptions } from "@/app/auth/[...nextauth]/route";
 import HeaderWithBg from "@/app/components/HeaderWithBg";
+import Heading from "@/app/components/Heading";
+
+import ButtonLink from "./components/ButtonLink";
 
 export default async function Home() {
-    const session = await getServerSession(authOptions);
-    if (session) {
-        redirect("/dashboard");
-    }
     return (
-        <div className="flex flex-col gap-4">
-            <HeaderWithBg>
-                <Heading title="Login" subtitle="in BibLib" />
-                <ButtonLink title="Access" href="/login" />
-            </HeaderWithBg>
-        </div>
+        <>
+            <SignedIn>
+                <div className="flex flex-col items-center justify-center">
+                    <HeaderWithBg>
+                        <Heading title="Welcome" subtitle="to BibLib" />
+                    </HeaderWithBg>
+                    <hr className="w-48 h-1 mx-auto my-4 bg-slate-800 border-0 rounded md:my-10" />
+                    <ButtonLink title="Go to dashboard" href="/dashboard" />
+                </div>
+            </SignedIn>
+            <SignedOut>
+                <div className="flex flex-col items-center justify-center">
+                    <HeaderWithBg>
+                        <Heading title="Login" subtitle="in BibLib" />
+                    </HeaderWithBg>
+                    <hr className="w-48 h-1 mx-auto my-4 bg-slate-800 border-0 rounded md:my-10" />
+                    <SignIn redirectUrl="/dashboard" />
+                </div>
+            </SignedOut>
+        </>
     );
 }

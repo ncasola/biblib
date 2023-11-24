@@ -1,7 +1,6 @@
+import { currentUser } from "@clerk/nextjs";
 import { SortOrder } from "mongoose";
-import { getServerSession } from "next-auth";
 
-import { authOptions } from "@/app/auth/[...nextauth]/route";
 import ListBooks from "@/app/components/books/view/ListBooks";
 import ButtonLink from "@/app/components/ButtonLink";
 import HeaderWithBg from "@/app/components/HeaderWithBg";
@@ -24,7 +23,6 @@ export default async function Page({
         shelf: string;
     };
 }) {
-    const session = await getServerSession(authOptions);
     const fetchShelves = async (email: string) => {
         "use server";
         await connectToDb();
@@ -86,7 +84,8 @@ export default async function Page({
     };
     const search = searchParams.search || "";
     const shelf = searchParams.shelf || "";
-    const email = session?.user?.email;
+    const user = await currentUser();
+    const email = user?.emailAddresses[0].emailAddress;
     const { dataBooks: books, totalData } = await fetchBooks(
         page,
         pageSize,

@@ -1,20 +1,11 @@
 /* eslint-disable simple-import-sort/imports */
 "use client";
 
-import { Avatar, Dropdown, Flowbite, Navbar } from "flowbite-react";
-import { signIn, signOut, useSession } from "next-auth/react";
+import { SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
+import { Flowbite, Navbar } from "flowbite-react";
 import Image from "next/image";
 
-type Props = {};
-
-export const Menu = (props: Props) => {
-    const { data: session, status } = useSession();
-    const user = session && session.user ? session.user : null;
-    const attributes = {
-        name: user && user.name ? user.name : "No name",
-        image: user && user.image ? user.image : "/logo.png",
-        email: user && user.email ? user.email : "No email",
-    };
+export const Menu = () => {
     return (
         <Flowbite>
             <main className="flex justify-center items-center bg-white">
@@ -32,66 +23,32 @@ export const Menu = (props: Props) => {
                             BibLib
                         </span>
                     </Navbar.Brand>
-                    {status === "loading" ? <div>Loading...</div> : null}
-                    {session ? (
-                        <>
-                            <Navbar.Collapse>
-                                <Navbar.Link
-                                    className="md:order-2"
-                                    href={`${process.env.NEXT_PUBLIC_ABSOLUTE_URL}/dashboard`}
-                                >
-                                    Dashboard
-                                </Navbar.Link>
-                                <Navbar.Link
-                                    className="md:order-2"
-                                    href={`${process.env.NEXT_PUBLIC_ABSOLUTE_URL}/dashboard/books`}
-                                >
-                                    Books
-                                </Navbar.Link>
-                                <Navbar.Link
-                                    className="md:order-2"
-                                    href={`${process.env.NEXT_PUBLIC_ABSOLUTE_URL}/dashboard/shelves`}
-                                >
-                                    Shelves
-                                </Navbar.Link>
-                            </Navbar.Collapse>
-                            <div className="flex md:order-2">
-                                <Dropdown
-                                    arrowIcon={false}
-                                    inline
-                                    label={
-                                        <Avatar
-                                            alt={attributes.name}
-                                            img={attributes.image}
-                                            rounded
-                                        />
-                                    }
-                                >
-                                    <Dropdown.Header>
-                                        <span className="block text-sm">
-                                            {attributes.name}
-                                        </span>
-                                        <span className="block truncate text-sm font-medium">
-                                            {attributes.email}
-                                        </span>
-                                    </Dropdown.Header>
-                                    <Dropdown.Item onClick={() => signOut()}>
-                                        Sign out
-                                    </Dropdown.Item>
-                                </Dropdown>
-                                <Navbar.Toggle />
-                            </div>
-                        </>
-                    ) : (
+                    <SignedIn>
                         <Navbar.Collapse>
                             <Navbar.Link
                                 className="md:order-2"
-                                onClick={() => signIn()}
+                                href={`${process.env.NEXT_PUBLIC_ABSOLUTE_URL}/dashboard`}
                             >
-                                Sign in
+                                Dashboard
+                            </Navbar.Link>
+                            <Navbar.Link
+                                className="md:order-2"
+                                href={`${process.env.NEXT_PUBLIC_ABSOLUTE_URL}/dashboard/books`}
+                            >
+                                Books
+                            </Navbar.Link>
+                            <Navbar.Link
+                                className="md:order-2"
+                                href={`${process.env.NEXT_PUBLIC_ABSOLUTE_URL}/dashboard/shelves`}
+                            >
+                                Shelves
                             </Navbar.Link>
                         </Navbar.Collapse>
-                    )}
+                        <UserButton />
+                    </SignedIn>
+                    <SignedOut>
+                        <SignInButton />
+                    </SignedOut>
                 </Navbar>
             </main>
         </Flowbite>

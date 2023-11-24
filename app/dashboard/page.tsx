@@ -1,6 +1,5 @@
-import { getServerSession } from "next-auth";
+import { currentUser } from "@clerk/nextjs";
 
-import { authOptions } from "@/app/auth/[...nextauth]/route";
 import { CardInfo } from "@/app/components/CardInfo";
 import HeaderWithBg from "@/app/components/HeaderWithBg";
 import Heading from "@/app/components/Heading";
@@ -8,8 +7,8 @@ import { connectToDb } from "@/app/config/connectToDb";
 import { PersonalBook, Shelf } from "@/app/models";
 
 export default async function Page() {
-    const session = await getServerSession(authOptions);
-    const email = session?.user?.email;
+    const user = await currentUser();
+    const email = user?.emailAddresses[0].emailAddress;
     const fetchData = async (email: string) => {
         "use server";
         await connectToDb();
