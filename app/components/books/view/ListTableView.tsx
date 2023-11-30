@@ -6,8 +6,9 @@ import { useEffect, useState } from "react";
 import { HiArrowDown, HiArrowUp } from "react-icons/hi";
 
 import { deleteBook } from "@/app/actions";
-import { DeleteConfirm } from "@/app/components/DeleteConfirm";
-import { NoData } from "@/app/components/NoData";
+import { DeleteConfirm } from "@/app/components/layout/DeleteConfirm";
+import { NoData } from "@/app/components/layout/NoData";
+import { useToastStore } from "@/app/stores/ToastStore";
 import type { BookItem } from "@/app/types/Book.types";
 
 interface Props {
@@ -21,6 +22,7 @@ interface Props {
 
 const ListTableView = (props: Props) => {
     const router = useRouter();
+    const { setToast } = useToastStore();
     const { data: rows, columns, sort } = props;
     const [openModal, setOpenModal] = useState(false);
     const [result, setResult] = useState(false);
@@ -45,13 +47,13 @@ const ListTableView = (props: Props) => {
             return deleted;
         };
         if (bookToDelete && result) {
-            console.log("bookToDelete", bookToDelete);
             deleteBookHandler(bookToDelete);
             setBookToDelete(null);
             setResult(false);
+            setToast("Book deleted successfully", "green");
             router.refresh();
         }
-    }, [result, bookToDelete, router]);
+    }, [result, bookToDelete, router, setToast]);
     return (
         <>
             <Table>

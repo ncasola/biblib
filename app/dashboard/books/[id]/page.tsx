@@ -1,8 +1,8 @@
 import BookView from "@/app/components/books/view/BookView";
-import ButtonLink from "@/app/components/ButtonLink";
-import HeaderWithBg from "@/app/components/HeaderWithBg";
-import Heading from "@/app/components/Heading";
-import { NoData } from "@/app/components/NoData";
+import ButtonLink from "@/app/components/layout/ButtonLink";
+import HeaderWithBg from "@/app/components/layout/HeaderWithBg";
+import Heading from "@/app/components/layout/Heading";
+import { NoData } from "@/app/components/layout/NoData";
 import { connectToDb } from "@/app/config/connectToDb";
 import { PersonalBook } from "@/app/models";
 import type { IPersonalBook } from "@/app/models/PersonalBook.model";

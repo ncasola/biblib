@@ -1,13 +1,12 @@
-import { currentUser } from "@clerk/nextjs";
-
-import ButtonLink from "@/app/components/ButtonLink";
-import HeaderWithBg from "@/app/components/HeaderWithBg";
-import Heading from "@/app/components/Heading";
+import ButtonLink from "@/app/components/layout/ButtonLink";
+import HeaderWithBg from "@/app/components/layout/HeaderWithBg";
+import Heading from "@/app/components/layout/Heading";
 import ListShelves from "@/app/components/shelves/view/ListShelves";
 import { connectToDb } from "@/app/config/connectToDb";
 import { PersonalBook, Shelf } from "@/app/models";
 import type { IShelf } from "@/app/models/Shelf.model";
 import { ShelfItem } from "@/app/types/Shelf.types";
+import { auth } from "@/auth";
 
 export default async function Page({
     searchParams,
@@ -43,8 +42,9 @@ export default async function Page({
     };
     const page = parseInt(searchParams.page) || 1;
     const pageSize = parseInt(searchParams.pageSize) || 4;
-    const user = await currentUser();
-    const email = user?.emailAddresses[0].emailAddress as string;
+    const session = await auth();
+    const user = session?.user;
+    const email = user?.email as string;
     const { data: shelves, totalData } = await fetchShelves(
         page,
         pageSize,

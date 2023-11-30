@@ -4,7 +4,7 @@ import { Badge } from "flowbite-react";
 import Image from "next/image";
 import Link from "next/link";
 
-import { NoData } from "@/app/components/NoData";
+import { NoData } from "@/app/components//layout/NoData";
 import type { BookItem } from "@/app/types/Book.types";
 
 type Props = {

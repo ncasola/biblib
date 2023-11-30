@@ -24,7 +24,7 @@ interface ListBooksProps {
 
 export default function ListBooks(props: ListBooksProps) {
     const router = useRouter();
-    const { height, width } = useWindowSize();
+    const { width } = useWindowSize();
     const searchParams = useSearchParams();
     const { books: rows, columns, shelves, totalData } = props;
     const [tableView, setTableView] = useState(true);

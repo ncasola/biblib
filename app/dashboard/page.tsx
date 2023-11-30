@@ -1,14 +1,14 @@
-import { currentUser } from "@clerk/nextjs";
-
-import { CardInfo } from "@/app/components/CardInfo";
-import HeaderWithBg from "@/app/components/HeaderWithBg";
-import Heading from "@/app/components/Heading";
+import { CardInfo } from "@/app/components/layout/CardInfo";
+import HeaderWithBg from "@/app/components/layout/HeaderWithBg";
+import Heading from "@/app/components/layout/Heading";
 import { connectToDb } from "@/app/config/connectToDb";
 import { PersonalBook, Shelf } from "@/app/models";
+import { auth } from "@/auth";
 
 export default async function Page() {
-    const user = await currentUser();
-    const email = user?.emailAddresses[0].emailAddress;
+    const session = await auth();
+    const user = session?.user;
+    const email = user?.email as string;
     const fetchData = async (email: string) => {
         "use server";
         await connectToDb();

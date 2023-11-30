@@ -1,15 +1,15 @@
-import { currentUser } from "@clerk/nextjs";
 import { SortOrder } from "mongoose";
 
 import ListBooks from "@/app/components/books/view/ListBooks";
-import ButtonLink from "@/app/components/ButtonLink";
-import HeaderWithBg from "@/app/components/HeaderWithBg";
-import Heading from "@/app/components/Heading";
+import ButtonLink from "@/app/components/layout/ButtonLink";
+import HeaderWithBg from "@/app/components/layout/HeaderWithBg";
+import Heading from "@/app/components/layout/Heading";
 import { connectToDb } from "@/app/config/connectToDb";
 import { PersonalBook, Shelf } from "@/app/models";
 import type { IPersonalBook } from "@/app/models/PersonalBook.model";
 import type { IShelf } from "@/app/models/Shelf.model";
 import { extractCover } from "@/app/utils/extractCover";
+import { auth } from "@/auth";
 
 export default async function Page({
     searchParams,
@@ -84,8 +84,9 @@ export default async function Page({
     };
     const search = searchParams.search || "";
     const shelf = searchParams.shelf || "";
-    const user = await currentUser();
-    const email = user?.emailAddresses[0].emailAddress;
+    const session = await auth();
+    const user = session?.user;
+    const email = user?.email as string;
     const { dataBooks: books, totalData } = await fetchBooks(
         page,
         pageSize,

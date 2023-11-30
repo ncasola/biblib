@@ -1,6 +1,5 @@
 "use server";
 
-import { currentUser } from "@clerk/nextjs";
 import { revalidatePath } from "next/cache";
 
 import { connectToDb } from "@/app/config/connectToDb";
@@ -10,13 +9,15 @@ import type { IPersonalBook } from "@/app/models/PersonalBook.model";
 import { IShelf } from "@/app/models/Shelf.model";
 import OpenLibrary from "@/app/sdk/OpenLibrary";
 import type { PersonalBookDTO } from "@/app/types/Book.types";
+import { auth } from "@/auth";
 
 export const getCurrentUser = async () => {
-    const user = await currentUser();
-    if (!user) {
+    const session = await auth();
+    if (!session) {
         throw new Error("User not found");
     }
-    return user.emailAddresses[0].emailAddress;
+    const user = session.user;
+    return user?.email as string;
 };
 
 export const createBook = async (data: PersonalBookDTO) => {

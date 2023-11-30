@@ -1,11 +1,12 @@
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { Button, Table } from "flowbite-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { deleteShelf } from "@/app/actions";
-import { DeleteConfirm } from "@/app/components/DeleteConfirm";
-import { NoData } from "@/app/components/NoData";
+import { DeleteConfirm } from "@/app/components/layout/DeleteConfirm";
+import { NoData } from "@/app/components/layout/NoData";
 import type { ShelfItem } from "@/app/types/Shelf.types";
 
 interface Props {
@@ -15,6 +16,7 @@ interface Props {
 
 const ListTableView = (props: Props) => {
     const router = useRouter();
+    const [parent, enableAnimations] = useAutoAnimate();
     const [openModal, setOpenModal] = useState(false);
     const [result, setResult] = useState(false);
     const [shelfToDelete, setShelfToDelete] = useState<string | null>(null);
@@ -39,7 +41,7 @@ const ListTableView = (props: Props) => {
     const { data: rows, columns } = props;
     return (
         <>
-            <Table>
+            <Table ref={parent}>
                 <Table.Head>
                     <>
                         {columns.map((column) => (
