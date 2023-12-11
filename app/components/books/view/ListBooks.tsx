@@ -90,11 +90,27 @@ export default function ListBooks(props: ListBooksProps) {
                     setSort={setSort}
                 />
             </div>
-            {tableView && !responsiveView && (
-                <ListTableView data={rows} columns={columns} sort={sort} />
+            {responsiveView ? (
+                <>
+                    {tableView ? (
+                        <ListResponsiveView data={rows} />
+                    ) : (
+                        <ListShelfView data={rows} />
+                    )}
+                </>
+            ) : (
+                <>
+                    {tableView ? (
+                        <ListTableView
+                            data={rows}
+                            columns={columns}
+                            sort={sort}
+                        />
+                    ) : (
+                        <ListShelfView data={rows} />
+                    )}
+                </>
             )}
-            {!tableView && !responsiveView && <ListShelfView data={rows} />}
-            {responsiveView && <ListResponsiveView data={rows} />}
             {totalPages > 1 && (
                 <>
                     <Pagination

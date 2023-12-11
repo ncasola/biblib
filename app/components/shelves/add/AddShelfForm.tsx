@@ -28,16 +28,12 @@ export default function AddShelfForm() {
     const onSubmit: SubmitHandler<ValidationSchema> = async (data) => {
         setLoading(true);
         const newShelf = await createShelf(data);
-        if (newShelf instanceof Object && "error" in newShelf) {
-            setMessage(newShelf.error);
-        } else {
-            setMessage(`Shelf added successfully`);
-        }
+        setMessage(`Shelf ${newShelf.name} added successfully`);
         setLoading(false);
     };
     return (
         <form
-            className="flex w-full flex-col gap-4 p-4 border-2 border-gray-200 rounded-lg bg-white dark:bg-gray-800"
+            className="flex w-full flex-col gap-4 p-4"
             onSubmit={handleSubmit(onSubmit)}
         >
             <div>

@@ -14,7 +14,9 @@ export default async function Page() {
                 />
             </HeaderWithBg>
             <div className="flex flex-col gap-4 mt-4">
-                <AddShelfForm />
+                <div className="border-2 border-gray-200 rounded-lg bg-white dark:bg-gray-800">
+                    <AddShelfForm />
+                </div>
             </div>
         </>
     );

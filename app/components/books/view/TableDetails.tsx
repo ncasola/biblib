@@ -25,11 +25,16 @@ const TableDetails: React.FC<Props> = ({ data }) => {
     }, [data]);
     return (
         <span className="font-bold text-gray-700 dark:text-gray-300">
-            {trimmedTitle} |{" "}
-            <a href={url} target="_blank" rel="noreferrer">
-                <HiArrowCircleRight className="inline-block" />
-                <span className="text-blue-500">OpenLibrary Page</span>
-            </a>
+            {trimmedTitle}
+            {url && (
+                <>
+                    |{" "}
+                    <a href={url} target="_blank" rel="noreferrer">
+                        <HiArrowCircleRight className="inline-block" />
+                        <span className="text-blue-500">OpenLibrary Page</span>
+                    </a>
+                </>
+            )}
         </span>
     );
 };

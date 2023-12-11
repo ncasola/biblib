@@ -88,7 +88,7 @@ const ListTableView = (props: Props) => {
                         ))}
                     {rows.length === 0 && (
                         <Table.Row>
-                            <Table.Cell colSpan={columns.length}>
+                            <Table.Cell colSpan={columns.length + 1}>
                                 <NoData
                                     title="There is no shelves yet"
                                     subtitle="You can add a new Shelf"

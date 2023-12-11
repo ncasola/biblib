@@ -88,7 +88,9 @@ export const createShelf = async ({ title }: { title: string }) => {
     });
     const shelfCreated = await newShelf.save();
     revalidatePath("/dashboard/shelves");
-    return shelfCreated;
+    return {
+        name: shelfCreated.title,
+    };
 };
 
 export const getShelvesCurrentUser = async () => {
