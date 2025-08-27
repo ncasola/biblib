@@ -1,5 +1,14 @@
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { Button, Table } from "flowbite-react";
+import {
+    Button,
+    ButtonGroup,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeadCell,
+    TableRow,
+} from "flowbite-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -42,27 +51,25 @@ const ListTableView = (props: Props) => {
     return (
         <>
             <Table ref={parent}>
-                <Table.Head>
+                <TableHead>
                     <>
                         {columns.map((column) => (
-                            <Table.HeadCell key={column}>
-                                {column}
-                            </Table.HeadCell>
+                            <TableHeadCell key={column}>{column}</TableHeadCell>
                         ))}
                     </>
-                    <Table.HeadCell>Actions</Table.HeadCell>
-                </Table.Head>
-                <Table.Body>
+                    <TableHeadCell>Actions</TableHeadCell>
+                </TableHead>
+                <TableBody>
                     {rows &&
                         rows.map((row) => (
-                            <Table.Row
+                            <TableRow
                                 className="bg-white border-b dark:bg-gray-800 dark:border-gray-700"
                                 key={row.id}
                             >
-                                <Table.Cell>{row.title}</Table.Cell>
-                                <Table.Cell>{row.totalBooks}</Table.Cell>
-                                <Table.Cell>
-                                    <Button.Group outline>
+                                <TableCell>{row.title}</TableCell>
+                                <TableCell>{row.totalBooks}</TableCell>
+                                <TableCell>
+                                    <ButtonGroup outline>
                                         <Button color="blue">
                                             <Link
                                                 href={`/dashboard/books?page=1&pageSize=5&shelf=${row.id}`}
@@ -82,23 +89,23 @@ const ListTableView = (props: Props) => {
                                         ) : (
                                             <Button disabled>Delete</Button>
                                         )}
-                                    </Button.Group>
-                                </Table.Cell>
-                            </Table.Row>
+                                    </ButtonGroup>
+                                </TableCell>
+                            </TableRow>
                         ))}
                     {rows.length === 0 && (
-                        <Table.Row>
-                            <Table.Cell colSpan={columns.length + 1}>
+                        <TableRow>
+                            <TableCell colSpan={columns.length + 1}>
                                 <NoData
                                     title="There is no shelves yet"
                                     subtitle="You can add a new Shelf"
                                     href="/dashboard/shelves/add"
                                     linkTitle="Add a Shelf"
                                 />
-                            </Table.Cell>
-                        </Table.Row>
+                            </TableCell>
+                        </TableRow>
                     )}
-                </Table.Body>
+                </TableBody>
             </Table>
             <DeleteConfirm
                 open={openModal}

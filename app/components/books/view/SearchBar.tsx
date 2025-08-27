@@ -48,7 +48,6 @@ const SearchBar = (props: Props) => {
             />
             <Select
                 id="shelf"
-                placeholder="Shelf"
                 onChange={(e) => setSelectShelf(e.target.value)}
                 value={actualShelf}
                 className="w-full"
@@ -62,7 +61,6 @@ const SearchBar = (props: Props) => {
             </Select>
             <Select
                 id="column"
-                placeholder="Sort by"
                 onChange={(e) => setColumn(e.target.value)}
                 value={column}
                 className="w-full"
@@ -73,7 +71,6 @@ const SearchBar = (props: Props) => {
             </Select>
             <Select
                 id="direction"
-                placeholder="Direction"
                 onChange={(e) => setDirection(e.target.value)}
                 value={direction}
                 className="w-full"

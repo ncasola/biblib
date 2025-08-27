@@ -1,4 +1,14 @@
-import { Badge, Button, Table } from "flowbite-react";
+import {
+    Badge,
+    Button,
+    ButtonGroup,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeadCell,
+    TableRow,
+} from "flowbite-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -57,10 +67,10 @@ const ListTableView = (props: Props) => {
     return (
         <>
             <Table>
-                <Table.Head>
+                <TableHead>
                     <>
                         {columns.map((column) => (
-                            <Table.HeadCell key={column}>
+                            <TableHeadCell key={column}>
                                 <span className="flex items-center">
                                     {toCamelCase(column) === sort.column && (
                                         <>
@@ -73,20 +83,20 @@ const ListTableView = (props: Props) => {
                                     )}
                                     {column}
                                 </span>
-                            </Table.HeadCell>
+                            </TableHeadCell>
                         ))}
                     </>
-                    <Table.HeadCell>Actions</Table.HeadCell>
-                </Table.Head>
-                <Table.Body>
+                    <TableHeadCell>Actions</TableHeadCell>
+                </TableHead>
+                <TableBody>
                     {rows &&
                         rows.map((row) => (
-                            <Table.Row
+                            <TableRow
                                 className="bg-white border-b dark:bg-gray-800 dark:border-gray-700"
                                 key={row.id}
                             >
-                                <Table.Cell>{row.title}</Table.Cell>
-                                <Table.Cell>
+                                <TableCell>{row.title}</TableCell>
+                                <TableCell>
                                     {new Date(
                                         row.publishDate,
                                     ).toLocaleDateString("en-US", {
@@ -94,8 +104,8 @@ const ListTableView = (props: Props) => {
                                         month: "long",
                                         day: "numeric",
                                     })}
-                                </Table.Cell>
-                                <Table.Cell>
+                                </TableCell>
+                                <TableCell>
                                     <Image
                                         src={row.image}
                                         alt={row.title}
@@ -103,14 +113,14 @@ const ListTableView = (props: Props) => {
                                         height={50}
                                         className="rounded-lg shadow-md"
                                     />
-                                </Table.Cell>
-                                <Table.Cell>
+                                </TableCell>
+                                <TableCell>
                                     <Badge color="indigo" className="max-w-max">
                                         {row.shelf}
                                     </Badge>
-                                </Table.Cell>
-                                <Table.Cell>
-                                    <Button.Group outline>
+                                </TableCell>
+                                <TableCell>
+                                    <ButtonGroup outline>
                                         <Button color="blue">
                                             <Link
                                                 href={`/dashboard/books/${row.id}`}
@@ -126,23 +136,23 @@ const ListTableView = (props: Props) => {
                                         >
                                             Delete
                                         </Button>
-                                    </Button.Group>
-                                </Table.Cell>
-                            </Table.Row>
+                                    </ButtonGroup>
+                                </TableCell>
+                            </TableRow>
                         ))}
                     {rows.length === 0 && (
-                        <Table.Row>
-                            <Table.Cell colSpan={columns.length + 1}>
+                        <TableRow>
+                            <TableCell colSpan={columns.length + 1}>
                                 <NoData
                                     title="There is no books yet"
                                     subtitle="You can add a new book to your collection"
                                     href="/dashboard/books/add"
                                     linkTitle="Add a book"
                                 />
-                            </Table.Cell>
-                        </Table.Row>
+                            </TableCell>
+                        </TableRow>
                     )}
-                </Table.Body>
+                </TableBody>
             </Table>
             <DeleteConfirm
                 open={openModal}
