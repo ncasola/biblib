@@ -2,7 +2,16 @@
 
 import { ErrorMessage } from "@hookform/error-message";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Alert, Button, Label, Modal, Select, TextInput } from "flowbite-react";
+import {
+    Alert,
+    Button,
+    Label,
+    Modal,
+    ModalBody,
+    ModalHeader,
+    Select,
+    TextInput,
+} from "flowbite-react";
 import { useEffect, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { useDebounce } from "use-debounce";
@@ -65,7 +74,7 @@ export default function AddBookForm() {
                 className="flex w-full flex-col gap-2 p-4 border-2 border-gray-200 rounded-lg bg-white dark:bg-gray-800"
                 onSubmit={handleSubmit(onSubmit)}
             >
-                <Label htmlFor="ISBN" value="ISBN" />
+                <Label htmlFor="ISBN">ISBN</Label>
                 <div className="grid grid-cols-[2fr_1fr] gap-2">
                     <TextInput
                         type="text"
@@ -88,7 +97,7 @@ export default function AddBookForm() {
                     <PreviewBook isbn={isbn} />
                 </div>
                 <div className="block">
-                    <Label htmlFor="Status" value="Status" />
+                    <Label htmlFor="Status">Status</Label>
                 </div>
                 <Select {...register("status")}>
                     <option value="reading">Reading</option>
@@ -102,7 +111,7 @@ export default function AddBookForm() {
                     render={({ message }) => <p>{message}</p>}
                 />
                 <div className="block">
-                    <Label htmlFor="Shelf" value="Shelf" />
+                    <Label htmlFor="Shelf">Shelf</Label>
                 </div>
                 <div className="grid grid-cols-[3fr_1fr] gap-2">
                     <Select {...register("shelf")}>
@@ -119,7 +128,7 @@ export default function AddBookForm() {
                         Create new shelf
                     </Button>
                 </div>
-                <Button type="submit" isProcessing={loading} pill>
+                <Button type="submit" pill disabled={loading}>
                     Add Book
                 </Button>
                 {message && (
@@ -135,10 +144,10 @@ export default function AddBookForm() {
                     getShelves();
                 }}
             >
-                <Modal.Header>Add a new shelf</Modal.Header>
-                <Modal.Body>
+                <ModalHeader>Add a new shelf</ModalHeader>
+                <ModalBody>
                     <AddShelfForm />
-                </Modal.Body>
+                </ModalBody>
             </Modal>
         </>
     );

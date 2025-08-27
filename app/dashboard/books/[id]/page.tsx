@@ -8,11 +8,12 @@ import { PersonalBook } from "@/app/models";
 import type { IPersonalBook } from "@/app/models/PersonalBook.model";
 import { extractCover } from "@/app/utils/extractCover";
 
-export default async function Page({ params }: { params: { id: string } }) {
-    const fetchBook = async (id: string) => {
+export default async function Page({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params;
+    const fetchBook = async (bookId: string) => {
         "use server";
         await connectToDb();
-        const book: IPersonalBook | null = await PersonalBook.findById(id)
+        const book: IPersonalBook | null = await PersonalBook.findById(bookId)
             .populate(["book", "shelf"])
             .exec();
         if (!book) {
@@ -27,7 +28,7 @@ export default async function Page({ params }: { params: { id: string } }) {
             data: book.book.data,
         };
     };
-    const book = await fetchBook(params.id);
+    const book = await fetchBook(id);
     return (
         <>
             <HeaderWithBg>

@@ -1,4 +1,12 @@
-import { Button, Table } from "flowbite-react";
+import {
+    Button,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeadCell,
+    TableRow,
+} from "flowbite-react";
 import Link from "next/link";
 
 import type { BookItem } from "@/app/types/Book.types";
@@ -21,57 +29,57 @@ const ListResponsiveView = (props: Props) => {
                         </p>
                     </div>
                     <div className="flex flex-col gap-4">
-                        <a
+                        <Link
                             href="/dashboard/books/add"
                             className="inline-flex items-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-gray-800 dark:hover:bg-gray-700"
                         >
                             Add a book
-                        </a>
+                        </Link>
                     </div>
                 </div>
             ) : (
                 <main className="grid grid-cols-1 gap-2">
                     {props.data.map((book) => (
                         <Table key={book.id} striped>
-                            <Table.Head>
-                                <Table.HeadCell>
+                            <TableHead>
+                                <TableHeadCell>
                                     <span className="font-bold text-gray-700 dark:text-gray-300">
                                         Field
                                     </span>
-                                </Table.HeadCell>
-                                <Table.HeadCell>
+                                </TableHeadCell>
+                                <TableHeadCell>
                                     <span className="font-bold text-gray-700 dark:text-gray-300">
                                         Data
                                     </span>
-                                </Table.HeadCell>
-                            </Table.Head>
-                            <Table.Body>
-                                <Table.Row>
-                                    <Table.Cell>
+                                </TableHeadCell>
+                            </TableHead>
+                            <TableBody>
+                                <TableRow>
+                                    <TableCell>
                                         <span className="font-bold text-gray-700 dark:text-gray-300">
                                             Title
                                         </span>
-                                    </Table.Cell>
-                                    <Table.Cell>{book.title}</Table.Cell>
-                                </Table.Row>
-                                <Table.Row>
-                                    <Table.Cell>
+                                    </TableCell>
+                                    <TableCell>{book.title}</TableCell>
+                                </TableRow>
+                                <TableRow>
+                                    <TableCell>
                                         <span className="font-bold text-gray-700 dark:text-gray-300">
                                             Shelf
                                         </span>
-                                    </Table.Cell>
-                                    <Table.Cell>{book.shelf}</Table.Cell>
-                                </Table.Row>
-                                <Table.Row>
-                                    <Table.Cell>
+                                    </TableCell>
+                                    <TableCell>{book.shelf}</TableCell>
+                                </TableRow>
+                                <TableRow>
+                                    <TableCell>
                                         <span className="font-bold text-gray-700 dark:text-gray-300">
                                             Publish Date
                                         </span>
-                                    </Table.Cell>
-                                    <Table.Cell>{book.publishDate}</Table.Cell>
-                                </Table.Row>
-                                <Table.Row>
-                                    <Table.Cell>
+                                    </TableCell>
+                                    <TableCell>{book.publishDate}</TableCell>
+                                </TableRow>
+                                <TableRow>
+                                    <TableCell>
                                         <Button color="blue">
                                             <Link
                                                 href={`/dashboard/books/${book.id}`}
@@ -79,12 +87,12 @@ const ListResponsiveView = (props: Props) => {
                                                 View
                                             </Link>
                                         </Button>
-                                    </Table.Cell>
-                                    <Table.Cell>
+                                    </TableCell>
+                                    <TableCell>
                                         <Button color="failure">Delete</Button>
-                                    </Table.Cell>
-                                </Table.Row>
-                            </Table.Body>
+                                    </TableCell>
+                                </TableRow>
+                            </TableBody>
                         </Table>
                     ))}
                 </main>

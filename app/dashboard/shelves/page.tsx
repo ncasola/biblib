@@ -11,8 +11,9 @@ import { auth } from "@/auth";
 export default async function Page({
     searchParams,
 }: {
-    searchParams: { page: string; pageSize: string };
+    searchParams: Promise<{ page: string; pageSize: string }>;
 }) {
+    const params = await searchParams;
     const fetchShelves = async (
         page: number,
         pageSize: number,
@@ -40,8 +41,8 @@ export default async function Page({
             totalData: totalShelfs,
         };
     };
-    const page = parseInt(searchParams.page) || 1;
-    const pageSize = parseInt(searchParams.pageSize) || 4;
+    const page = parseInt(params.page) || 1;
+    const pageSize = parseInt(params.pageSize) || 4;
     const session = await auth();
     const user = session?.user;
     const email = user?.email as string;

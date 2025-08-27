@@ -14,15 +14,16 @@ import { auth } from "@/auth";
 export default async function Page({
     searchParams,
 }: {
-    searchParams: {
+    searchParams: Promise<{
         page: string;
         pageSize: string;
         sort: string;
         direction: string;
         search: string;
         shelf: string;
-    };
+    }>;
 }) {
+    const params = await searchParams;
     const fetchShelves = async (email: string) => {
         "use server";
         await connectToDb();
@@ -76,14 +77,14 @@ export default async function Page({
             totalData: totalBooks,
         };
     };
-    const page = parseInt(searchParams.page) || 1;
-    const pageSize = parseInt(searchParams.pageSize) || 4;
+    const page = parseInt(params.page) || 1;
+    const pageSize = parseInt(params.pageSize) || 4;
     const sort = {
-        column: searchParams.sort || "title",
-        direction: searchParams.direction || "asc",
+        column: params.sort || "title",
+        direction: params.direction || "asc",
     };
-    const search = searchParams.search || "";
-    const shelf = searchParams.shelf || "";
+    const search = params.search || "";
+    const shelf = params.shelf || "";
     const session = await auth();
     const user = session?.user;
     const email = user?.email as string;

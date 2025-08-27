@@ -1,7 +1,13 @@
 /* eslint-disable simple-import-sort/imports */
 "use client";
 
-import { Button, Flowbite, Navbar } from "flowbite-react";
+import {
+    Button,
+    Navbar,
+    NavbarBrand,
+    NavbarCollapse,
+    NavbarLink,
+} from "flowbite-react";
 import type { Session } from "next-auth";
 import { signIn } from "next-auth/react";
 import Image from "next/image";
@@ -14,12 +20,9 @@ type Props = {
 export const Menu = (props: Props) => {
     const session = props.session;
     return (
-        <Flowbite>
-            <main className="flex justify-center items-center bg-white">
-                <Navbar className="w-11/12 h-5/6 md:w-9/12 md:h-5/6">
-                    <Navbar.Brand
-                        href={`${process.env.NEXT_PUBLIC_ABSOLUTE_URL}`}
-                    >
+        <main className="flex justify-center items-center bg-white">
+            <Navbar className="w-11/12 h-5/6 md:w-9/12 md:h-5/6">
+                <NavbarBrand href={`${process.env.NEXT_PUBLIC_ABSOLUTE_URL}`}>
                         <Image
                             src="/logo.png"
                             alt="BibLib"
@@ -29,44 +32,43 @@ export const Menu = (props: Props) => {
                         <span className="self-center whitespace-nowrap text-xl font-semibold dark:text-white">
                             BibLib
                         </span>
-                    </Navbar.Brand>
-                    {session && (
-                        <>
-                            <Navbar.Collapse>
-                                <Navbar.Link
-                                    className="md:order-2"
-                                    href={`${process.env.NEXT_PUBLIC_ABSOLUTE_URL}/dashboard`}
-                                >
-                                    Dashboard
-                                </Navbar.Link>
-                                <Navbar.Link
-                                    className="md:order-2"
-                                    href={`${process.env.NEXT_PUBLIC_ABSOLUTE_URL}/dashboard/books`}
-                                >
-                                    Books
-                                </Navbar.Link>
-                                <Navbar.Link
-                                    className="md:order-2"
-                                    href={`${process.env.NEXT_PUBLIC_ABSOLUTE_URL}/dashboard/shelves`}
-                                >
-                                    Shelves
-                                </Navbar.Link>
-                            </Navbar.Collapse>
-                            <SignedDropdown session={session} />
-                        </>
-                    )}
-                    {!session && (
-                        <Navbar.Collapse>
-                            <Button
+                </NavbarBrand>
+                {session && (
+                    <>
+                        <NavbarCollapse>
+                            <NavbarLink
                                 className="md:order-2"
-                                onClick={() => signIn()}
+                                href={`${process.env.NEXT_PUBLIC_ABSOLUTE_URL}/dashboard`}
                             >
-                                Login
-                            </Button>
-                        </Navbar.Collapse>
-                    )}
-                </Navbar>
-            </main>
-        </Flowbite>
+                                Dashboard
+                            </NavbarLink>
+                            <NavbarLink
+                                className="md:order-2"
+                                href={`${process.env.NEXT_PUBLIC_ABSOLUTE_URL}/dashboard/books`}
+                            >
+                                Books
+                            </NavbarLink>
+                            <NavbarLink
+                                className="md:order-2"
+                                href={`${process.env.NEXT_PUBLIC_ABSOLUTE_URL}/dashboard/shelves`}
+                            >
+                                Shelves
+                            </NavbarLink>
+                        </NavbarCollapse>
+                        <SignedDropdown session={session} />
+                    </>
+                )}
+                {!session && (
+                    <NavbarCollapse>
+                        <Button
+                            className="md:order-2"
+                            onClick={() => signIn()}
+                        >
+                            Login
+                        </Button>
+                    </NavbarCollapse>
+                )}
+            </Navbar>
+        </main>
     );
 };

@@ -1,6 +1,12 @@
 "use client";
 
-import { Avatar, Dropdown, Navbar } from "flowbite-react";
+import {
+    Avatar,
+    Dropdown,
+    DropdownHeader,
+    DropdownItem,
+    NavbarToggle,
+} from "flowbite-react";
 import { Session } from "next-auth";
 import { signOut } from "next-auth/react";
 
@@ -20,15 +26,17 @@ const SignedDropdown = ({ session }: Props) => {
                 inline
                 label={<Avatar alt={name} img={img} rounded />}
             >
-                <Dropdown.Header>
+                <DropdownHeader>
                     <span className="block text-sm">{name}</span>
                     <span className="block truncate text-sm font-medium">
                         {email}
                     </span>
-                </Dropdown.Header>
-                <Dropdown.Item onClick={() => signOut()}>Logout</Dropdown.Item>
+                </DropdownHeader>
+                <DropdownItem onClick={() => signOut()}>
+                    Logout
+                </DropdownItem>
             </Dropdown>
-            <Navbar.Toggle />
+            <NavbarToggle />
         </div>
     );
 };

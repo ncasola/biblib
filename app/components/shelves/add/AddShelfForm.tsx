@@ -38,7 +38,7 @@ export default function AddShelfForm() {
         >
             <div>
                 <div className="mb-2 block">
-                    <Label htmlFor="Title" value="Title" />
+                    <Label htmlFor="Title">Title</Label>
                 </div>
                 <TextInput
                     type="text"
@@ -54,7 +54,7 @@ export default function AddShelfForm() {
                 />
             </div>
 
-            <Button type="submit" isProcessing={loading} pill>
+            <Button type="submit" pill disabled={loading}>
                 Add Shelf
             </Button>
             {message && (

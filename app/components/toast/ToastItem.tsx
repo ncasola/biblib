@@ -1,6 +1,6 @@
 "use client";
 
-import { Toast } from "flowbite-react";
+import { Toast, ToastToggle } from "flowbite-react";
 import { useEffect } from "react";
 import { HiCheck } from "react-icons/hi";
 
@@ -29,7 +29,7 @@ const ToastItem = () => {
                         <HiCheck className="h-5 w-5" />
                     </div>
                     <div className="ml-3 text-sm font-normal">{message}</div>
-                    <Toast.Toggle onClick={clearToast} className="ml-auto" />
+                    <ToastToggle onClick={clearToast} className="ml-auto" />
                 </Toast>
             )}
         </div>

@@ -81,24 +81,19 @@ const BookView = (props: Props) => {
                     </span>
                     <Select
                         className="max-w-max"
-                        placeholder="Select a shelf"
+                        defaultValue=""
                         onChange={(e) =>
                             handlerChangeShelf(dataBook.id, e.target.value)
                         }
                     >
-                        <option value="">All</option>
-                        {shelves.length > 0 && (
-                            <>
-                                {shelves.map((shelf) => (
-                                    <option
-                                        key={shelf.value}
-                                        value={shelf.value}
-                                    >
-                                        {shelf.label}
-                                    </option>
-                                ))}
-                            </>
-                        )}
+                        <option value="" disabled>
+                            Select a shelf
+                        </option>
+                        {shelves.map((shelf) => (
+                            <option key={shelf.value} value={shelf.value}>
+                                {shelf.label}
+                            </option>
+                        ))}
                     </Select>
                     <span className="text-gray-600 dark:text-gray-300">
                         {errorMessage}
