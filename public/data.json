@@ -1,0 +1,132 @@
+{
+  "books": [
+    {
+      "id": "book-1",
+      "isbn": "9780747532699",
+      "title": "Harry Potter and the Philosopher's Stone",
+      "subtitle": "",
+      "authors": [{ "name": "J.K. Rowling" }],
+      "number_of_pages": 223,
+      "publish_date": "1997",
+      "publishers": [{ "name": "Bloomsbury" }],
+      "cover": {
+        "small": "https://covers.openlibrary.org/b/isbn/9780747532699-S.jpg",
+        "medium": "https://covers.openlibrary.org/b/isbn/9780747532699-M.jpg",
+        "large": "https://covers.openlibrary.org/b/isbn/9780747532699-L.jpg"
+      },
+      "status": "read",
+      "shelf_id": "shelf-3",
+      "shelf_name": "Read"
+    },
+    {
+      "id": "book-2",
+      "isbn": "9780451524935",
+      "title": "1984",
+      "subtitle": "",
+      "authors": [{ "name": "George Orwell" }],
+      "number_of_pages": 328,
+      "publish_date": "1949",
+      "publishers": [{ "name": "Secker & Warburg" }],
+      "cover": {
+        "small": "https://covers.openlibrary.org/b/isbn/9780451524935-S.jpg",
+        "medium": "https://covers.openlibrary.org/b/isbn/9780451524935-M.jpg",
+        "large": "https://covers.openlibrary.org/b/isbn/9780451524935-L.jpg"
+      },
+      "status": "reading",
+      "shelf_id": "shelf-2",
+      "shelf_name": "Currently reading"
+    },
+    {
+      "id": "book-3",
+      "isbn": "9780061120084",
+      "title": "To Kill a Mockingbird",
+      "subtitle": "",
+      "authors": [{ "name": "Harper Lee" }],
+      "number_of_pages": 324,
+      "publish_date": "1960",
+      "publishers": [{ "name": "J.B. Lippincott & Co." }],
+      "cover": {
+        "small": "https://covers.openlibrary.org/b/isbn/9780061120084-S.jpg",
+        "medium": "https://covers.openlibrary.org/b/isbn/9780061120084-M.jpg",
+        "large": "https://covers.openlibrary.org/b/isbn/9780061120084-L.jpg"
+      },
+      "status": "to-read",
+      "shelf_id": "shelf-1",
+      "shelf_name": "Want to read"
+    },
+    {
+      "id": "book-4",
+      "isbn": "9780316769174",
+      "title": "The Catcher in the Rye",
+      "subtitle": "",
+      "authors": [{ "name": "J.D. Salinger" }],
+      "number_of_pages": 277,
+      "publish_date": "1951",
+      "publishers": [{ "name": "Little, Brown and Company" }],
+      "cover": {
+        "small": "https://covers.openlibrary.org/b/isbn/9780316769174-S.jpg",
+        "medium": "https://covers.openlibrary.org/b/isbn/9780316769174-M.jpg",
+        "large": "https://covers.openlibrary.org/b/isbn/9780316769174-L.jpg"
+      },
+      "status": "read",
+      "shelf_id": "shelf-3",
+      "shelf_name": "Read"
+    },
+    {
+      "id": "book-5",
+      "isbn": "9780140283334",
+      "title": "The Great Gatsby",
+      "subtitle": "",
+      "authors": [{ "name": "F. Scott Fitzgerald" }],
+      "number_of_pages": 180,
+      "publish_date": "1925",
+      "publishers": [{ "name": "Charles Scribner's Sons" }],
+      "cover": {
+        "small": "https://covers.openlibrary.org/b/isbn/9780140283334-S.jpg",
+        "medium": "https://covers.openlibrary.org/b/isbn/9780140283334-M.jpg",
+        "large": "https://covers.openlibrary.org/b/isbn/9780140283334-L.jpg"
+      },
+      "status": "read",
+      "shelf_id": "shelf-3",
+      "shelf_name": "Read"
+    },
+    {
+      "id": "book-6",
+      "isbn": "9780544003415",
+      "title": "The Lord of the Rings",
+      "subtitle": "",
+      "authors": [{ "name": "J.R.R. Tolkien" }],
+      "number_of_pages": 1178,
+      "publish_date": "1954",
+      "publishers": [{ "name": "Allen & Unwin" }],
+      "cover": {
+        "small": "https://covers.openlibrary.org/b/isbn/9780544003415-S.jpg",
+        "medium": "https://covers.openlibrary.org/b/isbn/9780544003415-M.jpg",
+        "large": "https://covers.openlibrary.org/b/isbn/9780544003415-L.jpg"
+      },
+      "status": "to-read",
+      "shelf_id": "shelf-1",
+      "shelf_name": "Want to read"
+    }
+  ],
+  "shelves": [
+    {
+      "id": "shelf-1",
+      "title": "Want to read",
+      "book_count": 2,
+      "isDefault": true
+    },
+    {
+      "id": "shelf-2",
+      "title": "Currently reading",
+      "book_count": 1,
+      "isDefault": true
+    },
+    {
+      "id": "shelf-3",
+      "title": "Read",
+      "book_count": 3,
+      "isDefault": true
+    }
+  ]
+}
