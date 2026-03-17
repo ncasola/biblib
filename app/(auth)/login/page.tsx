@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { Suspense, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import Image from "next/image"
@@ -11,7 +11,20 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Loader2, Chrome } from "lucide-react"
 
-export default function LoginPage() {
+function LoginFallback() {
+  return (
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-vintage-yellow/10 via-background to-vintage-purple/10">
+      <Card className="w-full max-w-md p-8 bg-card/80 backdrop-blur-xl border-2 border-border/50 shadow-2xl rounded-2xl">
+        <div className="flex items-center justify-center gap-3 text-muted-foreground">
+          <Loader2 className="h-5 w-5 animate-spin text-vintage-red" />
+          <p className="font-medium">Cargando acceso...</p>
+        </div>
+      </Card>
+    </div>
+  )
+}
+
+function LoginContent() {
   const searchParams = useSearchParams()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
@@ -32,7 +45,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-vintage-yellow/10 via-background to-vintage-purple/10">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-linear-to-br from-vintage-yellow/10 via-background to-vintage-purple/10">
       <Card className="w-full max-w-md p-8 bg-card/80 backdrop-blur-xl border-2 border-border/50 shadow-2xl rounded-2xl">
         <div className="flex flex-col items-center mb-8">
           <Image
@@ -79,5 +92,13 @@ export default function LoginPage() {
         </div>
       </Card>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<LoginFallback />}>
+      <LoginContent />
+    </Suspense>
   )
 }

@@ -7,7 +7,7 @@ import { ArrowLeft } from "lucide-react"
 
 export default function ForgotPasswordPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-vintage-purple/10 via-background to-vintage-red/10">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-linear-to-br from-vintage-purple/10 via-background to-vintage-red/10">
       <Card className="w-full max-w-md p-8 bg-card/80 backdrop-blur-xl border-2 border-border/50 shadow-2xl rounded-2xl">
         <div className="flex flex-col items-center mb-8">
           <Image

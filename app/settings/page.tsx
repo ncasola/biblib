@@ -111,9 +111,9 @@ export default function SettingsPage() {
             }`}
           >
             {message.type === "success" ? (
-              <CheckCircle className="w-5 h-5 text-vintage-yellow flex-shrink-0 mt-0.5" />
+              <CheckCircle className="w-5 h-5 text-vintage-yellow shrink-0 mt-0.5" />
             ) : (
-              <AlertCircle className="w-5 h-5 text-vintage-red flex-shrink-0 mt-0.5" />
+              <AlertCircle className="w-5 h-5 text-vintage-red shrink-0 mt-0.5" />
             )}
             <p className={`font-medium ${message.type === "success" ? "text-vintage-yellow" : "text-vintage-red"}`}>
               {message.text}
@@ -125,7 +125,7 @@ export default function SettingsPage() {
           {/* Export Section */}
           <div className="rounded-2xl border border-border bg-card backdrop-blur-md p-8 shadow-xl">
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-full bg-vintage-yellow/20 flex items-center justify-center flex-shrink-0">
+              <div className="w-12 h-12 rounded-full bg-vintage-yellow/20 flex items-center justify-center shrink-0">
                 <Download className="w-6 h-6 text-vintage-yellow" />
               </div>
               <div className="flex-1">
@@ -153,7 +153,7 @@ export default function SettingsPage() {
           {/* Import Section */}
           <div className="rounded-2xl border border-border bg-card backdrop-blur-md p-8 shadow-xl">
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-full bg-secondary/20 flex items-center justify-center flex-shrink-0">
+              <div className="w-12 h-12 rounded-full bg-secondary/20 flex items-center justify-center shrink-0">
                 <Upload className="w-6 h-6 text-secondary" />
               </div>
               <div className="flex-1">
