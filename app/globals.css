@@ -12,24 +12,24 @@
   --vintage-cream: oklch(0.96 0.02 85);
   --vintage-brown: oklch(0.35 0.08 65);
 
-  --background: var(--vintage-cream);
-  --foreground: var(--vintage-brown);
-  --card: oklch(0.99 0.01 85);
+  --background: oklch(0.97 0.012 85);
+  --foreground: oklch(0.31 0.07 65);
+  --card: oklch(0.995 0.008 85);
   --card-foreground: var(--vintage-brown);
-  --popover: oklch(0.99 0.01 85);
+  --popover: oklch(0.995 0.008 85);
   --popover-foreground: var(--vintage-brown);
   --primary: var(--vintage-red);
   --primary-foreground: oklch(0.99 0 0);
-  --secondary: var(--vintage-olive);
+  --secondary: oklch(0.55 0.12 110);
   --secondary-foreground: oklch(0.99 0 0);
-  --muted: oklch(0.92 0.02 85);
-  --muted-foreground: oklch(0.5 0.05 65);
+  --muted: oklch(0.9 0.018 85);
+  --muted-foreground: oklch(0.4 0.05 65);
   --accent: var(--vintage-yellow);
   --accent-foreground: var(--vintage-brown);
   --destructive: oklch(0.55 0.25 30);
   --destructive-foreground: oklch(0.99 0 0);
-  --border: oklch(0.85 0.03 85);
-  --input: oklch(0.95 0.02 85);
+  --border: oklch(0.8 0.03 85);
+  --input: oklch(0.94 0.02 85);
   --ring: var(--vintage-red);
   --radius: 1rem;
   --chart-1: oklch(0.646 0.222 41.116);
@@ -48,22 +48,22 @@
 }
 
 .dark {
-  --background: oklch(0.18 0.02 280);
+  --background: oklch(0.16 0.02 280);
   --foreground: var(--vintage-cream);
-  --card: oklch(0.22 0.03 280);
+  --card: oklch(0.2 0.03 280);
   --card-foreground: var(--vintage-cream);
-  --popover: oklch(0.2 0.03 280);
+  --popover: oklch(0.19 0.03 280);
   --popover-foreground: var(--vintage-cream);
-  --primary: oklch(0.65 0.22 25);
+  --primary: oklch(0.69 0.22 25);
   --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.68 0.13 110);
+  --secondary: oklch(0.72 0.13 110);
   --secondary-foreground: oklch(0.99 0 0);
-  --muted: oklch(0.25 0.02 280);
-  --muted-foreground: oklch(0.65 0.03 85);
+  --muted: oklch(0.23 0.02 280);
+  --muted-foreground: oklch(0.75 0.03 85);
   --accent: oklch(0.78 0.15 95);
   --accent-foreground: var(--vintage-brown);
-  --border: oklch(0.3 0.03 280);
-  --input: oklch(0.25 0.02 280);
+  --border: oklch(0.38 0.03 280);
+  --input: oklch(0.27 0.02 280);
   --ring: var(--vintage-red);
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
@@ -142,6 +142,14 @@
 
   body {
     @apply bg-background text-foreground;
+  }
+
+  button:not(:disabled) {
+    cursor: pointer;
+  }
+
+  button:disabled {
+    cursor: not-allowed;
   }
 }
 

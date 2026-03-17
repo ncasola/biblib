@@ -25,18 +25,18 @@ export function SearchBookForm({ onSearch, isLoading = false }: SearchBookFormPr
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
         <label htmlFor="isbn" className="text-sm font-semibold text-foreground">
-          ISBN Number
+          Número ISBN
         </label>
         <Input
           id="isbn"
           type="text"
-          placeholder="e.g., 9780747532699"
+          placeholder="ej.: 9780747532699"
           value={isbn}
           onChange={(e) => setIsbn(e.target.value)}
           disabled={isLoading}
           className="bg-input border-2 border-border rounded-xl px-4 py-3 text-base focus:border-vintage-red focus:ring-vintage-red/20"
         />
-        <p className="text-xs text-muted-foreground">Enter the 10 or 13 digit ISBN code</p>
+        <p className="text-xs text-muted-foreground">Introduce un ISBN de 10 o 13 dígitos</p>
       </div>
 
       <Button
@@ -47,12 +47,12 @@ export function SearchBookForm({ onSearch, isLoading = false }: SearchBookFormPr
         {isLoading ? (
           <>
             <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-            Searching...
+            Buscando...
           </>
         ) : (
           <>
             <Search className="w-5 h-5 mr-2" />
-            Search Book
+            Buscar libro
           </>
         )}
       </Button>

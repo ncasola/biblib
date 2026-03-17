@@ -1,8 +1,9 @@
 "use client"
 
-import { createContext, useContext, useState, type ReactNode } from "react"
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react"
+import type { Session, User as SupabaseUser } from "@supabase/supabase-js"
+import { createClient } from "@/lib/supabase/client"
 
-// Mock user type - ready for Supabase User type
 export interface User {
   id: string
   email: string
@@ -13,7 +14,9 @@ export interface User {
 
 interface AuthContextType {
   user: User | null
+  session: Session | null
   loading: boolean
+  signInWithGoogle: (nextPath?: string) => Promise<void>
   signIn: (email: string, password: string) => Promise<void>
   signUp: (email: string, password: string, name: string) => Promise<void>
   signOut: () => Promise<void>
@@ -23,71 +26,100 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
+function mapUser(user: SupabaseUser): User {
+  const fullName = user.user_metadata.full_name
+  const fallbackName = user.email?.split("@")[0] ?? "Lector"
+  return {
+    id: user.id,
+    email: user.email ?? "",
+    name: typeof fullName === "string" && fullName.length > 0 ? fullName : fallbackName,
+    avatar: typeof user.user_metadata.avatar_url === "string" ? user.user_metadata.avatar_url : undefined,
+    createdAt: user.created_at,
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(() => {
-    if (typeof window === "undefined") return null
-    const storedUser = localStorage.getItem("biblib_user")
-    return storedUser ? (JSON.parse(storedUser) as User) : null
-  })
-  const loading = false
+  const [supabase] = useState(() => createClient())
+  const [user, setUser] = useState<User | null>(null)
+  const [session, setSession] = useState<Session | null>(null)
+  const [loading, setLoading] = useState(true)
 
-  const signIn = async (email: string, _password: string) => {
-    void _password
-    // Mock sign in - replace with Supabase auth
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-
-    const mockUser: User = {
-      id: "mock-user-id",
-      email,
-      name: email.split("@")[0],
-      createdAt: new Date().toISOString(),
+  useEffect(() => {
+    const loadInitialSession = async () => {
+      const {
+        data: { session: initialSession },
+      } = await supabase.auth.getSession()
+      setSession(initialSession)
+      setUser(initialSession?.user ? mapUser(initialSession.user) : null)
+      setLoading(false)
     }
 
-    setUser(mockUser)
-    localStorage.setItem("biblib_user", JSON.stringify(mockUser))
+    void loadInitialSession()
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      setSession(nextSession)
+      setUser(nextSession?.user ? mapUser(nextSession.user) : null)
+      setLoading(false)
+    })
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [supabase])
+
+  const signInWithGoogle = async (nextPath?: string) => {
+    const origin = typeof window !== "undefined" ? window.location.origin : ""
+    const redirectTarget = nextPath ? `/auth/callback?next=${encodeURIComponent(nextPath)}` : "/auth/callback"
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${origin}${redirectTarget}`,
+      },
+    })
+
+    if (error) {
+      throw error
+    }
   }
 
-  const signUp = async (email: string, _password: string, name: string) => {
+  const signIn = async (_email: string, _password: string) => {
+    void _email
     void _password
-    // Mock sign up - replace with Supabase auth
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    throw new Error("El inicio de sesión con correo/contraseña está deshabilitado. Usa Google.")
+  }
 
-    const mockUser: User = {
-      id: "mock-user-id",
-      email,
-      name,
-      createdAt: new Date().toISOString(),
-    }
-
-    setUser(mockUser)
-    localStorage.setItem("biblib_user", JSON.stringify(mockUser))
+  const signUp = async (_email: string, _password: string, _name: string) => {
+    void _email
+    void _password
+    void _name
+    throw new Error("El registro se gestiona con Google OAuth.")
   }
 
   const signOut = async () => {
-    // Mock sign out - replace with Supabase auth
-    await new Promise((resolve) => setTimeout(resolve, 500))
+    await supabase.auth.signOut()
     setUser(null)
-    localStorage.removeItem("biblib_user")
+    setSession(null)
   }
 
-  const resetPassword = async (email: string) => {
-    // Mock reset password - replace with Supabase auth
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-    console.log("[v0] Password reset email sent to:", email)
+  const resetPassword = async (_email: string) => {
+    void _email
+    throw new Error("La recuperación de contraseña no está disponible con Google OAuth")
   }
 
   const updatePassword = async (_newPassword: string) => {
     void _newPassword
-    // Mock update password - replace with Supabase auth
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-    console.log("[v0] Password updated")
+    throw new Error("El cambio de contraseña no está disponible con Google OAuth")
   }
 
   return (
     <AuthContext.Provider
       value={{
         user,
+        session,
         loading,
+        signInWithGoogle,
         signIn,
         signUp,
         signOut,
@@ -103,7 +135,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext)
   if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider")
+    throw new Error("useAuth debe usarse dentro de un AuthProvider")
   }
   return context
 }

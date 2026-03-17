@@ -38,20 +38,20 @@ export async function searchBookByISBN(isbn: string): Promise<Book | null> {
     console.log("[v0] Found book data:", bookData)
 
     const authors: Author[] = (bookData.authors || []).map((a) => ({
-      name: a.name || "Unknown Author",
+      name: a.name || "Autor desconocido",
       url: a.url,
     }))
 
     const publishers: Publisher[] = (bookData.publishers || []).map((p) => ({
-      name: p.name || "Unknown Publisher",
+      name: p.name || "Editorial desconocida",
     }))
 
     const book: Book = {
       id: `book-${cleanISBN}`,
       isbn: cleanISBN,
-      title: bookData.title || "Unknown Title",
+      title: bookData.title || "Título desconocido",
       subtitle: bookData.subtitle,
-      authors: authors.length > 0 ? authors : [{ name: "Unknown Author" }],
+      authors: authors.length > 0 ? authors : [{ name: "Autor desconocido" }],
       number_of_pages: bookData.number_of_pages || 0,
       publish_date: bookData.publish_date || "",
       publishers: publishers.length > 0 ? publishers : undefined,
@@ -61,8 +61,8 @@ export async function searchBookByISBN(isbn: string): Promise<Book | null> {
         large: "/placeholder.svg?height=512&width=341",
       },
       status: "to-read",
-      shelf_id: "shelf-1",
-      shelf_name: "Want to read",
+      shelf_id: "",
+      shelf_name: "Predeterminada",
     }
 
     console.log("[v0] Returning book object:", book)

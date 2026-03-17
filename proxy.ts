@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
+import { createProxyClient } from "@/lib/supabase/proxy"
 
 // Routes that require authentication
 const protectedRoutes = ["/profile", "/books", "/shelves", "/settings"]
@@ -8,29 +9,31 @@ const protectedRoutes = ["/profile", "/books", "/shelves", "/settings"]
 const authRoutes = ["/login", "/signup"]
 
 export function proxy(request: NextRequest) {
+  const response = NextResponse.next()
+  const supabase = createProxyClient(request, response)
   const { pathname } = request.nextUrl
 
-  // Mock auth check - replace with Supabase session check
-  // For now, check if user data exists in localStorage via cookie
-  const hasUserCookie = request.cookies.has("biblib_user")
+  return supabase.auth.getUser().then(({ data: { user } }) => {
+    const isAuthenticated = Boolean(user)
 
-  // Protect routes that require authentication
-  if (protectedRoutes.some((route) => pathname.startsWith(route))) {
-    if (!hasUserCookie) {
-      const loginUrl = new URL("/login", request.url)
-      loginUrl.searchParams.set("redirect", pathname)
-      return NextResponse.redirect(loginUrl)
+    // Protect routes that require authentication
+    if (protectedRoutes.some((route) => pathname.startsWith(route))) {
+      if (!isAuthenticated) {
+        const loginUrl = new URL("/login", request.url)
+        loginUrl.searchParams.set("redirect", pathname)
+        return NextResponse.redirect(loginUrl)
+      }
     }
-  }
 
-  // Redirect authenticated users away from auth pages
-  if (authRoutes.some((route) => pathname.startsWith(route))) {
-    if (hasUserCookie) {
-      return NextResponse.redirect(new URL("/", request.url))
+    // Redirect authenticated users away from auth pages
+    if (authRoutes.some((route) => pathname.startsWith(route))) {
+      if (isAuthenticated) {
+        return NextResponse.redirect(new URL("/", request.url))
+      }
     }
-  }
 
-  return NextResponse.next()
+    return response
+  })
 }
 
 export const config = {

@@ -90,7 +90,7 @@ export function ShelfViewer3D({ books }: ShelfViewer3DProps) {
                             <>
                               <div className="text-center line-clamp-4 px-1">{book.title}</div>
                               <div className="text-[8px] opacity-80 text-center line-clamp-2">
-                                {book.authors[0]?.name || "Unknown"}
+                                {book.authors[0]?.name || "Desconocido"}
                               </div>
                             </>
                           )}
@@ -173,9 +173,9 @@ export function ShelfViewer3D({ books }: ShelfViewer3DProps) {
                       {isHovered && (
                         <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 bg-black/90 text-white text-xs rounded-lg p-2 min-w-[150px] z-50 pointer-events-none">
                           <p className="font-bold line-clamp-2">{book.title}</p>
-                          <p className="text-[10px] opacity-80 mt-1">{book.authors[0]?.name || "Unknown"}</p>
+                          <p className="text-[10px] opacity-80 mt-1">{book.authors[0]?.name || "Desconocido"}</p>
                           {book.number_of_pages && (
-                            <p className="text-[10px] opacity-60 mt-1">{book.number_of_pages} pages</p>
+                            <p className="text-[10px] opacity-60 mt-1">{book.number_of_pages} páginas</p>
                           )}
                         </div>
                       )}

@@ -5,6 +5,7 @@ import type { Book } from "@/lib/types"
 import { useState } from "react"
 import Image from "next/image"
 import { BookOpen, Plus, CheckCircle } from "lucide-react"
+import { addBookAction } from "@/app/actions/books"
 
 interface BookSearchResultProps {
   book: Book
@@ -17,16 +18,7 @@ export function BookSearchResult({ book }: BookSearchResultProps) {
   const handleAddBook = async () => {
     setIsAdding(true)
     try {
-      const response = await fetch("/api/books/add", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(book),
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || "Failed to add book")
-      }
+      await addBookAction(book)
 
       setIsAdded(true)
 
@@ -34,7 +26,7 @@ export function BookSearchResult({ book }: BookSearchResultProps) {
         setIsAdded(false)
       }, 3000)
     } catch (error) {
-      alert(error instanceof Error ? error.message : "Failed to add book")
+      alert(error instanceof Error ? error.message : "No se pudo agregar el libro")
     } finally {
       setIsAdding(false)
     }
@@ -63,30 +55,30 @@ export function BookSearchResult({ book }: BookSearchResultProps) {
 
           <div className="space-y-3">
             <div>
-              <p className="text-xs font-semibold text-vintage-red uppercase tracking-wide mb-1">Authors</p>
+              <p className="text-xs font-semibold text-vintage-red uppercase tracking-wide mb-1">Autores</p>
               <p className="text-sm text-foreground font-medium">
-                {book.authors && book.authors.length > 0 ? book.authors.map((a) => a.name).join(", ") : "Unknown"}
+                {book.authors && book.authors.length > 0 ? book.authors.map((a) => a.name).join(", ") : "Desconocido"}
               </p>
             </div>
 
             {book.number_of_pages > 0 && (
               <div>
-                <p className="text-xs font-semibold text-vintage-olive uppercase tracking-wide mb-1">Pages</p>
+                <p className="text-xs font-semibold text-vintage-olive uppercase tracking-wide mb-1">Páginas</p>
                 <p className="text-sm text-foreground font-medium">{book.number_of_pages}</p>
               </div>
             )}
 
             {book.publish_date && (
               <div>
-                <p className="text-xs font-semibold text-vintage-purple uppercase tracking-wide mb-1">Published</p>
+                <p className="text-xs font-semibold text-vintage-purple uppercase tracking-wide mb-1">Publicado</p>
                 <p className="text-sm text-foreground font-medium">{book.publish_date}</p>
               </div>
             )}
 
             {book.publishers && book.publishers.length > 0 && (
               <div>
-                <p className="text-xs font-semibold text-vintage-brown uppercase tracking-wide mb-1">Publisher</p>
-                <p className="text-sm text-foreground font-medium">{book.publishers[0]?.name || "Unknown"}</p>
+                <p className="text-xs font-semibold text-vintage-brown uppercase tracking-wide mb-1">Editorial</p>
+                <p className="text-sm text-foreground font-medium">{book.publishers[0]?.name || "Desconocido"}</p>
               </div>
             )}
           </div>
@@ -101,17 +93,17 @@ export function BookSearchResult({ book }: BookSearchResultProps) {
         {isAdded ? (
           <>
             <CheckCircle className="w-5 h-5 mr-2" />
-            Added to Library!
+            Agregado a la biblioteca
           </>
         ) : isAdding ? (
           <>
             <BookOpen className="w-5 h-5 mr-2 animate-pulse" />
-            Adding to Library...
+            Agregando a la biblioteca...
           </>
         ) : (
           <>
             <Plus className="w-5 h-5 mr-2" />
-            Add to Library
+            Agregar a la biblioteca
           </>
         )}
       </Button>

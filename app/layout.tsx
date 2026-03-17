@@ -5,26 +5,19 @@ import "./globals.css"
 import { AuthProvider } from "@/lib/auth-context"
 
 export const metadata: Metadata = {
-  title: "v0 App",
-  description: "Created with v0",
-  generator: "v0.app",
+  title: "BibLib",
+  description: "BibLib es una aplicación de gestión de biblioteca personal.",
+  generator: "BibLib",
   icons: {
     icon: [
-      {
-        url: "/icon-light-32x32.png",
-        media: "(prefers-color-scheme: light)",
-      },
-      {
-        url: "/icon-dark-32x32.png",
-        media: "(prefers-color-scheme: dark)",
-      },
-      {
-        url: "/icon.svg",
-        type: "image/svg+xml",
-      },
+      { url: "/logo.png", type: "image/png", sizes: "32x32" },
+      { url: "/logo.png", type: "image/png", sizes: "192x192" },
+      { url: "/logo.png", type: "image/png", sizes: "512x512" },
     ],
-    apple: "/apple-icon.png",
+    shortcut: [{ url: "/logo.png", type: "image/png", sizes: "32x32" }],
+    apple: [{ url: "/logo.png", sizes: "180x180", type: "image/png" }],
   },
+  manifest: "/manifest.webmanifest",
 }
 
 export default function RootLayout({
@@ -33,7 +26,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
+    <html lang="es">
       <body className={`font-sans antialiased`}>
         <AuthProvider>{children}</AuthProvider>
         <Analytics />

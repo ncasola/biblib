@@ -38,7 +38,7 @@ export function Header() {
             alt="BibLib Logo"
             width={50}
             height={50}
-            className="transition-transform group-hover:scale-110"
+            className="rounded-full border-2 border-border/60 bg-card transition-transform group-hover:scale-110"
           />
           <span className="text-2xl font-bold heading-vintage">BibLib</span>
         </Link>
@@ -46,16 +46,16 @@ export function Header() {
         {/* Desktop Navigation */}
         <nav className="hidden md:flex gap-8 items-center">
           <Link href="/" className="text-foreground font-semibold hover:text-vintage-red transition-colors">
-            Dashboard
+            Inicio
           </Link>
           <Link href="/books" className="text-foreground font-semibold hover:text-vintage-olive transition-colors">
-            Books
+            Libros
           </Link>
           <Link href="/shelves" className="text-foreground font-semibold hover:text-vintage-purple transition-colors">
-            Shelves
+            Estanterías
           </Link>
           <Link href="/settings" className="text-foreground font-semibold hover:text-vintage-yellow transition-colors">
-            Settings
+            Ajustes
           </Link>
         </nav>
 
@@ -78,30 +78,30 @@ export function Header() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56 bg-card/95 backdrop-blur-xl border-2 border-border">
-                <DropdownMenuLabel className="text-vintage-red">My Account</DropdownMenuLabel>
+                <DropdownMenuLabel className="text-vintage-red">Mi cuenta</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
                   <Link href="/profile" className="cursor-pointer">
                     <User className="mr-2 h-4 w-4" />
-                    <span>Profile</span>
+                    <span>Perfil</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link href="/settings" className="cursor-pointer">
                     <Settings className="mr-2 h-4 w-4" />
-                    <span>Settings</span>
+                    <span>Ajustes</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-red-600">
                   <LogOut className="mr-2 h-4 w-4" />
-                  <span>Sign Out</span>
+                  <span>Cerrar sesión</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
             <Button asChild className="hidden md:flex bg-vintage-red hover:bg-vintage-red/90 text-white rounded-xl">
-              <Link href="/login">Sign In</Link>
+              <Link href="/login">Iniciar sesión</Link>
             </Button>
           )}
 
@@ -120,29 +120,29 @@ export function Header() {
       {mobileMenuOpen && (
         <nav className="md:hidden border-t-2 border-border px-4 py-4 flex flex-col gap-4 bg-card backdrop-blur-md">
           <Link href="/" className="text-foreground hover:text-primary transition-colors">
-            Dashboard
+            Inicio
           </Link>
           <Link href="/books" className="text-foreground hover:text-primary transition-colors">
-            Books
+            Libros
           </Link>
           <Link href="/shelves" className="text-foreground hover:text-primary transition-colors">
-            Shelves
+            Estanterías
           </Link>
           <Link href="/settings" className="text-foreground hover:text-primary transition-colors">
-            Settings
+            Ajustes
           </Link>
           {user ? (
             <>
               <Link href="/profile" className="text-foreground hover:text-primary transition-colors">
-                Profile
+                Perfil
               </Link>
               <button onClick={handleSignOut} className="text-left text-red-600 hover:text-red-700 transition-colors">
-                Sign Out
+                Cerrar sesión
               </button>
             </>
           ) : (
             <Link href="/login" className="text-foreground hover:text-primary transition-colors">
-              Sign In
+              Iniciar sesión
             </Link>
           )}
         </nav>

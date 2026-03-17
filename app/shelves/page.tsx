@@ -5,10 +5,12 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { useState, useEffect } from "react"
-import type { LibraryData, Shelf } from "@/lib/types"
-import { getStoredLibraryData, loadLibraryData, saveLibraryData } from "@/lib/storage"
+import type { LibraryData } from "@/lib/types"
+import { getLibraryDataAction } from "@/app/actions/library"
+import { createShelfAction, deleteShelfAction, renameShelfAction } from "@/app/actions/shelves"
 import { ShelfCard } from "@/components/shelf-card"
 import { Plus } from "lucide-react"
+import { LoadingState } from "@/components/loading-state"
 
 export default function ShelvesPage() {
   const [data, setData] = useState<LibraryData | null>(null)
@@ -16,74 +18,51 @@ export default function ShelvesPage() {
   const [newShelfName, setNewShelfName] = useState("")
   const [isDialogOpen, setIsDialogOpen] = useState(false)
 
+  const refreshData = async () => {
+    const loaded = await getLibraryDataAction()
+    setData(loaded)
+  }
+
   useEffect(() => {
     const initData = async () => {
-      const stored = getStoredLibraryData()
-      if (stored) {
-        setData(stored)
-      } else {
-        const loaded = await loadLibraryData()
+      try {
+        const loaded = await getLibraryDataAction()
         setData(loaded)
+      } catch (error) {
+        console.error("Error loading shelves:", error)
+        setData({ books: [], shelves: [] })
+      } finally {
+        setLoading(false)
       }
-      setLoading(false)
     }
 
-    initData()
+    void initData()
   }, [])
 
-  const handleCreateShelf = () => {
-    if (!data || !newShelfName.trim()) return
-
-    const newShelf: Shelf = {
-      id: `shelf-${Date.now()}`,
-      title: newShelfName,
-      book_count: 0,
-      isDefault: false,
-    }
-
-    const updatedData = {
-      ...data,
-      shelves: [...data.shelves, newShelf],
-    }
-
-    setData(updatedData)
-    saveLibraryData(updatedData)
+  const handleCreateShelf = async () => {
+    if (!newShelfName.trim()) return
+    await createShelfAction(newShelfName)
+    await refreshData()
     setNewShelfName("")
     setIsDialogOpen(false)
   }
 
-  const handleDeleteShelf = (shelfId: string) => {
-    if (!data) return
-
-    const updatedData = {
-      ...data,
-      shelves: data.shelves.filter((s) => s.id !== shelfId),
-      books: data.books.map((b) => (b.shelf_id === shelfId ? { ...b, shelf_id: "shelf-1" } : b)),
-    }
-
-    setData(updatedData)
-    saveLibraryData(updatedData)
+  const handleDeleteShelf = async (shelfId: string) => {
+    await deleteShelfAction(shelfId)
+    await refreshData()
   }
 
-  const handleUpdateShelf = (shelfId: string, newTitle: string) => {
-    if (!data || !newTitle.trim()) return
-
-    const updatedData = {
-      ...data,
-      shelves: data.shelves.map((s) => (s.id === shelfId ? { ...s, title: newTitle } : s)),
-    }
-
-    setData(updatedData)
-    saveLibraryData(updatedData)
+  const handleUpdateShelf = async (shelfId: string, newTitle: string) => {
+    if (!newTitle.trim()) return
+    await renameShelfAction(shelfId, newTitle)
+    await refreshData()
   }
 
   if (loading || !data) {
     return (
       <div className="min-h-screen bg-background">
         <Header />
-        <div className="flex items-center justify-center h-96">
-          <p className="text-foreground-light">Loading...</p>
-        </div>
+        <LoadingState message="Ordenando tus estanterías..." />
       </div>
     )
   }
@@ -95,24 +74,24 @@ export default function ShelvesPage() {
       <main className="max-w-7xl mx-auto px-4 py-12">
         <div className="flex items-center justify-between mb-12">
           <div>
-            <h1 className="text-4xl font-bold heading-vintage mb-2">Your Shelves</h1>
-            <p className="text-muted-foreground text-lg">Organize your books into custom shelves</p>
+            <h1 className="text-4xl font-bold heading-vintage mb-2">Tus estanterías</h1>
+            <p className="text-muted-foreground text-lg">Organiza tus libros en estanterías personalizadas</p>
           </div>
 
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button className="bg-primary text-primary-foreground px-6 py-3 rounded-xl font-semibold hover:scale-105 transition-all shadow-lg shadow-primary/30">
                 <Plus className="w-4 h-4 mr-2" />
-                New Shelf
+                Nueva estantería
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Create New Shelf</DialogTitle>
+                <DialogTitle>Crear nueva estantería</DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
                 <Input
-                  placeholder="Shelf name (e.g., 'Sci-Fi', 'My Favorites')"
+                  placeholder="Nombre de estantería (ej.: 'Ciencia ficción', 'Favoritos')"
                   value={newShelfName}
                   onChange={(e) => setNewShelfName(e.target.value)}
                   onKeyDown={(e) => {
@@ -122,14 +101,14 @@ export default function ShelvesPage() {
                 />
                 <div className="flex gap-2 justify-end">
                   <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                    Cancel
+                    Cancelar
                   </Button>
                   <Button
                     onClick={handleCreateShelf}
                     disabled={!newShelfName.trim()}
                     className="bg-primary text-primary-foreground px-4 py-2 rounded-xl font-semibold hover:scale-105 transition-all shadow-lg shadow-primary/30"
                   >
-                    Create Shelf
+                    Crear estantería
                   </Button>
                 </div>
               </div>
@@ -139,8 +118,8 @@ export default function ShelvesPage() {
 
         {data.shelves.length === 0 ? (
           <div className="rounded-2xl border border-border bg-card backdrop-blur-md p-12 shadow-xl text-center">
-            <p className="text-muted-foreground mb-4">No shelves created yet.</p>
-            <p className="text-sm text-muted-foreground">Create your first shelf to organize your books!</p>
+            <p className="text-muted-foreground mb-4">Aún no has creado estanterías.</p>
+            <p className="text-sm text-muted-foreground">Crea tu primera estantería para organizar tus libros.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

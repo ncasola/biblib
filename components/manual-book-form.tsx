@@ -8,8 +8,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useRouter } from "next/navigation"
-import { getStoredLibraryData, saveLibraryData } from "@/lib/storage"
-import type { Book, ReadingStatus } from "@/lib/types"
+import { addBookAction } from "@/app/actions/books"
+import type { Book } from "@/lib/types"
 
 export function ManualBookForm() {
   const router = useRouter()
@@ -23,7 +23,7 @@ export function ManualBookForm() {
     number_of_pages: "",
     isbn: "",
     coverUrl: "",
-    status: "unread" as ReadingStatus,
+    status: "unread" as Book["status"],
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -31,41 +31,31 @@ export function ManualBookForm() {
     setIsSubmitting(true)
 
     try {
-      // Get current library data
-      const data = getStoredLibraryData()
-      if (!data) {
-        throw new Error("Library data not found")
-      }
-
-      // Create new book
       const newBook: Book = {
-        id: `book-${Date.now()}`,
+        id: crypto.randomUUID(),
+        isbn: formData.isbn.trim() || `manual-${crypto.randomUUID()}`,
         title: formData.title,
         subtitle: formData.subtitle || undefined,
         authors: formData.authors ? formData.authors.split(",").map((name) => ({ name: name.trim() })) : [],
         publishers: formData.publisher ? [{ name: formData.publisher }] : [],
-        publish_date: formData.publish_date || undefined,
-        number_of_pages: formData.number_of_pages ? Number.parseInt(formData.number_of_pages) : undefined,
-        isbn_13: formData.isbn || undefined,
+        publish_date: formData.publish_date || "",
+        number_of_pages: formData.number_of_pages ? Number.parseInt(formData.number_of_pages, 10) : 0,
         cover: {
           small: formData.coverUrl || "/default-book-cover.webp",
           medium: formData.coverUrl || "/default-book-cover.webp",
           large: formData.coverUrl || "/default-book-cover.webp",
         },
         status: formData.status,
-        shelf_id: data.shelves[0]?.id || "default",
-        added_date: new Date().toISOString(),
+        shelf_id: "",
+        shelf_name: "",
       }
 
-      // Add book to library
-      data.books.push(newBook)
-      saveLibraryData(data)
+      await addBookAction(newBook)
 
-      // Redirect to books page
       router.push("/books")
     } catch (error) {
       console.error("Error adding book:", error)
-      alert("Failed to add book. Please try again.")
+      alert("No se pudo agregar el libro. Inténtalo de nuevo.")
     } finally {
       setIsSubmitting(false)
     }
@@ -75,7 +65,7 @@ export function ManualBookForm() {
     <form onSubmit={handleSubmit} className="space-y-6">
       <div>
         <Label htmlFor="title" className="text-foreground font-semibold">
-          Title *
+          Título *
         </Label>
         <Input
           id="title"
@@ -83,26 +73,26 @@ export function ManualBookForm() {
           value={formData.title}
           onChange={(e) => setFormData({ ...formData, title: e.target.value })}
           className="mt-2 bg-surface border-border"
-          placeholder="Enter book title"
+          placeholder="Introduce el título del libro"
         />
       </div>
 
       <div>
         <Label htmlFor="subtitle" className="text-foreground font-semibold">
-          Subtitle
+          Subtítulo
         </Label>
         <Input
           id="subtitle"
           value={formData.subtitle}
           onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
           className="mt-2 bg-surface border-border"
-          placeholder="Enter book subtitle (optional)"
+          placeholder="Introduce el subtítulo (opcional)"
         />
       </div>
 
       <div>
         <Label htmlFor="authors" className="text-foreground font-semibold">
-          Authors *
+          Autores *
         </Label>
         <Input
           id="authors"
@@ -110,34 +100,34 @@ export function ManualBookForm() {
           value={formData.authors}
           onChange={(e) => setFormData({ ...formData, authors: e.target.value })}
           className="mt-2 bg-surface border-border"
-          placeholder="Comma-separated (e.g., J.K. Rowling, George Orwell)"
+          placeholder="Separados por coma (ej.: J.K. Rowling, George Orwell)"
         />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label htmlFor="publisher" className="text-foreground font-semibold">
-            Publisher
+            Editorial
           </Label>
           <Input
             id="publisher"
             value={formData.publisher}
             onChange={(e) => setFormData({ ...formData, publisher: e.target.value })}
             className="mt-2 bg-surface border-border"
-            placeholder="Publisher name"
+            placeholder="Nombre de la editorial"
           />
         </div>
 
         <div>
           <Label htmlFor="publish_date" className="text-foreground font-semibold">
-            Publication Date
+            Fecha de publicación
           </Label>
           <Input
             id="publish_date"
             value={formData.publish_date}
             onChange={(e) => setFormData({ ...formData, publish_date: e.target.value })}
             className="mt-2 bg-surface border-border"
-            placeholder="e.g., 1997"
+            placeholder="ej.: 1997"
           />
         </div>
       </div>
@@ -145,7 +135,7 @@ export function ManualBookForm() {
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label htmlFor="pages" className="text-foreground font-semibold">
-            Number of Pages
+            Número de páginas
           </Label>
           <Input
             id="pages"
@@ -153,7 +143,7 @@ export function ManualBookForm() {
             value={formData.number_of_pages}
             onChange={(e) => setFormData({ ...formData, number_of_pages: e.target.value })}
             className="mt-2 bg-surface border-border"
-            placeholder="e.g., 320"
+            placeholder="ej.: 320"
           />
         </div>
 
@@ -166,14 +156,14 @@ export function ManualBookForm() {
             value={formData.isbn}
             onChange={(e) => setFormData({ ...formData, isbn: e.target.value })}
             className="mt-2 bg-surface border-border"
-            placeholder="e.g., 9780747532699"
+            placeholder="ej.: 9780747532699"
           />
         </div>
       </div>
 
       <div>
         <Label htmlFor="coverUrl" className="text-foreground font-semibold">
-          Cover Image URL
+          URL de la portada
         </Label>
         <Input
           id="coverUrl"
@@ -181,27 +171,27 @@ export function ManualBookForm() {
           value={formData.coverUrl}
           onChange={(e) => setFormData({ ...formData, coverUrl: e.target.value })}
           className="mt-2 bg-surface border-border"
-          placeholder="https://example.com/cover.jpg (optional)"
+          placeholder="https://example.com/portada.jpg (opcional)"
         />
-        <p className="text-xs text-muted-foreground mt-1">Leave empty to use default vintage cover</p>
+        <p className="text-xs text-muted-foreground mt-1">Déjalo vacío para usar la portada vintage por defecto</p>
       </div>
 
       <div>
         <Label htmlFor="status" className="text-foreground font-semibold">
-          Reading Status
+          Estado de lectura
         </Label>
         <Select
           value={formData.status}
-          onValueChange={(value) => setFormData({ ...formData, status: value as ReadingStatus })}
+          onValueChange={(value) => setFormData({ ...formData, status: value as Book["status"] })}
         >
           <SelectTrigger className="mt-2 bg-surface border-border">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="unread">Unread</SelectItem>
-            <SelectItem value="reading">Reading</SelectItem>
-            <SelectItem value="read">Read</SelectItem>
-            <SelectItem value="to-read">To Read</SelectItem>
+            <SelectItem value="unread">Sin empezar</SelectItem>
+            <SelectItem value="reading">Leyendo</SelectItem>
+            <SelectItem value="read">Leído</SelectItem>
+            <SelectItem value="to-read">Por leer</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -211,7 +201,7 @@ export function ManualBookForm() {
         disabled={isSubmitting}
         className="w-full bg-primary text-primary-foreground px-6 py-3 rounded-xl font-semibold hover:scale-105 transition-all shadow-lg shadow-primary/30"
       >
-        {isSubmitting ? "Adding Book..." : "Add Book to Library"}
+        {isSubmitting ? "Agregando libro..." : "Agregar libro a la biblioteca"}
       </Button>
     </form>
   )

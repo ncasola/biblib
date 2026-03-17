@@ -37,7 +37,7 @@ export default function ProfilePage() {
       <div className="min-h-screen bg-background">
         <Header />
         <main className="max-w-7xl mx-auto px-4 py-12">
-          <p className="text-center">Please sign in to view your profile.</p>
+          <p className="text-center">Inicia sesión para ver tu perfil.</p>
         </main>
       </div>
     )
@@ -47,7 +47,7 @@ export default function ProfilePage() {
     <div className="min-h-screen bg-background">
       <Header />
       <main className="max-w-4xl mx-auto px-4 py-8">
-        <h1 className="text-4xl font-bold heading-vintage mb-8 text-vintage-red">My Profile</h1>
+        <h1 className="text-4xl font-bold heading-vintage mb-8 text-vintage-red">Mi perfil</h1>
 
         <div className="grid gap-8 md:grid-cols-[300px_1fr]">
           <Card className="p-6 bg-card/80 backdrop-blur-xl border-2 border-border/50 rounded-2xl h-fit">
@@ -72,11 +72,11 @@ export default function ProfilePage() {
           </Card>
 
           <Card className="p-8 bg-card/80 backdrop-blur-xl border-2 border-border/50 rounded-2xl">
-            <h2 className="text-2xl font-bold heading-vintage mb-6">Account Information</h2>
+            <h2 className="text-2xl font-bold heading-vintage mb-6">Información de la cuenta</h2>
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="name">Name</Label>
+                <Label htmlFor="name">Nombre</Label>
                 <Input
                   id="name"
                   type="text"
@@ -87,7 +87,7 @@ export default function ProfilePage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">Correo</Label>
                 <Input
                   id="email"
                   type="email"
@@ -98,7 +98,7 @@ export default function ProfilePage() {
               </div>
 
               <div className="pt-4">
-                {success && <p className="text-green-600 text-sm mb-4">Profile updated successfully!</p>}
+                {success && <p className="text-green-600 text-sm mb-4">Perfil actualizado correctamente.</p>}
                 <Button
                   type="submit"
                   disabled={loading}
@@ -107,10 +107,10 @@ export default function ProfilePage() {
                   {loading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Saving...
+                      Guardando...
                     </>
                   ) : (
-                    "Save Changes"
+                    "Guardar cambios"
                   )}
                 </Button>
               </div>

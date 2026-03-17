@@ -3,34 +3,29 @@
 import type React from "react"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import Image from "next/image"
 import { useAuth } from "@/lib/auth-context"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Card } from "@/components/ui/card"
-import { Loader2 } from "lucide-react"
+import { Loader2, Chrome } from "lucide-react"
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
+  const searchParams = useSearchParams()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
-  const { signIn } = useAuth()
-  const router = useRouter()
+  const { signInWithGoogle } = useAuth()
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleGoogleLogin = async () => {
     setLoading(true)
     setError("")
 
     try {
-      await signIn(email, password)
-      router.push("/")
+      const redirectPath = searchParams.get("redirect") ?? undefined
+      await signInWithGoogle(redirectPath)
     } catch {
-      setError("Invalid email or password")
+      setError("No se pudo iniciar sesión con Google")
     } finally {
       setLoading(false)
     }
@@ -40,66 +35,45 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-vintage-yellow/10 via-background to-vintage-purple/10">
       <Card className="w-full max-w-md p-8 bg-card/80 backdrop-blur-xl border-2 border-border/50 shadow-2xl rounded-2xl">
         <div className="flex flex-col items-center mb-8">
-          <Image src="/logo.png" alt="BibLib Logo" width={80} height={80} className="mb-4" />
-          <h1 className="text-3xl font-bold heading-vintage text-center">Welcome Back</h1>
-          <p className="text-muted-foreground text-center mt-2">Sign in to your BibLib account</p>
+          <Image
+            src="/logo.png"
+            alt="BibLib Logo"
+            width={80}
+            height={80}
+            className="mb-4 rounded-full border-2 border-border/60 bg-card/90 p-1"
+          />
+          <h1 className="text-3xl font-bold heading-vintage text-center">Bienvenido a BibLib</h1>
+          <p className="text-muted-foreground text-center mt-2">Inicia sesión con tu cuenta de Google</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="rounded-xl border-2"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <div className="flex justify-between items-center">
-              <Label htmlFor="password">Password</Label>
-              <Link href="/forgot-password" className="text-sm text-vintage-red hover:underline">
-                Forgot password?
-              </Link>
-            </div>
-            <Input
-              id="password"
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="rounded-xl border-2"
-            />
-          </div>
-
+        <div className="space-y-6">
           {error && <p className="text-red-600 text-sm">{error}</p>}
 
           <Button
-            type="submit"
+            type="button"
+            onClick={handleGoogleLogin}
             disabled={loading}
-            className="w-full bg-vintage-red hover:bg-vintage-red/90 text-white rounded-xl py-6 text-lg font-semibold"
+            className="w-full bg-vintage-red hover:bg-vintage-red/90 text-white rounded-xl py-6 text-lg font-semibold flex items-center justify-center"
           >
             {loading ? (
               <>
                 <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                Signing in...
+                Redirigiendo...
               </>
             ) : (
-              "Sign In"
+              <>
+                <Chrome className="mr-2 h-5 w-5" />
+                Continuar con Google
+              </>
             )}
           </Button>
-        </form>
+        </div>
 
         <div className="mt-6 text-center">
           <p className="text-muted-foreground">
-            Don&apos;t have an account?{" "}
-            <Link href="/signup" className="text-vintage-olive font-semibold hover:underline">
-              Sign up
+            El acceso se gestiona con Google OAuth.{" "}
+            <Link href="/" className="text-vintage-olive font-semibold hover:underline">
+              Volver al inicio
             </Link>
           </p>
         </div>

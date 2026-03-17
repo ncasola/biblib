@@ -28,7 +28,7 @@ export function ShelfCard({ shelf, bookCount, onUpdate, onDelete, isDefault }: S
   return (
     <div className="rounded-2xl border border-border bg-card backdrop-blur-md p-6 shadow-xl flex flex-col gap-4 relative hover:shadow-2xl transition-shadow">
       {isDefault && (
-        <div className="absolute top-3 right-3 bg-primary text-white text-xs px-2 py-1 rounded">Default</div>
+        <div className="absolute top-3 right-3 bg-primary text-white text-xs px-2 py-1 rounded">Predeterminada</div>
       )}
 
       <div className="flex items-start justify-between gap-4 pr-12">
@@ -37,7 +37,7 @@ export function ShelfCard({ shelf, bookCount, onUpdate, onDelete, isDefault }: S
           <div className="flex items-center gap-2 text-muted-foreground text-sm">
             <BookOpen className="w-4 h-4" />
             <span>
-              {bookCount} book{bookCount !== 1 ? "s" : ""}
+              {bookCount} libro{bookCount !== 1 ? "s" : ""}
             </span>
           </div>
         </div>
@@ -50,12 +50,12 @@ export function ShelfCard({ shelf, bookCount, onUpdate, onDelete, isDefault }: S
           <DialogTrigger asChild>
             <Button variant="outline" size="sm" className="flex-1 border-border bg-transparent">
               <Edit2 className="w-4 h-4 mr-2" />
-              Rename
+              Renombrar
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Rename Shelf</DialogTitle>
+              <DialogTitle>Renombrar estantería</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <Input
@@ -68,14 +68,14 @@ export function ShelfCard({ shelf, bookCount, onUpdate, onDelete, isDefault }: S
               />
               <div className="flex gap-2 justify-end">
                 <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-                  Cancel
+                  Cancelar
                 </Button>
                 <Button
                   onClick={handleUpdate}
                   disabled={!editedName.trim() || editedName === shelf.title}
                   className="bg-primary text-primary-foreground px-4 py-2 rounded-xl font-semibold hover:scale-105 transition-all shadow-lg shadow-primary/30"
                 >
-                  Save
+                  Guardar
                 </Button>
               </div>
             </div>
@@ -88,13 +88,13 @@ export function ShelfCard({ shelf, bookCount, onUpdate, onDelete, isDefault }: S
             size="sm"
             className="flex-1 border-destructive text-destructive hover:bg-destructive/10 bg-transparent"
             onClick={() => {
-              if (window.confirm(`Delete shelf "${shelf.title}"? Books will be moved to default shelf.`)) {
+              if (window.confirm(`¿Eliminar la estantería "${shelf.title}"? Los libros se moverán a la predeterminada.`)) {
                 onDelete(shelf.id)
               }
             }}
           >
             <Trash2 className="w-4 h-4 mr-2" />
-            Delete
+            Eliminar
           </Button>
         )}
       </div>

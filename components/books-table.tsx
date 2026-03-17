@@ -30,7 +30,7 @@ interface BooksTableProps {
 const columns: ColumnDef<Book>[] = [
   {
     accessorKey: "cover",
-    header: "Cover",
+    header: "Portada",
     cell: ({ row }) => (
       <div className="relative w-10 h-16">
         <Image
@@ -49,7 +49,7 @@ const columns: ColumnDef<Book>[] = [
   },
   {
     accessorKey: "title",
-    header: "Title",
+    header: "Título",
     cell: ({ row }) => (
       <div>
         <p className="font-medium text-foreground">{row.original.title}</p>
@@ -59,36 +59,36 @@ const columns: ColumnDef<Book>[] = [
   },
   {
     accessorKey: "authors",
-    header: "Author(s)",
+    header: "Autor(es)",
     cell: ({ row }) =>
       row.original.authors && row.original.authors.length > 0
         ? row.original.authors
             .map((a) => a.name)
             .join(", ")
             .substring(0, 50) + (row.original.authors.map((a) => a.name).join(", ").length > 50 ? "..." : "")
-        : "Unknown",
+        : "Desconocido",
   },
   {
     accessorKey: "number_of_pages",
-    header: "Pages",
+    header: "Páginas",
     cell: ({ row }) => row.original.number_of_pages || "-",
   },
   {
     accessorKey: "publish_date",
-    header: "Published",
+    header: "Publicado",
     cell: ({ row }) => row.original.publish_date || "-",
   },
   {
     accessorKey: "status",
-    header: "Status",
+    header: "Estado",
     cell: ({ row }) => <BookStatusBadge status={row.original.status} />,
   },
   {
     id: "actions",
-    header: "Actions",
+    header: "Acciones",
     cell: ({ row }) => (
       <Link href={`/book/${row.original.id}`}>
-        <button className="text-primary hover:text-primary-dark text-sm font-medium">View</button>
+        <button className="text-primary hover:text-primary-dark text-sm font-medium">Ver</button>
       </Link>
     ),
   },
@@ -135,8 +135,8 @@ export function BooksTable({ books, shelves }: BooksTableProps) {
   if (books.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-foreground-light mb-4">No books in your library yet.</p>
-        <p className="text-sm text-foreground-light">Add your first book to get started!</p>
+        <p className="text-foreground-light mb-4">Aún no tienes libros en tu biblioteca.</p>
+        <p className="text-sm text-foreground-light">Agrega tu primer libro para empezar.</p>
       </div>
     )
   }
@@ -148,7 +148,7 @@ export function BooksTable({ books, shelves }: BooksTableProps) {
         <div className="flex items-center gap-2 flex-1">
           <Search className="w-4 h-4 text-foreground-light flex-shrink-0" />
           <Input
-            placeholder="Search by title or author..."
+            placeholder="Buscar por título o autor..."
             value={globalFilter}
             onChange={(e) => setGlobalFilter(e.target.value)}
             className="bg-surface border-border"
@@ -159,10 +159,10 @@ export function BooksTable({ books, shelves }: BooksTableProps) {
           <Filter className="w-4 h-4 text-foreground-light flex-shrink-0" />
           <Select value={selectedShelf} onValueChange={setSelectedShelf}>
             <SelectTrigger className="bg-surface border-border">
-              <SelectValue placeholder="All Shelves" />
+              <SelectValue placeholder="Todas las estanterías" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Shelves</SelectItem>
+              <SelectItem value="all">Todas las estanterías</SelectItem>
               {shelves.map((shelf) => (
                 <SelectItem key={shelf.id} value={shelf.id}>
                   {shelf.title}
@@ -213,12 +213,12 @@ export function BooksTable({ books, shelves }: BooksTableProps) {
       {/* Pagination */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4">
         <div className="text-sm text-foreground-light text-center sm:text-left">
-          Showing {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1} to{" "}
+          Mostrando {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1} a{" "}
           {Math.min(
             (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
             filteredBooks.length,
           )}{" "}
-          of {table.getFilteredRowModel().rows.length} books
+          de {table.getFilteredRowModel().rows.length} libros
         </div>
 
         <div className="flex items-center gap-2">
@@ -233,7 +233,7 @@ export function BooksTable({ books, shelves }: BooksTableProps) {
           </Button>
 
           <div className="text-sm text-foreground-light">
-            Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
+            Página {table.getState().pagination.pageIndex + 1} de {table.getPageCount()}
           </div>
 
           <Button

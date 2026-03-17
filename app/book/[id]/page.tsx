@@ -4,11 +4,13 @@ import { Header } from "@/components/header"
 import { Button } from "@/components/ui/button"
 import { useState, useEffect } from "react"
 import type { Book, LibraryData } from "@/lib/types"
-import { getStoredLibraryData, loadLibraryData, saveLibraryData } from "@/lib/storage"
+import { getLibraryDataAction } from "@/app/actions/library"
+import { deleteBookAction, updateBookStatusAction } from "@/app/actions/books"
 import { useParams, useRouter } from "next/navigation"
 import Image from "next/image"
 import { ArrowLeft, Edit2, Trash2 } from "lucide-react"
 import { BookStatusForm } from "@/components/book-status-form"
+import { LoadingState } from "@/components/loading-state"
 
 export default function BookDetailsPage() {
   const params = useParams()
@@ -22,42 +24,39 @@ export default function BookDetailsPage() {
 
   useEffect(() => {
     const initData = async () => {
-      const stored = getStoredLibraryData()
-      const libraryData = stored || (await loadLibraryData())
-      setData(libraryData)
+      try {
+        const libraryData = await getLibraryDataAction()
+        setData(libraryData)
 
-      const foundBook = libraryData.books.find((b) => b.id === bookId)
-      setBook(foundBook || null)
-      setLoading(false)
+        const foundBook = libraryData.books.find((b) => b.id === bookId)
+        setBook(foundBook || null)
+      } catch (error) {
+        console.error("Error loading book details:", error)
+      } finally {
+        setLoading(false)
+      }
     }
 
-    initData()
+    void initData()
   }, [bookId])
 
-  const handleStatusChange = (newStatus: Book["status"]) => {
+  const handleStatusChange = async (newStatus: Book["status"]) => {
     if (!book || !data) return
 
-    const updatedBook = { ...book, status: newStatus }
-    const updatedData = {
-      ...data,
-      books: data.books.map((b) => (b.id === book.id ? updatedBook : b)),
-    }
+    await updateBookStatusAction(book.id, newStatus)
+    const updatedData = await getLibraryDataAction()
+    const updatedBook = updatedData.books.find((b) => b.id === book.id) ?? null
 
     setBook(updatedBook)
     setData(updatedData)
-    saveLibraryData(updatedData)
     setIsEditing(false)
   }
 
-  const handleDeleteBook = () => {
+  const handleDeleteBook = async () => {
     if (!book || !data) return
 
-    if (window.confirm(`Delete "${book.title}"?`)) {
-      const updatedData = {
-        ...data,
-        books: data.books.filter((b) => b.id !== book.id),
-      }
-      saveLibraryData(updatedData)
+    if (window.confirm(`¿Eliminar "${book.title}"?`)) {
+      await deleteBookAction(book.id)
       router.push("/books")
     }
   }
@@ -66,9 +65,7 @@ export default function BookDetailsPage() {
     return (
       <div className="min-h-screen bg-background">
         <Header />
-        <div className="flex items-center justify-center h-96">
-          <p className="text-foreground-light">Loading...</p>
-        </div>
+        <LoadingState message="Cargando detalles del libro..." />
       </div>
     )
   }
@@ -78,12 +75,12 @@ export default function BookDetailsPage() {
       <div className="min-h-screen bg-background">
         <Header />
         <main className="max-w-4xl mx-auto px-4 py-12">
-          <p className="text-foreground-light">Book not found</p>
+          <p className="text-foreground-light">Libro no encontrado</p>
           <Button
             onClick={() => router.push("/books")}
             className="mt-4 bg-primary text-primary-foreground px-6 py-3 rounded-xl font-semibold hover:scale-105 transition-all shadow-lg shadow-primary/30"
           >
-            Back to Books
+            Volver a libros
           </Button>
         </main>
       </div>
@@ -101,7 +98,7 @@ export default function BookDetailsPage() {
           className="mb-6 bg-transparent border-2 border-border text-foreground px-6 py-3 rounded-xl font-semibold hover:bg-muted transition-all"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Books
+          Volver a libros
         </Button>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -129,29 +126,29 @@ export default function BookDetailsPage() {
 
             <div className="rounded-2xl border border-border bg-card backdrop-blur-md p-6 shadow-xl space-y-4">
               <div>
-                <p className="text-sm font-semibold text-vintage-red uppercase tracking-wide mb-1">Authors</p>
+              <p className="text-sm font-semibold text-vintage-red uppercase tracking-wide mb-1">Autores</p>
                 <p className="text-foreground font-medium">
-                  {book.authors && book.authors.length > 0 ? book.authors.map((a) => a.name).join(", ") : "Unknown"}
+                  {book.authors && book.authors.length > 0 ? book.authors.map((a) => a.name).join(", ") : "Desconocido"}
                 </p>
               </div>
 
               {book.publishers && book.publishers.length > 0 && (
                 <div>
-                  <p className="text-sm font-semibold text-vintage-olive uppercase tracking-wide mb-1">Publisher</p>
+                  <p className="text-sm font-semibold text-vintage-olive uppercase tracking-wide mb-1">Editorial</p>
                   <p className="text-foreground font-medium">{book.publishers.map((p) => p.name).join(", ")}</p>
                 </div>
               )}
 
               {book.publish_date && (
                 <div>
-                  <p className="text-sm font-semibold text-vintage-purple uppercase tracking-wide mb-1">Published</p>
+                  <p className="text-sm font-semibold text-vintage-purple uppercase tracking-wide mb-1">Publicado</p>
                   <p className="text-foreground font-medium">{book.publish_date}</p>
                 </div>
               )}
 
               {book.number_of_pages > 0 && (
                 <div>
-                  <p className="text-sm font-semibold text-vintage-brown uppercase tracking-wide mb-1">Pages</p>
+                  <p className="text-sm font-semibold text-vintage-brown uppercase tracking-wide mb-1">Páginas</p>
                   <p className="text-foreground font-medium">{book.number_of_pages}</p>
                 </div>
               )}
@@ -168,21 +165,21 @@ export default function BookDetailsPage() {
             <div className="rounded-2xl border border-border bg-card backdrop-blur-md p-6 shadow-xl space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground mb-2">Reading Status</p>
+                  <p className="text-sm font-medium text-muted-foreground mb-2">Estado de lectura</p>
                   <p className="text-lg font-semibold text-primary">
                     {book.status === "read"
-                      ? "Read"
+                      ? "Leído"
                       : book.status === "reading"
-                        ? "Currently Reading"
+                        ? "Leyendo"
                         : book.status === "to-read"
-                          ? "Want to Read"
-                          : "Unread"}
+                          ? "Por leer"
+                          : "Sin empezar"}
                   </p>
                 </div>
 
                 <Button variant="outline" onClick={() => setIsEditing(!isEditing)} className="border-border">
                   <Edit2 className="w-4 h-4 mr-2" />
-                  Change
+                  Cambiar
                 </Button>
               </div>
 
@@ -191,7 +188,7 @@ export default function BookDetailsPage() {
 
             {/* Shelf Info */}
             <div className="rounded-2xl border border-border bg-card backdrop-blur-md p-6 shadow-xl">
-              <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-1">Shelf</p>
+              <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-1">Estantería</p>
               <p className="text-foreground font-medium">{book.shelf_name}</p>
             </div>
 
@@ -203,7 +200,7 @@ export default function BookDetailsPage() {
                 onClick={handleDeleteBook}
               >
                 <Trash2 className="w-4 h-4 mr-2" />
-                Delete Book
+                Eliminar libro
               </Button>
             </div>
           </div>

@@ -10,15 +10,15 @@ interface BookStatusFormProps {
 
 export function BookStatusForm({ currentStatus, onStatusChange }: BookStatusFormProps) {
   const statuses: Array<{ value: Book["status"]; label: string; color: string }> = [
-    { value: "to-read", label: "Want to Read", color: "bg-purple-100 text-purple-800" },
-    { value: "reading", label: "Currently Reading", color: "bg-blue-100 text-blue-800" },
-    { value: "read", label: "Read", color: "bg-green-100 text-green-800" },
-    { value: "unread", label: "Unread", color: "bg-gray-100 text-gray-800" },
+    { value: "to-read", label: "Por leer", color: "bg-purple-100 text-purple-800" },
+    { value: "reading", label: "Leyendo", color: "bg-blue-100 text-blue-800" },
+    { value: "read", label: "Leído", color: "bg-green-100 text-green-800" },
+    { value: "unread", label: "Sin empezar", color: "bg-gray-100 text-gray-800" },
   ]
 
   return (
     <div className="space-y-2">
-      <p className="text-sm text-foreground-light mb-3">Select new status:</p>
+      <p className="text-sm text-foreground-light mb-3">Selecciona el nuevo estado:</p>
       <div className="grid grid-cols-2 gap-2">
         {statuses.map((status) => (
           <Button

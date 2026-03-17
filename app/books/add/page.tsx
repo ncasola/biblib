@@ -26,13 +26,13 @@ export default function AddBookPage() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.error || "Book not found")
+        throw new Error(errorData.error || "Libro no encontrado")
       }
 
       const book = await response.json()
       setSearchResult(book)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to search book")
+      setError(err instanceof Error ? err.message : "No se pudo buscar el libro")
     } finally {
       setIsSearching(false)
     }
@@ -50,50 +50,50 @@ export default function AddBookPage() {
               className="mb-4 bg-transparent border-2 border-border text-foreground px-6 py-3 rounded-xl font-semibold hover:bg-muted transition-all"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Books
+              Volver a libros
             </Button>
           </Link>
-          <h1 className="text-4xl md:text-5xl font-bold heading-vintage mb-2">Add New Book</h1>
-          <p className="text-lg text-muted-foreground">Search by ISBN or add manually</p>
+          <h1 className="text-4xl md:text-5xl font-bold heading-vintage mb-2">Agregar nuevo libro</h1>
+          <p className="text-lg text-muted-foreground">Busca por ISBN o agrega manualmente</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <div>
             <Tabs defaultValue="isbn" className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-6">
-                <TabsTrigger value="isbn">Search by ISBN</TabsTrigger>
-                <TabsTrigger value="manual">Add Manually</TabsTrigger>
+                <TabsTrigger value="isbn">Buscar por ISBN</TabsTrigger>
+                <TabsTrigger value="manual">Agregar manualmente</TabsTrigger>
               </TabsList>
 
               <TabsContent value="isbn">
                 <div className="rounded-2xl border border-border bg-card backdrop-blur-md p-8 shadow-xl">
-                  <h2 className="text-2xl font-bold text-foreground mb-6">Search Book</h2>
+                  <h2 className="text-2xl font-bold text-foreground mb-6">Buscar libro</h2>
                   <SearchBookForm onSearch={handleSearch} isLoading={isSearching} />
 
                   {error && (
                     <div className="mt-6 p-4 rounded-xl bg-vintage-red/10 border-2 border-vintage-red/30">
                       <p className="text-vintage-red font-medium">{error}</p>
                       <p className="text-sm text-muted-foreground mt-1">
-                        Try another ISBN or check if the format is correct
+                        Prueba otro ISBN o revisa si el formato es correcto
                       </p>
                     </div>
                   )}
                 </div>
 
                 <div className="rounded-2xl border border-border/50 bg-card/80 backdrop-blur-xl p-6 shadow-lg mt-6">
-                  <h3 className="font-bold text-foreground mb-3">Tips:</h3>
+                  <h3 className="font-bold text-foreground mb-3">Consejos:</h3>
                   <ul className="text-sm text-muted-foreground space-y-2">
-                    <li>• Use 10 or 13 digit ISBN numbers</li>
+                    <li>• Usa ISBN de 10 o 13 dígitos</li>
                     <li>• Try: 9780747532699 (Harry Potter)</li>
                     <li>• Try: 9780451524935 (1984)</li>
-                    <li>• Remove dashes and spaces from ISBN</li>
+                    <li>• Quita guiones y espacios del ISBN</li>
                   </ul>
                 </div>
               </TabsContent>
 
               <TabsContent value="manual">
                 <div className="rounded-2xl border border-border bg-card backdrop-blur-md p-8 shadow-xl">
-                  <h2 className="text-2xl font-bold text-foreground mb-6">Manual Entry</h2>
+                  <h2 className="text-2xl font-bold text-foreground mb-6">Entrada manual</h2>
                   <ManualBookForm />
                 </div>
               </TabsContent>
@@ -103,7 +103,7 @@ export default function AddBookPage() {
           <div>
             {searchResult ? (
               <div>
-                <h2 className="text-2xl font-bold text-foreground mb-6">Book Details</h2>
+                <h2 className="text-2xl font-bold text-foreground mb-6">Detalles del libro</h2>
                 <BookSearchResult book={searchResult} />
               </div>
             ) : (
@@ -112,8 +112,8 @@ export default function AddBookPage() {
                   <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-vintage-yellow/20 flex items-center justify-center">
                     <span className="text-4xl">📚</span>
                   </div>
-                  <h3 className="text-xl font-bold text-foreground mb-2">Ready to Add</h3>
-                  <p className="text-muted-foreground">Search by ISBN or enter book details manually</p>
+                  <h3 className="text-xl font-bold text-foreground mb-2">Listo para agregar</h3>
+                  <p className="text-muted-foreground">Busca por ISBN o completa los datos manualmente</p>
                 </div>
               </div>
             )}

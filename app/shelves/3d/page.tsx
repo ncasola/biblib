@@ -3,8 +3,9 @@
 import { Header } from "@/components/header"
 import { Suspense, useState, useEffect } from "react"
 import type { LibraryData } from "@/lib/types"
-import { getStoredLibraryData, loadLibraryData } from "@/lib/storage"
+import { getLibraryDataAction } from "@/app/actions/library"
 import { ShelfViewer3D } from "@/components/shelf-viewer-3d"
+import { LoadingState } from "@/components/loading-state"
 
 export default function Shelf3DPage() {
   const [data, setData] = useState<LibraryData | null>(null)
@@ -13,32 +14,28 @@ export default function Shelf3DPage() {
 
   useEffect(() => {
     const initData = async () => {
-      const stored = getStoredLibraryData()
-      if (stored) {
-        setData(stored)
-        if (stored.shelves.length > 0) {
-          setSelectedShelfId(stored.shelves[0].id)
-        }
-      } else {
-        const loaded = await loadLibraryData()
+      try {
+        const loaded = await getLibraryDataAction()
         setData(loaded)
         if (loaded.shelves.length > 0) {
           setSelectedShelfId(loaded.shelves[0].id)
         }
+      } catch (error) {
+        console.error("Error loading 3D shelf data:", error)
+        setData({ books: [], shelves: [] })
+      } finally {
+        setLoading(false)
       }
-      setLoading(false)
     }
 
-    initData()
+    void initData()
   }, [])
 
   if (loading || !data) {
     return (
       <div className="min-h-screen bg-background">
         <Header />
-        <div className="flex items-center justify-center h-96">
-          <p className="text-foreground-light">Loading...</p>
-        </div>
+        <LoadingState message="Renderizando vista 3D..." />
       </div>
     )
   }
@@ -52,18 +49,18 @@ export default function Shelf3DPage() {
 
       <main className="max-w-7xl mx-auto px-4 py-12">
         <div className="mb-12">
-          <h1 className="text-4xl font-bold heading-vintage mb-2">Bookshelf View</h1>
-          <p className="text-muted-foreground text-lg">Browse your books displayed on beautiful 3D shelves</p>
+          <h1 className="text-4xl font-bold heading-vintage mb-2">Vista de estantería</h1>
+          <p className="text-muted-foreground text-lg">Explora tus libros en una estantería 3D</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Sidebar */}
           <div className="space-y-4">
             <div className="rounded-2xl border border-border bg-card backdrop-blur-md p-6 shadow-xl">
-              <h3 className="text-lg font-bold text-foreground mb-4">Shelves</h3>
+              <h3 className="text-lg font-bold text-foreground mb-4">Estanterías</h3>
               <div className="space-y-2">
                 {data.shelves.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No shelves yet</p>
+                  <p className="text-sm text-muted-foreground">Aún no hay estanterías</p>
                 ) : (
                   data.shelves.map((shelf) => (
                     <button
@@ -77,7 +74,7 @@ export default function Shelf3DPage() {
                     >
                       <p className="font-medium text-sm">{shelf.title}</p>
                       <p className="text-xs opacity-75">
-                        {data.books.filter((b) => b.shelf_id === shelf.id).length} books
+                        {data.books.filter((b) => b.shelf_id === shelf.id).length} libros
                       </p>
                     </button>
                   ))
@@ -86,11 +83,11 @@ export default function Shelf3DPage() {
             </div>
 
             <div className="rounded-2xl border border-border bg-card backdrop-blur-md p-6 shadow-xl">
-              <h3 className="text-lg font-bold text-foreground mb-4">Controls</h3>
+              <h3 className="text-lg font-bold text-foreground mb-4">Controles</h3>
               <div className="space-y-2 text-sm text-muted-foreground">
-                <p>• Drag to rotate</p>
-                <p>• Scroll to zoom</p>
-                <p>• Right-click to pan</p>
+                <p>• Arrastra para rotar</p>
+                <p>• Rueda para hacer zoom</p>
+                <p>• Clic derecho para desplazar</p>
               </div>
             </div>
           </div>
@@ -100,14 +97,14 @@ export default function Shelf3DPage() {
             <div className="rounded-2xl border border-border bg-card backdrop-blur-md shadow-xl overflow-hidden">
               {shelfBooks.length === 0 ? (
                 <div className="w-full h-full flex flex-col items-center justify-center text-center p-6">
-                  <p className="text-muted-foreground mb-2">No books on this shelf</p>
-                  <p className="text-sm text-muted-foreground">Add books to see them in 3D view</p>
+                  <p className="text-muted-foreground mb-2">No hay libros en esta estantería</p>
+                  <p className="text-sm text-muted-foreground">Agrega libros para verlos en 3D</p>
                 </div>
               ) : (
                 <Suspense
                   fallback={
                     <div className="w-full h-full flex items-center justify-center">
-                      <p className="text-muted-foreground">Loading shelf view...</p>
+                      <p className="text-muted-foreground">Cargando vista de estantería...</p>
                     </div>
                   }
                 >
