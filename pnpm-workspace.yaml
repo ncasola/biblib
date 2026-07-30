@@ -1,0 +1,9 @@
+# Migrado desde el campo `pnpm` de package.json, que pnpm 11 ya no lee.
+# Se autoriza exactamente lo que estaba autorizado antes: ni un paquete más.
+allowBuilds:
+  unrs-resolver: true
+  # No estaban en la config previa, así que se deniegan. Ojo: sin compilar,
+  # sharp deja de optimizar imágenes en next/image. Si eso importa aquí, la
+  # decisión de autorizarlo es de una persona, no de este playbook.
+  esbuild: false
+  sharp: false
