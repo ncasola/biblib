@@ -7,3 +7,10 @@ allowBuilds:
   # decisión de autorizarlo es de una persona, no de este playbook.
   esbuild: false
   sharp: false
+
+# Overrides de dependencias transitivas con avisos de seguridad. Todos son
+# saltos dentro del mismo major: sólo suben el paquete vulnerable, sin
+# arrastrar la cadena. Se revisan cuando el padre los suba por su cuenta.
+overrides:
+  postcss: '>=8.5.25'
+  sharp: '>=0.35.3'
