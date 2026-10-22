@@ -1,0 +1,1014 @@
+{
+  "specVersion": "1.0",
+  "date": "2026-10-22",
+  "status": "proposed",
+  "note": "Especificación pendiente; no acredita implementación ni despliegue. Dependencias obligatorias de entrega, no referencias a integraciones futuras.",
+  "phases": [
+    "F0",
+    "F1",
+    "F2",
+    "F3",
+    "F4"
+  ],
+  "waves": [
+    "O00",
+    "O01",
+    "O02",
+    "O03",
+    "O04",
+    "O05",
+    "O06",
+    "O07",
+    "O08",
+    "O09",
+    "O10",
+    "O11",
+    "O12",
+    "O13",
+    "O14",
+    "O15",
+    "O16"
+  ],
+  "units": [
+    {
+      "id": "U-INF-01",
+      "title": "Stack Supabase local propio",
+      "phase": "F0",
+      "wave": "O01",
+      "dependsOn": [],
+      "size": "M",
+      "priority": "P1",
+      "document": "01-entorno-y-migraciones.md",
+      "auditRefs": [
+        "SEC-01",
+        "SEC-04",
+        "SEC-05",
+        "QA-01",
+        "QA-02",
+        "OPS-02"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "U-INF-02",
+      "title": "Objetivos explícitos y builds aislados",
+      "phase": "F0",
+      "wave": "O02",
+      "dependsOn": [
+        "U-INF-01"
+      ],
+      "size": "M",
+      "priority": "P1",
+      "document": "01-entorno-y-migraciones.md",
+      "auditRefs": [
+        "SEC-01",
+        "SEC-05",
+        "QA-01",
+        "OPS-02"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "U-INF-03",
+      "title": "CLI de ciclo de vida, estado y diagnóstico",
+      "phase": "F0",
+      "wave": "O03",
+      "dependsOn": [
+        "U-INF-01",
+        "U-INF-02"
+      ],
+      "size": "M",
+      "priority": "P1",
+      "document": "01-entorno-y-migraciones.md",
+      "auditRefs": [
+        "QA-01",
+        "QA-02",
+        "OPS-01",
+        "OPS-02"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "U-INF-04",
+      "title": "Runner Drizzle único, planes e integridad",
+      "phase": "F0",
+      "wave": "O04",
+      "dependsOn": [
+        "U-INF-02",
+        "U-INF-03"
+      ],
+      "size": "M",
+      "priority": "P1",
+      "document": "01-entorno-y-migraciones.md",
+      "auditRefs": [
+        "SEC-04",
+        "QA-02",
+        "BE-02"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "U-INF-05",
+      "title": "Fixtures GoTrue, Storage y correo reales",
+      "phase": "F0",
+      "wave": "O05",
+      "dependsOn": [
+        "U-INF-03",
+        "U-INF-04"
+      ],
+      "size": "M",
+      "priority": "P1",
+      "document": "01-entorno-y-migraciones.md",
+      "auditRefs": [
+        "SEC-05",
+        "QA-01",
+        "QA-02"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "U-INF-06",
+      "title": "Reset y bootstrap locales verificables",
+      "phase": "F0",
+      "wave": "O06",
+      "dependsOn": [
+        "U-INF-03",
+        "U-INF-04",
+        "U-INF-05"
+      ],
+      "size": "M",
+      "priority": "P1",
+      "document": "01-entorno-y-migraciones.md",
+      "auditRefs": [
+        "QA-02",
+        "OPS-02"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "U-INF-07",
+      "title": "Adopción de base y migración preprod/prod",
+      "phase": "F1",
+      "wave": "O08",
+      "dependsOn": [
+        "U-INF-02",
+        "U-INF-04",
+        "U-QA-01",
+        "U-OPS-02"
+      ],
+      "size": "L",
+      "priority": "P1",
+      "document": "01-entorno-y-migraciones.md",
+      "auditRefs": [
+        "SEC-04",
+        "QA-02",
+        "OPS-02"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "U-DAT-01",
+      "title": "Confirmación sobre revisión de colección",
+      "phase": "F1",
+      "wave": "O07",
+      "dependsOn": [
+        "U-INF-04",
+        "U-INF-05",
+        "U-QA-01",
+        "U-OPS-01"
+      ],
+      "size": "M",
+      "priority": "P1",
+      "document": "02-datos-importacion-y-catalogacion.md",
+      "auditRefs": [
+        "BE-02",
+        "IMP-01",
+        "UX-04"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "U-DAT-02",
+      "title": "Snapshots y deshacer recuperable",
+      "phase": "F1",
+      "wave": "O10",
+      "dependsOn": [
+        "U-DAT-01",
+        "U-DAT-03",
+        "U-OPS-02"
+      ],
+      "size": "L",
+      "priority": "P1",
+      "document": "02-datos-importacion-y-catalogacion.md",
+      "auditRefs": [
+        "IMP-01",
+        "IMP-03",
+        "OPS-02"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "U-DAT-03",
+      "title": "Trabajos persistentes y leases",
+      "phase": "F1",
+      "wave": "O09",
+      "dependsOn": [
+        "U-DAT-01",
+        "U-DAT-05",
+        "U-OPS-01"
+      ],
+      "size": "L",
+      "priority": "P1",
+      "document": "02-datos-importacion-y-catalogacion.md",
+      "auditRefs": [
+        "IMP-02",
+        "BE-06",
+        "UX-04"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "U-DAT-04",
+      "title": "Restauración multipart atómica",
+      "phase": "F2",
+      "wave": "O11",
+      "dependsOn": [
+        "U-DAT-01",
+        "U-DAT-02",
+        "U-DAT-03",
+        "U-QA-03"
+      ],
+      "size": "L",
+      "priority": "P1",
+      "document": "02-datos-importacion-y-catalogacion.md",
+      "auditRefs": [
+        "IMP-01",
+        "IMP-02",
+        "IMP-03"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "U-DAT-05",
+      "title": "Cuota y caché bibliográficas compartidas",
+      "phase": "F1",
+      "wave": "O08",
+      "dependsOn": [
+        "U-BIB-01",
+        "U-INF-04",
+        "U-QA-01"
+      ],
+      "size": "M",
+      "priority": "P1",
+      "document": "02-datos-importacion-y-catalogacion.md",
+      "auditRefs": [
+        "BE-04",
+        "IMP-02",
+        "OPS-01"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "U-DAT-06",
+      "title": "Obra, edición y ejemplar; ISBN opcional",
+      "phase": "F2",
+      "wave": "O12",
+      "dependsOn": [
+        "U-DAT-01",
+        "U-DAT-04",
+        "U-BIB-04",
+        "U-QA-03"
+      ],
+      "size": "L",
+      "priority": "P1",
+      "document": "02-datos-importacion-y-catalogacion.md",
+      "auditRefs": [
+        "IMP-04",
+        "UX-01",
+        "UX-08"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "U-DAT-07",
+      "title": "Bandeja de revisión bibliográfica",
+      "phase": "F2",
+      "wave": "O13",
+      "dependsOn": [
+        "U-DAT-01",
+        "U-DAT-03",
+        "U-DAT-05",
+        "U-DAT-06",
+        "U-BIB-04",
+        "U-DAT-08"
+      ],
+      "size": "L",
+      "priority": "P1",
+      "document": "02-datos-importacion-y-catalogacion.md",
+      "auditRefs": [
+        "IMP-04",
+        "UX-01",
+        "UX-05"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "U-DAT-08",
+      "title": "Búsqueda por título y autor",
+      "phase": "F1",
+      "wave": "O10",
+      "dependsOn": [
+        "U-DAT-05",
+        "U-BIB-01",
+        "U-BIB-02",
+        "U-BIB-04"
+      ],
+      "size": "M",
+      "priority": "P1",
+      "document": "02-datos-importacion-y-catalogacion.md",
+      "auditRefs": [
+        "BE-04",
+        "UX-08"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "U-DAT-09",
+      "title": "CSV con mapeo y revisión",
+      "phase": "F2",
+      "wave": "O13",
+      "dependsOn": [
+        "U-DAT-01",
+        "U-DAT-03",
+        "U-DAT-04",
+        "U-DAT-06"
+      ],
+      "size": "M",
+      "priority": "P2",
+      "document": "02-datos-importacion-y-catalogacion.md",
+      "auditRefs": [
+        "IMP-01",
+        "IMP-02",
+        "IMP-03"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "U-DAT-10",
+      "title": "Assets privados y portadas seguras",
+      "phase": "F2",
+      "wave": "O11",
+      "dependsOn": [
+        "U-DAT-03",
+        "U-DAT-05",
+        "U-BIB-04",
+        "U-INF-04",
+        "U-INF-05",
+        "U-OPS-02"
+      ],
+      "size": "L",
+      "priority": "P2",
+      "document": "02-datos-importacion-y-catalogacion.md",
+      "auditRefs": [
+        "FE-02",
+        "OPS-02"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "U-EXP-01",
+      "title": "Navegación, títulos y retorno contextual",
+      "phase": "F1",
+      "wave": "O07",
+      "dependsOn": [
+        "U-QA-01"
+      ],
+      "size": "S",
+      "priority": "P2",
+      "document": "03-experiencia-y-funciones.md",
+      "auditRefs": [
+        "UX-05",
+        "UI-01",
+        "FE-03"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "U-EXP-02",
+      "title": "Filtros y vistas guardadas",
+      "phase": "F1",
+      "wave": "O10",
+      "dependsOn": [
+        "U-DAT-01",
+        "U-EXP-01"
+      ],
+      "size": "M",
+      "priority": "P2",
+      "document": "03-experiencia-y-funciones.md",
+      "auditRefs": [
+        "UX-05",
+        "UX-06",
+        "FE-03"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "U-EXP-03",
+      "title": "Accesibilidad y adaptación verificadas",
+      "phase": "F2",
+      "wave": "O11",
+      "dependsOn": [
+        "U-EXP-01",
+        "U-EXP-02",
+        "U-BIB-04",
+        "U-QA-02"
+      ],
+      "size": "M",
+      "priority": "P1",
+      "document": "03-experiencia-y-funciones.md",
+      "auditRefs": [
+        "UI-01",
+        "UI-02",
+        "UI-03",
+        "FE-01"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "U-EXP-04",
+      "title": "Interacción 3D y alternativa 2D",
+      "phase": "F1",
+      "wave": "O08",
+      "dependsOn": [
+        "U-EXP-01",
+        "U-QA-01"
+      ],
+      "size": "S",
+      "priority": "P2",
+      "document": "03-experiencia-y-funciones.md",
+      "auditRefs": [
+        "UX-09",
+        "UI-03",
+        "FE-02"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "U-EXP-05",
+      "title": "Alta consecutiva y escáner ISBN",
+      "phase": "F3",
+      "wave": "O13",
+      "dependsOn": [
+        "U-DAT-06",
+        "U-BIB-05",
+        "U-OPS-04"
+      ],
+      "size": "M",
+      "priority": "P2",
+      "document": "03-experiencia-y-funciones.md",
+      "auditRefs": [
+        "UX-08",
+        "SEC-03",
+        "UI-03"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "U-EXP-06",
+      "title": "Avatar propio",
+      "phase": "F3",
+      "wave": "O13",
+      "dependsOn": [
+        "U-DAT-10",
+        "U-OPS-03"
+      ],
+      "size": "M",
+      "priority": "P2",
+      "document": "03-experiencia-y-funciones.md",
+      "auditRefs": [
+        "UX-03",
+        "FE-02",
+        "OPS-02"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "U-EXP-07",
+      "title": "Catálogo imprimible",
+      "phase": "F3",
+      "wave": "O15",
+      "dependsOn": [
+        "U-EXP-02",
+        "U-DAT-06",
+        "U-PRO-01",
+        "U-PRO-03",
+        "U-PRO-05"
+      ],
+      "size": "S",
+      "priority": "P2",
+      "document": "03-experiencia-y-funciones.md",
+      "auditRefs": [
+        "UX-05",
+        "UI-01"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "U-EXP-08",
+      "title": "PWA y copia de lectura offline",
+      "phase": "F3",
+      "wave": "O15",
+      "dependsOn": [
+        "U-EXP-01",
+        "U-EXP-02",
+        "U-DAT-06",
+        "U-DAT-10",
+        "U-BIB-05",
+        "U-OPS-03",
+        "U-PRO-01",
+        "U-PRO-02",
+        "U-PRO-03",
+        "U-PRO-04",
+        "U-PRO-05"
+      ],
+      "size": "L",
+      "priority": "P3",
+      "document": "03-experiencia-y-funciones.md",
+      "auditRefs": [
+        "SEC-05",
+        "OPS-02",
+        "FE-01"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "U-PRO-01",
+      "title": "Notas, etiquetas y valoración",
+      "phase": "F3",
+      "wave": "O13",
+      "dependsOn": [
+        "U-DAT-06",
+        "U-DAT-04",
+        "U-OPS-03"
+      ],
+      "size": "M",
+      "priority": "P2",
+      "document": "03-experiencia-y-funciones.md",
+      "auditRefs": [
+        "UX-01",
+        "IMP-03"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "U-PRO-02",
+      "title": "Ciclos, sesiones y progreso de lectura",
+      "phase": "F3",
+      "wave": "O14",
+      "dependsOn": [
+        "U-DAT-06",
+        "U-PRO-01",
+        "U-OPS-03"
+      ],
+      "size": "L",
+      "priority": "P2",
+      "document": "03-experiencia-y-funciones.md",
+      "auditRefs": [
+        "UI-01",
+        "IMP-03"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "U-PRO-03",
+      "title": "Ubicación física y fotografías privadas",
+      "phase": "F3",
+      "wave": "O13",
+      "dependsOn": [
+        "U-DAT-06",
+        "U-DAT-10",
+        "U-OPS-03"
+      ],
+      "size": "L",
+      "priority": "P2",
+      "document": "03-experiencia-y-funciones.md",
+      "auditRefs": [
+        "UX-02",
+        "OPS-02"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "U-PRO-04",
+      "title": "Préstamos privados por ejemplar",
+      "phase": "F3",
+      "wave": "O14",
+      "dependsOn": [
+        "U-DAT-06",
+        "U-PRO-03",
+        "U-OPS-03"
+      ],
+      "size": "M",
+      "priority": "P2",
+      "document": "03-experiencia-y-funciones.md",
+      "auditRefs": [
+        "UX-01",
+        "OPS-02"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "U-PRO-05",
+      "title": "Series y volúmenes",
+      "phase": "F3",
+      "wave": "O13",
+      "dependsOn": [
+        "U-DAT-06",
+        "U-DAT-04",
+        "U-OPS-03"
+      ],
+      "size": "M",
+      "priority": "P2",
+      "document": "03-experiencia-y-funciones.md",
+      "auditRefs": [
+        "IMP-04",
+        "UX-05"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "U-QA-01",
+      "title": "Integración Supabase real local",
+      "phase": "F0",
+      "wave": "O06",
+      "dependsOn": [
+        "U-INF-01",
+        "U-INF-04",
+        "U-INF-05"
+      ],
+      "size": "M",
+      "priority": "P1",
+      "document": "04-calidad-seguridad-y-operacion.md",
+      "auditRefs": [
+        "SEC-04",
+        "SEC-05",
+        "QA-01",
+        "QA-02"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "U-QA-02",
+      "title": "E2E, fallos y navegadores",
+      "phase": "F1",
+      "wave": "O07",
+      "dependsOn": [
+        "U-QA-01",
+        "U-INF-06"
+      ],
+      "size": "L",
+      "priority": "P1",
+      "document": "04-calidad-seguridad-y-operacion.md",
+      "auditRefs": [
+        "QA-01",
+        "UX-04",
+        "FE-01",
+        "UI-03"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "U-QA-03",
+      "title": "Rendimiento y capacidad medidos",
+      "phase": "F1",
+      "wave": "O09",
+      "dependsOn": [
+        "U-QA-01",
+        "U-INF-06",
+        "U-OPS-01"
+      ],
+      "size": "M",
+      "priority": "P2",
+      "document": "04-calidad-seguridad-y-operacion.md",
+      "auditRefs": [
+        "BE-01",
+        "BE-02",
+        "BE-03",
+        "BE-04",
+        "FE-02"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "U-QA-04",
+      "title": "CI y promoción de artefactos",
+      "phase": "F1",
+      "wave": "O09",
+      "dependsOn": [
+        "U-INF-03",
+        "U-INF-07",
+        "U-QA-01",
+        "U-QA-02"
+      ],
+      "size": "M",
+      "priority": "P1",
+      "document": "04-calidad-seguridad-y-operacion.md",
+      "auditRefs": [
+        "SEC-01",
+        "QA-01",
+        "QA-02"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "U-QA-05",
+      "title": "Cierre de auditoría con evidencia",
+      "phase": "F4",
+      "wave": "O16",
+      "dependsOn": [
+        "U-INF-01",
+        "U-INF-02",
+        "U-INF-03",
+        "U-INF-04",
+        "U-INF-05",
+        "U-INF-06",
+        "U-INF-07",
+        "U-DAT-01",
+        "U-DAT-02",
+        "U-DAT-03",
+        "U-DAT-04",
+        "U-DAT-05",
+        "U-DAT-06",
+        "U-DAT-07",
+        "U-DAT-08",
+        "U-DAT-09",
+        "U-DAT-10",
+        "U-EXP-01",
+        "U-EXP-02",
+        "U-EXP-03",
+        "U-EXP-04",
+        "U-EXP-05",
+        "U-EXP-06",
+        "U-EXP-07",
+        "U-EXP-08",
+        "U-PRO-01",
+        "U-PRO-02",
+        "U-PRO-03",
+        "U-PRO-04",
+        "U-PRO-05",
+        "U-QA-01",
+        "U-QA-02",
+        "U-QA-03",
+        "U-QA-04",
+        "U-OPS-01",
+        "U-OPS-02",
+        "U-OPS-03",
+        "U-OPS-04",
+        "U-OPS-05",
+        "U-BIB-01",
+        "U-BIB-02",
+        "U-BIB-03",
+        "U-BIB-04",
+        "U-BIB-05"
+      ],
+      "size": "S",
+      "priority": "P2",
+      "document": "04-calidad-seguridad-y-operacion.md",
+      "auditRefs": [
+        "SEC-01",
+        "SEC-02",
+        "SEC-03",
+        "SEC-04",
+        "SEC-05",
+        "BE-01",
+        "BE-02",
+        "BE-03",
+        "BE-04",
+        "BE-05",
+        "BE-06",
+        "IMP-01",
+        "IMP-02",
+        "IMP-03",
+        "IMP-04",
+        "UX-01",
+        "UX-02",
+        "UX-03",
+        "UX-04",
+        "UX-05",
+        "UX-06",
+        "UX-07",
+        "UX-08",
+        "UX-09",
+        "UI-01",
+        "UI-02",
+        "UI-03",
+        "FE-01",
+        "FE-02",
+        "FE-03",
+        "FE-04",
+        "QA-01",
+        "QA-02",
+        "OPS-01",
+        "OPS-02"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "U-OPS-01",
+      "title": "Observabilidad sin datos privados",
+      "phase": "F0",
+      "wave": "O03",
+      "dependsOn": [
+        "U-INF-02"
+      ],
+      "size": "M",
+      "priority": "P2",
+      "document": "04-calidad-seguridad-y-operacion.md",
+      "auditRefs": [
+        "OPS-01",
+        "BE-01",
+        "BE-04"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "U-OPS-02",
+      "title": "Backup administrativo y restore probado",
+      "phase": "F1",
+      "wave": "O07",
+      "dependsOn": [
+        "U-INF-04",
+        "U-INF-05",
+        "U-INF-06",
+        "U-QA-01"
+      ],
+      "size": "L",
+      "priority": "P1",
+      "document": "04-calidad-seguridad-y-operacion.md",
+      "auditRefs": [
+        "OPS-02",
+        "QA-02",
+        "IMP-03"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "U-OPS-03",
+      "title": "Eliminación de cuenta y retención",
+      "phase": "F2",
+      "wave": "O12",
+      "dependsOn": [
+        "U-DAT-03",
+        "U-DAT-10",
+        "U-OPS-02",
+        "U-OPS-04"
+      ],
+      "size": "L",
+      "priority": "P2",
+      "document": "04-calidad-seguridad-y-operacion.md",
+      "auditRefs": [
+        "OPS-02",
+        "SEC-05"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "U-OPS-04",
+      "title": "Sesión, exposición y cabeceras reales",
+      "phase": "F1",
+      "wave": "O09",
+      "dependsOn": [
+        "U-INF-07",
+        "U-QA-01",
+        "U-QA-02"
+      ],
+      "size": "M",
+      "priority": "P1",
+      "document": "04-calidad-seguridad-y-operacion.md",
+      "auditRefs": [
+        "SEC-02",
+        "SEC-03",
+        "SEC-04",
+        "SEC-05",
+        "BE-05",
+        "BE-06",
+        "OPS-02"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "U-OPS-05",
+      "title": "Mantenimiento y restos del prototipo",
+      "phase": "F0",
+      "wave": "O01",
+      "dependsOn": [],
+      "size": "S",
+      "priority": "P3",
+      "document": "04-calidad-seguridad-y-operacion.md",
+      "auditRefs": [
+        "SEC-01",
+        "FE-04"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "U-BIB-01",
+      "title": "Contrato y orquestador bibliográfico",
+      "phase": "F1",
+      "wave": "O07",
+      "dependsOn": [
+        "U-INF-02",
+        "U-QA-01"
+      ],
+      "size": "M",
+      "priority": "P1",
+      "document": "06-proveedores-bibliograficos.md",
+      "auditRefs": [
+        "BE-04",
+        "IMP-04"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "U-BIB-02",
+      "title": "Adaptadores Open Library y BNE",
+      "phase": "F1",
+      "wave": "O08",
+      "dependsOn": [
+        "U-BIB-01"
+      ],
+      "size": "M",
+      "priority": "P1",
+      "document": "06-proveedores-bibliograficos.md",
+      "auditRefs": [
+        "BE-04",
+        "IMP-04"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "U-BIB-03",
+      "title": "Google Books opcional",
+      "phase": "F1",
+      "wave": "O09",
+      "dependsOn": [
+        "U-BIB-01",
+        "U-BIB-02",
+        "U-DAT-05"
+      ],
+      "size": "M",
+      "priority": "P2",
+      "document": "06-proveedores-bibliograficos.md",
+      "auditRefs": [
+        "BE-04",
+        "OPS-02"
+      ],
+      "status": "planned",
+      "activationCondition": "Entrega técnica aceptable con fixtures y flag apagado. Live permanece deshabilitado hasta comprobar clave, cuota/coste, comunicación de privacidad y uso permitido; OL+BNE no dependen de su activación."
+    },
+    {
+      "id": "U-BIB-04",
+      "title": "Procedencia y selección de candidatos",
+      "phase": "F1",
+      "wave": "O09",
+      "dependsOn": [
+        "U-BIB-01",
+        "U-BIB-02",
+        "U-DAT-01",
+        "U-DAT-05"
+      ],
+      "size": "M",
+      "priority": "P1",
+      "document": "06-proveedores-bibliograficos.md",
+      "auditRefs": [
+        "IMP-04",
+        "UX-08",
+        "UX-01"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "U-BIB-05",
+      "title": "Integración y activación de proveedores",
+      "phase": "F1",
+      "wave": "O10",
+      "dependsOn": [
+        "U-BIB-01",
+        "U-BIB-02",
+        "U-BIB-03",
+        "U-BIB-04",
+        "U-DAT-03",
+        "U-DAT-05"
+      ],
+      "size": "M",
+      "priority": "P1",
+      "document": "06-proveedores-bibliograficos.md",
+      "auditRefs": [
+        "BE-04",
+        "IMP-02",
+        "FE-02"
+      ],
+      "status": "planned"
+    }
+  ]
+}

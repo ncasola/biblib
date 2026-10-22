@@ -1,0 +1,16 @@
+{
+  "ok": true,
+  "checks": [
+    "Proxy protege inicio/detalle; callback rechaza destinos externos y conserva error OAuth",
+    "Login móvil y tema oscuro, sin errores de hidratación",
+    "Inicio privado con datos de Postgres aislado",
+    "Alta, edición completa, autores con coma, verificación ISBN, ubicación y estado",
+    "ISBN-10 con guiones detecta libro existente y conserva enlace",
+    "Importación: revisión sin escrituras, confirmación y fusión aditiva",
+    "Eliminación confirmada sin afectar otros libros",
+    "Perfil guarda nombre en Auth y muestra confirmación real"
+  ],
+  "browserErrors": [],
+  "blockedExternal": [],
+  "isolation": "Build temporal sin .env, Auth mock en loopback y Postgres Docker efímero; sin credenciales reales."
+}

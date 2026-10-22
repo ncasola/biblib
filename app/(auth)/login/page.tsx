@@ -29,6 +29,11 @@ function LoginContent() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const { signInWithGoogle } = useAuth()
+  const accessError = searchParams.get("error") === "oauth"
+    ? "No se pudo completar el acceso con Google. Vuelve a intentarlo."
+    : searchParams.get("error") === "session"
+      ? "No se pudo comprobar tu sesión. Inicia sesión de nuevo."
+      : ""
 
   const handleGoogleLogin = async () => {
     setLoading(true)
@@ -60,7 +65,7 @@ function LoginContent() {
         </div>
 
         <div className="space-y-6">
-          {error && <p className="text-red-600 text-sm">{error}</p>}
+          {(error || accessError) && <p role="alert" className="text-destructive text-sm">{error || accessError}</p>}
 
           <Button
             type="button"

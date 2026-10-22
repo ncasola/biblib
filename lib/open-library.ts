@@ -1,0 +1,116 @@
+import { z } from "zod"
+import { normalizeBookCover } from "./book-covers"
+import { DomainError } from "./domain-errors"
+import { normalizeIsbn } from "./isbn"
+import type { Book } from "./types"
+
+const REQUEST_TIMEOUT_MS = 8_000
+const REQUEST_INTERVAL_MS = 1_000
+const MAX_CACHE_ENTRIES = 500
+const CACHE_TTL_MS = 60 * 60 * 1_000
+const NOT_FOUND_TTL_MS = 5 * 60 * 1_000
+const httpUrl = z.url().refine((value) => ["https:", "http:"].includes(new URL(value).protocol))
+const providerBookSchema = z.object({
+  url: httpUrl.optional(),
+  title: z.string().trim().min(1).max(500),
+  subtitle: z.string().max(1_000).optional(),
+  authors: z.array(z.object({ name: z.string().trim().min(1).max(200), url: httpUrl.optional() })).max(30).optional(),
+  number_of_pages: z.number().int().min(0).max(100_000).optional(),
+  publish_date: z.string().max(100).optional(),
+  publishers: z.array(z.object({ name: z.string().trim().min(1).max(200) })).max(20).optional(),
+  cover: z.object({ small: httpUrl.optional(), medium: httpUrl.optional(), large: httpUrl.optional() }).optional(),
+})
+
+type ClientOptions = {
+  fetch?: typeof fetch
+  now?: () => number
+  wait?: (milliseconds: number) => Promise<void>
+  contact?: string
+}
+
+/** Identificación y política de uso: https://openlibrary.org/developers/api */
+export function openLibraryHeaders(contact = process.env.OPEN_LIBRARY_CONTACT): HeadersInit {
+  const safeContact = contact?.replace(/[\r\n]/g, " ").trim()
+  return { "User-Agent": safeContact ? `BibLib/1.0 (${safeContact})` : "BibLib/1.0", Accept: "application/json" }
+}
+
+export function createOpenLibraryClient(options: ClientOptions = {}) {
+  const request = options.fetch ?? ((...args: Parameters<typeof fetch>) => fetch(...args))
+  const now = options.now ?? Date.now
+  const wait = options.wait ?? ((milliseconds: number) => new Promise<void>((resolve) => setTimeout(resolve, milliseconds)))
+  const cache = new Map<string, { expires: number; book: Book | null }>()
+  const inFlight = new Map<string, Promise<Book | null>>()
+  let nextRequestAt = 0
+
+  async function lookup(isbn: string): Promise<Book | null> {
+    // Solo se reserva hasta un segundo de espera; el exceso se rechaza sin cola ilimitada.
+    const start = Math.max(now(), nextRequestAt)
+    if (start - now() > REQUEST_INTERVAL_MS) {
+      throw new DomainError("RATE_LIMITED", "Hay varias búsquedas en curso. Espera unos segundos y vuelve a intentarlo.")
+    }
+    const remaining = start - now()
+    nextRequestAt = start + REQUEST_INTERVAL_MS
+    if (remaining > 0) await wait(remaining)
+
+    const url = new URL("https://openlibrary.org/api/books")
+    url.searchParams.set("bibkeys", `ISBN:${isbn}`)
+    url.searchParams.set("format", "json")
+    url.searchParams.set("jscmd", "data")
+    try {
+      const response = await request(url, { headers: openLibraryHeaders(options.contact), signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS), cache: "no-store" })
+      if (response.status === 429) throw new DomainError("RATE_LIMITED", "Open Library ha limitado las consultas. Espera unos segundos y vuelve a intentarlo.")
+      if (!response.ok) throw new DomainError("PROVIDER_UNAVAILABLE", "Open Library no está disponible ahora. Puedes reintentar o añadir el libro manualmente.")
+      const payload: unknown = await response.json()
+      if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+        throw new DomainError("PROVIDER_UNAVAILABLE", "Open Library devolvió una respuesta que no se pudo interpretar. Vuelve a intentarlo.")
+      }
+      if (Object.keys(payload).some((key) => key !== `ISBN:${isbn}`)) {
+        throw new DomainError("PROVIDER_UNAVAILABLE", "Open Library devolvió una respuesta inesperada. Vuelve a intentarlo.")
+      }
+      const raw = (payload as Record<string, unknown>)[`ISBN:${isbn}`]
+      let book: Book | null = null
+      if (raw !== undefined) {
+        const parsed = providerBookSchema.safeParse(raw)
+        if (!parsed.success) throw new DomainError("PROVIDER_UNAVAILABLE", "La ficha recibida de Open Library está incompleta o no es válida. Puedes añadir el libro manualmente.")
+        const data = parsed.data
+        const cover = normalizeBookCover(data.cover)
+        for (const size of ["small", "medium", "large"] as const) {
+          if (cover[size].startsWith("http://covers.openlibrary.org/")) cover[size] = cover[size].replace("http:", "https:")
+        }
+        const sourceUrl = data.url?.replace(/^http:\/\/openlibrary\.org\//, "https://openlibrary.org/")
+        book = {
+          id: `book-${isbn}`, isbn, title: data.title, subtitle: data.subtitle,
+          authors: data.authors?.length ? data.authors : [{ name: "Autor desconocido" }],
+          number_of_pages: data.number_of_pages ?? 0, publish_date: data.publish_date ?? "",
+          publishers: data.publishers?.length ? data.publishers : undefined,
+          cover, status: "to-read", shelf_id: "", shelf_name: "Predeterminada",
+          catalogue: { source: "open-library", isbnVerified: false, ...(sourceUrl?.startsWith("https://") ? { sourceUrl } : {}) },
+        }
+      }
+      if (cache.size >= MAX_CACHE_ENTRIES) cache.delete(cache.keys().next().value!)
+      cache.set(isbn, { book, expires: now() + (book ? CACHE_TTL_MS : NOT_FOUND_TTL_MS) })
+      return book
+    } catch (error) {
+      if (error instanceof DomainError) throw error
+      throw new DomainError("PROVIDER_UNAVAILABLE", "No se pudo contactar con Open Library. Comprueba la conexión o vuelve a intentarlo.")
+    }
+  }
+
+  async function searchBookByISBN(value: string): Promise<Book | null> {
+    const isbn = typeof value === "string" && value.length <= 100 ? normalizeIsbn(value) : null
+    if (!isbn) throw new DomainError("INVALID_INPUT", "El ISBN no es válido. Introduce un ISBN de 10 o 13 dígitos con su dígito de control correcto.")
+    const cached = cache.get(isbn)
+    if (cached && cached.expires > now()) return structuredClone(cached.book)
+    cache.delete(isbn)
+    let pending = inFlight.get(isbn)
+    if (!pending) {
+      pending = lookup(isbn)
+      inFlight.set(isbn, pending)
+    }
+    try { return structuredClone(await pending) } finally {
+      if (inFlight.get(isbn) === pending) inFlight.delete(isbn)
+    }
+  }
+
+  return { searchBookByISBN }
+}

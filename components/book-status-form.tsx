@@ -1,36 +1,35 @@
 "use client"
 
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import type { Book } from "@/lib/types"
+import { DomainError } from "@/lib/domain-errors"
 
 interface BookStatusFormProps {
   currentStatus: Book["status"]
-  onStatusChange: (status: Book["status"]) => void
+  onStatusChange: (status: Book["status"]) => Promise<void>
+  disabled?: boolean
 }
 
-export function BookStatusForm({ currentStatus, onStatusChange }: BookStatusFormProps) {
-  const statuses: Array<{ value: Book["status"]; label: string; color: string }> = [
-    { value: "to-read", label: "Por leer", color: "bg-purple-100 text-purple-800" },
-    { value: "reading", label: "Leyendo", color: "bg-blue-100 text-blue-800" },
-    { value: "read", label: "Leído", color: "bg-green-100 text-green-800" },
-    { value: "unread", label: "Sin empezar", color: "bg-gray-100 text-gray-800" },
+export function BookStatusForm({ currentStatus, onStatusChange, disabled = false }: BookStatusFormProps) {
+  const [pending, setPending] = useState<Book["status"] | null>(null)
+  const [error, setError] = useState("")
+  const statuses: { value: Book["status"]; label: string }[] = [
+    { value: "unread", label: "Sin leer" }, { value: "reading", label: "Leyendo" },
+    { value: "read", label: "Leído" }, { value: "to-read", label: "Por leer" },
   ]
-
-  return (
-    <div className="space-y-2">
-      <p className="text-sm text-foreground-light mb-3">Selecciona el nuevo estado:</p>
-      <div className="grid grid-cols-2 gap-2">
-        {statuses.map((status) => (
-          <Button
-            key={status.value}
-            onClick={() => onStatusChange(status.value)}
-            variant={currentStatus === status.value ? "default" : "outline"}
-            className={currentStatus === status.value ? "bg-primary text-white" : "border-border"}
-          >
-            {status.label}
-          </Button>
-        ))}
-      </div>
+  const change = async (status: Book["status"]) => {
+    if (pending || disabled || status === currentStatus) return
+    setPending(status); setError("")
+    try { await onStatusChange(status) } catch (caught) {
+      setError(caught instanceof DomainError ? caught.message : "No se pudo cambiar el estado. Comprueba la conexión y vuelve a intentarlo.")
+    } finally { setPending(null) }
+  }
+  return <div aria-busy={Boolean(pending)} className="space-y-3">
+    <p className="text-sm text-muted-foreground">Estado de lectura</p>
+    <div role="group" aria-label="Estado de lectura" className="grid grid-cols-2 gap-2">
+      {statuses.map((status) => <Button type="button" key={status.value} onClick={() => void change(status.value)} disabled={disabled || Boolean(pending)} aria-pressed={currentStatus === status.value} variant={currentStatus === status.value ? "default" : "outline"}>{pending === status.value ? "Guardando..." : status.label}</Button>)}
     </div>
-  )
+    {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+  </div>
 }

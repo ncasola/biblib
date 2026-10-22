@@ -1,8 +1,11 @@
 import { searchBookByISBN } from "@/lib/api-client"
+import { DomainError } from "@/lib/domain-errors"
+import { getRequiredUserId } from "@/lib/server-user"
 import { type NextRequest, NextResponse } from "next/server"
 
 export async function GET(request: NextRequest) {
   try {
+    await getRequiredUserId()
     const searchParams = request.nextUrl.searchParams
     const isbn = searchParams.get("isbn")
 
@@ -16,9 +19,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Libro no encontrado" }, { status: 404 })
     }
 
-    return NextResponse.json(book)
+    return NextResponse.json(book, { headers: { "Cache-Control": "private, no-store" } })
   } catch (error) {
-    console.error("Error searching book:", error)
-    return NextResponse.json({ error: "No se pudo buscar el libro" }, { status: 500 })
+    if (error instanceof DomainError) {
+      const status = { INVALID_INPUT: 400, UNAUTHORIZED: 401, NOT_FOUND: 404, CONFLICT: 409, PROVIDER_UNAVAILABLE: 503, RATE_LIMITED: 429 }[error.code]
+      return NextResponse.json({ error: error.message, code: error.code }, { status, headers: { "Cache-Control": "private, no-store", ...(status === 429 ? { "Retry-After": "1" } : {}) } })
+    }
+    return NextResponse.json({ error: "No se pudo buscar el libro. Vuelve a intentarlo." }, { status: 500 })
   }
 }

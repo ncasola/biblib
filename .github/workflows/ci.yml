@@ -1,0 +1,52 @@
+name: Validación
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Tipos, pruebas y build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+      # Valores ficticios de construcción; no permiten acceder a un proyecto real.
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-public-placeholder
+    steps:
+      - name: Descargar código
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Preparar pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 10.32.1
+          run_install: false
+      - name: Preparar Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: pnpm
+      - name: Instalar desde el lockfile
+        run: pnpm install --frozen-lockfile
+      - name: Lint
+        run: pnpm lint
+      - name: Comprobar tipos
+        run: pnpm typecheck
+      - name: Pruebas unitarias
+        run: pnpm test
+      - name: Build
+        run: pnpm build
+      - name: Migraciones y aislamiento en Postgres temporal
+        run: pnpm test:db
+      - name: Recorridos de navegador con servicios temporales
+        run: pnpm test:smoke

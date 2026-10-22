@@ -4,32 +4,28 @@ import { Header } from "@/components/header"
 import { Button } from "@/components/ui/button"
 import { LoadingState } from "@/components/loading-state"
 import Link from "next/link"
-import { useEffect, useState } from "react"
-import type { LibraryData } from "@/lib/types"
-import { getLibraryDataAction } from "@/app/actions/library"
+import { useCallback, useEffect, useState } from "react"
+import { getLibrarySummaryAction } from "@/app/actions/library"
 import { BookOpen, Library, Bookmark, TrendingUp } from "lucide-react"
 
 export default function Dashboard() {
-  const [data, setData] = useState<LibraryData | null>(null)
+  const [data, setData] = useState<Awaited<ReturnType<typeof getLibrarySummaryAction>> | null>(null)
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
 
-  useEffect(() => {
-    const initData = async () => {
-      try {
-        const loaded = await getLibraryDataAction()
-        setData(loaded)
-      } catch (error) {
-        console.error("Error loading library data:", error)
-        setData({ books: [], shelves: [] })
-      } finally {
-        setLoading(false)
-      }
-    }
+  const loadData = useCallback(() => getLibrarySummaryAction().then((loaded) => {
+      setData(loaded)
+      setLoadError(false)
+    }).catch((error: unknown) => {
+      console.error("Error loading library data:", error)
+      setLoadError(true)
+    }).finally(() => {
+      setLoading(false)
+    }), [])
 
-    void initData()
-  }, [])
+  useEffect(() => { void loadData() }, [loadData])
 
-  if (loading || !data) {
+  if (loading && !data) {
     return (
       <div className="min-h-screen bg-background">
         <Header />
@@ -38,21 +34,28 @@ export default function Dashboard() {
     )
   }
 
-  const totalBooks = data.books.length
-  const totalShelves = data.shelves.length
-  const booksRead = data.books.filter((b) => b.status === "read").length
-  const booksReading = data.books.filter((b) => b.status === "reading").length
-  const booksToRead = data.books.filter((b) => b.status === "to-read").length
+  const totalBooks = data?.totalBooks ?? 0
+  const totalShelves = data?.totalShelves ?? 0
+  const booksRead = data?.read ?? 0
+  const booksReading = data?.reading ?? 0
+  const booksToRead = data?.toRead ?? 0
 
   return (
     <div className="min-h-screen bg-background">
       <Header />
 
-      <main className="max-w-7xl mx-auto px-4 py-12">
-        <div className="mb-12 text-center">
-          <h1 className="text-5xl md:text-6xl font-bold heading-vintage mb-4">Bienvenido a BibLib</h1>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-            Tu biblioteca digital con estilo vintage para organizar y disfrutar tu colección de libros
+      <main id="main-content" tabIndex={-1} className="max-w-7xl mx-auto px-4 py-12 outline-none">
+        {loadError ? (
+          <div role="alert" className="mx-auto max-w-xl rounded-2xl border border-destructive/40 bg-card p-8 text-center shadow-xl">
+            <h1 className="mb-2 text-2xl font-bold heading-vintage">No se pudo cargar tu biblioteca</h1>
+            <p className="mb-5 text-muted-foreground">Inténtalo de nuevo para consultar tus libros y estanterías.</p>
+            <Button onClick={() => void loadData()} disabled={loading}>{loading ? "Cargando…" : "Reintentar"}</Button>
+          </div>
+        ) : data ? <>
+        <div className="mb-8">
+          <h1 className="text-3xl md:text-4xl font-bold heading-vintage mb-3">Tu biblioteca</h1>
+          <p className="text-base md:text-lg text-muted-foreground max-w-2xl">
+            Continúa tus lecturas y encuentra tu próximo libro.
           </p>
         </div>
 
@@ -106,6 +109,22 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {(data.currentlyReading.length > 0 || data.recent.length > 0) && (
+          <div className="grid gap-6 md:grid-cols-2 mb-8">
+            {([{ title: "Continuar leyendo", entries: data.currentlyReading }, { title: "Últimas incorporaciones", entries: data.recent }]).map((section) => (
+              <section key={section.title} className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+                <h2 className="text-xl font-semibold mb-4">{section.title}</h2>
+                {section.entries.length ? <ul className="space-y-3">{section.entries.map((book) => <li key={book.id}>
+                  <Link href={`/book/${book.id}`} className="block rounded-lg p-2 hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring">
+                    <span className="block font-medium text-primary">{book.title}</span>
+                    <span className="block text-sm text-muted-foreground">{book.authors.map((author) => author.name).join(", ") || "Autor desconocido"} · {book.shelf_name}</span>
+                  </Link>
+                </li>)}</ul> : <p className="text-muted-foreground">Aún no hay lecturas en curso.</p>}
+              </section>
+            ))}
+          </div>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
           <div className="rounded-2xl border border-border bg-card backdrop-blur-md p-8 flex flex-col gap-4 shadow-xl hover:shadow-2xl hover:shadow-vintage-red/20 transition-all duration-300">
             <div className="p-4 rounded-2xl bg-vintage-red/10 w-fit">
@@ -113,11 +132,11 @@ export default function Dashboard() {
             </div>
             <h2 className="text-2xl font-bold text-foreground">Agregar libro</h2>
             <p className="text-muted-foreground flex-1">Busca y agrega libros a tu biblioteca con su número ISBN</p>
-            <Link href="/books/add">
-              <Button className="w-full bg-primary text-primary-foreground px-6 py-3 rounded-xl font-semibold hover:scale-105 active:scale-95 transition-all duration-200 shadow-lg shadow-primary/30">
+            <Button asChild className="w-full bg-primary text-primary-foreground px-6 py-3 rounded-xl font-semibold hover:scale-105 active:scale-95 transition-all duration-200 shadow-lg shadow-primary/30">
+              <Link href="/books/add">
                 Agregar libro
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </div>
 
           <div className="rounded-2xl border border-border bg-card backdrop-blur-md p-8 flex flex-col gap-4 shadow-xl hover:shadow-2xl hover:shadow-vintage-olive/20 transition-all duration-300">
@@ -128,11 +147,11 @@ export default function Dashboard() {
             <p className="text-muted-foreground flex-1">
               Consulta todos tus libros en tabla o explora la estantería 3D
             </p>
-            <Link href="/books">
-              <Button className="w-full bg-secondary text-secondary-foreground px-6 py-3 rounded-xl font-semibold hover:scale-105 active:scale-95 transition-all duration-200 shadow-lg shadow-secondary/30">
+            <Button asChild className="w-full bg-secondary text-secondary-foreground px-6 py-3 rounded-xl font-semibold hover:scale-105 active:scale-95 transition-all duration-200 shadow-lg shadow-secondary/30">
+              <Link href="/books">
                 Ver biblioteca
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </div>
 
           <div className="rounded-2xl border border-border bg-card backdrop-blur-md p-8 flex flex-col gap-4 shadow-xl hover:shadow-2xl hover:shadow-vintage-purple/20 transition-all duration-300">
@@ -141,11 +160,11 @@ export default function Dashboard() {
             </div>
             <h2 className="text-2xl font-bold text-foreground">Gestionar estanterías</h2>
             <p className="text-muted-foreground flex-1">Crea y organiza tus libros en estanterías personalizadas</p>
-            <Link href="/shelves">
-              <Button className="w-full bg-transparent border-2 border-border text-foreground px-6 py-3 rounded-xl font-semibold hover:bg-muted hover:scale-105 active:scale-95 transition-all duration-200">
+            <Button asChild className="w-full bg-transparent border-2 border-border text-foreground px-6 py-3 rounded-xl font-semibold hover:bg-muted hover:scale-105 active:scale-95 transition-all duration-200">
+              <Link href="/shelves">
                 Gestionar estanterías
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </div>
         </div>
 
@@ -174,7 +193,7 @@ export default function Dashboard() {
               <div className="text-center">
                 <div className="w-20 h-20 mx-auto mb-3 rounded-full bg-vintage-red/20 flex items-center justify-center">
                   <p className="text-2xl font-bold text-vintage-red">
-                    {data.books.filter((b) => b.status === "unread").length}
+                    {data.unread}
                   </p>
                 </div>
                 <p className="text-sm font-medium text-muted-foreground">Sin empezar</p>
@@ -182,6 +201,7 @@ export default function Dashboard() {
             </div>
           </div>
         )}
+        </> : null}
       </main>
     </div>
   )

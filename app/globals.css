@@ -4,32 +4,40 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Vintage colors from logo: red, olive green, yellow, purple */
-  --vintage-red: oklch(0.58 0.22 25);
-  --vintage-olive: oklch(0.62 0.13 110);
-  --vintage-yellow: oklch(0.85 0.15 95);
-  --vintage-purple: oklch(0.45 0.18 310);
-  --vintage-cream: oklch(0.96 0.02 85);
-  --vintage-brown: oklch(0.35 0.08 65);
+  /* Texto de color sobre crema: contraste mínimo revisado de 4.96:1. */
+  --vintage-red: #b52b30;
+  --vintage-olive: #536332;
+  --vintage-yellow: #8b6500;
+  --vintage-purple: #624477;
+  --vintage-cream: #f6eddd;
+  --vintage-brown: #644b32;
+  --vintage-red-text: var(--vintage-red);
+  --vintage-olive-text: var(--vintage-olive);
+  --vintage-yellow-text: var(--vintage-yellow);
+  --vintage-purple-text: var(--vintage-purple);
+  --vintage-brown-text: var(--vintage-brown);
 
-  --background: oklch(0.97 0.012 85);
-  --foreground: oklch(0.31 0.07 65);
-  --card: oklch(0.995 0.008 85);
+  --background: #faf7f0;
+  --foreground: #423326;
+  --surface: #f4eddf;
+  --foreground-light: #655746;
+  --primary-dark: #872025;
+  --card: #fffdf9;
   --card-foreground: var(--vintage-brown);
-  --popover: oklch(0.995 0.008 85);
+  --popover: #fffdf9;
   --popover-foreground: var(--vintage-brown);
   --primary: var(--vintage-red);
   --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.55 0.12 110);
+  --secondary: var(--vintage-olive);
   --secondary-foreground: oklch(0.99 0 0);
-  --muted: oklch(0.9 0.018 85);
-  --muted-foreground: oklch(0.4 0.05 65);
-  --accent: var(--vintage-yellow);
-  --accent-foreground: var(--vintage-brown);
-  --destructive: oklch(0.55 0.25 30);
+  --muted: #eee5d5;
+  --muted-foreground: var(--foreground-light);
+  --accent: #d4af37;
+  --accent-foreground: #423326;
+  --destructive: #b4232b;
   --destructive-foreground: oklch(0.99 0 0);
-  --border: oklch(0.8 0.03 85);
-  --input: oklch(0.94 0.02 85);
+  --border: #d8cbb6;
+  --input: #f4eddf;
   --ring: var(--vintage-red);
   --radius: 1rem;
   --chart-1: oklch(0.646 0.222 41.116);
@@ -48,36 +56,52 @@
 }
 
 .dark {
-  --background: oklch(0.16 0.02 280);
-  --foreground: var(--vintage-cream);
-  --card: oklch(0.2 0.03 280);
-  --card-foreground: var(--vintage-cream);
-  --popover: oklch(0.19 0.03 280);
-  --popover-foreground: var(--vintage-cream);
-  --primary: oklch(0.69 0.22 25);
-  --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.72 0.13 110);
-  --secondary-foreground: oklch(0.99 0 0);
-  --muted: oklch(0.23 0.02 280);
-  --muted-foreground: oklch(0.75 0.03 85);
-  --accent: oklch(0.78 0.15 95);
-  --accent-foreground: var(--vintage-brown);
-  --border: oklch(0.38 0.03 280);
-  --input: oklch(0.27 0.02 280);
-  --ring: var(--vintage-red);
+  /* Texto de color sobre carbón: contraste mínimo revisado de 5.59:1. */
+  --vintage-red: #a91f28;
+  --vintage-olive: #46562b;
+  --vintage-yellow: #e0b94f;
+  --vintage-purple: #614478;
+  --vintage-brown: #715238;
+  --vintage-red-text: #ff7775;
+  --vintage-olive-text: #b4c77e;
+  --vintage-yellow-text: #f0cd63;
+  --vintage-purple-text: #cfafe9;
+  --vintage-brown-text: #d6b58d;
+  --background: #202028;
+  --foreground: #f6eddd;
+  --surface: #292932;
+  --foreground-light: #c6bda9;
+  --primary: #a91f28;
+  --primary-dark: #ff7775;
+  --primary-foreground: #fffdf9;
+  --card: #292932;
+  --card-foreground: #f6eddd;
+  --popover: #292932;
+  --popover-foreground: #f6eddd;
+  --secondary: #46562b;
+  --secondary-foreground: #fffdf9;
+  --muted: #32323b;
+  --muted-foreground: #c6bda9;
+  --accent: #e0b94f;
+  --accent-foreground: #423326;
+  --destructive: #f16d6a;
+  --destructive-foreground: #202028;
+  --border: #4b4b55;
+  --input: #32323b;
+  --ring: #ffaaa3;
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(0.269 0 0);
-  --sidebar-ring: oklch(0.439 0 0);
+  --sidebar: #292932;
+  --sidebar-foreground: #f6eddd;
+  --sidebar-primary: #a91f28;
+  --sidebar-primary-foreground: #fffdf9;
+  --sidebar-accent: #32323b;
+  --sidebar-accent-foreground: #f6eddd;
+  --sidebar-border: #4b4b55;
+  --sidebar-ring: #ffaaa3;
 }
 
 @theme inline {
@@ -99,6 +123,9 @@
   --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
+  --color-surface: var(--surface);
+  --color-foreground-light: var(--foreground-light);
+  --color-primary-dark: var(--primary-dark);
   --color-ring: var(--ring);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
@@ -136,7 +163,7 @@
     color-scheme: light;
   }
 
-  [data-theme="dark"] {
+  .dark {
     color-scheme: dark;
   }
 
@@ -156,10 +183,30 @@
 /* Remove @layer components and use simple CSS classes */
 .heading-vintage {
   font-weight: 700;
-  background: linear-gradient(135deg, var(--vintage-red), var(--vintage-olive), var(--vintage-yellow));
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--vintage-red);
+}
+
+.dark .text-vintage-red,
+.dark .text-primary,
+.dark .hover\:text-primary:hover,
+.dark .heading-vintage {
+  color: var(--vintage-red-text);
+}
+
+.dark .text-vintage-olive {
+  color: var(--vintage-olive-text);
+}
+
+.dark .text-vintage-yellow {
+  color: var(--vintage-yellow-text);
+}
+
+.dark .text-vintage-purple {
+  color: var(--vintage-purple-text);
+}
+
+.dark .text-vintage-brown {
+  color: var(--vintage-brown-text);
 }
 
 ::-webkit-scrollbar {
@@ -179,4 +226,15 @@
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--vintage-red);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

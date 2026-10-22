@@ -1,7 +1,7 @@
 import { sql } from "drizzle-orm"
 import { authenticatedRole, authUsers } from "drizzle-orm/supabase"
-import { pgSchema, uuid, text, timestamp, boolean, integer, jsonb, uniqueIndex, index, check, pgPolicy, type AnyPgColumn } from "drizzle-orm/pg-core"
-import type { Author, Publisher, Book } from "@/lib/types"
+import { pgSchema, uuid, text, timestamp, boolean, integer, jsonb, uniqueIndex, index, check, pgPolicy, foreignKey, type AnyPgColumn } from "drizzle-orm/pg-core"
+import type { Author, Publisher, Book, CatalogueMetadata } from "@/lib/types"
 
 export const biblibSchema = pgSchema("biblib")
 const ownRow = (userIdColumn: AnyPgColumn) => sql`(select auth.uid() = ${userIdColumn})`
@@ -20,6 +20,8 @@ export const shelves = biblibSchema.table(
   },
   (table) => [
     uniqueIndex("shelves_user_id_title_unique").on(table.userId, table.title),
+    uniqueIndex("shelves_user_id_id_unique").on(table.userId, table.id),
+    check("shelves_title_check", sql`length(btrim(${table.title})) between 1 and 120`),
     uniqueIndex("shelves_user_id_default_unique")
       .on(table.userId, table.isDefault)
       .where(sql`${table.isDefault} = true`),
@@ -36,21 +38,22 @@ export const shelves = biblibSchema.table(
     pgPolicy("shelves_update_own", {
       for: "update",
       to: authenticatedRole,
-      using: ownRow(table.userId),
-      withCheck: ownRow(table.userId),
+      using: sql`${ownRow(table.userId)} and not ${table.isDefault}`,
+      withCheck: sql`${ownRow(table.userId)} and not ${table.isDefault}`,
     }),
     pgPolicy("shelves_delete_own", {
       for: "delete",
       to: authenticatedRole,
-      using: ownRow(table.userId),
+      using: sql`${ownRow(table.userId)} and not ${table.isDefault}`,
     }),
   ],
-)
+).enableRLS()
 
 export const books = biblibSchema.table(
   "books",
   {
     id: uuid("id").defaultRandom().primaryKey(),
+    version: uuid("version").notNull().defaultRandom(),
     userId: uuid("user_id")
       .notNull()
       .references(() => authUsers.id, { onDelete: "cascade" }),
@@ -59,6 +62,7 @@ export const books = biblibSchema.table(
     subtitle: text("subtitle"),
     authors: jsonb("authors").$type<Author[]>().notNull().default([]),
     publishers: jsonb("publishers").$type<Publisher[]>().notNull().default([]),
+    catalogue: jsonb("catalogue").$type<CatalogueMetadata>().notNull().default({ source: "import", isbnVerified: false }),
     numberOfPages: integer("number_of_pages").notNull().default(0),
     publishDate: text("publish_date").notNull().default(""),
     coverSmall: text("cover_small").notNull().default("/default-book-cover.webp"),
@@ -66,8 +70,7 @@ export const books = biblibSchema.table(
     coverLarge: text("cover_large").notNull().default("/default-book-cover.webp"),
     status: text("status").$type<Book["status"]>().notNull().default("unread"),
     shelfId: uuid("shelf_id")
-      .notNull()
-      .references(() => shelves.id, { onDelete: "restrict" }),
+      .notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
@@ -77,6 +80,9 @@ export const books = biblibSchema.table(
     index("books_user_id_idx").on(table.userId),
     index("books_shelf_id_idx").on(table.shelfId),
     check("books_status_check", sql`${table.status} in ('read', 'reading', 'unread', 'to-read')`),
+    check("books_pages_check", sql`${table.numberOfPages} between 0 and 100000`),
+    check("books_title_check", sql`length(btrim(${table.title})) between 1 and 500`),
+    foreignKey({ name: "books_owner_shelf_fk", columns: [table.userId, table.shelfId], foreignColumns: [shelves.userId, shelves.id] }).onDelete("restrict"),
     pgPolicy("books_select_own", {
       for: "select",
       to: authenticatedRole,
@@ -99,4 +105,4 @@ export const books = biblibSchema.table(
       using: ownRow(table.userId),
     }),
   ],
-)
+).enableRLS()

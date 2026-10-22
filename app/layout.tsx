@@ -3,9 +3,10 @@ import type { Metadata } from "next"
 import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 import { AuthProvider } from "@/lib/auth-context"
+import { ThemeProvider } from "@/components/theme-provider"
 
 export const metadata: Metadata = {
-  title: "BibLib",
+  title: { default: "BibLib", template: "%s · BibLib" },
   description: "BibLib es una aplicación de gestión de biblioteca personal.",
   generator: "BibLib",
   icons: {
@@ -26,10 +27,12 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="es">
+    <html lang="es" suppressHydrationWarning>
       <body className={`font-sans antialiased`}>
-        <AuthProvider>{children}</AuthProvider>
-        <Analytics />
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem enableColorScheme disableTransitionOnChange storageKey="theme">
+          <AuthProvider>{children}</AuthProvider>
+        </ThemeProvider>
+        {process.env.NEXT_PUBLIC_ENABLE_ANALYTICS === "true" && <Analytics />}
       </body>
     </html>
   )
