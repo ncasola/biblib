@@ -4,7 +4,7 @@ import { and, asc, eq, gt, inArray, sql } from "drizzle-orm"
 import { mutationResult } from "@/lib/action-result"
 import { DEFAULT_BOOK_COVER } from "@/lib/book-covers"
 import { parseUuid } from "@/lib/book-validation"
-import { COVER_RECOVERY_BATCH_SIZE, decideCoverRecovery, type CoverRecoveryResult, type CoverRecoverySnapshot } from "@/lib/cover-recovery"
+import { COVER_RECOVERY_BATCH_SIZE, decideCoverRecovery, recordCoverRecovery, type CoverRecoveryResult, type CoverRecoverySnapshot } from "@/lib/cover-recovery"
 import { withRlsContext } from "@/lib/db/client"
 import { lockLibrary, mapRowToBook } from "@/lib/db/library"
 import { books } from "@/lib/db/schema"
@@ -12,6 +12,8 @@ import { translateDatabaseError } from "@/lib/domain-errors"
 import { normalizeIsbn } from "@/lib/isbn"
 import { enrichImportedBookCovers } from "@/lib/library-import"
 import { getRequiredUserId } from "@/lib/server-user"
+import { telemetry, withActionCorrelation } from "@/lib/observability/server"
+import { observeOperation } from "@/lib/observability/operations"
 
 function snapshot(row: typeof books.$inferSelect): CoverRecoverySnapshot {
   return { id: row.id, isbn: row.isbn, version: row.version, cover: { small: row.coverSmall, medium: row.coverMedium, large: row.coverLarge } }
@@ -35,7 +37,7 @@ async function recoverMissingCovers(cursor: unknown): Promise<CoverRecoveryResul
 
   const candidates = batch.filter((row) => normalizeIsbn(row.isbn)).map((row) => mapRowToBook({ book: row, shelfTitle: "" }))
   // La red queda fuera de la transacción y del bloqueo de escrituras.
-  const found = new Map((await enrichImportedBookCovers(candidates)).map((book) => [book.id, book.cover]))
+  const found = new Map((await enrichImportedBookCovers(candidates, telemetry)).map((book) => [book.id, book.cover]))
   try {
     return await withRlsContext(userId, async (tx) => {
       await lockLibrary(tx, userId)
@@ -59,5 +61,9 @@ async function recoverMissingCovers(cursor: unknown): Promise<CoverRecoveryResul
 }
 
 export async function recoverMissingCoversAction(cursor: unknown = null) {
-  return mutationResult(() => recoverMissingCovers(cursor))
+  return withActionCorrelation(() => mutationResult(async () => {
+    const result = await observeOperation("cover.recovery", "cover.batch", () => recoverMissingCovers(cursor), telemetry)
+    recordCoverRecovery(result, telemetry)
+    return result
+  }))
 }

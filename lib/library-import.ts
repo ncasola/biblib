@@ -2,6 +2,8 @@ import { z } from "zod"
 import { DEFAULT_BOOK_COVER, normalizeBookCover } from "./book-covers"
 import { normalizeIsbn, normalizedBookIdentifier } from "./isbn"
 import { openLibraryHeaders } from "./open-library"
+import { classifyProviderFailure } from "./observability/events"
+import { emitSafely, noopTelemetry, type TelemetryEmitter } from "./observability/emitter"
 import type { Book, LibraryData } from "./types"
 
 export const MAX_IMPORT_BYTES = 8 * 1024 * 1024
@@ -59,7 +61,19 @@ const librarySchema = z.object({
   })).max(MAX_IMPORT_SHELVES),
 })
 
-export function parseLibraryImport(input: unknown): LibraryData {
+export function parseLibraryImport(input: unknown, telemetry: TelemetryEmitter = noopTelemetry): LibraryData {
+  const started = Date.now()
+  try {
+    const library = validateLibraryImport(input)
+    emitSafely(telemetry, "import.preview", { operation: "import.validate", result: "ok", durationMs: Math.max(0, Date.now() - started) })
+    return library
+  } catch (error) {
+    emitSafely(telemetry, "import.preview", { operation: "import.validate", result: "error", errorCode: "INVALID_INPUT", durationMs: Math.max(0, Date.now() - started) })
+    throw error
+  }
+}
+
+function validateLibraryImport(input: unknown): LibraryData {
   let serialized: string | undefined
   try {
     serialized = JSON.stringify(input)
@@ -154,7 +168,7 @@ const responseCoverSchema = z.object({
   }).optional(),
 })
 
-export async function enrichImportedBookCovers(books: Book[]): Promise<Book[]> {
+export async function enrichImportedBookCovers(books: Book[], telemetry: TelemetryEmitter = noopTelemetry): Promise<Book[]> {
   const prepared = books.map((book) => ({ ...book, cover: normalizeBookCover(book.cover) }))
   const isbns = [...new Set(prepared
     .filter((book) => book.cover.large === DEFAULT_BOOK_COVER)
@@ -175,13 +189,22 @@ export async function enrichImportedBookCovers(books: Book[]): Promise<Book[]> {
     url.searchParams.set("format", "json")
     url.searchParams.set("jscmd", "data")
 
+    const startedAt = Date.now()
+    let httpStatus: number | undefined
     try {
       previousRequest = Date.now()
       const response = await fetch(url, { headers: openLibraryHeaders(), signal: AbortSignal.timeout(Math.max(1, Math.min(REQUEST_TIMEOUT_MS, deadline - Date.now()))) })
+      httpStatus = response.status
       // Ante una caída o límite del servicio, el resto se importa con su portada genérica.
-      if (!response.ok) break
+      if (!response.ok) {
+        emitSafely(telemetry, "provider.request", { operation: "open-library.covers", provider: "open-library", result: "error", durationMs: Math.max(0, Date.now() - startedAt), httpStatus, batch: batch.length, errorCode: classifyProviderFailure(response.status) })
+        break
+      }
       const payload: unknown = await response.json()
-      if (!payload || typeof payload !== "object" || Array.isArray(payload)) break
+      if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+        emitSafely(telemetry, "provider.request", { operation: "open-library.covers", provider: "open-library", result: "error", durationMs: Math.max(0, Date.now() - startedAt), httpStatus, batch: batch.length, errorCode: classifyProviderFailure(httpStatus) })
+        break
+      }
 
       for (const isbn of batch) {
         const entry = responseCoverSchema.safeParse((payload as Record<string, unknown>)[`ISBN:${isbn}`])
@@ -189,7 +212,9 @@ export async function enrichImportedBookCovers(books: Book[]): Promise<Book[]> {
         const cover = normalizeBookCover(entry.data.cover)
         if (cover.large !== DEFAULT_BOOK_COVER) covers.set(isbn, cover)
       }
-    } catch {
+      emitSafely(telemetry, "provider.request", { operation: "open-library.covers", provider: "open-library", result: "ok", durationMs: Math.max(0, Date.now() - startedAt), httpStatus, batch: batch.length })
+    } catch (error) {
+      emitSafely(telemetry, "provider.request", { operation: "open-library.covers", provider: "open-library", result: "error", durationMs: Math.max(0, Date.now() - startedAt), httpStatus, batch: batch.length, errorCode: classifyProviderFailure(httpStatus && httpStatus >= 400 ? httpStatus : error) })
       break
     }
   }

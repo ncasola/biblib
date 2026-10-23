@@ -2,6 +2,8 @@ import { z } from "zod"
 import { normalizeBookCover } from "./book-covers"
 import { DomainError } from "./domain-errors"
 import { normalizeIsbn } from "./isbn"
+import { classifyProviderFailure } from "./observability/events"
+import { emitSafely, noopTelemetry, type TelemetryEmitter } from "./observability/emitter"
 import type { Book } from "./types"
 
 const REQUEST_TIMEOUT_MS = 8_000
@@ -26,6 +28,7 @@ type ClientOptions = {
   now?: () => number
   wait?: (milliseconds: number) => Promise<void>
   contact?: string
+  telemetry?: TelemetryEmitter
 }
 
 /** Identificación y política de uso: https://openlibrary.org/developers/api */
@@ -38,6 +41,7 @@ export function createOpenLibraryClient(options: ClientOptions = {}) {
   const request = options.fetch ?? ((...args: Parameters<typeof fetch>) => fetch(...args))
   const now = options.now ?? Date.now
   const wait = options.wait ?? ((milliseconds: number) => new Promise<void>((resolve) => setTimeout(resolve, milliseconds)))
+  const telemetry = options.telemetry ?? noopTelemetry
   const cache = new Map<string, { expires: number; book: Book | null }>()
   const inFlight = new Map<string, Promise<Book | null>>()
   let nextRequestAt = 0
@@ -56,8 +60,11 @@ export function createOpenLibraryClient(options: ClientOptions = {}) {
     url.searchParams.set("bibkeys", `ISBN:${isbn}`)
     url.searchParams.set("format", "json")
     url.searchParams.set("jscmd", "data")
+    const startedAt = now()
+    let httpStatus: number | undefined
     try {
       const response = await request(url, { headers: openLibraryHeaders(options.contact), signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS), cache: "no-store" })
+      httpStatus = response.status
       if (response.status === 429) throw new DomainError("RATE_LIMITED", "Open Library ha limitado las consultas. Espera unos segundos y vuelve a intentarlo.")
       if (!response.ok) throw new DomainError("PROVIDER_UNAVAILABLE", "Open Library no está disponible ahora. Puedes reintentar o añadir el libro manualmente.")
       const payload: unknown = await response.json()
@@ -89,8 +96,11 @@ export function createOpenLibraryClient(options: ClientOptions = {}) {
       }
       if (cache.size >= MAX_CACHE_ENTRIES) cache.delete(cache.keys().next().value!)
       cache.set(isbn, { book, expires: now() + (book ? CACHE_TTL_MS : NOT_FOUND_TTL_MS) })
+      emitSafely(telemetry, "provider.request", { operation: "open-library.lookup", provider: "open-library", result: "ok", durationMs: Math.max(0, now() - startedAt), httpStatus })
       return book
     } catch (error) {
+      // Nunca se registra la URL ni el ISBN consultado: solo estado y clasificación.
+      emitSafely(telemetry, "provider.request", { operation: "open-library.lookup", provider: "open-library", result: "error", durationMs: Math.max(0, now() - startedAt), httpStatus, errorCode: classifyProviderFailure(httpStatus && (httpStatus >= 400 || error instanceof DomainError) ? httpStatus : error) })
       if (error instanceof DomainError) throw error
       throw new DomainError("PROVIDER_UNAVAILABLE", "No se pudo contactar con Open Library. Comprueba la conexión o vuelve a intentarlo.")
     }
