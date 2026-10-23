@@ -47,7 +47,11 @@
         "QA-02",
         "OPS-02"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O01 · merge bc00636",
+      "pending": [
+        "Bindings en 127.0.0.1: Docker Desktop 29.4.3 ignora host_binding_ipv4; decisión de Néstor (daemon.json o firewall), doctor avisa mientras tanto."
+      ]
     },
     {
       "id": "U-INF-02",
@@ -909,7 +913,8 @@
         "SEC-01",
         "FE-04"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O01 · merge efbea96; 32 dependencias huérfanas retiradas en consolidación"
     },
     {
       "id": "U-BIB-01",
