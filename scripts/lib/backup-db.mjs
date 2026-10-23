@@ -8,8 +8,9 @@ import { AUTH_TABLES, sha256 } from "./backup-files.mjs"
 
 // Columnas que cambian sin cambiar el estado respaldado (accesos, inicios de sesión).
 const MARK_EXCLUDED = Object.freeze({ "auth.users": ["last_sign_in_at", "updated_at"], "storage.objects": ["last_accessed_at"] })
-// Tokens que restore rota deliberadamente: se excluyen al comparar contenido.
-export const ROTATING_COLUMNS = Object.freeze({ "biblib.books": ["version"], "biblib.library_state": ["revision", "updated_at"] })
+// Tokens que restore rota deliberadamente: se excluyen al comparar contenido. Rotar books.version
+// dispara el trigger de 0003, que también renueva rotated_xact y updated_at de library_state.
+export const ROTATING_COLUMNS = Object.freeze({ "biblib.books": ["version"], "biblib.library_state": ["revision", "rotated_xact", "updated_at"] })
 // Clave natural de cada tabla para comparar presencia cuando el contenido cambia legítimamente.
 const TABLE_KEYS = Object.freeze({ "storage.objects": ["bucket_id", "name"], "drizzle.__drizzle_migrations": ["hash", "created_at"] })
 // Auth y Storage se comparan por cantidad y claves: restore reasigna credenciales de fixtures
