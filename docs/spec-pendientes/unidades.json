@@ -238,7 +238,7 @@
         "IMP-03",
         "OPS-02"
       ],
-      "status": "planned"
+      "status": "in-progress"
     },
     {
       "id": "U-DAT-03",
@@ -373,7 +373,8 @@
         "BE-04",
         "UX-08"
       ],
-      "status": "in-progress"
+      "status": "implemented",
+      "evidence": "O10 · merge c01f283; smoke y E2E en la puerta integrada"
     },
     {
       "id": "U-DAT-09",
@@ -761,7 +762,12 @@
         "BE-04",
         "FE-02"
       ],
-      "status": "in-progress"
+      "status": "implemented",
+      "evidence": "O09 · merge aa414de; 100/1000/10000 medidos (docs/validacion/rendimiento/2026-10-23/)",
+      "pending": [
+        "Repetir tras U-DAT-04 y U-DAT-06.",
+        "Tareas T1–T8: T3/T4 en U-FIX-02, T8 y T2 en U-DAT-02, T1 en U-DAT-04, T5/T7 en U-DAT-06, T6 en U-EXP-03."
+      ]
     },
     {
       "id": "U-QA-04",
@@ -973,7 +979,12 @@
         "BE-06",
         "OPS-02"
       ],
-      "status": "in-progress"
+      "status": "implemented-local",
+      "evidence": "O09 · merge fee2525; headers 35/35, integración security 19/19, service_role fuera de Next",
+      "pending": [
+        "HTTPS real, CDN, Google OAuth real y CSP en modo enforcement.",
+        "Repetir con U-EXP-05 y U-EXP-08."
+      ]
     },
     {
       "id": "U-OPS-05",
@@ -1104,7 +1115,12 @@
         "IMP-02",
         "FE-02"
       ],
-      "status": "in-progress"
+      "status": "implemented",
+      "evidence": "O10 · merge cbba289 + 9a25aa6; E2E de proveedores activados",
+      "pending": [
+        "Ficha solo-BNE requiere BIBLIB_BIBLIOGRAPHY_REVIEW_ENABLED.",
+        "Probe externo no ejecutado (requiere autorización)."
+      ]
     },
     {
       "id": "U-LOC-01",
@@ -1151,6 +1167,26 @@
       "pending": [
         "Gateway de lotes en live: U-BIB-05."
       ]
+    },
+    {
+      "id": "U-FIX-02",
+      "title": "Una verificación de sesión por petición y latencia con varias sesiones",
+      "phase": "F1",
+      "wave": "O10",
+      "dependsOn": [
+        "U-QA-03",
+        "U-OPS-04"
+      ],
+      "size": "M",
+      "priority": "P1",
+      "document": "orquestacion-f1.md",
+      "auditRefs": [
+        "BE-01",
+        "BE-03",
+        "SEC-05"
+      ],
+      "status": "in-progress",
+      "note": "Tareas T3/T4 de U-QA-03."
     }
   ]
 }
