@@ -1,0 +1,422 @@
+{
+  "schemaVersion": 1,
+  "kind": "biblib-admin-backup",
+  "backupId": "20261023T144114Z-scratch-2c1008",
+  "createdAt": "2026-10-23T14:41:14.291Z",
+  "completedAt": "2026-10-23T14:41:18.126Z",
+  "durationMs": 3835,
+  "source": {
+    "target": "local",
+    "profile": "scratch",
+    "project": "biblib-scratch",
+    "fingerprint": "ea260283d87954c1c405cb5ee4875867dd8b103c86084460f3a74244e06b13fa",
+    "rootHash": "1521f98bc1f79009574e3fc3f32b948e779c84053bc7a1b3953f44dc7aac37e9",
+    "postgres": {
+      "host": "127.0.0.1",
+      "port": 55342,
+      "database": "postgres"
+    }
+  },
+  "commit": {
+    "sha": "64b8189541321e89135dc16032c91172b1d5b13d",
+    "drizzleClean": true
+  },
+  "tools": {
+    "supabaseCli": "2.117.0",
+    "pgDump": "17.6",
+    "drizzleOrm": "0.45.2"
+  },
+  "migrations": {
+    "head": "0002_book_versions",
+    "state": "up-to-date",
+    "applied": [
+      {
+        "tag": "0000_biblib_init",
+        "hash": "b2f6e7bcc8e8c8b85fe2fb5f21506237d10f8aae0d7d895d83b214ab53cb6ab2",
+        "created_at": 1760000000000
+      },
+      {
+        "tag": "0001_library_integrity",
+        "hash": "585b45c948a69091695708a43771658522e89a8778814a8c3e145d095e9685ca",
+        "created_at": 1792627200000
+      },
+      {
+        "tag": "0002_book_versions",
+        "hash": "eb1e44f5d2a96cea8db8c39d1e4055758c0a0d0c0a8c220bd03b2b1be3a94a09",
+        "created_at": 1792678059187
+      }
+    ],
+    "journalHash": "317586a04106052581771cfce6e16a453ac4b72ab65022b7eb3c64dbd86b97ff",
+    "ledgerHash": "0f5211210402c71c936d9d71d9370159d93a84808624c28bf23fdbfef0edda14"
+  },
+  "scope": {
+    "list": [
+      "schema",
+      "data",
+      "history",
+      "auth",
+      "storage"
+    ],
+    "schema": [
+      "biblib",
+      "drizzle"
+    ],
+    "data": [
+      "biblib",
+      "drizzle"
+    ],
+    "history": "drizzle.__drizzle_migrations",
+    "auth": {
+      "method": "supabase db dump --local --data-only --schema auth",
+      "tables": [
+        "auth.identities",
+        "auth.mfa_factors",
+        "auth.users",
+        "auth.webauthn_credentials"
+      ]
+    },
+    "storage": {
+      "method": "API Storage del perfil (clave local service_role, solo en memoria)",
+      "buckets": 2,
+      "objects": 3
+    }
+  },
+  "exclusions": [
+    {
+      "item": "auth.audit_log_entries",
+      "reason": "Sesiones, tokens, flujos, auditoría o configuración de Auth: se invalidan o se gestionan fuera del respaldo."
+    },
+    {
+      "item": "auth.custom_oauth_providers",
+      "reason": "Sesiones, tokens, flujos, auditoría o configuración de Auth: se invalidan o se gestionan fuera del respaldo."
+    },
+    {
+      "item": "auth.flow_state",
+      "reason": "Sesiones, tokens, flujos, auditoría o configuración de Auth: se invalidan o se gestionan fuera del respaldo."
+    },
+    {
+      "item": "auth.instances",
+      "reason": "Sesiones, tokens, flujos, auditoría o configuración de Auth: se invalidan o se gestionan fuera del respaldo."
+    },
+    {
+      "item": "auth.mfa_amr_claims",
+      "reason": "Sesiones, tokens, flujos, auditoría o configuración de Auth: se invalidan o se gestionan fuera del respaldo."
+    },
+    {
+      "item": "auth.mfa_challenges",
+      "reason": "Sesiones, tokens, flujos, auditoría o configuración de Auth: se invalidan o se gestionan fuera del respaldo."
+    },
+    {
+      "item": "auth.oauth_authorizations",
+      "reason": "Sesiones, tokens, flujos, auditoría o configuración de Auth: se invalidan o se gestionan fuera del respaldo."
+    },
+    {
+      "item": "auth.oauth_client_states",
+      "reason": "Sesiones, tokens, flujos, auditoría o configuración de Auth: se invalidan o se gestionan fuera del respaldo."
+    },
+    {
+      "item": "auth.oauth_clients",
+      "reason": "Sesiones, tokens, flujos, auditoría o configuración de Auth: se invalidan o se gestionan fuera del respaldo."
+    },
+    {
+      "item": "auth.oauth_consents",
+      "reason": "Sesiones, tokens, flujos, auditoría o configuración de Auth: se invalidan o se gestionan fuera del respaldo."
+    },
+    {
+      "item": "auth.one_time_tokens",
+      "reason": "Sesiones, tokens, flujos, auditoría o configuración de Auth: se invalidan o se gestionan fuera del respaldo."
+    },
+    {
+      "item": "auth.refresh_tokens",
+      "reason": "Sesiones, tokens, flujos, auditoría o configuración de Auth: se invalidan o se gestionan fuera del respaldo."
+    },
+    {
+      "item": "auth.saml_providers",
+      "reason": "Sesiones, tokens, flujos, auditoría o configuración de Auth: se invalidan o se gestionan fuera del respaldo."
+    },
+    {
+      "item": "auth.saml_relay_states",
+      "reason": "Sesiones, tokens, flujos, auditoría o configuración de Auth: se invalidan o se gestionan fuera del respaldo."
+    },
+    {
+      "item": "auth.schema_migrations",
+      "reason": "Sesiones, tokens, flujos, auditoría o configuración de Auth: se invalidan o se gestionan fuera del respaldo."
+    },
+    {
+      "item": "auth.sessions",
+      "reason": "Sesiones, tokens, flujos, auditoría o configuración de Auth: se invalidan o se gestionan fuera del respaldo."
+    },
+    {
+      "item": "auth.sso_domains",
+      "reason": "Sesiones, tokens, flujos, auditoría o configuración de Auth: se invalidan o se gestionan fuera del respaldo."
+    },
+    {
+      "item": "auth.sso_providers",
+      "reason": "Sesiones, tokens, flujos, auditoría o configuración de Auth: se invalidan o se gestionan fuera del respaldo."
+    },
+    {
+      "item": "auth.webauthn_challenges",
+      "reason": "Sesiones, tokens, flujos, auditoría o configuración de Auth: se invalidan o se gestionan fuera del respaldo."
+    },
+    {
+      "item": "auth.schema_migrations, storage.migrations",
+      "reason": "Historial de la plataforma: lo crea la versión de Supabase del destino."
+    },
+    {
+      "item": "configuración de Auth, OAuth, SMTP, JWT y claves",
+      "reason": "Configuración externa y secretos; nunca forman parte del respaldo ni del repositorio."
+    },
+    {
+      "item": "Mailpit",
+      "reason": "Correo efímero de desarrollo."
+    },
+    {
+      "item": ".biblib/fixtures",
+      "reason": "Registro privado con contraseñas de fixtures y clave local; restore reasigna credenciales en el destino."
+    },
+    {
+      "item": "otros esquemas de plataforma (storage interno, realtime, vault, extensiones)",
+      "reason": "Los recrea la plataforma del destino."
+    }
+  ],
+  "consistency": {
+    "method": "pg_dump con snapshot exportado para dominio/ledger; marca de estado igual antes y después de Auth y Storage",
+    "mark": "6488a5b5c2570f5ea2c1d760b4e67446a87f3068b7347375eeaf1dcee5903412"
+  },
+  "counts": {
+    "auth.identities": 2,
+    "auth.mfa_factors": 0,
+    "auth.users": 2,
+    "auth.webauthn_credentials": 0,
+    "biblib.books": 10,
+    "biblib.shelves": 6,
+    "drizzle.__drizzle_migrations": 3,
+    "storage.buckets": 2,
+    "storage.objects": 3
+  },
+  "digests": [
+    {
+      "schema": "auth",
+      "table": "identities",
+      "count": 2,
+      "keys": "dc4571a1e37ff9de398e9c12c0323279",
+      "content": "3c4992faf82a47c5a90d6bdc6d768995"
+    },
+    {
+      "schema": "auth",
+      "table": "mfa_factors",
+      "count": 0,
+      "keys": "d41d8cd98f00b204e9800998ecf8427e",
+      "content": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "schema": "auth",
+      "table": "users",
+      "count": 2,
+      "keys": "2ae8aaae14ea68b847c6941831d8d389",
+      "content": "b6513bf26964502f217cfd7013758b46"
+    },
+    {
+      "schema": "auth",
+      "table": "webauthn_credentials",
+      "count": 0,
+      "keys": "d41d8cd98f00b204e9800998ecf8427e",
+      "content": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    {
+      "schema": "biblib",
+      "table": "books",
+      "count": 10,
+      "keys": "eaf7481f6fa9f688756e518cb950ab1c",
+      "content": "f053ee61806dfb007575c683b0909a6e"
+    },
+    {
+      "schema": "biblib",
+      "table": "shelves",
+      "count": 6,
+      "keys": "c94d6eb5450641c5d3380b523b4bff80",
+      "content": "f7082dc1b20ad91383bf14b61e2ae451"
+    },
+    {
+      "schema": "drizzle",
+      "table": "__drizzle_migrations",
+      "count": 3,
+      "keys": "59ae9b1bd51e268244c38557f4912bdd",
+      "content": "90766a16fd46ef0318025dfe496eb59f"
+    },
+    {
+      "schema": "storage",
+      "table": "buckets",
+      "count": 2,
+      "keys": "ff6899263ef5910bee5242db93d4fb3b",
+      "content": "a9b3e5280fcebc03401e62de7f026bd2"
+    },
+    {
+      "schema": "storage",
+      "table": "objects",
+      "count": 3,
+      "keys": "b849f0cb48f75965909479a22cbab38f",
+      "content": "155ed1ce7839f0e68b8b54f9323dd9f7"
+    }
+  ],
+  "tokens": {
+    "biblib.books.version": "10 huella(s) sha256(id:token)"
+  },
+  "sample": [
+    {
+      "id": "202e6da5-a6ba-42eb-8c33-75ed0e00ffc9",
+      "digest": "5937b8822675a9cf89a3e8d1ba58a0ec"
+    },
+    {
+      "id": "370158d1-fbeb-5bdc-aac6-e3c69b6037ab",
+      "digest": "fdc3c2de31fd1dac21b9368e05fe6f66"
+    },
+    {
+      "id": "4d207b26-6cdb-5998-a790-72c272b9464d",
+      "digest": "83fa26c00a0c0edf6dadce8efb9605eb"
+    },
+    {
+      "id": "4df2d4b5-3772-52c1-ae9d-08a9330e4cdf",
+      "digest": "d77c47e49c9b3df0566ee28a49505439"
+    },
+    {
+      "id": "7c761c5f-0218-55f5-a035-67033d3d46bb",
+      "digest": "f8e8ae04d4b21a75e30b587c9290e552"
+    }
+  ],
+  "fixtureAccounts": {
+    "a": {
+      "id": "a3296f2f-8979-4763-9dc3-15e45bf59c8d",
+      "books": 5,
+      "shelves": 3
+    },
+    "b": {
+      "id": "9b9327b9-676c-4a9b-8455-0365f0d3c7e9",
+      "books": 5,
+      "shelves": 3
+    }
+  },
+  "storage": {
+    "buckets": [
+      {
+        "id": "biblib-ops02-ensayo",
+        "name": "biblib-ops02-ensayo",
+        "public": false,
+        "fileSizeLimit": null,
+        "allowedMimeTypes": null
+      },
+      {
+        "id": "biblib-test-assets",
+        "name": "biblib-test-assets",
+        "public": false,
+        "fileSizeLimit": null,
+        "allowedMimeTypes": [
+          "image/webp"
+        ]
+      }
+    ],
+    "objects": [
+      {
+        "bucket": "biblib-ops02-ensayo",
+        "name": "notas/ensayo o07 (copia).txt",
+        "size": 42,
+        "contentType": "text/plain",
+        "sha256": "8ee4364e4b76f623c6f37c8bd9d0f6f135864ba2fa128af853dfb413195239b3",
+        "file": "storage/70c01e1cecfa979427dbf3314721a372d7a47173.bin.enc"
+      },
+      {
+        "bucket": "biblib-ops02-ensayo",
+        "name": "portadas/b/ensayo-o07.webp",
+        "size": 81490,
+        "contentType": "image/webp",
+        "sha256": "9f7e43ae6fd9e421853625bdc043cbcc0a11b9934196c1352961d077b4fcba76",
+        "file": "storage/7b4cbf089ade2a60b7fa0c31f69c889da9e945cf.bin.enc"
+      },
+      {
+        "bucket": "biblib-test-assets",
+        "name": "fixtures/portada.webp",
+        "size": 81490,
+        "contentType": "image/webp",
+        "sha256": "9f7e43ae6fd9e421853625bdc043cbcc0a11b9934196c1352961d077b4fcba76",
+        "file": "storage/3f3140421a207dbc3363170f0bfb43a9dd70a0cd.bin.enc"
+      }
+    ]
+  },
+  "files": [
+    {
+      "path": "db/biblib-drizzle.sql.enc",
+      "role": "domain-dump",
+      "bytes": 16746,
+      "sha256": "0206418379c286ef0eb0937f668a696a3d74914fc8f0ee280b516e0d28fa36fc",
+      "plainSha256": "70b0af259c425598f97a6896b4f750fc48d19d42b95511c640458f3995bcdf6d",
+      "encrypted": true
+    },
+    {
+      "path": "db/auth-data.sql.enc",
+      "role": "auth-data",
+      "bytes": 4079,
+      "sha256": "a7f4b1c6b42a8182a2541408e0dce349e40f1a3e1078d0328faa29bdf3f5af57",
+      "plainSha256": "13d6e86e2225bf4ed65a588577fe6542f492cb4bb810bc8cfaa0fd5f96c19106",
+      "encrypted": true
+    },
+    {
+      "path": "storage/70c01e1cecfa979427dbf3314721a372d7a47173.bin.enc",
+      "role": "storage-object",
+      "bytes": 80,
+      "sha256": "8d073c5b517416d7d1a5acc06f8a9610f5104a68a559edc707e40bee2d8d4611",
+      "plainSha256": "8ee4364e4b76f623c6f37c8bd9d0f6f135864ba2fa128af853dfb413195239b3",
+      "encrypted": true
+    },
+    {
+      "path": "storage/7b4cbf089ade2a60b7fa0c31f69c889da9e945cf.bin.enc",
+      "role": "storage-object",
+      "bytes": 81528,
+      "sha256": "5d82f21cd3bdb355dc99e487c3970363b9f549575b4b888d3da24821a11f67cd",
+      "plainSha256": "9f7e43ae6fd9e421853625bdc043cbcc0a11b9934196c1352961d077b4fcba76",
+      "encrypted": true
+    },
+    {
+      "path": "storage/3f3140421a207dbc3363170f0bfb43a9dd70a0cd.bin.enc",
+      "role": "storage-object",
+      "bytes": 81528,
+      "sha256": "fbb580cb2fbb69a909ad07dee8c21c7f5284108e074c6a4ffb0aef41df116bd3",
+      "plainSha256": "9f7e43ae6fd9e421853625bdc043cbcc0a11b9934196c1352961d077b4fcba76",
+      "encrypted": true
+    }
+  ],
+  "encryption": {
+    "algorithm": "aes-256-gcm",
+    "keyFingerprint": "1fe62ba7fa784f33",
+    "key": "externa: no se guarda con el respaldo"
+  },
+  "restoreVerification": {
+    "passed": true,
+    "reportId": "7ab6ed42-c080-48b2-9c6b-a6b8fbadab93",
+    "report": "rehearsals/20261023T144303Z-scratch.json",
+    "reportSha256": "b5aaf3668c21fd1af8f47486e57f54d5458f590305caa77b8163c41fe69ead03",
+    "target": {
+      "target": "local",
+      "profile": "scratch",
+      "project": "biblib-scratch",
+      "fingerprint": "ea260283d87954c1c405cb5ee4875867dd8b103c86084460f3a74244e06b13fa"
+    },
+    "recoveryMs": 14671,
+    "at": "2026-10-23T14:43:03.866Z"
+  },
+  "contentHash": "b25d4feff3d567252df61684c6f63e429f5186dd35330773a8c54ce56f29a307",
+  "lastRehearsal": {
+    "passed": false,
+    "reportId": "f9a5dfe6-776c-450b-9d3f-4ca02d5c65e8",
+    "report": "rehearsals/20261023T144321Z-scratch.json",
+    "reportSha256": "87a5b3f50c338a06e5ba39f269e841b569238e6258bada41e1047fa6fe285acf",
+    "target": {
+      "target": "local",
+      "profile": "scratch",
+      "project": "biblib-scratch",
+      "fingerprint": "ea260283d87954c1c405cb5ee4875867dd8b103c86084460f3a74244e06b13fa"
+    },
+    "recoveryMs": 32404,
+    "at": "2026-10-23T14:43:21.599Z"
+  },
+  "objectsHash": "bfb8136695d52e184e53b6404803e2e3570c11a24fad07852bad3b5d8acccae5"
+}

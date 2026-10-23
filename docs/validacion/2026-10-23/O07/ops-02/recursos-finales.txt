@@ -1,0 +1,6 @@
+# Contenedores biblib-scratch
+# Redes
+biblib-scratch-network
+# Volúmenes
+supabase_db_biblib-scratch
+supabase_storage_biblib-scratch

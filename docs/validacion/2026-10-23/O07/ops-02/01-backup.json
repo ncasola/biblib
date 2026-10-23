@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "code": 0,
+  "backupId": "20261023T144114Z-scratch-2c1008",
+  "dir": ".biblib/backups/20261023T144114Z-scratch-2c1008",
+  "profile": "scratch",
+  "project": "biblib-scratch",
+  "head": "0002_book_versions",
+  "counts": {
+    "auth.identities": 2,
+    "auth.mfa_factors": 0,
+    "auth.users": 2,
+    "auth.webauthn_credentials": 0,
+    "biblib.books": 10,
+    "biblib.shelves": 6,
+    "drizzle.__drizzle_migrations": 3,
+    "storage.buckets": 2,
+    "storage.objects": 3
+  },
+  "storageObjects": 3,
+  "files": 5,
+  "encrypted": true,
+  "durationMs": 3835,
+  "contentHash": "b25d4feff3d567252df61684c6f63e429f5186dd35330773a8c54ce56f29a307"
+}

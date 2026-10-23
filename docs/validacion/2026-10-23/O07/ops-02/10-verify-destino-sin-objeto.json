@@ -1,0 +1,20 @@
+{
+  "passed": false,
+  "discrepancies": [
+    {
+      "id": "table.storage.objects",
+      "status": "fail",
+      "message": "storage.objects: 2/3 filas o claves/contenido distintos."
+    },
+    {
+      "id": "storage.object",
+      "status": "fail",
+      "message": "Falta el objeto biblib-ops02-ensayo/storage/70c01e1cecfa979427dbf3314721a372d7a47173.bin.enc en el destino."
+    },
+    {
+      "id": "storage.objects",
+      "status": "fail",
+      "message": "2/3 objeto(s) presentes con su sha256."
+    }
+  ]
+}

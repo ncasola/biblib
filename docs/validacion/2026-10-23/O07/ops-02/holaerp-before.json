@@ -1,0 +1,29 @@
+{
+  "containers": [
+    "082bb27f1ad52463c67842f83fc325661e6ab877a2b3ba7f2605fc1b5ffe0607 /supabase_inbucket_holaerp running 2026-10-23T11:44:51.316089813Z 0 {\"8025/tcp\":[{\"HostIp\":\"0.0.0.0\",\"HostPort\":\"54324\"},{\"HostIp\":\"::\",\"HostPort\":\"54324\"}]} supabase_network_holaerp ",
+    "08cec5edb3abaec7831307b2007cf5e36a5f8b643991e2639049cc86cb50ed46 /supabase_kong_holaerp running 2026-10-23T11:44:51.290405575Z 0 {\"8000/tcp\":[{\"HostIp\":\"0.0.0.0\",\"HostPort\":\"54321\"},{\"HostIp\":\"::\",\"HostPort\":\"54321\"}]} supabase_network_holaerp ",
+    "120d997b9f56c6894da4e2d5e7971daafe06903b8cd654ec4c2a961ae1135b5a /supabase_storage_holaerp running 2026-10-23T11:44:51.35153148Z 0 {\"5000/tcp\":null} supabase_network_holaerp ",
+    "2fd62432d826f76a023a55b8a66bcab3b913f9ee4aba0c99ffff08cc2740fed2 /holaerp-local-redis running 2026-10-23T11:44:51.288438023Z 0 {\"6379/tcp\":[{\"HostIp\":\"0.0.0.0\",\"HostPort\":\"6379\"},{\"HostIp\":\"::\",\"HostPort\":\"6379\"}]} holaerp-web_holaerp-local-network",
+    "332384a83b1f341ddefc518d7144987003f6790824aa125244e1a073de639c5d /supabase_rest_holaerp running 2026-10-23T11:44:51.320538507Z 0 {\"3000/tcp\":null} supabase_network_holaerp ",
+    "607df66c4564d78aecde432e405f42b709951f0812745919e0c5b3b87474c610 /supabase_edge_runtime_holaerp exited 2026-10-23T10:49:18.214927255Z 0 {} supabase_network_holaerp ",
+    "635d94610787207c51ee6d0af30dd035c014750349a473ed956c0db49c7a1021 /supabase_realtime_holaerp running 2026-10-23T11:44:51.333542081Z 0 {\"4000/tcp\":null} supabase_network_holaerp ",
+    "7937bb8bda3761f5cbda8fc93a99a22be0235d250ee9f4a58726a8cfbddae6bb /supabase_auth_holaerp running 2026-10-23T11:44:58.981935089Z 5 {\"9999/tcp\":null} supabase_network_holaerp ",
+    "95dd8a99145e694c97cc91d74f5a86b5b9c0e1b55486827e87774e8f83901120 /supabase_db_holaerp running 2026-10-23T11:44:51.355723282Z 0 {\"5432/tcp\":[{\"HostIp\":\"0.0.0.0\",\"HostPort\":\"5432\"},{\"HostIp\":\"::\",\"HostPort\":\"5432\"}]} supabase_network_holaerp ",
+    "b4e9b186eabc5e6c897663ce44f93a6ce7f88a7f7243f5119233ebd184f3ac8f /supabase_studio_holaerp running 2026-10-23T11:44:51.34646201Z 0 {\"3000/tcp\":[{\"HostIp\":\"0.0.0.0\",\"HostPort\":\"54323\"},{\"HostIp\":\"::\",\"HostPort\":\"54323\"}]} supabase_network_holaerp ",
+    "f13ae72c84a88dfffb325842a6b59fd0aab72ef9cc9cd0807aaf45b84cb9a95f /supabase_pg_meta_holaerp running 2026-10-23T11:44:51.342126683Z 0 {\"8080/tcp\":null} supabase_network_holaerp "
+  ],
+  "networks": [
+    "1aaaac8132fe938e7e125ba66a8b9a5356647bf30c45392c615a470fa3e10c61 supabase_network_holaerp",
+    "bc44cf05fa25c3126a40a9b168236b3fc401247a4f625b312ccaf6ae6c28607c holaerp-web_holaerp-local-network",
+    "f65d1a0bc4e05b16921718ecd096473ccbdff14dccf8211e9f3a69b6eef59b66 holaerp-woo_default"
+  ],
+  "volumes": [
+    "holaerp-ps_db-data",
+    "holaerp-ps_ps-data",
+    "holaerp-woo_db-data",
+    "holaerp-woo_wp-data",
+    "supabase_db_holaerp",
+    "supabase_edge_runtime_holaerp",
+    "supabase_storage_holaerp"
+  ]
+}

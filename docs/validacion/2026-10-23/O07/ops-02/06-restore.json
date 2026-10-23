@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "code": 0,
+  "runId": "a6ca04f0-1ea7-4fe6-881e-2c381b99df87",
+  "backupId": "20261023T144114Z-scratch-2c1008",
+  "profile": "scratch",
+  "project": "biblib-scratch",
+  "head": "0002_book_versions",
+  "pendingAfterRestore": [],
+  "rotation": {
+    "rotated": [
+      {
+        "token": "biblib.books.version",
+        "rows": 10
+      }
+    ],
+    "invalidated": [],
+    "review": [],
+    "staleWriteRejected": true
+  },
+  "durationMs": 6127,
+  "next": "pnpm db:restore:verify --backup .biblib/backups/20261023T144114Z-scratch-2c1008 --profile scratch"
+}
