@@ -53,7 +53,9 @@
     "db:migrate:preprod": "node scripts/db/migrate.mjs apply preprod",
     "db:migrate:prod": "node scripts/db/migrate.mjs apply prod",
     "db:adopt:preprod": "node scripts/db/adopt.mjs preprod",
-    "db:adopt:prod": "node scripts/db/adopt.mjs prod"
+    "db:adopt:prod": "node scripts/db/adopt.mjs prod",
+    "perf:local": "node scripts/performance/run.mjs",
+    "perf:local:cleanup": "node scripts/performance/run.mjs cleanup"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "1.1.15",
