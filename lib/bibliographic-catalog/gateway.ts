@@ -74,7 +74,8 @@ const privateSchema = z.object({ status: z.enum(["found", "notFound"]), payload:
 
 /** Implementación sobre las funciones `biblib.catalogue_*` con la conexión propia del servidor. */
 export function createPostgresCoordinationStore(sql: postgres.Sql): CoordinationStore {
-  const json = (value: unknown) => JSON.stringify(value)
+  // Objeto tipado como jsonb: un string con ::jsonb se guardaría como escalar JSON, no como array.
+  const json = (value: unknown) => sql.json(value as postgres.JSONValue)
   return {
     async begin(k, options) {
       const [row] = await sql`select biblib.catalogue_begin(${k.provider}, ${k.policyVersion}, ${k.scope}, ${k.schemaVersion}::integer, ${k.operation}, ${k.key}, ${options.useCache}, ${options.leaseMs}::integer, ${options.discardFence ?? null}::bigint) as result`
@@ -82,7 +83,7 @@ export function createPostgresCoordinationStore(sql: postgres.Sql): Coordination
     },
     async complete(k, token, outcome) {
       const [row] = await sql`select biblib.catalogue_complete(${k.provider}, ${k.policyVersion}, ${k.scope}, ${k.schemaVersion}::integer, ${k.operation}, ${k.key}, ${token}::bigint,
-        ${outcome?.status ?? null}, ${outcome ? json(outcome.payload) : null}::jsonb, ${outcome ? json(outcome.provenance) : null}::jsonb, ${outcome ? Math.round(outcome.ttlMs) : null}::integer) as result`
+        ${outcome?.status ?? null}, ${outcome ? json(outcome.payload) : null}, ${outcome ? json(outcome.provenance) : null}, ${outcome ? Math.round(outcome.ttlMs) : null}::integer) as result`
       return z.enum(["published", "released", "stale"]).parse(row?.result)
     },
     async reserve(request) {
@@ -98,7 +99,7 @@ export function createPostgresCoordinationStore(sql: postgres.Sql): Coordination
       return row?.result == null ? null : privateSchema.parse(row.result)
     },
     async privatePut(owner, k, outcome) {
-      const [row] = await sql`select biblib.catalogue_private_put(${owner}::uuid, ${k.provider}, ${k.policyVersion}, ${k.scope}, ${k.schemaVersion}::integer, ${k.operation}, ${k.key}, ${outcome.status}, ${json(outcome.payload)}::jsonb, ${Math.round(outcome.ttlMs)}::integer) as result`
+      const [row] = await sql`select biblib.catalogue_private_put(${owner}::uuid, ${k.provider}, ${k.policyVersion}, ${k.scope}, ${k.schemaVersion}::integer, ${k.operation}, ${k.key}, ${outcome.status}, ${json(outcome.payload)}, ${Math.round(outcome.ttlMs)}::integer) as result`
       return row?.result === true
     },
     async invalidate(provider, policyVersion, schemaVersion) {
