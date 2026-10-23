@@ -20,7 +20,8 @@ const facts0002 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrat
 const facts0003 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0003.json"), "utf8"))
 const facts0004 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0004.json"), "utf8"))
 const facts0005 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0005.json"), "utf8"))
-const facts = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0006.json"), "utf8"))
+const facts0006 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0006.json"), "utf8"))
+const facts = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0007.json"), "utf8"))
 const named = (list, name) => list.find((item) => item.name === name)
 const temporary = []
 after(() => { for (const dir of temporary) rmSync(dir, { recursive: true, force: true }) })
@@ -105,8 +106,8 @@ describe("ledger", () => {
     assert.deepEqual(compareLedger(entries, rowsFor(entries)).pending, [])
     const partial = compareLedger(entries, rowsFor(entries, 1))
     assert.equal(partial.appliedHead.tag, "0000_biblib_init")
-    assert.deepEqual(partial.pending, ["0001_library_integrity", "0002_book_versions", "0003_library_revision", "0004_catalogue_coordination", "0005_library_jobs", "0006_library_snapshots"])
-    assert.equal(compareLedger(entries, []).pending.length, 7)
+    assert.deepEqual(partial.pending, ["0001_library_integrity", "0002_book_versions", "0003_library_revision", "0004_catalogue_coordination", "0005_library_jobs", "0006_library_snapshots", "0007_saved_views"])
+    assert.equal(compareLedger(entries, []).pending.length, entries.length)
   })
 
   test("hash legacy CRLF exige conciliación y no se reescribe", () => {
@@ -148,6 +149,8 @@ describe("ledger", () => {
 })
 
 describe("manifest de objetos", () => {
+  test("los metadatos reales tras 0006 cumplen su prefijo", () => { assert.deepEqual(failing(verifyManifest(facts0006, MANIFEST_MIGRATIONS.slice(0, 7))), []) })
+
   test("los metadatos reales tras 0002 cumplen el manifest de 0000→0002", () => {
     const checks = verifyManifest(facts0002, MANIFEST_MIGRATIONS.slice(0, 3))
     assert.deepEqual(failing(checks), [])
@@ -172,7 +175,7 @@ describe("manifest de objetos", () => {
     assert.ok(checks.length >= 190)
   })
 
-  test("los metadatos reales tras 0006 cumplen el manifest completo", () => {
+  test("los metadatos reales tras 0007 cumplen el manifest completo", () => {
     const checks = verifyManifest(facts, MANIFEST_MIGRATIONS)
     assert.deepEqual(failing(checks), [])
     assert.ok(checks.length >= 235)
@@ -182,7 +185,7 @@ describe("manifest de objetos", () => {
     // Antes de 0006 faltan las funciones de captura: los metadatos de 0005 no cumplen el manifest completo.
     assert.ok(failing(verifyManifest(facts0005, MANIFEST_MIGRATIONS)).includes("function.library_snapshot_capture"))
     assert.equal(expectedObjects().triggers[0], "books_rotate_version:BEFORE INSERT OR UPDATE ROW")
-    assert.deepEqual(expectedObjects().triggers.slice(1), ["books_rotate_library_revision:AFTER INSERT OR UPDATE OR DELETE ROW", "shelves_rotate_library_revision:AFTER INSERT OR UPDATE OR DELETE ROW"])
+    assert.deepEqual(expectedObjects().triggers.slice(1, 3), ["books_rotate_library_revision:AFTER INSERT OR UPDATE OR DELETE ROW", "shelves_rotate_library_revision:AFTER INSERT OR UPDATE OR DELETE ROW"])
     // Las tablas de 0003 con RLS y un head anterior que aún no las conoce marcan drift.
     assert.ok(failing(verifyManifest(facts, MANIFEST_MIGRATIONS.slice(0, 3))).includes("policy.library_state_select_own"))
     assert.ok(failing(verifyManifest(facts, MANIFEST_MIGRATIONS.slice(0, 4))).includes("policy.catalogue_private_cache_select_own"))
@@ -492,7 +495,7 @@ describe("stack scratch real [stack]", { skip: stack.reason ?? false }, () => {
     const tag = `${String(current.length).padStart(4, "0")}_u_inf_04_fallo`
     // El segundo paso falla siempre (columna duplicada, 42701), haya o no filas en la base.
     writeFileSync(path.join(dir, `${tag}.sql`), "CREATE TABLE biblib.u_inf_04_probe (id integer);\n--> statement-breakpoint\nALTER TABLE biblib.u_inf_04_probe ADD COLUMN id integer;\n")
-    editJournal(dir, (j) => { j.entries.push({ idx: current.length, version: "7", when: 1792900000000, tag, breakpoints: true }) })
+    editJournal(dir, (j) => { j.entries.push({ idx: current.length, version: "7", when: current.at(-1).when + 1000, tag, breakpoints: true }) })
     const journal = loadJournal(dir)
     const sql = connect(stack.resolved, { applicationName: "biblib-test" })
     try {
