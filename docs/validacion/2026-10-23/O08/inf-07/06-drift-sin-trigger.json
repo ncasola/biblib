@@ -1,0 +1,55 @@
+{
+  "plan": {
+    "code": 5,
+    "state": "adoption-required",
+    "reconciliation": {
+      "closestHead": "0002_book_versions",
+      "differences": [
+        {
+          "id": "trigger.books_rotate_version",
+          "message": "Falta el trigger books_rotate_version en biblib.books."
+        }
+      ],
+      "proposal": [
+        "No se adopta: el esquema no es equivalente a ningún prefijo del journal; el más cercano es 0002_book_versions con 1 diferencia(s).",
+        "Opción A: corrección hacia delante revisada en una copia aislada que deje los objetos listados idénticos a ese prefijo (por ejemplo, recrear un trigger o una política con el SQL exacto de su migración), y repetir db:plan:<target>.",
+        "Opción B: restaurar el respaldo ensayado y repetir el diagnóstico.",
+        "Nunca se marcan migraciones como aplicadas sin equivalencia ni se importan excepciones de otro proyecto."
+      ]
+    }
+  },
+  "adopt": {
+    "code": 5,
+    "phase": "adopción",
+    "message": "El esquema ya no es equivalente al prefijo planificado; no se adopta.",
+    "report": {
+      "previousHead": null,
+      "attempted": [
+        "0000_biblib_init",
+        "0001_library_integrity",
+        "0002_book_versions"
+      ],
+      "failedChange": null,
+      "result": "rechazado: sin equivalencia",
+      "head": null,
+      "waitedForLock": false,
+      "reconciliation": {
+        "closestHead": "0002_book_versions",
+        "differences": [
+          {
+            "id": "trigger.books_rotate_version",
+            "message": "Falta el trigger books_rotate_version en biblib.books."
+          }
+        ],
+        "proposal": [
+          "No se adopta: el esquema no es equivalente a ningún prefijo del journal; el más cercano es 0002_book_versions con 1 diferencia(s).",
+          "Opción A: corrección hacia delante revisada en una copia aislada que deje los objetos listados idénticos a ese prefijo (por ejemplo, recrear un trigger o una política con el SQL exacto de su migración), y repetir db:plan:<target>.",
+          "Opción B: restaurar el respaldo ensayado y repetir el diagnóstico.",
+          "Nunca se marcan migraciones como aplicadas sin equivalencia ni se importan excepciones de otro proyecto."
+        ]
+      }
+    },
+    "record": ".biblib/promotions/20261023T165506Z-preprod-de0f58d5fd2e-23c11a.json"
+  },
+  "ledger": null
+}

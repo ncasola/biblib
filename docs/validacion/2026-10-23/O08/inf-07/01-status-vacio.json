@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "target": {
+    "target": "preprod",
+    "project": "inf07ensayoremoto001",
+    "fingerprint": "1e9b3dc4e9d78ecd14b26d46d602db476601e8a1ec18a2f71e771b53e62be04f",
+    "host": "db.inf07ensayoremoto001.supabase.co",
+    "port": 5432,
+    "database": "postgres",
+    "user": "postgres",
+    "connection": "direct",
+    "tls": "verify-full"
+  },
+  "state": "empty",
+  "appliedHead": null,
+  "expectedHead": "0004_catalogue_coordination",
+  "migrations": [
+    {
+      "tag": "0000_biblib_init",
+      "when": 1760000000000,
+      "hash": "b2f6e7bcc8e8c8b85fe2fb5f21506237d10f8aae0d7d895d83b214ab53cb6ab2",
+      "status": "pending"
+    },
+    {
+      "tag": "0001_library_integrity",
+      "when": 1792627200000,
+      "hash": "585b45c948a69091695708a43771658522e89a8778814a8c3e145d095e9685ca",
+      "status": "pending"
+    },
+    {
+      "tag": "0002_book_versions",
+      "when": 1792678059187,
+      "hash": "eb1e44f5d2a96cea8db8c39d1e4055758c0a0d0c0a8c220bd03b2b1be3a94a09",
+      "status": "pending"
+    },
+    {
+      "tag": "0003_library_revision",
+      "when": 1792765666340,
+      "hash": "ebdb1774d4f3d698a39cd85015e6fb464544ce9e0702ef41056c038ee63731b6",
+      "status": "pending"
+    },
+    {
+      "tag": "0004_catalogue_coordination",
+      "when": 1792770443198,
+      "hash": "d10085aa91488d41078ced9905b986b56d2ac8dfdccb62a712ef384a064038e3",
+      "status": "pending"
+    }
+  ],
+  "pending": [
+    "0000_biblib_init",
+    "0001_library_integrity",
+    "0002_book_versions",
+    "0003_library_revision",
+    "0004_catalogue_coordination"
+  ],
+  "adoption": null,
+  "remote": {
+    "version": "17.11",
+    "major": 17,
+    "role": "postgres",
+    "tls": "TLSv1.3",
+    "owners": []
+  },
+  "dataPreflight": {
+    "required": true,
+    "checks": [
+      {
+        "id": "data.empty",
+        "status": "ok",
+        "message": "Sin tablas de dominio todavía: no hay datos que revisar."
+      }
+    ]
+  },
+  "checks": {
+    "ok": 12,
+    "other": []
+  }
+}

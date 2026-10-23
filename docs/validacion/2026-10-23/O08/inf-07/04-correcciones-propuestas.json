@@ -1,0 +1,92 @@
+{
+  "schemaVersion": 1,
+  "kind": "data-corrections",
+  "target": {
+    "target": "preprod",
+    "project": "inf07ensayoremoto001",
+    "fingerprint": "1e9b3dc4e9d78ecd14b26d46d602db476601e8a1ec18a2f71e771b53e62be04f",
+    "host": "db.inf07ensayoremoto001.supabase.co",
+    "port": 5432,
+    "database": "postgres",
+    "user": "postgres",
+    "connection": "direct",
+    "tls": "verify-full"
+  },
+  "pending": [
+    "0001_library_integrity",
+    "0002_book_versions",
+    "0003_library_revision",
+    "0004_catalogue_coordination"
+  ],
+  "checks": [
+    {
+      "id": "data.owner-shelf",
+      "status": "fail",
+      "count": 1,
+      "message": "Fichas cuya estantería no existe o pertenece a otro propietario. (1).",
+      "correction": "Asignar la ficha a una estantería del mismo propietario (por ejemplo, su predeterminada) con una corrección revisada; books_owner_shelf_fk de 0001 la rechazaría."
+    },
+    {
+      "id": "data.pages",
+      "status": "fail",
+      "count": 1,
+      "message": "Fichas con páginas fuera de 0–100000. (1).",
+      "correction": "Revisar el número de páginas (0–100000); books_pages_check de 0001 lo rechazaría."
+    },
+    {
+      "id": "data.book-title",
+      "status": "fail",
+      "count": 1,
+      "message": "Fichas con título vacío o de más de 500 caracteres. (1).",
+      "correction": "Completar o acortar el título (1–500 caracteres sin espacios extremos); books_title_check de 0001 lo rechazaría."
+    },
+    {
+      "id": "data.shelf-title",
+      "status": "ok",
+      "count": 0,
+      "message": "Estanterías con nombre vacío o de más de 120 caracteres: ninguna."
+    },
+    {
+      "id": "data.isbn-duplicate",
+      "status": "warn",
+      "count": 2,
+      "message": "Fichas del mismo propietario con el mismo ISBN normalizado (sin guiones ni espacios). (2).",
+      "correction": "Revisar con su propietario si son ejemplares distintos o un duplicado que fusionar; la migración no lo bloquea."
+    },
+    {
+      "id": "data.shelf-duplicate",
+      "status": "ok",
+      "count": 0,
+      "message": "Estanterías del mismo propietario con el mismo nombre normalizado: ninguna."
+    }
+  ],
+  "items": [
+    {
+      "check": "data.owner-shelf",
+      "id": "c0000000-0000-4000-8000-000000000001",
+      "owner": "d0c5501112f7"
+    },
+    {
+      "check": "data.pages",
+      "id": "c0000000-0000-4000-8000-000000000002",
+      "owner": "09141bbc87ac"
+    },
+    {
+      "check": "data.book-title",
+      "id": "c0000000-0000-4000-8000-000000000003",
+      "owner": "09141bbc87ac"
+    },
+    {
+      "check": "data.isbn-duplicate",
+      "id": "ba000000-0000-4000-8000-000000000001",
+      "owner": "d0c5501112f7"
+    },
+    {
+      "check": "data.isbn-duplicate",
+      "id": "ba000000-0000-4000-8000-000000000002",
+      "owner": "d0c5501112f7"
+    }
+  ],
+  "truncatedAt": 50,
+  "createdAt": "2026-10-23T16:54:51.258Z"
+}

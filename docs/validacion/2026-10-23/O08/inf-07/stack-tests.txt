@@ -1,0 +1,18 @@
+▶ promoción contra un remoto simulado [stack]
+  ✔ 1 · status y plan son de solo lectura: no crean ledger ni objetos y listan pendientes (442.9396ms)
+  ✔ 2 · identidad errónea, sin TLS, plan de otro commit/head y respaldo ausente o ajeno abortan antes de DDL (19613.9248ms)
+  ✔ 3 · copia equivalente a 0000: conserva IDs y datos, aplica 0001…0004 y verifica catálogo, FK, RLS y versión (5206.7521ms)
+  ✔ 4 · datos incompatibles con 0001: listado restringido de correcciones, sin plan ni cambios (729.5487ms)
+  ✔ 5 · esquema manual sin ledger equivalente a 0002: adopt escribe solo el ledger y migrate aplica 0003/0004 (10306.4262ms)
+  ✔ 6 · esquema con drift (sin trigger): la adopción se rechaza con 5 y conciliación, sin ledger (5254.1314ms)
+  ✔ 7 · fallo transaccional sin avance del ledger y restauración coherente desde el respaldo (11497.1634ms)
+  ✔ 8 · dos ejecuciones simultáneas no aplican el mismo plan (7989.3473ms)
+✔ promoción contra un remoto simulado [stack] (64959.0926ms)
+ℹ tests 8
+ℹ suites 1
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 65922.4732

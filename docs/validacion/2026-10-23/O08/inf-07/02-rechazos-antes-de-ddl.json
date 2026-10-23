@@ -1,0 +1,23 @@
+{
+  "codes": {
+    "ref": 3,
+    "sinTls": 3,
+    "require": 3,
+    "host": 3,
+    "rol": 3,
+    "certificado": 3,
+    "servidorSinTls": 3,
+    "commit": 6,
+    "sinRespaldo": 6,
+    "respaldoSinEnsayo": 6,
+    "respaldoAjeno": 3
+  },
+  "ledgerSinCambios": true,
+  "objetosSinCambios": true,
+  "planDeOtroHead": {
+    "code": 6,
+    "phase": "plan",
+    "message": "El head aplicado o los pendientes cambiaron desde el plan (¿otro runner?); no se aplica nada. Genera un plan nuevo.",
+    "record": ".biblib/promotions/20261023T165445Z-preprod-91c2a4bbfe03-8f8d8f.json"
+  }
+}

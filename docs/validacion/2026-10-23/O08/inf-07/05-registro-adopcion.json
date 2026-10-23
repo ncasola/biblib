@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "kind": "biblib-promotion-record",
+  "operation": "adopt-ledger",
+  "recordId": "d3b04a56-0426-4314-88e3-2c57bed173ec",
+  "target": {
+    "target": "preprod",
+    "project": "inf07ensayoremoto001",
+    "fingerprint": "1e9b3dc4e9d78ecd14b26d46d602db476601e8a1ec18a2f71e771b53e62be04f",
+    "host": "db.inf07ensayoremoto001.supabase.co",
+    "port": 5432,
+    "database": "postgres",
+    "user": "postgres",
+    "connection": "direct",
+    "tls": "verify-full"
+  },
+  "commit": "0cb90064dd365e5ff9b256e534444099094fd620",
+  "planHash": "53446d0c0ce740e332c32efe3c2cc86ba6efde89e202a638d1a83cbe0fbdee24",
+  "plan": ".biblib/plans/inf07-25520-adopcion.json",
+  "headBefore": null,
+  "headAfter": "0002_book_versions",
+  "attempted": [
+    "0000_biblib_init",
+    "0001_library_integrity",
+    "0002_book_versions"
+  ],
+  "backup": {
+    "backupId": "20261023T165452Z-ensayo-3ac189",
+    "receiptHash": "3134639c7331881194026e75a62b7e02edb88a9921b3cf68c098166a025114cf",
+    "createdAt": "2026-10-23T16:54:52.188Z",
+    "rehearsal": {
+      "reportId": "6a987653-850c-4861-8ea5-81b0b897489f",
+      "at": "2026-10-23T16:54:55.666Z"
+    }
+  },
+  "lostWrites": {
+    "since": "2026-10-23T16:54:52.188Z",
+    "note": "Las escrituras en el destino posteriores a backup.createdAt no están en el respaldo: si hubiera que restaurar, se pierden o se recuperan por otra vía antes de abrir tráfico. Mantén la aplicación sin escrituras desde el respaldo hasta verificar la promoción."
+  },
+  "platform": {
+    "before": "d100fe8e05fbfa854192ebc883ed421577d6c72fd3da59c987f519fef3bb4df9",
+    "after": "d100fe8e05fbfa854192ebc883ed421577d6c72fd3da59c987f519fef3bb4df9",
+    "unchanged": true
+  },
+  "result": "ledger adoptado hasta 0002_book_versions: 3 fila(s), sin DDL de negocio",
+  "code": 0,
+  "startedAt": "2026-10-23T16:54:56.410Z",
+  "finishedAt": "2026-10-23T16:54:56.614Z",
+  "checks": {
+    "ok": 37,
+    "fail": 0
+  },
+  "pendingAfter": [
+    "0003_library_revision",
+    "0004_catalogue_coordination"
+  ]
+}

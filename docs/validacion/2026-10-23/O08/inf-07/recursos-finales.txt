@@ -1,0 +1,16 @@
+# Recursos Docker de BibLib tras parar scratch
+supabase_studio_biblib-test Up 2 hours (healthy)
+supabase_pg_meta_biblib-test Up 2 hours (healthy)
+supabase_storage_biblib-test Up 2 hours (healthy)
+supabase_rest_biblib-test Up 2 hours
+supabase_inbucket_biblib-test Up 2 hours (healthy)
+supabase_auth_biblib-test Up 2 hours (healthy)
+supabase_kong_biblib-test Up 2 hours (healthy)
+supabase_db_biblib-test Up 2 hours (healthy)
+red biblib-scratch-network
+red biblib-test-network
+volumen supabase_db_biblib-scratch
+volumen supabase_db_biblib-test
+volumen supabase_storage_biblib-scratch
+volumen supabase_storage_biblib-test
+# Contenedores de ensayo U-INF-07 (etiqueta biblib.unit=u-inf-07-ensayo)
