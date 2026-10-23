@@ -1,0 +1,6 @@
+Compilando un build sin objetivo en una carpeta temporal (sin archivos .env)…
+Build sin objetivo: 67 archivos estáticos revisados, sin formulario de acceso local ni material privado.
+exit 0
+--- control negativo: build del perfil test (.next-local) con --forbid-local-login
+El formulario de acceso local está presente en 1 archivos del bundle cliente; este build no debe incluirlo.
+exit 11

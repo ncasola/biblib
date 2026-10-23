@@ -42,7 +42,10 @@
     "db:restore:local": "node scripts/db/restore-local.mjs",
     "db:restore:verify": "node scripts/db/restore-verify.mjs",
     "db:local:credentials": "node scripts/db/local-credentials.mjs",
-    "test:integration:catalogue": "node tests/integration/catalogue/run.mjs"
+    "test:integration:catalogue": "node tests/integration/catalogue/run.mjs",
+    "test:e2e:local": "node tests/e2e/run.mjs",
+    "test:e2e:local:ui": "node tests/e2e/run.mjs --ui",
+    "test:e2e:external": "node tests/e2e/run.mjs --external"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "1.1.15",
@@ -71,6 +74,7 @@
     "zod": "4.1.13"
   },
   "devDependencies": {
+    "@playwright/test": "1.64.1",
     "@tailwindcss/postcss": "^4.3.3",
     "@types/node": "^26.1.2",
     "@types/react": "^19.2.17",

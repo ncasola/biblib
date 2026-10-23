@@ -1,0 +1,8 @@
+E2E externo (opt-in) · Open Library live · no se ejecuta en CI
+
+Running 1 test using 1 worker
+
+  ok 1 [external] › tests\e2e\externo\open-library.spec.ts:21:1 › Open Library live: un ISBN público se encuentra con su título (787ms)
+Assertion failed: !(handle->flags & UV_HANDLE_CLOSING), file src\win\async.c, line 76
+
+  1 passed (4.1s)

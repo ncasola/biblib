@@ -1,7 +1,5 @@
-import { execFileSync, spawn } from "node:child_process"
 import { randomBytes } from "node:crypto"
-import { createWriteStream, existsSync, mkdirSync, readdirSync, rmSync } from "node:fs"
-import { createConnection } from "node:net"
+import { existsSync, mkdirSync, readdirSync, rmSync } from "node:fs"
 import path from "node:path"
 import { pathToFileURL } from "node:url"
 import { BiblibError, EXIT } from "../../scripts/lib/exit-codes.mjs"
@@ -11,6 +9,9 @@ import { loadJournal } from "../../scripts/db/journal-guard.mjs"
 import { inspectDatabase } from "../../scripts/db/target.mjs"
 import { adminClient, closeConnection, database, integrationContext, PROFILE } from "./lib/context.mjs"
 import { cleanupManifest, isEmpty, manifestFile, readManifest, startManifest, writeManifest } from "./lib/run-manifest.mjs"
+import { listUsers, pipeRedacted, redactor, run, startApp, stopTree } from "./lib/process.mjs"
+
+export { redactor }
 
 // pnpm test:integration:local — U-QA-01. Ejecuta tests/integration/{auth,rls,storage,import,catalogue} contra el
 // stack Supabase real del perfil test y la app compilada para ese perfil (127.0.0.1:3148).
@@ -40,94 +41,6 @@ export function suiteBatches(root = REPO_ROOT) {
     return existsSync(dir) ? readdirSync(dir).filter((f) => f.endsWith(".test.mjs")).sort().map((f) => path.join("tests", "integration", suite, f)) : []
   })
   return [files.filter((f) => !f.includes("caida")), files.filter((f) => f.includes("caida"))].filter((batch) => batch.length)
-}
-
-/** Enmascara JWT, valores de cookie SSR y secretos conocidos antes de escribir en consola. */
-export function redactor(secrets = []) {
-  const known = secrets.filter((s) => typeof s === "string" && s.length >= 8)
-  return (text) => {
-    let out = text
-    for (const secret of known) out = out.split(secret).join("[oculto]")
-    return out.replace(/eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}/g, "[jwt oculto]")
-      .replace(/base64-[A-Za-z0-9_-]{16,}/g, "[cookie oculta]")
-      .replace(/(refresh_token|access_token|password)("?\s*[:=]\s*"?)[^"\s,}]+/gi, "$1$2[oculto]")
-  }
-}
-
-function pipeRedacted(stream, target, redact) {
-  let pending = ""
-  stream.setEncoding("utf8")
-  stream.on("data", (chunk) => {
-    pending += chunk
-    const lines = pending.split("\n")
-    pending = lines.pop()
-    for (const line of lines) target.write(`${redact(line)}\n`)
-  })
-  stream.on("end", () => { if (pending) target.write(redact(pending)) })
-}
-
-function run(command, args, { env, logFile, onOutput } = {}) {
-  return new Promise((resolve, reject) => {
-    const child = spawn(command, args, { cwd: REPO_ROOT, env, windowsHide: true, stdio: ["ignore", "pipe", "pipe"] })
-    const log = logFile ? createWriteStream(logFile) : null
-    for (const stream of [child.stdout, child.stderr]) {
-      if (log) stream.pipe(log, { end: false })
-      if (onOutput) onOutput(stream)
-    }
-    child.once("error", () => reject(new BiblibError(EXIT.MISSING_REQUIREMENT, "proceso", `No se pudo ejecutar ${path.basename(command)}.`)))
-    child.once("close", (code) => { log?.end(); resolve(code ?? EXIT.INTERRUPTED) })
-  })
-}
-
-function portInUse(port) {
-  return new Promise((resolve) => {
-    const socket = createConnection({ host: "127.0.0.1", port })
-    socket.setTimeout(1000)
-    socket.once("connect", () => { socket.destroy(); resolve(true) })
-    socket.once("timeout", () => { socket.destroy(); resolve(false) })
-    socket.once("error", () => resolve(false))
-  })
-}
-
-/** Termina solo el árbol del proceso que arrancó este runner. */
-function stopTree(child) {
-  if (!child || child.exitCode !== null) return
-  try {
-    if (process.platform === "win32") execFileSync("taskkill", ["/pid", String(child.pid), "/T", "/F"], { stdio: "ignore", windowsHide: true })
-    else process.kill(-child.pid, "SIGTERM")
-  } catch { /* Ya había terminado. */ }
-}
-
-async function startApp(ctx, env) {
-  if (await portInUse(Number(new URL(ctx.appUrl).port))) fail(EXIT.SERVICE_UNAVAILABLE, "app", `El puerto de la app del perfil test (${ctx.appUrl}) está ocupado; no se termina al ocupante. Libéralo y repite.`)
-  const child = spawn(process.execPath, ["scripts/next-target.mjs", "start", "local", "--profile", PROFILE], {
-    cwd: REPO_ROOT, env, windowsHide: true, detached: process.platform !== "win32", stdio: ["ignore", "pipe", "pipe"],
-  })
-  const log = createWriteStream(path.join(LOG_DIR, "app.log"))
-  child.stdout.pipe(log, { end: false })
-  child.stderr.pipe(log, { end: false })
-  const deadline = Date.now() + 60000
-  while (Date.now() < deadline) {
-    if (child.exitCode !== null) fail(child.exitCode === EXIT.IDENTITY_MISMATCH ? EXIT.IDENTITY_MISMATCH : EXIT.SERVICE_UNAVAILABLE, "app", "La app no arrancó con el build del perfil test; revisa .biblib/integration/app.log.")
-    try {
-      const response = await fetch(`${ctx.appUrl}/login`, { redirect: "manual", signal: AbortSignal.timeout(2000) })
-      if (response.status === 200) return child
-    } catch { /* Todavía arrancando. */ }
-    await new Promise((resolve) => setTimeout(resolve, 500))
-  }
-  stopTree(child)
-  fail(EXIT.SERVICE_UNAVAILABLE, "app", "La app del perfil test no respondió en 60 s.")
-}
-
-async function listUsers(admin) {
-  const users = []
-  for (let page = 1; ; page++) {
-    const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 1000 })
-    if (error) fail(EXIT.SERVICE_UNAVAILABLE, "usuarios", "GoTrue no permitió listar las cuentas locales.")
-    users.push(...data.users.map((u) => ({ id: u.id, email: u.email })))
-    if (data.users.length < 1000) break
-  }
-  return users.sort((x, y) => x.id.localeCompare(y.id))
 }
 
 /** Limpia lo registrado; si algo queda, el manifiesto conserva solo lo pendiente y se sale con 10. */
@@ -182,7 +95,7 @@ export async function runIntegration(argv = process.argv.slice(2), out = process
     if (bundle !== 0) fail(EXIT.VERIFICATION_FAILED, "bundle", "El bundle de cliente contiene material privado o no existe; no se ejecuta la suite.")
     out.write("Bundle de cliente sin credenciales administrativas ni URLs privadas.\n")
 
-    app = await startApp(ctx, env)
+    app = await startApp(ctx, env, { logFile: path.join(LOG_DIR, "app.log"), logHint: ".biblib/integration/app.log" })
     startManifest(file, { runId, fingerprint: ctx.resolved.fingerprint })
     const counts = { pass: 0, fail: 0 }
     let testCode = 0
