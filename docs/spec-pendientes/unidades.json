@@ -142,7 +142,11 @@
         "QA-01",
         "QA-02"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O05 · merge 2c2440c; ensayo scratch real (docs/validacion/2026-10-23/O05/)",
+      "pending": [
+        "Matriz RLS A/B completa en U-QA-01; políticas definitivas de assets en U-DAT-10."
+      ]
     },
     {
       "id": "U-INF-06",
