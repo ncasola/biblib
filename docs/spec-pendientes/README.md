@@ -16,6 +16,7 @@ La especificación es un resultado documental. No instala Supabase, no crea scri
 | [04 · Calidad, seguridad y operación](04-calidad-seguridad-y-operacion.md) | Pruebas reales, navegadores, capacidad, CI, cierre de auditoría, observabilidad, respaldos, eliminación y mantenimiento. |
 | [05 · Fases, olas y trazabilidad](05-fases-olas-y-trazabilidad.md) | Secuencia completa, paralelismo, puertas, riesgos y correspondencia de los 35 hallazgos. |
 | [06 · Proveedores bibliográficos](06-proveedores-bibliograficos.md) | Open Library, BNE, Google Books opcional, adaptadores, fuentes por campo, conflictos, costes, cuotas y pruebas. |
+| [Orquestación de F0](orquestacion-f0.md) | Decisiones de O00, reglas comunes, contrato compartido, reparto de agentes y puertas de O01–O06. |
 | [Registro de unidades](unidades.json) | ID, fase, ola, dependencias obligatorias, tamaño, prioridad, documento y hallazgos relacionados. Todos empiezan en `planned`. |
 
 El registro fija el **orden de entrega y las dependencias obligatorias**; los documentos de unidad fijan contratos y aceptación. Una referencia a una integración futura no añade una dependencia circular: debe diferenciarse del prerrequisito de entrega. Si cambia una decisión, actualizar la unidad, registro y ola afectados en la misma propuesta. El código existente y el informe de implementación son evidencia del punto de partida, no de que esta spec esté terminada.
