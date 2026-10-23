@@ -15,7 +15,10 @@ import { classify, closeConnection, connect, inspectDatabase, readLedger, resolv
 
 const repo = fileURLToPath(new URL("../../", import.meta.url))
 const drizzleDir = path.join(repo, "drizzle")
-const facts = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0002.json"), "utf8"))
+// Metadatos reales capturados de Supabase local: tras 0002 (U-INF-04) y tras 0003 (U-DAT-01, head actual).
+const facts0002 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0002.json"), "utf8"))
+const facts = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0003.json"), "utf8"))
+const named = (list, name) => list.find((item) => item.name === name)
 const temporary = []
 after(() => { for (const dir of temporary) rmSync(dir, { recursive: true, force: true }) })
 const clone = (value) => JSON.parse(JSON.stringify(value))
@@ -99,8 +102,8 @@ describe("ledger", () => {
     assert.deepEqual(compareLedger(entries, rowsFor(entries)).pending, [])
     const partial = compareLedger(entries, rowsFor(entries, 1))
     assert.equal(partial.appliedHead.tag, "0000_biblib_init")
-    assert.deepEqual(partial.pending, ["0001_library_integrity", "0002_book_versions"])
-    assert.equal(compareLedger(entries, []).pending.length, 3)
+    assert.deepEqual(partial.pending, ["0001_library_integrity", "0002_book_versions", "0003_library_revision"])
+    assert.equal(compareLedger(entries, []).pending.length, 4)
   })
 
   test("hash legacy CRLF exige conciliación y no se reescribe", () => {
@@ -142,23 +145,53 @@ describe("ledger", () => {
 })
 
 describe("manifest de objetos", () => {
-  test("los metadatos reales tras 0002 cumplen el manifest", () => {
-    const checks = verifyManifest(facts, MANIFEST_MIGRATIONS)
+  test("los metadatos reales tras 0002 cumplen el manifest de 0000→0002", () => {
+    const checks = verifyManifest(facts0002, MANIFEST_MIGRATIONS.slice(0, 3))
     assert.deepEqual(failing(checks), [])
     assert.ok(checks.length >= 35)
+  })
+
+  test("los metadatos reales tras 0003 cumplen el manifest completo", () => {
+    const checks = verifyManifest(facts, MANIFEST_MIGRATIONS)
+    assert.deepEqual(failing(checks), [])
+    assert.ok(checks.length >= 75)
     assert.equal(expectedObjects().triggers[0], "books_rotate_version:BEFORE INSERT OR UPDATE ROW")
+    assert.deepEqual(expectedObjects().triggers.slice(1), ["books_rotate_library_revision:AFTER INSERT OR UPDATE OR DELETE ROW", "shelves_rotate_library_revision:AFTER INSERT OR UPDATE OR DELETE ROW"])
+    // Las tablas de 0003 con RLS y un head anterior que aún no las conoce marcan drift.
+    assert.ok(failing(verifyManifest(facts, MANIFEST_MIGRATIONS.slice(0, 3))).includes("policy.library_state_select_own"))
+  })
+
+  test("drift de los objetos de 0003: escritura directa, permisos, seguridad y triggers", () => {
+    const write = clone(facts); write.grants.push({ grantee: "authenticated", table: "library_state", privilege: "UPDATE" })
+    assert.deepEqual(failing(verifyManifest(write, MANIFEST_MIGRATIONS)), ["grant.authenticated.library_state"])
+    const anonLock = clone(facts); named(anonLock.functions, "lock_library").execute_anon = true
+    assert.deepEqual(failing(verifyManifest(anonLock, MANIFEST_MIGRATIONS)), ["function.lock_library"])
+    const invoker = clone(facts); named(invoker.functions, "rotate_library_revision").security_definer = false
+    assert.deepEqual(failing(verifyManifest(invoker, MANIFEST_MIGRATIONS)), ["function.rotate_library_revision"])
+    const callable = clone(facts); named(callable.functions, "rotate_library_revision").execute_authenticated = true
+    assert.deepEqual(failing(verifyManifest(callable, MANIFEST_MIGRATIONS)), ["function.rotate_library_revision"])
+    const body = clone(facts); named(body.functions, "rotate_library_revision").body = "BEGIN RETURN NULL; END;"
+    assert.deepEqual(failing(verifyManifest(body, MANIFEST_MIGRATIONS)), ["function.rotate_library_revision"])
+    const disabled = clone(facts); named(disabled.triggers, "shelves_rotate_library_revision").enabled = "D"
+    assert.deepEqual(failing(verifyManifest(disabled, MANIFEST_MIGRATIONS)), ["trigger.shelves_rotate_library_revision"])
+    const noDelete = clone(facts); named(noDelete.triggers, "books_rotate_library_revision").tgtype = 21 // AFTER INSERT OR UPDATE ROW
+    assert.deepEqual(failing(verifyManifest(noDelete, MANIFEST_MIGRATIONS)), ["trigger.books_rotate_library_revision"])
+    const openPreviews = clone(facts); named(openPreviews.policies, "import_previews_select_own").using = "true"
+    assert.deepEqual(failing(verifyManifest(openPreviews, MANIFEST_MIGRATIONS)), ["policy.import_previews_select_own"])
+    const noRls = clone(facts); named(noRls.tables, "library_operations").rls = false
+    assert.deepEqual(failing(verifyManifest(noRls, MANIFEST_MIGRATIONS)), ["rls.library_operations"])
   })
 
   test("drift de trigger, función y políticas se detecta por metadatos", () => {
-    const noTrigger = { ...facts, triggers: [] }
+    const noTrigger = { ...facts, triggers: facts.triggers.filter((t) => t.name !== "books_rotate_version") }
     assert.deepEqual(failing(verifyManifest(noTrigger, MANIFEST_MIGRATIONS)), ["trigger.books_rotate_version"])
-    const after = clone(facts); after.triggers[0].tgtype = 21 // AFTER INSERT OR UPDATE ROW
+    const after = clone(facts); named(after.triggers, "books_rotate_version").tgtype = 21 // AFTER INSERT OR UPDATE ROW
     assert.deepEqual(failing(verifyManifest(after, MANIFEST_MIGRATIONS)), ["trigger.books_rotate_version"])
-    const disabled = clone(facts); disabled.triggers[0].enabled = "D"
+    const disabled = clone(facts); named(disabled.triggers, "books_rotate_version").enabled = "D"
     assert.deepEqual(failing(verifyManifest(disabled, MANIFEST_MIGRATIONS)), ["trigger.books_rotate_version"])
-    const body = clone(facts); body.functions[0].body = "BEGIN RETURN NEW; END;"
+    const body = clone(facts); named(body.functions, "rotate_book_version").body = "BEGIN RETURN NEW; END;"
     assert.deepEqual(failing(verifyManifest(body, MANIFEST_MIGRATIONS)), ["function.rotate_book_version"])
-    const searchPath = clone(facts); searchPath.functions[0].config = null
+    const searchPath = clone(facts); named(searchPath.functions, "rotate_book_version").config = null
     assert.deepEqual(failing(verifyManifest(searchPath, MANIFEST_MIGRATIONS)), ["function.rotate_book_version"])
     const open = clone(facts); open.policies.find((p) => p.name === "books_select_own").using = "true"
     assert.deepEqual(failing(verifyManifest(open, MANIFEST_MIGRATIONS)), ["policy.books_select_own"])
@@ -178,14 +211,14 @@ describe("manifest de objetos", () => {
     const reformatted = clone(facts)
     const policy = reformatted.policies.find((p) => p.name === "shelves_update_own")
     policy.using = "(user_id = auth.uid())\n  AND (NOT is_default)"
-    reformatted.functions[0].body = "begin\n\tNEW.version :=   gen_random_uuid(); -- rota\n\treturn NEW;\nend;"
+    named(reformatted.functions, "rotate_book_version").body = "begin\n\tNEW.version :=   gen_random_uuid(); -- rota\n\treturn NEW;\nend;"
     assert.deepEqual(failing(verifyManifest(reformatted, MANIFEST_MIGRATIONS)), [])
     assert.equal(normalizeExpression("((status = ANY (ARRAY['read'::text])))"), "status=anyarray['read']")
   })
 
   test("el manifest depende del head aplicado", () => {
     // Con solo 0000 aplicado se espera books_shelf_fk y no los objetos de 0001/0002.
-    const failures = failing(verifyManifest(facts, ["0000_biblib_init"]))
+    const failures = failing(verifyManifest(facts0002, ["0000_biblib_init"]))
     assert.ok(failures.includes("constraint.books_shelf_fk"))
     assert.ok(failures.includes("policy.shelves_update_own"))
     assert.ok(!failures.some((id) => id.startsWith("trigger.") || id.startsWith("function.")))
@@ -196,6 +229,7 @@ describe("manifest de objetos", () => {
     const { entries } = loadJournal(drizzleDir)
     const state = classify({ entries }, { biblib: true, ledger: true, rows: rowsFor(entries) }, { ...facts, triggers: [] })
     assert.equal(state.state, "drift")
+    assert.equal(classify({ entries }, { biblib: true, ledger: true, rows: rowsFor(entries) }, facts).state, "up-to-date")
     assert.equal(state.code, EXIT.HISTORY_DIVERGED)
     assert.deepEqual(state.pending, [])
     assert.match(state.checks.find((c) => c.id === "manifest.drift").message, /no se corrige reaplicando/)
@@ -342,19 +376,19 @@ describe("stack scratch real [stack]", { skip: stack.reason ?? false }, () => {
   test("un error intermedio revierte el conjunto y no adelanta el ledger (9)", async (t) => {
     const dir = migrationsCopy()
     // El segundo paso falla siempre (columna duplicada, 42701), haya o no filas en la base.
-    writeFileSync(path.join(dir, "0003_u_inf_04_fallo.sql"), "CREATE TABLE biblib.u_inf_04_probe (id integer);\n--> statement-breakpoint\nALTER TABLE biblib.u_inf_04_probe ADD COLUMN id integer;\n")
-    editJournal(dir, (j) => { j.entries.push({ idx: 3, version: "7", when: 1792700000000, tag: "0003_u_inf_04_fallo", breakpoints: true }) })
+    writeFileSync(path.join(dir, "0004_u_inf_04_fallo.sql"), "CREATE TABLE biblib.u_inf_04_probe (id integer);\n--> statement-breakpoint\nALTER TABLE biblib.u_inf_04_probe ADD COLUMN id integer;\n")
+    editJournal(dir, (j) => { j.entries.push({ idx: 4, version: "7", when: 1792800000000, tag: "0004_u_inf_04_fallo", breakpoints: true }) })
     const journal = loadJournal(dir)
     const sql = connect(stack.resolved, { applicationName: "biblib-test" })
     try {
       const inspection = await inspectDatabase(sql, journal)
-      if (inspection.state !== "pending" || inspection.pending.join() !== "0003_u_inf_04_fallo") { t.skip(`scratch no está en 0002 (${inspection.state})`); return }
+      if (inspection.state !== "pending" || inspection.pending.join() !== "0004_u_inf_04_fallo") { t.skip(`scratch no está en 0003 (${inspection.state})`); return }
       const ledgerBefore = await readLedger(sql)
       const plan = buildPlan({ resolved: stack.resolved, journal, inspection, commit: { sha: "0".repeat(40), drizzleClean: true }, drizzle: "0.45.2" })
       const failure = await applyPlan(sql, { plan, journal, migrationsDir: dir, waitMs: 2000 }).then(() => null, (error) => error)
       assert.equal(failure?.code, EXIT.MIGRATION_FAILED)
-      assert.equal(failure.report.previousHead.tag, "0002_book_versions")
-      assert.equal(failure.report.failedChange, "0003_u_inf_04_fallo")
+      assert.equal(failure.report.previousHead.tag, "0003_library_revision")
+      assert.equal(failure.report.failedChange, "0004_u_inf_04_fallo")
       assert.match(failure.report.result, /revertido/)
       assert.deepEqual((await readLedger(sql)).rows, ledgerBefore.rows)
       const [{ probe }] = await sql`select to_regclass('biblib.u_inf_04_probe') is not null as probe`
