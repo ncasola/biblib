@@ -7,11 +7,46 @@ export interface Publisher {
   name: string
 }
 
-export interface CatalogueMetadata {
-  source: "manual" | "open-library" | "photo" | "import"
+/** Fuentes del objeto `catalogue` legacy (v1, sin `schemaVersion`). */
+export type CatalogueSourceV1 = "manual" | "open-library" | "photo" | "import"
+
+/**
+ * Fuentes admitidas en la procedencia ampliada. `google-books` se añadirá cuando exista su lector
+ * y validador (U-BIB-03): hasta entonces se rechaza con explicación, nunca se reclasifica.
+ */
+export type ProvenanceProvider = CatalogueSourceV1 | "bne"
+
+export type ProvenanceField = "title" | "subtitle" | "authors" | "publishers" | "publish_date" | "number_of_pages" | "cover"
+
+export interface FieldProvenance {
+  provider: ProvenanceProvider
+  sourceUrl?: string
+  recordId?: string
+  retrievedAt?: string
+  selection: "user-selected" | "manually-verified" | "unverified"
+}
+
+/** Procedencia legacy: una fuente para toda la ficha. La ausencia de `isbnVerified` se lee como `false`. */
+export interface CatalogueMetadataV1 {
+  schemaVersion?: undefined
+  source: CatalogueSourceV1
+  /** La persona confirmó el ISBN frente a su ejemplar físico. Un proveedor o el checksum nunca lo activan. */
   isbnVerified: boolean
   sourceUrl?: string
 }
+
+/** `catalogue.schemaVersion: 2`: conserva la fuente primaria y añade procedencia por campo. */
+export interface CatalogueAttributionV2 {
+  schemaVersion: 2
+  source: ProvenanceProvider
+  isbnVerified: boolean
+  /** Derivado de `normalizeIsbn` al leer; no se persiste ni equivale a comprobar el ejemplar. */
+  isbnChecksumValid?: boolean
+  sourceUrl?: string
+  fields?: Partial<Record<ProvenanceField, FieldProvenance>>
+}
+
+export type CatalogueMetadata = CatalogueMetadataV1 | CatalogueAttributionV2
 
 export interface Book {
   id: string

@@ -2,6 +2,7 @@ import { z } from "zod"
 import { normalizeBookCover } from "./book-covers"
 import { normalizeIsbn } from "./isbn"
 import { DomainError } from "./domain-errors"
+import { catalogueProblem, catalogueSchema, normalizeCatalogue } from "./catalogue-provenance"
 
 export const uuidSchema = z.uuid({ message: "El identificador no es válido." })
 export const statusSchema = z.enum(["read", "reading", "unread", "to-read"])
@@ -23,17 +24,16 @@ const bookInputSchema = z.object({
   cover: z.object({ small: coverUrl.optional(), medium: coverUrl.optional(), large: coverUrl.optional() }).nullish(),
   status: statusSchema,
   shelf_id: z.string().max(100).default(""),
-  catalogue: z.object({
-    source: z.enum(["manual", "open-library", "photo", "import"]),
-    isbnVerified: z.boolean(),
-    sourceUrl: z.url().max(2048).refine((url) => url.startsWith("https://")).optional(),
-  }).optional(),
+  // Procedencia legacy (v1) o `schemaVersion: 2` (U-BIB-04); las acciones deciden cuál se guarda.
+  catalogue: catalogueSchema.optional(),
 })
 
 export type BookInput = z.input<typeof bookInputSchema>
 
 export function parseBookInput(input: unknown) {
   const result = bookInputSchema.safeParse(input)
+  const problem = !result.success && input && typeof input === "object" && "catalogue" in input ? catalogueProblem(input.catalogue) : null
+  if (problem) throw new DomainError("INVALID_INPUT", problem)
   if (!result.success) throw new DomainError("INVALID_INPUT", "Revisa el título, autores, páginas, estado y dirección de portada.")
   const data = result.data
   let isbn = data.isbn
@@ -45,11 +45,7 @@ export function parseBookInput(input: unknown) {
     if (!normalized) throw new DomainError("INVALID_INPUT", "El ISBN no es válido. Revisa sus dígitos o déjalo vacío.")
     isbn = normalized
   }
-  return { ...data, isbn, cover: normalizeBookCover(data.cover), catalogue: {
-    source: data.catalogue?.source ?? "manual",
-    isbnVerified: Boolean(normalizeIsbn(isbn) && data.catalogue?.isbnVerified),
-    ...(data.catalogue?.sourceUrl ? { sourceUrl: data.catalogue.sourceUrl } : {}),
-  } }
+  return { ...data, isbn, cover: normalizeBookCover(data.cover), catalogue: normalizeCatalogue(data.catalogue ?? { source: "manual", isbnVerified: false }, isbn) }
 }
 
 export function parseUuid(value: unknown): string {

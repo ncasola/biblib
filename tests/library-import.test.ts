@@ -141,7 +141,9 @@ test("exporta versión y fecha y restaura tanto el formato antiguo como el versi
   assert.deepEqual(parseLibraryImport(JSON.parse(JSON.stringify(exported))), original)
   assert.deepEqual(parseLibraryImport(original), original)
   assert.deepEqual(original, snapshot)
-  assert.throws(() => parseLibraryImport({ ...exported, formatVersion: 2 }), /versión.*no es compatible/)
+  assert.throws(() => parseLibraryImport({ ...exported, formatVersion: 3 }), /versión.*no es compatible/)
+  // No existe un formato 2 con el array `books`: el lector v2 no lo interpreta como v1.
+  assert.throws(() => parseLibraryImport({ ...exported, formatVersion: 2 }), /formato 2 contiene secciones.*books/)
   assert.throws(() => parseLibraryImport({ ...exported, exportedAt: undefined }), /fecha de exportación/)
   assert.throws(() => parseLibraryImport({ ...exported, exportedAt: "ayer" }), /formato de biblioteca válido/)
 })

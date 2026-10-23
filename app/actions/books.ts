@@ -14,6 +14,13 @@ import { domainMutation } from "@/lib/server-action"
 import { assertBookVersion, bookVersionConflict } from "@/lib/book-version"
 import { telemetry } from "@/lib/observability/server"
 import { observeOperation } from "@/lib/observability/operations"
+import { readCatalogConfig } from "@/lib/bibliographic-catalog/config"
+import { catalogueForCreate, catalogueForUpdate, catalogueWithField } from "@/lib/catalogue-provenance"
+
+/** U-BIB-04: los writers de procedencia v2 solo se activan con BIBLIB_BIBLIOGRAPHY_REVIEW_ENABLED=true. */
+function bibliographyReviewEnabled(): boolean {
+  try { return readCatalogConfig().reviewEnabled } catch { return false }
+}
 
 async function getShelf(tx: DatabaseTransaction, userId: string, requested: string): Promise<string> {
   if (!requested || requested === "shelf-1") return ensureDefaultShelf(tx, userId)
@@ -60,6 +67,7 @@ async function assertUniqueIsbn(tx: DatabaseTransaction, userId: string, isbn: s
 async function addBook(input: unknown): Promise<Book> {
   const userId = await getRequiredUserId()
   const book = parseBookInput(input)
+  const catalogue = catalogueForCreate(book.catalogue, bibliographyReviewEnabled())
   try {
     return await withRlsContext(userId, async (tx) => {
       await lockLibrary(tx)
@@ -71,7 +79,7 @@ async function addBook(input: unknown): Promise<Book> {
         id, userId, isbn, title: book.title, subtitle: book.subtitle ?? null,
         authors: book.authors, publishers: book.publishers ?? [], numberOfPages: book.number_of_pages,
         publishDate: book.publish_date, coverSmall: book.cover.small, coverMedium: book.cover.medium,
-        coverLarge: book.cover.large, status: book.status, shelfId, catalogue: book.catalogue,
+        coverLarge: book.cover.large, status: book.status, shelfId, catalogue,
       })
       const created = await findBook(tx, userId, id)
       if (!created) throw new DomainError("NOT_FOUND", "No se pudo recuperar el libro guardado.")
@@ -93,11 +101,13 @@ async function updateBook(bookId: string, input: unknown): Promise<Book> {
       const shelfId = await getShelf(tx, userId, book.shelf_id)
       const isbn = book.isbn || `manual-${id}`
       await assertUniqueIsbn(tx, userId, isbn, id)
+      // La procedencia sale de la ficha bloqueada y versionada: los campos cambiados pasan a «manual».
+      const catalogue = catalogueForUpdate(current, { ...book, isbn }, bibliographyReviewEnabled())
       const changed = await tx.update(books).set({
         isbn, title: book.title, subtitle: book.subtitle ?? null, authors: book.authors,
         publishers: book.publishers ?? [], numberOfPages: book.number_of_pages,
         publishDate: book.publish_date, coverSmall: book.cover.small, coverMedium: book.cover.medium,
-        coverLarge: book.cover.large, status: book.status, shelfId, catalogue: book.catalogue, updatedAt: new Date(),
+        coverLarge: book.cover.large, status: book.status, shelfId, catalogue, updatedAt: new Date(),
       }).where(and(eq(books.id, id), eq(books.userId, userId), eq(books.version, current.version!))).returning({ id: books.id })
       if (!changed.length) throw bookVersionConflict()
       return (await findBook(tx, userId, id))!
@@ -153,8 +163,9 @@ async function refreshBookCover(bookId: string, version: unknown): Promise<Book>
     if (!latest) throw new DomainError("NOT_FOUND", "El libro ya no está disponible.")
     assertBookVersion(latest, current.version)
     if (normalizedBookIdentifier(latest.isbn) !== normalizedBookIdentifier(current.isbn)) throw new DomainError("CONFLICT", "El ISBN ha cambiado mientras se buscaba la portada. Vuelve a intentarlo.")
+    const catalogue = catalogueWithField(latest.catalogue, "cover", { provider: "open-library", retrievedAt: new Date().toISOString(), selection: "user-selected" }, bibliographyReviewEnabled())
     const changed = await tx.update(books).set({ coverSmall: enriched.cover.small, coverMedium: enriched.cover.medium,
-      coverLarge: enriched.cover.large, updatedAt: new Date() }).where(and(eq(books.id, current.id), eq(books.userId, userId), eq(books.version, latest.version!))).returning({ id: books.id })
+      coverLarge: enriched.cover.large, catalogue, updatedAt: new Date() }).where(and(eq(books.id, current.id), eq(books.userId, userId), eq(books.version, latest.version!))).returning({ id: books.id })
     if (!changed.length) throw bookVersionConflict()
     return (await findBook(tx, userId, current.id))!
   })

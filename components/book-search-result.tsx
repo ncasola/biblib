@@ -9,6 +9,7 @@ import { addBookAction } from "@/app/actions/books"
 import type { Book, Shelf } from "@/lib/types"
 import { CheckCircle } from "lucide-react"
 import { unwrapAction } from "@/lib/action-result"
+import { provenanceProviderLabel } from "@/lib/catalogue-provenance"
 
 export function BookSearchResult({ book, shelves, existing = false }: { book: Book; shelves: Shelf[]; existing?: boolean }) {
   const [saved, setSaved] = useState<Book | null>(existing ? book : null)
@@ -21,10 +22,14 @@ export function BookSearchResult({ book, shelves, existing = false }: { book: Bo
       <Button asChild><Link href={`/book/${saved.id}`}>Ver libro guardado</Link></Button>
     </section>
   )
+  // Sin la revisión bibliográfica solo se guarda procedencia v1: otra fuente se avisa, nunca se reclasifica en silencio.
+  const legacyCatalogue = book.catalogue && book.catalogue.schemaVersion !== 2 ? book.catalogue : null
+  const sourceName = book.catalogue ? provenanceProviderLabel(book.catalogue.source) : "una fuente bibliográfica"
   return (
     <section className="rounded-2xl border border-border bg-card/80 backdrop-blur-md p-5 sm:p-6 shadow-xl space-y-5">
-      <div><h2 className="text-2xl font-bold">Revisar libro encontrado</h2><p className="text-sm text-muted-foreground mt-2">Datos de Open Library. Comprueba que el ISBN y la edición coinciden con tu ejemplar y corrige lo necesario antes de guardar.</p></div>
-      <BookForm initialBook={{ ...book, catalogue: book.catalogue ?? { source: "open-library", isbnVerified: false } }} shelves={shelves} onSubmit={async (input) => { setSaved(unwrapAction(await addBookAction(input))) }} />
+      <div><h2 className="text-2xl font-bold">Revisar libro encontrado</h2><p className="text-sm text-muted-foreground mt-2">Datos de {sourceName}. Comprueba que el ISBN y la edición coinciden con tu ejemplar y corrige lo necesario antes de guardar.</p>
+        {!legacyCatalogue && <p role="note" className="mt-2 rounded-xl border border-border bg-muted/40 p-3 text-sm">Esta fuente todavía no se puede registrar como procedencia de la ficha: se guardará como entrada manual con los datos que confirmes.</p>}</div>
+      <BookForm initialBook={{ ...book, catalogue: legacyCatalogue ?? { source: "manual", isbnVerified: false } }} shelves={shelves} onSubmit={async (input) => { setSaved(unwrapAction(await addBookAction(input))) }} />
     </section>
   )
 }
