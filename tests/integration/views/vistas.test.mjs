@@ -39,7 +39,7 @@ test("A/B: B no ve, renombra, sobrescribe ni borra lo de A por acción, SQL o Da
   for (const method of ["GET", "POST", "PATCH", "DELETE"]) {
     const env = ctx.resolved.target.env()
     const response = await fetch(`${env.SUPABASE_URL}/rest/v1/saved_book_views?id=eq.${view.id}`, {
-      method, headers: { apikey: env.SUPABASE_ANON_KEY, Authorization: `Bearer ${b.session.access_token}`, [method === "GET" ? "Accept-Profile" : "Content-Profile"]: "biblib", "Content-Type": "application/json" },
+      method, signal: AbortSignal.timeout(10_000), headers: { apikey: env.SUPABASE_ANON_KEY, Authorization: `Bearer ${b.session.access_token}`, [method === "GET" ? "Accept-Profile" : "Content-Profile"]: "biblib", "Content-Type": "application/json" },
       ...(method === "POST" || method === "PATCH" ? { body: JSON.stringify({ name: "Intrusión" }) } : {}),
     })
     assert.equal(response.status, 406)

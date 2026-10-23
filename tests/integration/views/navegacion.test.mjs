@@ -57,7 +57,7 @@ test("Chrome real: URL, recarga, atrás/adelante, selección, errores de red y e
   const rejectSave = (route) => route.request().headers()["next-action"] === saveId ? route.abort("failed") : route.fallback()
   await page.route("**/*", rejectSave)
   await p.getByRole("button", { name: "Guardar vista actual", exact: true }).click()
-  await expect(p.getByRole("alert")).toBeVisible()
+  await expect(p.getByRole("alert")).toHaveText("No se pudo completar la operación. Tus filtros se conservan.")
   assert.equal(page.url(), urlBefore)
   assert.equal((await ctx.sql`select count(*)::int n from biblib.saved_book_views where user_id = ${ctx.users.a} and name like ${`${ctx.prefix}%`}`)[0].n, 1)
   await page.unroute("**/*", rejectSave)
@@ -74,6 +74,7 @@ test("Chrome real: URL, recarga, atrás/adelante, selección, errores de red y e
   await page.getByRole("button", { name: "Mover 10 libros", exact: true }).click()
   await expect(page.getByRole("checkbox", { name: "Seleccionar todos los libros de esta página" })).toBeChecked()
   await expect(page.getByRole("button", { name: "Mover 10 libros", exact: true })).toBeEnabled()
+  await expect(page.getByText("No se pudieron mover los libros seleccionados. Inténtalo de nuevo.")).toBeVisible()
   await page.unroute("**/*", rejectMove)
   await page.getByRole("button", { name: "Página siguiente" }).click()
   await expect(page.getByText("Página 2 de 2")).toBeVisible()
@@ -96,10 +97,11 @@ test("Chrome real: URL, recarga, atrás/adelante, selección, errores de red y e
   const gate = new Promise((resolve) => { release = resolve })
   const delayDelete = async (route) => { if (route.request().headers()["next-action"] === deleteId) await gate; await route.fallback() }
   await page.route("**/*", delayDelete)
-  await row.getByRole("button", { name: "Confirmar borrado" }).click()
-  await expect(p.getByRole("status")).toHaveText("Procesando vista…")
-  await expect(row).toBeVisible()
-  release()
+  try {
+    await row.getByRole("button", { name: "Confirmar borrado" }).click()
+    await expect(p.getByRole("status")).toHaveText("Procesando vista…")
+    await expect(row).toBeVisible()
+  } finally { release() }
   await expect(p.getByRole("status")).toHaveText("Vista borrada.")
   await expect(row).toHaveCount(0)
   await page.unroute("**/*", delayDelete)

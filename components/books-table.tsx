@@ -19,6 +19,7 @@ import { applySavedView, type SavedViewFilters } from "@/lib/saved-views"
 import { BOOK_PAGE_SIZE, bookRowAnchor, buildBookDetailHref, buildCollectionPath, defaultBookSearchFilters, parseBookRowAnchor, normalizeBookSearchQuery, parseBookSearchFilters, serializeBookSearchFilters, type BookSearchFilters, type BookSort, type BookSortKey, type BookStatusFilter, type BookView } from "@/lib/book-search"
 import type { Book, Shelf } from "@/lib/types"
 import { unwrapAction } from "@/lib/action-result"
+import { DomainError } from "@/lib/domain-errors"
 
 interface BooksTableProps {
   initialView?: BookView
@@ -216,7 +217,7 @@ export function BooksTable({ initialView = "table" }: BooksTableProps) {
       retryList()
       await loadShelves()
     } catch (error) {
-      setMoveError(error instanceof Error ? error.message : "No se pudieron mover los libros seleccionados.")
+      setMoveError(error instanceof DomainError ? error.message : "No se pudieron mover los libros seleccionados. Inténtalo de nuevo.")
     } finally {
       setMovePending(false)
     }

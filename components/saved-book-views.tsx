@@ -5,6 +5,7 @@ import { deleteSavedViewAction, listSavedViewsAction, overwriteSavedViewAction, 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { unwrapAction } from "@/lib/action-result"
+import { DomainError } from "@/lib/domain-errors"
 import { currentViewFilters, type SavedBookView, type SavedViewFilters } from "@/lib/saved-views"
 import type { BookSearchFilters } from "@/lib/book-search"
 
@@ -24,7 +25,7 @@ export function SavedBookViews({ filters, onApply }: { filters: BookSearchFilter
     setError("")
     setMessage("")
     try { await work(); setMessage(success) }
-    catch (cause) { setError(cause instanceof Error ? cause.message : "No se pudo completar la operación. Tus filtros se conservan.") }
+    catch (cause) { setError(cause instanceof DomainError ? cause.message : "No se pudo completar la operación. Tus filtros se conservan.") }
     finally { setPending(false) }
   }
 
