@@ -187,7 +187,8 @@
         "QA-02",
         "OPS-02"
       ],
-      "status": "planned"
+      "status": "in-progress",
+      "note": "Se entrega preparada: sin destino remoto autorizado."
     },
     {
       "id": "U-DAT-01",
@@ -293,7 +294,12 @@
         "IMP-02",
         "OPS-01"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O08 · merge 88570f3; 0004_catalogue_coordination; grupo catalogue 14/14 en scratch (docs/validacion/2026-10-23/O08/dat-05/)",
+      "pending": [
+        "lib/library-import.ts y lib/api-client.ts siguen con fetch directo a OL: U-BIB-05/U-DAT-03.",
+        "Grupo catalogue con el perfil test en el cierre de ola."
+      ]
     },
     {
       "id": "U-DAT-06",
@@ -998,7 +1004,8 @@
         "BE-04",
         "IMP-04"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O08 · merge ad0788e + f4dbfeb/ff890a1; 3 consultas públicas reales a BNE (docs/validacion/2026-10-23/O08/bib-02.md)"
     },
     {
       "id": "U-BIB-03",
