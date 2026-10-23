@@ -70,7 +70,11 @@
         "QA-01",
         "OPS-02"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O02 · merge 52cef6e; build:test aislado + check:bundle limpio (29 archivos)",
+      "pending": [
+        "El checkout principal tiene un .env no acreditado: dev:local lo rechaza hasta moverlo fuera del camino de carga (decisión de Néstor)."
+      ]
     },
     {
       "id": "U-INF-03",
@@ -833,7 +837,11 @@
         "BE-01",
         "BE-04"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O03 · merge 9536de8; primitivas F0, sin exportador remoto",
+      "pending": [
+        "Exportador, panel y alertas remotas: F1/F4."
+      ]
     },
     {
       "id": "U-OPS-02",
