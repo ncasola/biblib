@@ -24,9 +24,11 @@ Plan operativo de la fase F1 (O07–O10): integridad de colección, proveedores 
 | O07 | U-QA-02 E2E y navegadores (tras U-DAT-01) | Claude (Opus) | `test` | No (Playwright en lockfile) |
 | O08 | U-BIB-02 Adaptadores OL y BNE | Codex | No | No |
 | O08 | U-DAT-05 Cuota y caché compartidas | Claude (Opus) | `scratch` | Sí (`0004`) |
-| O08 | U-EXP-04 3D táctil/teclado y alternativa 2D | OpenCode · `glm-5.3` (cuota recuperada) | No | No |
+| O08 | U-EXP-04 3D táctil/teclado y alternativa 2D | OpenCode `glm-5.3` → Codex (cuota agotada otra vez) | No | No |
 | O08 | U-INF-07 Adopción y promoción remota (tras U-DAT-05) | Claude (Opus) | `scratch` | No (sin destino remoto autorizado: queda preparada) |
-| O09 | U-DAT-03, U-BIB-03, U-BIB-04, U-QA-03, U-QA-04, U-OPS-04 | Se fija al cerrar O08 | — | U-DAT-03 |
+| O09 | U-BIB-04 Procedencia y candidatos | Claude (Opus) | No | No (pregunta antes) |
+| O09 | U-BIB-03 Google Books opcional | Codex | No | No |
+| O09 | U-DAT-03, U-QA-03, U-QA-04, U-OPS-04 | Tras U-QA-02/U-INF-07 (stack) | — | U-DAT-03 |
 | O10 | U-DAT-02, U-DAT-08, U-BIB-05, U-EXP-02 | Se fija al cerrar O09 | — | U-DAT-02 / U-EXP-02 en orden |
 
 ## Puertas

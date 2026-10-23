@@ -1028,7 +1028,7 @@
         "BE-04",
         "OPS-02"
       ],
-      "status": "planned",
+      "status": "in-progress",
       "activationCondition": "Entrega técnica aceptable con fixtures y flag apagado. Live permanece deshabilitado hasta comprobar clave, cuota/coste, comunicación de privacidad y uso permitido; OL+BNE no dependen de su activación."
     },
     {
@@ -1050,7 +1050,7 @@
         "UX-08",
         "UX-01"
       ],
-      "status": "planned"
+      "status": "in-progress"
     },
     {
       "id": "U-BIB-05",
