@@ -1,0 +1,55 @@
+Integración Supabase real · perfil test · biblib-test · huella b831ef825c09 · run 2041be7c8736
+Compilando la app para el perfil test…
+Bundle de cliente sin credenciales administrativas ni URLs privadas.
+✔ Auth del perfil test solo contiene las cuentas ficticias A/B del censo, sin identidades externas (696.1116ms)
+✔ el correo local solo se entrega a Mailpit y a destinatarios @biblib.test (8.0953ms)
+✔ getUser identifica a A y B en GoTrue y rechaza un token alterado (4214.5442ms)
+✔ cookies SSR: nombre sb-<ref>-auth-token, Path=/, SameSite=Lax y sesión en base64url (0.463ms)
+✔ renovación por el SDK: tokens nuevos, misma identidad y cookies actualizadas (122.6281ms)
+✔ anónimo en una ruta privada con consulta vuelve al acceso conservando la ruta (5.8498ms)
+✔ con sesión, /login devuelve a la ruta con consulta y descarta destinos externos (182.6972ms)
+✔ una sesión vencida con refresh válido se renueva en el proxy y mantiene el destino (418.2776ms)
+✔ cookies fragmentadas producidas por el SDK funcionan en el proxy y en las acciones (330.1641ms)
+✔ cerrar sesión elimina la vista privada, también con una copia antigua de las cookies (268.5723ms)
+✔ cierre y renovación concurrentes no dejan ninguna sesión utilizable (1773.1768ms)
+✔ cada cuenta solo recibe su biblioteca desde las acciones (4330.6899ms)
+✔ A no lee, modifica, mueve ni borra recursos de B manipulando IDs (1604.784ms)
+✔ anónimo no obtiene datos: el proxy redirige las acciones y la API responde 401 (8.4997ms)
+✔ CRUD propio como A: versión rotada por el trigger, conflicto con versión antigua y portada por defecto (1021.6764ms)
+✔ la estantería predeterminada no se borra ni se renombra desde la app (212.0071ms)
+✔ la conexión de la app no arrastra claims: A, B, fallo de A y B otra vez (537.6479ms)
+✔ conexión reutilizada A → B → sin claims, también tras una transacción fallida (752.3205ms)
+✔ PostgREST rechaza el esquema biblib para anónimo y para A (lectura y escritura) (2462.91ms)
+✔ el esquema público no expone tablas de BibLib (2.6858ms)
+✔ supabase-js con .schema('biblib') no obtiene datos (10.5995ms)
+✔ GraphQL no expone libros ni estanterías (pg_graphql desactivado en el stack) (15.1068ms)
+✔ A solo ve sus filas: los libros y estanterías de B no existen para A (659.8868ms)
+✔ A no actualiza ni borra libros o estanterías de B (0 filas afectadas) (13.4014ms)
+✔ A no inserta para B ni enlaza sus libros con estanterías de B (29.3048ms)
+✔ la estantería predeterminada está protegida también para su dueño (17.7838ms)
+✔ anon no tiene acceso al esquema biblib, ni siquiera con claims de A (9.2547ms)
+✔ books_rotate_version rota la versión con el rol authenticated en alta, cambio y versión forzada (12.0722ms)
+✔ el bucket de fixtures es privado y rechaza la lectura anónima por todas las rutas (2360.8126ms)
+✔ una sesión de A tampoco lee el bucket de fixtures sin firma (sin políticas por cuenta todavía) (8.2549ms)
+✔ la URL firmada por el proceso de prueba descarga los bytes exactos; alterada o caducada se rechaza (2546.5835ms)
+✔ un objeto creado por el run se sirve solo firmado y se elimina sin tocar el fixture (71.5501ms)
+✔ la portada por defecto se sirve desde la app, sin red externa ni sesión (6.1476ms)
+ℹ tests 33
+ℹ suites 0
+ℹ pass 33
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 39580.6717
+✔ con Auth y Storage inaccesibles no se sirven datos privados ni objetos, y todo vuelve al recuperarlos (14331.8193ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 18851.8177
+Cuentas de Auth sin cambios (2, todas @biblib.test). Limpieza del run completa.
+Resultado: 34 escenarios superados, 0 fallidos.

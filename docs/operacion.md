@@ -245,7 +245,7 @@ pnpm db:local:down --profile scratch
 pnpm db:local:bootstrap --profile scratch --json
 ```
 
-Todos aceptan únicamente `--profile main|test|scratch` y `--json`. El perfil predeterminado es `main`; desde un worktree `up` y `bootstrap` exigen `scratch`. Para consumir JSON usa `pnpm --silent` (suprime la cabecera propia de pnpm) o `node scripts/local-stack.mjs status --profile scratch --json`. El CLI usa la raíz del módulo, no el directorio actual de la terminal. Los procesos reciben argumentos separados, sin shell, con `--workdir` y `--network-id` explícitos y entorno limpiado por `childEnv`. Windows y Linux usan el entrypoint JS del paquete fijado que respalda `node_modules/.bin/supabase`.
+Todos aceptan únicamente `--profile main|test|scratch` y `--json`. El perfil predeterminado es `main`; desde un worktree `up` y `bootstrap` exigen `scratch` o `test` (este último, para `test:integration:local`). Para consumir JSON usa `pnpm --silent` (suprime la cabecera propia de pnpm) o `node scripts/local-stack.mjs status --profile scratch --json`. El CLI usa la raíz del módulo, no el directorio actual de la terminal. Los procesos reciben argumentos separados, sin shell, con `--workdir` y `--network-id` explícitos y entorno limpiado por `childEnv`. Windows y Linux usan el entrypoint JS del paquete fijado que respalda `node_modules/.bin/supabase`.
 
 `doctor` es de solo lectura: valida manifiesto/configuración, versiones fijadas frente a instaladas, motor Docker, identidad, archivos de entorno mediante `assertNoForeignEnvFiles`, puertos ocupados (incluidos los reservados) y rangos TCP excluidos de Windows. Detecta el PID con netstat/ss cuando está disponible y nunca termina al ocupante. No abre Docker Desktop, no genera workdirs, no modifica esquema ni consulta datos. Un `.env*` no acreditado produce salida 3 sin mostrar su contenido. No consulta `supabase status` ni carga credenciales para diagnosticar un stack parado.
 
@@ -370,3 +370,82 @@ El bucket **privado** `biblib-test-assets` contiene `fixtures/portada.webp`, con
 `tests/fixtures/catalogue/*.json` contiene respuestas de ISBN offline en formato Open Library; `lib/catalogue-fixtures.ts` ofrece `readCatalogueFixture(isbn)`, que devuelve una copia o `{}` sin red. **U-BIB conectará ese lector con el flujo de proveedores**: `BIBLIB_CATALOGUE_MODE=fixture` ya se propaga, pero esta entrega no cambia el proveedor actual. Las altas manuales y la lectura directa del catálogo fixture funcionan sin Internet; la búsqueda actual del producto aún usa Open Library.
 
 `pnpm test:scripts` incluye simulaciones de censo, identidad ajena, ledger pendiente, reintentos, cuenta existente, preservación de fichas y SQL acotado. La prueba **[stack]** de `tests/scripts/seed.test.mjs` usa solo `scratch` en marcha y acreditado; con `BIBLIB_SKIP_STACK_TESTS=1` se omite. Comprueba seed repetido, libro manual sin marcador, versiones, sesiones A/B, token alterado, nombre, refresh/signOut/revocación, cookies SSR, rechazo anónimo Storage, descarga firmada determinista y correo en Mailpit. Deja un libro manual ficticio `manual-ensayo-o05` en A para comprobar su conservación. Al terminar el ensayo ejecuta `pnpm db:local:down --profile scratch`; se conservan red y volúmenes propios. La matriz completa de RLS A/B corresponde a U-QA-01.
+
+## Integración Supabase real · U-QA-01
+
+`pnpm test:integration:local` ejecuta la suite `tests/integration/{auth,rls,storage}` contra los servicios reales del perfil **`test`** (`biblib-test`, puertos 55330–55339) y la app compilada para ese perfil en `127.0.0.1:3148`. Para identidad, cookies, permisos y Storage sustituye a los sustitutos de Auth de `test:db`/`test:smoke`. Esos dos comandos se conservan: son rápidos y no necesitan el stack.
+
+```powershell
+pnpm db:local:bootstrap --profile test   # o db:local:up + db:plan:local/db:migrate:local + db:seed:local, todos con --profile test
+pnpm test:integration:local              # [--profile test] [--reuse-build]
+pnpm db:local:down --profile test        # conserva red y volúmenes propios
+```
+
+Desde un worktree, `up`/`bootstrap` admiten `test` además de `scratch`. La suite está en `.mjs` y se ejecuta con `node --test`, como `tests/scripts` y los helpers de U-INF-05; no hay compilación TypeScript intermedia.
+
+### Qué hace el runner
+
+`tests/integration/run.mjs` no acepta URLs ni otros perfiles. Su secuencia es:
+
+1. **Acredita el perfil** con `resolveSeedTarget("test")`: `loadTarget("local", { profile: "test" })`, registro `.biblib/state/test.json`, huella, propiedad Docker y servicios Postgres/GoTrue/Kong/Storage en marcha. Toma el bloqueo del perfil; otro lifecycle activo devuelve **7**.
+2. **Comprueba ledger y fixtures.** Lee el ledger: con migraciones pendientes sale con **6** y con drift, con **5**. Exige el registro privado de fixtures A/B completo; si falta, sale con **10** (ejecuta `db:seed:local --profile test`). El runner no siembra, porque el seed vuelve a pedir el correo de GoTrue, limitado a 2 por hora.
+3. **Prepara la ejecución.** Limpia los restos registrados de un run anterior y anota las cuentas de Auth.
+4. **Compila y verifica el bundle.** Ejecuta `next-target build local --profile test` (`.next-local`), salvo con `--reuse-build`; `start` sigue validando la huella del build. Después pasa `check:bundle` sobre ese build: si encuentra material privado, sale con **11** antes de las pruebas.
+5. **Arranca la app** con `next-target start local --profile test`. Si el puerto 3148 está ocupado, sale con **8** y no termina al ocupante.
+6. **Ejecuta las pruebas** con `node --test --test-concurrency=1`. La caída simulada de servicios va sola, en un lote final.
+7. **Cierra.** Comprueba que las cuentas de Auth son las mismas y todas `@biblib.test`, limpia lo creado por el run y detiene solo el árbol de procesos de la app que arrancó.
+
+Las sesiones salen de `signInWithPassword` contra GoTrue, mediante `tests/integration/support/session.mjs`. Las cookies son las que escribe `@supabase/ssr`.
+
+Las acciones de dominio se ejecutan **por HTTP contra la app real**, igual que desde el navegador: `POST` con la cabecera `Next-Action`, cuyo ID sale de `server-reference-manifest.json` del build, y las cookies del harness. Así se prueban el proxy, `getUser` real, `withRlsContext` y la conexión Postgres compartida de la app (`max: 1`). Invocar `lib/db` en el proceso de pruebas no cubriría cookies ni proxy. No se añaden endpoints ni bypass al producto.
+
+### Qué cubre
+
+| Archivo | Comprobaciones |
+| --- | --- |
+| `auth/sesion` | `getUser` de A/B; se rechaza un token con `sub` cambiado. Cookies `sb-127-auth-token` con `Path=/`, `SameSite=Lax` y codificación base64url. Renovación por el SDK. La redirección anónima conserva la consulta. `/login` devuelve a `/books?status=read&page=2` y rechaza un destino externo. El proxy renueva una sesión vencida y mantiene el destino. Las cookies partidas `.0/.1` del SDK funcionan en proxy y acciones. `signOut` vacía las cookies; se rechazan la copia antigua, su access token y su refresh, y la renovación revocada vuelve al acceso. Un cierre y una renovación concurrentes no dejan ninguna sesión válida. |
+| `auth/cuentas` | Solo existen las cuentas A/B del censo, `@biblib.test`, sin identidades externas. Mailpit solo recibió correo para `@biblib.test`. |
+| `auth/caida-servicios` | Se detiene el gateway propio (Kong del perfil), por el que pasan GoTrue y Storage. El proxy redirige con `error=session`, las acciones no devuelven datos y la API responde 401. El objeto firmado deja de servirse, pero la portada por defecto sigue disponible. Al recuperarlo, la sesión y la firma vuelven a funcionar. |
+| `rls/acciones-ab` | Cada cuenta recibe solo su biblioteca. A manipula IDs de B: detalle, filtros, estado, edición, borrado, mover, mover en lote, alta en estantería ajena, renombrar o borrar estanterías ajenas y `/api/books/add`. Recibe `NOT_FOUND`/404 y B no cambia. El anónimo recibe 307 del proxy o 401 de la API. CRUD propio con rotación de versión, conflicto con versión antigua y portada por defecto. La predeterminada no se borra ni se renombra. En la conexión compartida, A→B→fallo de A→B no deja claims residuales. |
+| `rls/conexion-reutilizada` | En una sola conexión, las sentencias de `withRlsContext` dejan tras commit o rollback el rol `postgres`, ningún claim y `auth.uid()` nulo, en el mismo backend. |
+| `rls/sql-roles` | Rol `authenticated` con `request.jwt.claims` en SQL. Lectura, actualización, borrado, alta y relaciones cruzadas: 0 filas, `42501` o `23503`. Estantería predeterminada: 0 filas, `42501` y `23505`. `anon` sin acceso a `biblib` (`42501`). Trigger `books_rotate_version` en alta, cambio y versión forzada. Todo se revierte. |
+| `rls/data-api` | PostgREST rechaza el perfil `biblib` (406 `PGRST106`) en lectura y escritura, para anónimo y para A. El esquema público no tiene esas tablas (404). `supabase-js` con `.schema("biblib")` no obtiene datos. GraphQL no las expone; hoy `pg_graphql` no está habilitado. |
+| `storage/fixtures` | `biblib-test-assets` es privado: no leen el anónimo, la URL pública ni una sesión de A sin firma. La firma del proceso de prueba devuelve los bytes de `public/default-book-cover.webp`; se rechaza alterada, para otra ruta o caducada. Un objeto del run se sirve solo firmado y se elimina sin tocar el fixture. La app sirve la portada por defecto sin red ni sesión. |
+
+`pnpm test:scripts` incluye `tests/scripts/integration-runner.test.mjs`, que no necesita Docker. Cubre argumentos, enmascarado de salida, orden de lotes, decodificación de respuestas de acciones, envejecimiento de cookies y limpieza acotada.
+
+### Datos, limpieza y salida
+
+- **Credencial administrativa local.** Solo la usan los procesos del runner y de las pruebas, para listar cuentas, firmar y limpiar. Procede del estado del perfil y del registro privado de U-INF-05 y nunca se imprime. `check:bundle` confirma que no llega al bundle de cliente. **Limitación heredada de U-INF-02:** el proceso servidor que lanza `start:local` recibe el entorno completo de `loadTarget`, que hoy incluye esa clave local aunque la app no la usa.
+- **Recursos del run y limpieza.** Libros y estanterías llevan el título `[QA-01 <run>] …`. Los objetos van bajo `qa-01/<run>/` en `biblib-test-assets`. El metadato temporal `qa01_relleno` de B fuerza las cookies partidas. Todo se registra en `.biblib/integration/test-run.json` (ignorado por Git), solo con IDs, rutas y claves, sin sesiones. La limpieza borra por ID + propietario + marca. Si queda algo, sale con **10** y conserva el manifiesto, que el siguiente run limpia antes de empezar. No se tocan los fixtures A/B, `fixtures/portada.webp` ni los datos añadidos a mano.
+- **Códigos de salida.**
+  - **0**: correcto.
+  - **2**: argumentos.
+  - **3**: identidad (perfil sin registro, otra raíz o `BIBLIB_TARGET` distinto de `local`).
+  - **5**/**6**: ledger.
+  - **7**: bloqueo.
+  - **8**: servicio o puerto.
+  - **10**: fixtures ausentes o limpieza incompleta.
+  - **11**: escenarios fallidos, bundle con secretos o cuentas cambiadas.
+  - **130**: interrupción.
+
+  Un fallo nombra su escenario con `✖`. La salida de las pruebas pasa por un filtro que oculta JWT, valores de cookie SSR, contraseñas de fixtures y claves conocidas. Las aserciones comparan identidades o booleanos, no tokens.
+- **Registros.** `.biblib/integration/build.log` y `.biblib/integration/app.log`.
+- **Duración y límites.** Una ejecución tarda unos 1,5 minutos con build y hace 8 inicios de sesión. GoTrue limita `sign_in_sign_ups` a 30 cada 5 minutos por IP: caben dos ejecuciones seguidas. Si una tercera inmediata recibe 429, espera 5 minutos.
+
+### Qué no cubre
+
+- **Google OAuth externo ni `/auth/callback`:** necesitan Internet y la configuración del proveedor. Se comprueban a mano en un entorno de pruebas.
+- **Autorización por propietario de assets (U-DAT-10):** aquí solo se prueba el bucket de fixtures con las firmas del proceso de prueba. Las pruebas A/B de adjuntos, firma por propietario, reemplazo y limpieza se añadirán a `storage/` al integrar U-DAT-10.
+- **Navegador real:** el `onError` de `<img>`, el JS de cliente y la accesibilidad corresponden a U-QA-02. Del fallback de portada se comprueba la parte de servidor: una ficha sin portada guarda `/default-book-cover.webp` sin consultar la red, y la app sirve ese archivo aunque Supabase no esté disponible.
+- Alojamiento, cabeceras de despliegue, preproducción y producción.
+
+Diferencia con las suites existentes:
+
+| Suite | Auth | Datos | Necesita |
+| --- | --- | --- | --- |
+| `pnpm test:db` | Sustituto mínimo (`auth.uid()` simulado) | Postgres efímero en Docker | Docker |
+| `pnpm test:smoke` | Simulado en un build temporal, con red externa bloqueada | Sustitutos de la app | Chrome |
+| `pnpm test:integration:local` | GoTrue real, cookies `@supabase/ssr`, sesiones A/B | Postgres, PostgREST, Storage y Kong del perfil `test`; app compilada | Docker y perfil `test` preparado |
+
+Evidencia del ensayo: [validacion/2026-10-23/O06/qa-01](validacion/2026-10-23/O06/qa-01/informe.md).
