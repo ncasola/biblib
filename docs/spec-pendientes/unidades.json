@@ -677,7 +677,14 @@
         "QA-01",
         "QA-02"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O06 · merge 22a2b8c; test:integration:local 34/34 ×2 contra perfil test (docs/validacion/2026-10-23/O06/qa-01/)",
+      "pending": [
+        "scripts/next-target.mjs pasa SUPABASE_SERVICE_ROLE_KEY local al proceso servidor de Next (no al bundle): retirarlo del childEnv de la app.",
+        "Con GoTrue/Storage caídos, Kong cuelga ~60 s y el proxy no tiene timeout (UX-04/U-QA-02).",
+        "El runner no resiembra por el límite de correo de GoTrue (2/h).",
+        "Pruebas A/B de assets por propietario al integrar U-DAT-10."
+      ]
     },
     {
       "id": "U-QA-02",
