@@ -208,7 +208,11 @@
         "IMP-01",
         "UX-04"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O07 · merge ef95af7; 0003_library_revision; integración 45/45 con head 0003 (docs/validacion/2026-10-23/O07/dat-01/)",
+      "pending": [
+        "Ensayo desde vacío con db:reset:local --profile test no disponible desde worktree; cubierto por test:db (0000→0003)."
+      ]
     },
     {
       "id": "U-DAT-02",
@@ -414,7 +418,12 @@
         "UI-01",
         "FE-03"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O07 · merge ecbed9d; smoke 12/12 en Chrome",
+      "pending": [
+        "app/page.tsx y app/settings/page.tsx conservan su cabecera propia.",
+        "Recorrido con sesión real: U-QA-02."
+      ]
     },
     {
       "id": "U-EXP-02",
@@ -705,7 +714,7 @@
         "FE-01",
         "UI-03"
       ],
-      "status": "planned"
+      "status": "in-progress"
     },
     {
       "id": "U-QA-03",
@@ -884,7 +893,12 @@
         "QA-02",
         "IMP-03"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O07 · merge 6e6eb9c; backup→reset→restore→verify en scratch (docs/validacion/2026-10-23/O07/ops-02/)",
+      "pending": [
+        "Procedimiento remoto: U-INF-07 y plan del proveedor.",
+        "El recibo de backup aún no satisface --backup-receipt de db:reset:local."
+      ]
     },
     {
       "id": "U-OPS-03",
@@ -962,7 +976,12 @@
         "BE-04",
         "IMP-04"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O07 · merge 83b7cf9 + fix e6974f5 (actionError)",
+      "pending": [
+        "Importación y recuperación aún por el flujo legacy: U-BIB-05.",
+        "Adaptadores BNE (O08) y Google (O09)."
+      ]
     },
     {
       "id": "U-BIB-02",
@@ -1061,8 +1080,12 @@
         "SEC-02",
         "SEC-05"
       ],
-      "status": "in-progress",
-      "note": "Petición de Néstor del 23-10-2026. Doble puerta: constante de build solo en local/test y guarda de servidor con loopback."
+      "status": "implemented",
+      "note": "Petición de Néstor del 23-10-2026. Doble puerta: constante de build solo en local/test y guarda de servidor con loopback.",
+      "evidence": "O07 · merge 8669cc0 + fix smoke 43ba28f; bundle sin formulario en build sin objetivo",
+      "pending": [
+        "Ensayo contra GoTrue real: U-QA-02 (en curso)."
+      ]
     }
   ]
 }
