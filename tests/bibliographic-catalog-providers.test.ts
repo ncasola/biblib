@@ -48,16 +48,17 @@ test("fixture desconocido es notFound con la configuración predeterminada", asy
   assert.equal(result.complete, true)
 })
 
-test("desactivar OL evita consultas sin cambiar el llamador; BNE/Google carecen de capacidades", async () => {
+test("desactivar OL evita sus consultas; BNE declara capacidades y Google permanece opcional", async () => {
   let requests = 0
   const config = readCatalogConfig({ BIBLIB_TARGET: "test", BIBLIB_CATALOGUE_MODE: "live", BIBLIB_OPEN_LIBRARY_ENABLED: "false", BIBLIB_BNE_ENABLED: "true", BIBLIB_GOOGLE_BOOKS_ENABLED: "true" })
-  const service = createConfiguredCatalog(config, { fetch: async () => { requests++; assert.fail("No debe consultar") } })
+  const service = createConfiguredCatalog(config, { fetch: async (input) => { requests++; assert.equal(new URL(String(input)).hostname, "catalogo.bne.es"); return new Response(null, { status: 503 }) } })
   const result = await service.lookupISBN(isbn)
   assert.equal(result.status, "incomplete")
-  assert.deepEqual(result.providers.map((provider) => provider.status), ["disabled", "notAttempted", "misconfigured"])
-  assert.equal(result.providers[1].reason, "unsupported")
-  assert.ok(Object.values(service.capabilities()).every((capability) => !Object.values(capability).some(Boolean)))
-  assert.equal(requests, 0)
+  assert.deepEqual(result.providers.map((provider) => provider.status), ["disabled", "unavailable", "misconfigured"])
+  assert.equal(service.capabilities().bne.lookupISBN, true)
+  assert.equal(service.capabilities().bne.getCover, false)
+  assert.equal(service.capabilities()["open-library"].lookupISBN, false)
+  assert.equal(requests, 1)
   const keyed = createConfiguredCatalog(readCatalogConfig({ BIBLIB_TARGET: "test", BIBLIB_CATALOGUE_MODE: "live", BIBLIB_OPEN_LIBRARY_ENABLED: "false", BIBLIB_GOOGLE_BOOKS_ENABLED: "true", GOOGLE_BOOKS_API_KEY: "clave-sintetica" }))
   assert.equal((await keyed.lookupISBN(isbn)).providers[2].status, "notAttempted")
   assert.ok(!JSON.stringify(config).includes("clave-sintetica"))

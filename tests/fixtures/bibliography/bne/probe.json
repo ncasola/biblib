@@ -1,0 +1,29 @@
+{
+  "requests": 3,
+  "endpoint": "https://catalogo.bne.es/view/sru/34BNE_INST",
+  "isbn": "9788401337208",
+  "maximumRecords": 2,
+  "evidence": [
+    {
+      "operation": "explain",
+      "date": "2026-10-23T15:28:51.338Z",
+      "status": 200,
+      "originalBytes": 186457,
+      "originalSha256": "aeb23b0eda9f6f064f8fb60e3074ad6c6b7f7cf9048335c7ad8a8d4f81f82d78"
+    },
+    {
+      "operation": "search-retrieve",
+      "date": "2026-10-23T15:28:51.802Z",
+      "status": 200,
+      "originalBytes": 15163,
+      "originalSha256": "aee59c2fd323c43b3e6538a58c29d4e840ef88dfcc677b5f0f9c51e391df79c2"
+    },
+    {
+      "operation": "explain (repetici?n para corregir recorte local de ?ndices con atributos)",
+      "date": "2026-10-23T15:37:19.151Z",
+      "status": 200,
+      "originalBytes": 186457,
+      "originalSha256": "aeb23b0eda9f6f064f8fb60e3074ad6c6b7f7cf9048335c7ad8a8d4f81f82d78"
+    }
+  ]
+}

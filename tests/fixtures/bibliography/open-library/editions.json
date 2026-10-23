@@ -1,0 +1,7 @@
+{
+  "entries": [
+    { "key": "/books/OL1M", "title": "La música del silencio", "isbn_13": ["9788401337208"], "publishers": ["Plaza & Janés"], "publish_date": "2014", "number_of_pages": 147, "languages": [{ "key": "/languages/spa" }], "covers": [1] },
+    { "key": "/books/OL2M", "title": "Edición sin descripción", "isbn_10": ["0-8044-2957-X"] },
+    { "key": "/books/OL3M" }
+  ]
+}

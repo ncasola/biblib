@@ -617,3 +617,11 @@ pnpm db:status:local --profile scratch   # sin drift
 - `pnpm test`: `tests/catalogue-gateway.test.ts` (store en memoria, reloj simulado, sin Docker).
 - `pnpm test:db`: aplica `0004` en el contenedor aislado y ejecuta `tests/db/catalogue.sql` (reserva atómica, horizonte, tope por dueño, cooldown, fencing, caída nunca cacheada, invalidación, RLS A/B y funciones no ejecutables por `authenticated`).
 - `pnpm test:integration:catalogue --profile scratch|test`: grupo `tests/integration/catalogue/` contra Postgres y GoTrue reales, sin compilar ni arrancar la app. Lanza procesos Node distintos con el gateway compilado y un `fetch` simulado que solo registra claves ficticias (ISBN sintéticos `979-0-0009…`); usa un ámbito de credencial propio por run y limpia sus filas. También corre dentro de `pnpm test:integration:local` (perfil `test`). Evidencia: [O08/dat-05](validacion/2026-10-23/O08/dat-05/informe.md).
+
+## Adaptadores bibliográficos Open Library y BNE · U-BIB-02
+
+En modo `live`, Open Library admite ISBN, título/autor y resolución limitada de ediciones. `OPEN_LIBRARY_CONTACT` añade la identificación `BibLib (<contacto>)`; sin contacto sigue `BibLib/1.0`. Todas las operaciones del adaptador comparten el límite conservador de una petición por segundo y respetan `Retry-After` sin reintentos automáticos. La fachada legacy `lib/open-library.ts` delega en este adaptador.
+
+BNE permanece apagada por defecto: `BIBLIB_BNE_ENABLED=true` habilita SRU 1.2 en `https://catalogo.bne.es/view/sru/34BNE_INST` y solo en modo `live`. Consulta ISBN y título/autor, con máximo diez registros, 524288 bytes XML y 3,5 segundos por petición, además del deadline del orquestador. No se configura un endpoint alternativo en producción. Un fallo de BNE permite seguir con OL; para desactivarla basta devolver la bandera a `false`.
+
+Los metadatos BNE tienen política CC0 con procedencia (URL de ficha y hora de recuperación); sus portadas permanecen deshabilitadas. Las cachés locales de ambos adaptadores son acotadas y conservan solo metadatos validados, nunca XML crudo ni imágenes. Hasta integrar U-DAT-05 esta limitación/caché es por instancia; no acredita una cuota global. `fixture` continúa sin llamadas externas. El mapeo MARC, fixtures, consultas públicas y validación están en [el informe O08](validacion/2026-10-23/O08/bib-02.md).
