@@ -35,7 +35,7 @@ test("valida la ficha, completa portada parcial y conserva metadatos sin inventa
   assert.equal(result?.cover.small, "https://covers.openlibrary.org/b/id/1-L.jpg")
   assert.equal(result?.cover.medium, result?.cover.large)
   assert.deepEqual(result?.catalogue, { source: "open-library", isbnVerified: false, sourceUrl: "https://openlibrary.org/books/OL1M" })
-  assert.equal(new Headers(requests[0].init?.headers).get("User-Agent"), "BibLib/1.0 (https://biblioteca.example/contacto)")
+  assert.equal(new Headers(requests[0].init?.headers).get("User-Agent"), "BibLib (https://biblioteca.example/contacto)")
   assert.ok(requests[0].init?.signal instanceof AbortSignal)
   const minimal = await createOpenLibraryClient({ fetch: jsonFetch({ [`ISBN:${isbn}`]: { title: "Ficha sin datos adicionales" } }) }).searchBookByISBN(isbn)
   assert.deepEqual(minimal?.authors, [{ name: "Autor desconocido" }])
@@ -142,5 +142,5 @@ test("la caché está acotada a 500 fichas y no conserva indefinidamente la más
 
 test("la identificación usa BibLib y solo incluye el contacto configurado", () => {
   assert.equal(new Headers(openLibraryHeaders("")).get("User-Agent"), "BibLib/1.0")
-  assert.equal(new Headers(openLibraryHeaders("contacto\r\nlocal")).get("User-Agent"), "BibLib/1.0 (contacto  local)")
+  assert.equal(new Headers(openLibraryHeaders("contacto\r\nlocal")).get("User-Agent"), "BibLib (contacto  local)")
 })
