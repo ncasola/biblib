@@ -8,7 +8,7 @@ import { scaleIsbn } from "./dataset.mjs"
 // iteración (se rotan para no medir siempre la misma fila) y las iteraciones por nivel de concurrencia.
 // Los argumentos reproducen los que envía la interfaz (BOOK_PAGE_SIZE = 10, escena 3D de 48, etc.).
 
-const STANDARD = { 1: 40, 5: 20, 10: 15 }
+const STANDARD = { 1: 60, 5: 20, 10: 15 }
 const HEAVY = { 1: 12, 5: 3, 10: 2 }
 const SEARCH_TERMS = ["faro", "jardín", "peñalver", "atlas", "isla", "viaje", "nocturno", "azul", "del norte", "Ximena"]
 
@@ -62,3 +62,8 @@ export function loadExportModule() {
   const require = createRequire(import.meta.url)
   return require(path.join(REPO_ROOT, ".next", "tests", "lib", "library-export.js"))
 }
+
+const DUMMY = { bigShelf: "", total: 1, bookIds: [""], lastPage: 1, scenePages: 1 }
+/** Nombres de los escenarios de acción, para validar `--scenarios` sin conocer aún los datos. */
+export const ACTION_SCENARIO_NAMES = Object.freeze(actionScenarios(DUMMY).map((scenario) => scenario.name))
+export const PREVIEW_SCENARIO_NAMES = Object.freeze(["preview-importacion-conservar", "preview-importacion-nuevos", "preview-importacion-reemplazo"])

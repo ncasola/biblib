@@ -11,6 +11,7 @@ import { percentile, summarize } from "../../scripts/performance/lib/stats.mjs"
 import { redactPlan } from "../../scripts/performance/lib/explain.mjs"
 import { budgetRows, writeTables } from "../../scripts/performance/lib/report.mjs"
 import { parseArgs } from "../../scripts/performance/run.mjs"
+import { contractResults } from "../../scripts/performance/lib/contract.mjs"
 import { parseScale, runScaleSeed, scaleCensus, seedScaleDomain } from "../../scripts/performance/scale-seed.mjs"
 
 // U-QA-03 · Seed de escala, dataset determinista y utilidades de la medición. Sin Docker ni red.
@@ -163,13 +164,31 @@ test("los EXPLAIN guardados no contienen identificadores", () => {
   assert.equal(redacted.match(/<uuid>/g).length, 2)
 })
 
-test("los argumentos de perf:local validan tamaños, pasos y perfil", () => {
-  assert.deepEqual(parseArgs([]).scales, [100, 1000, 10000])
+test("los argumentos de perf:local siguen el contrato: perfil test o scratch, tamaño 1000 por defecto y escenarios por nombre", () => {
+  const defaults = parseArgs([])
+  assert.deepEqual([defaults.profile, defaults.scales, defaults.only, defaults.json], ["test", [1000], null, false])
   assert.deepEqual(parseArgs(["--scale", "10000", "--scale", "100"]).scales, [100, 10000])
-  const parsed = parseArgs(["--skip", "web", "--skip", "quota", "--reuse-build", "--cleanup", "--web-runs", "2", "--profile", "test"])
-  assert.deepEqual([...parsed.skip], ["web", "quota"])
-  assert.equal(parsed.reuseBuild && parsed.cleanup, true)
-  for (const args of [["--scale", "500"], ["--skip", "nada"], ["--profile", "scratch"], ["--profile", "main"], ["--web-runs", "9"], ["--db-url", "x"]]) assert.throws(() => parseArgs(args), { code: EXIT.INVALID_ARGS })
+  const parsed = parseArgs(["--profile", "scratch", "--scenarios", "dashboard,listado-inicial,web", "--out", "salida", "--json", "--skip", "quota", "--reuse-build", "--cleanup", "--web-runs", "2"])
+  assert.equal(parsed.profile, "scratch")
+  assert.deepEqual([...parsed.only], ["dashboard", "listado-inicial", "web"])
+  assert.deepEqual([parsed.out, parsed.json, parsed.reuseBuild, parsed.cleanup, parsed.webRuns], ["salida", true, true, true, 2])
+  for (const args of [["--scale", "500"], ["--scale", "1e3"], ["--skip", "nada"], ["--profile", "main"], ["--profile", "prod"], ["--web-runs", "9"], ["--db-url", "x"], ["--scenarios", "nada"], ["--scenarios"], ["--scenarios", "dashboard,;rm"], ["--out"]]) assert.throws(() => parseArgs(args), { code: EXIT.INVALID_ARGS })
+})
+
+test("el contrato JSON lista cada escenario con p50, p95, presupuesto y estado (ok, over-budget o no-budget)", () => {
+  const result = sample(10000, { list: { accionMs: { n: 10, p50: 700, p95: 1500, max: 1600, mean: 800 }, sqlMs: { n: 10, p50: 5, p95: 9, max: 10 } } })
+  const results = contractResults(result)
+  for (const entry of results) assert.deepEqual(Object.keys(entry).filter((key) => ["scenario", "p50", "p95", "budget", "status"].includes(key)).sort(), ["budget", "p50", "p95", "scenario", "status"])
+  const byName = (name) => results.find((entry) => entry.scenario === name)
+  assert.deepEqual([byName("listado-inicial").budget, byName("listado-inicial").status], [1000, "over-budget"])
+  assert.deepEqual([byName("dashboard").budget, byName("dashboard").status], [1000, "ok"])
+  assert.equal(byName("sql:listado-inicial").budget, 500)
+  assert.equal(byName("sql:listado-inicial").status, "ok")
+  assert.deepEqual([byName("exportacion-lectura-completa").budget, byName("exportacion-lectura-completa").status], [null, "no-budget"])
+  assert.equal(byName("listado-inicial@10").concurrency, 10)
+  assert.equal(byName("web:escritorio:inicio:lcp").budget, 2500)
+  assert.equal(byName("web:escritorio:inicio:inp").status, "ok")
+  assert.equal(byName("web:escritorio:inicio:cls").unit, "score")
 })
 
 function sample(scale, overrides = {}) {

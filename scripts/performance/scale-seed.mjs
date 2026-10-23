@@ -99,7 +99,12 @@ export async function runScaleSeed({ profile, scale, root = REPO_ROOT, signal, l
     const save = () => { store.phase = phase; writeFixtureStore(own, store) }
     const admin = (deps.createClient ?? createClient)(values.SUPABASE_URL, values.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } })
     phase = "auth"
-    await deps.seedAccounts(admin, census, store, save)
+    // Actualizar la cuenta con la API administrativa revoca sus sesiones: si ya existe tal como debe estar, no se toca
+    // (así los tres tamaños comparten las sesiones abiertas de la medición).
+    const saved = store.accounts.escala
+    const current = saved?.id ? (await admin.auth.admin.getUserById(saved.id)).data?.user : null
+    const intact = current && current.email === SCALE_EMAIL && current.user_metadata?.biblib_scale === DATASET_ID && current.user_metadata?.biblib_fixture === census.censusId
+    if (!intact) await deps.seedAccounts(admin, census, store, save)
     checkSignal()
     phase = "dominio"; save()
     const dataset = scaleDataset(scale)
