@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { Header } from "@/components/header"
 import { ShelfViewer3D } from "@/components/shelf-viewer-3d"
 import { LoadingState } from "@/components/loading-state"
 import { Button } from "@/components/ui/button"
@@ -90,13 +89,11 @@ export default function Shelf3DPage() {
   }
 
   if (shelvesLoading && shelves.length === 0 && !shelvesError) {
-    return <div className="min-h-screen bg-background"><Header /><LoadingState message="Cargando estanterías..." /></div>
+    return <LoadingState message="Cargando estanterías..." />
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <main id="main-content" tabIndex={-1} className="mx-auto max-w-7xl px-4 py-8 outline-none md:py-12">
+    <>
         {shelvesError ? (
           <div role="alert" className="rounded-2xl border border-destructive/40 bg-card p-8 text-center shadow-xl">
             <p className="mb-4 text-foreground">No se pudieron cargar las estanterías. Inténtalo de nuevo.</p>
@@ -167,7 +164,6 @@ export default function Shelf3DPage() {
             </section>
           </div>}
         </>}
-      </main>
-    </div>
+    </>
   )
 }

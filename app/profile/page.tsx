@@ -4,7 +4,6 @@ import type React from "react"
 
 import { useState } from "react"
 import { useAuth, type User } from "@/lib/auth-context"
-import { Header } from "@/components/header"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -16,14 +15,7 @@ export default function ProfilePage() {
   const { user, loading } = useAuth()
 
   if (loading || !user) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Header />
-        <main id="main-content" tabIndex={-1} className="max-w-7xl mx-auto px-4 py-12">
-          <p role="status" className="text-center">{loading ? "Cargando perfil..." : "Inicia sesión para ver tu perfil."}</p>
-        </main>
-      </div>
-    )
+    return <p role="status" className="py-6 text-center">{loading ? "Cargando perfil..." : "Inicia sesión para ver tu perfil."}</p>
   }
 
   return <ProfileForm key={user.id} user={user} />
@@ -54,9 +46,7 @@ function ProfileForm({ user }: { user: User }) {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <main id="main-content" tabIndex={-1} className="max-w-4xl mx-auto px-4 py-8">
+    <div className="mx-auto max-w-4xl">
         <h1 className="text-4xl font-bold heading-vintage mb-8 text-vintage-red">Mi perfil</h1>
 
         <div className="grid gap-8 md:grid-cols-[300px_1fr]">
@@ -129,7 +119,6 @@ function ProfileForm({ user }: { user: User }) {
             </form>
           </Card>
         </div>
-      </main>
     </div>
   )
 }

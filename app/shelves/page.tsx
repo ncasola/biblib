@@ -1,7 +1,6 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react"
-import { Header } from "@/components/header"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
@@ -74,13 +73,11 @@ export default function ShelvesPage() {
   }
 
   if (loading && shelves.length === 0 && !loadError) {
-    return <div className="min-h-screen bg-background"><Header /><LoadingState message="Cargando estanterías..." /></div>
+    return <LoadingState message="Cargando estanterías..." />
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <main id="main-content" tabIndex={-1} className="mx-auto max-w-7xl px-4 py-8 outline-none md:py-12">
+    <>
         {loadError ? (
           <div role="alert" className="rounded-2xl border border-destructive/40 bg-card p-8 text-center shadow-xl">
             <h1 className="mb-2 text-2xl font-bold heading-vintage">No se pudieron cargar las estanterías</h1>
@@ -114,7 +111,6 @@ export default function ShelvesPage() {
             )}
           </>
         )}
-      </main>
-    </div>
+    </>
   )
 }

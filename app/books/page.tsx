@@ -1,6 +1,5 @@
 "use client"
 
-import { Header } from "@/components/header"
 import { BooksTable } from "@/components/books-table"
 import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
@@ -8,9 +7,7 @@ import Link from "next/link"
 
 export default function BooksPage() {
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <main id="main-content" tabIndex={-1} className="mx-auto max-w-7xl px-4 py-8 outline-none md:py-12">
+    <>
         <div className="mb-8 flex flex-col gap-4 md:mb-12 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="mb-2 text-3xl font-bold heading-vintage md:text-4xl">Tus libros</h1>
@@ -24,7 +21,6 @@ export default function BooksPage() {
         <div className="rounded-2xl border border-border bg-card p-4 shadow-xl backdrop-blur-md md:p-8">
           <BooksTable initialView="table" />
         </div>
-      </main>
-    </div>
+    </>
   )
 }
