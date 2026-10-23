@@ -12,6 +12,8 @@ export interface ProviderRecordRef {
   provider: ProviderId
   recordKind: "work" | "edition"
   recordId: string
+  page?: number
+  limit?: 10 | 20
 }
 
 export interface BibliographicCandidate {
@@ -72,7 +74,7 @@ export interface LookupOptions {
   userId?: string
 }
 
-export interface TitleAuthorQuery { title?: string; author?: string }
+export interface TitleAuthorQuery { title?: string; author?: string; page?: number; limit?: 10 | 20; language?: string }
 
 export interface BibliographicCatalogService {
   capabilities(): Record<string, ProviderCapability>

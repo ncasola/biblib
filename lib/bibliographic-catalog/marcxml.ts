@@ -132,7 +132,7 @@ function mapRecord(record: Element, identifier: string | undefined, retrievedAt:
   }, isbn)
 }
 
-export function parseBneSearchRetrieve(xml: string, options: { retrievedAt: string; isbn?: string; maximumRecords?: number; maxBytes?: number }): BibliographicCandidate[] {
+export function parseBneSearchRetrieve(xml: string, options: { retrievedAt: string; isbn?: string; maximumRecords?: number; maxBytes?: number; startRecord?: number }): BibliographicCandidate[] {
   const root = parse(xml, options.maxBytes)
   if (root.namespace !== SRU || root.name !== "searchRetrieveResponse" || text(single(root, "version")) !== "1.2" || root.children.some((node) => node.name === "diagnostics")) return invalid()
   const totalText = text(single(root, "numberOfRecords"))
@@ -140,7 +140,9 @@ export function parseBneSearchRetrieve(xml: string, options: { retrievedAt: stri
   const total = Number(totalText)
   const wrapper = single(root, "records")
   const records = wrapper ? children(wrapper, "record", SRU) : []
-  if (records.length > Math.min(options.maximumRecords ?? 10, 10) || records.length > total || total > 0 && !records.length) return invalid()
+  const start = options.startRecord ?? 1
+  if (!Number.isSafeInteger(start) || start < 1) return invalid()
+  if (records.length > Math.min(options.maximumRecords ?? 10, 10) || records.length > total || total >= start && !records.length) return invalid()
   const positions = new Set<number>()
   return records.map((record) => {
     const position = Number(text(single(record, "recordPosition")))

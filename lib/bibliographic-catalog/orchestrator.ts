@@ -129,12 +129,14 @@ export function createBibliographicCatalogService(settings: ServiceOptions): Bib
     },
     async searchTitleAuthor(query, options = {}) {
       if (!query || [query.title, query.author].some((value) => value !== undefined && (typeof value !== "string" || value.length > 500)) || (!query.title?.trim() && !query.author?.trim())) throw new DomainError("INVALID_INPUT", "Introduce un título o autor para buscar.")
-      const normalized = { title: query.title?.trim(), author: query.author?.trim() }
-      return run("searchTitleAuthor", JSON.stringify([normalized.title?.toLowerCase() ?? "", normalized.author?.toLowerCase() ?? ""]), options, metadataCall("searchTitleAuthor", normalized))
+      if ((query.page !== undefined && (!Number.isInteger(query.page) || query.page < 1 || query.page > 100)) || (query.limit !== undefined && ![10, 20].includes(query.limit)) || (query.language !== undefined && !/^[a-z]{2,3}$/i.test(query.language))) throw new DomainError("INVALID_INPUT", "La página o el idioma de búsqueda no es válido.")
+      const normalized = { title: query.title?.normalize("NFC").trim(), author: query.author?.normalize("NFC").trim(), ...(query.page !== undefined ? { page: query.page } : {}), ...(query.limit !== undefined ? { limit: query.limit } : {}), ...(query.language ? { language: query.language.toLowerCase() } : {}) }
+      return run("searchTitleAuthor", JSON.stringify([normalized.title?.toLowerCase() ?? "", normalized.author?.toLowerCase() ?? "", normalized.page ?? 1, normalized.limit ?? 10, normalized.language ?? ""]), options, metadataCall("searchTitleAuthor", normalized))
     },
     async resolveEditions(work, options = {}) {
       if (!work || !DEFAULT_PROVIDER_ORDER.includes(work.provider) || !["work", "edition"].includes(work.recordKind) || typeof work.recordId !== "string" || !/^[A-Za-z0-9_-]{1,200}$/.test(work.recordId)) throw new DomainError("INVALID_INPUT", "La referencia bibliográfica no es válida.")
-      return run("resolveEditions", `${work.recordKind}:${work.recordId}`, options, metadataCall("resolveEditions", work), work.provider)
+      if ((work.page !== undefined && (!Number.isInteger(work.page) || work.page < 1 || work.page > 100)) || (work.limit !== undefined && ![10, 20].includes(work.limit))) throw new DomainError("INVALID_INPUT", "La página de ediciones no es válida.")
+      return run("resolveEditions", `${work.recordKind}:${work.recordId}:${work.page ?? 1}:${work.limit ?? 10}`, options, metadataCall("resolveEditions", work), work.provider)
     },
     async getCover(value, options = {}) {
       const isbn = canonicalIsbn(value)

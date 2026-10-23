@@ -1,0 +1,5 @@
+{
+  "rateLimited": { "status": 429, "retryAfter": "12" },
+  "blocked": "La red de pruebas está bloqueada",
+  "timeoutMs": 5
+}

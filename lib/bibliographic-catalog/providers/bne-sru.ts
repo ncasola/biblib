@@ -94,18 +94,25 @@ export function createBneSruProvider(options: BneSruOptions = {}): CatalogProvid
     } finally { clearTimeout(timer); context.signal.removeEventListener("abort", abort) }
   }
 
-  async function search(query: string, context: ProviderContext, isbn?: string): Promise<ProviderResult<BibliographicCandidate[]>> {
+  async function search(query: string, context: ProviderContext, isbn?: string, page = 1, limit = maximumRecords): Promise<ProviderResult<BibliographicCandidate[]>> {
     const base = { provider: "bne", requestId: context.requestId }
     try {
       context.signal.throwIfAborted()
-      const cached = cache.get(query)
+      const cached = isbn ? cache.get(query) : undefined
       let candidates = cached && cached.expires > now() ? structuredClone(cached.candidates) : undefined
       if (!candidates) {
         cache.delete(query)
-        const xml = await xmlRequest({ operation: "searchRetrieve", query, recordSchema: "marcxml", recordPacking: "xml", maximumRecords: String(maximumRecords), startRecord: "1" }, context)
-        candidates = parseBneSearchRetrieve(xml, { retrievedAt: new Date(now()).toISOString(), isbn, maximumRecords, maxBytes })
+        candidates = []
+        // El parser MARC mantiene su límite de diez registros por respuesta; veinte usa dos páginas SRU.
+        for (let offset = 0; offset < limit; offset += 10) {
+          const size = Math.min(10, limit - offset)
+          const xml = await xmlRequest({ operation: "searchRetrieve", query, recordSchema: "marcxml", recordPacking: "xml", maximumRecords: String(size), startRecord: String((page - 1) * limit + offset + 1) }, context)
+          const records = parseBneSearchRetrieve(xml, { retrievedAt: new Date(now()).toISOString(), isbn, maximumRecords: size, maxBytes, startRecord: (page - 1) * limit + offset + 1 })
+          candidates.push(...records)
+          if (records.length < size) break
+        }
         if (isbn) candidates = candidates.filter((candidate) => candidate.evidence.isbnExact)
-        if (options.cacheMetadata !== false && hasProviderRight(policy, "cacheMetadata")) {
+        if (isbn && options.cacheMetadata !== false && hasProviderRight(policy, "cacheMetadata")) {
           if (cache.size >= 500) cache.delete(cache.keys().next().value!)
           cache.set(query, { candidates: structuredClone(candidates), expires: now() + (candidates.length ? policy.metadataTtlSeconds * 1000 : 300000) })
         }
@@ -123,7 +130,7 @@ export function createBneSruProvider(options: BneSruOptions = {}): CatalogProvid
       return search(`alma.isbn="${isbn}"`, context, isbn)
     },
     async searchTitleAuthor(query, context) {
-      try { return await search(bneTitleAuthorCql(query), context) }
+      try { return await search(bneTitleAuthorCql(query), context, undefined, query.page ?? 1, query.limit ?? maximumRecords) }
       catch { return { provider: "bne", requestId: context.requestId, status: "unavailable" } }
     },
     async explain(context) { return parseBneExplain(await xmlRequest({ operation: "explain" }, context)) },
