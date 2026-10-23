@@ -1,4 +1,4 @@
-import type { ActionResult } from "../action-result"
+import { actionError, type ActionResult } from "../action-result"
 import { DomainError } from "../domain-errors"
 import type { CatalogLookupResult } from "./types"
 
@@ -14,5 +14,5 @@ export function catalogResultError<T>(result: CatalogLookupResult<T>): DomainErr
 
 export function toBibliographyActionResult<T>(value: CatalogLookupResult<T>): BibliographyActionResult<T> {
   const error = catalogResultError(value)
-  return error ? { ok: false, error: { code: error.code, message: error.message }, value } : { ok: true, value }
+  return error ? { ok: false, error: actionError(error.code, error.message), value } : { ok: true, value }
 }
