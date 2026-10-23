@@ -1,10 +1,11 @@
+import { readFileSync } from "node:fs"
 import { EXIT } from "../lib/exit-codes.mjs"
 
 // Manifest de objetos deliberados de BibLib. Se comprueba con metadatos de pg_catalog e
 // information_schema y con expresiones normalizadas, nunca comparando el pretty-print.
 // `since`/`until` indican la migración que introduce o retira cada objeto.
-const M0 = "0000_biblib_init", M1 = "0001_library_integrity", M2 = "0002_book_versions", M3 = "0003_library_revision"
-export const MANIFEST_MIGRATIONS = [M0, M1, M2, M3]
+const M0 = "0000_biblib_init", M1 = "0001_library_integrity", M2 = "0002_book_versions", M3 = "0003_library_revision", M4 = "0004_catalogue_coordination"
+export const MANIFEST_MIGRATIONS = [M0, M1, M2, M3, M4]
 
 const own = "user_id=auth.uid"
 const ownNotDefault = "user_id=auth.uidandnotis_default"
@@ -47,8 +48,21 @@ BEGIN
 END;
 `
 
+// Cuerpos de 0004 leídos de la propia migración versionada (su hash lo protege el journal), para no
+// duplicar ~150 líneas de plpgsql; se comparan normalizados igual que los de 0003.
+function migrationBodies(tag) {
+  const source = readFileSync(new URL(`../../drizzle/${tag}.sql`, import.meta.url), "utf8")
+  return Object.fromEntries([...source.matchAll(/CREATE FUNCTION "biblib"\."(\w+)"\([^)]*\) RETURNS [\s\S]*?AS \$\$([\s\S]*?)\$\$;/g)].map(([, name, body]) => [name, normalizeBody(body)]))
+}
+const CATALOGUE = migrationBodies(M4)
+const catalogueKey = ["provider", "policy_version", "credential_scope", "schema_version", "operation", "canonical_key"]
+const providerTokens = ["'open-library'", "'bne'", "'google-books'"]
+const catalogueTables = ["catalogue_cache", "catalogue_inflight", "catalogue_quota_buckets", "catalogue_quota_reservations", "catalogue_private_cache"]
+// Coordinación del catálogo: sin EXECUTE para anon/authenticated; solo la conexión del servidor.
+const catalogueFunction = (name, returns, args) => ({ name, language: "plpgsql", returns, args, searchPath: "search_path=pg_catalog", securityDefiner: true, body: CATALOGUE[name], execute: { authenticated: false, anon: false }, since: M4 })
+
 export const MANIFEST = Object.freeze({
-  tables: [{ name: "shelves", since: M0 }, { name: "books", since: M0 }, { name: "library_state", since: M3 }, { name: "import_previews", since: M3 }, { name: "library_operations", since: M3 }],
+  tables: [{ name: "shelves", since: M0 }, { name: "books", since: M0 }, { name: "library_state", since: M3 }, { name: "import_previews", since: M3 }, { name: "library_operations", since: M3 }, ...catalogueTables.map((name) => ({ name, since: M4 }))],
   policies: [
     policy("shelves", "shelves_select_own", "SELECT", own, null),
     policy("shelves", "shelves_insert_own", "INSERT", null, own),
@@ -64,11 +78,14 @@ export const MANIFEST = Object.freeze({
     policy("import_previews", "import_previews_delete_own", "DELETE", ownSelect("import_previews"), null, M3),
     policy("library_operations", "library_operations_select_own", "SELECT", ownSelect("library_operations"), null, M3),
     policy("library_operations", "library_operations_insert_own", "INSERT", null, ownSelect("library_operations"), M3),
+    policy("catalogue_private_cache", "catalogue_private_cache_select_own", "SELECT", "selectauth.uid=catalogue_private_cache.owner_id", null, M4),
+    policy("catalogue_private_cache", "catalogue_private_cache_delete_own", "DELETE", "selectauth.uid=catalogue_private_cache.owner_id", null, M4),
   ],
   // library_state solo se lee: la revisión cambia por lock_library()/triggers, nunca por escritura directa.
+  // La caché compartida, las consultas en vuelo y las cuotas no tienen ningún privilegio de cliente.
   grants: {
-    authenticated: { shelves: ["DELETE", "INSERT", "SELECT", "UPDATE"], books: ["DELETE", "INSERT", "SELECT", "UPDATE"], library_state: ["SELECT"], import_previews: ["DELETE", "INSERT", "SELECT"], library_operations: ["INSERT", "SELECT"] },
-    anon: { shelves: [], books: [], library_state: [], import_previews: [], library_operations: [] },
+    authenticated: { shelves: ["DELETE", "INSERT", "SELECT", "UPDATE"], books: ["DELETE", "INSERT", "SELECT", "UPDATE"], library_state: ["SELECT"], import_previews: ["DELETE", "INSERT", "SELECT"], library_operations: ["INSERT", "SELECT"], catalogue_cache: [], catalogue_inflight: [], catalogue_quota_buckets: [], catalogue_quota_reservations: [], catalogue_private_cache: ["DELETE", "SELECT"] },
+    anon: { shelves: [], books: [], library_state: [], import_previews: [], library_operations: [], ...Object.fromEntries(catalogueTables.map((name) => [name, []])) },
   },
   constraints: [
     { table: "shelves", name: "shelves_pkey", type: "p", columns: ["id"], since: M0 },
@@ -93,6 +110,31 @@ export const MANIFEST = Object.freeze({
     { table: "library_operations", name: "library_operations_status_check", type: "c", columns: ["status"], tokens: ["'committed'"], since: M3 },
     { table: "library_operations", name: "library_operations_key_check", type: "c", columns: ["idempotency_key"], tokens: ["length(idempotency_key)", ">=16", "<=128"], since: M3 },
     { table: "library_operations", name: "library_operations_digest_check", type: "c", columns: ["input_digest"], tokens: ["'^[0-9a-f]{64}$'"], since: M3 },
+    { table: "catalogue_cache", name: "catalogue_cache_pkey", type: "p", columns: catalogueKey, since: M4 },
+    { table: "catalogue_cache", name: "catalogue_cache_provider_check", type: "c", columns: ["provider"], tokens: providerTokens, since: M4 },
+    { table: "catalogue_cache", name: "catalogue_cache_operation_check", type: "c", columns: ["operation"], tokens: ["'lookupISBN'", "'resolveEditions'", "'getCover'"], since: M4 },
+    { table: "catalogue_cache", name: "catalogue_cache_status_check", type: "c", columns: ["status"], tokens: ["'found'", "'notFound'"], since: M4 },
+    { table: "catalogue_cache", name: "catalogue_cache_key_check", type: "c", columns: ["canonical_key"], tokens: ["length(canonical_key)", ">=1", "<=200"], since: M4 },
+    { table: "catalogue_cache", name: "catalogue_cache_payload_check", type: "c", columns: ["payload"], tokens: ["jsonb_typeof(payload)", "'array'"], since: M4 },
+    { table: "catalogue_cache", name: "catalogue_cache_expiry_check", type: "c", columns: ["fetched_at", "expires_at"], tokens: ["expires_at>fetched_at"], since: M4 },
+    { table: "catalogue_inflight", name: "catalogue_inflight_pkey", type: "p", columns: catalogueKey, since: M4 },
+    { table: "catalogue_inflight", name: "catalogue_inflight_provider_check", type: "c", columns: ["provider"], tokens: providerTokens, since: M4 },
+    { table: "catalogue_quota_buckets", name: "catalogue_quota_buckets_pkey", type: "p", columns: ["provider", "credential_scope"], since: M4 },
+    { table: "catalogue_quota_buckets", name: "catalogue_quota_buckets_provider_check", type: "c", columns: ["provider"], tokens: providerTokens, since: M4 },
+    { table: "catalogue_quota_buckets", name: "catalogue_quota_buckets_interval_check", type: "c", columns: ["interval_ms"], tokens: [">=1", "<=3600000"], since: M4 },
+    { table: "catalogue_quota_reservations", name: "catalogue_quota_reservations_pkey", type: "p", columns: ["id"], since: M4 },
+    { table: "catalogue_quota_reservations", name: "catalogue_quota_reservations_owner_id_users_id_fk", type: "f", columns: ["owner_id"], references: "auth.users", refColumns: ["id"], onDelete: "c", since: M4 },
+    { table: "catalogue_quota_reservations", name: "catalogue_quota_reservations_bucket_fk", type: "f", columns: ["provider", "credential_scope"], references: "biblib.catalogue_quota_buckets", refColumns: ["provider", "credential_scope"], onDelete: "c", since: M4 },
+    { table: "catalogue_quota_reservations", name: "catalogue_quota_reservations_purpose_check", type: "c", columns: ["purpose"], tokens: ["'interactive'", "'batch'"], since: M4 },
+    { table: "catalogue_quota_reservations", name: "catalogue_quota_reservations_expiry_check", type: "c", columns: ["slot_at", "expires_at"], tokens: ["expires_at>slot_at"], since: M4 },
+    { table: "catalogue_private_cache", name: "catalogue_private_cache_pkey", type: "p", columns: ["owner_id", "provider", "policy_version", "credential_scope", "schema_version", "operation", "key_hmac"], since: M4 },
+    { table: "catalogue_private_cache", name: "catalogue_private_cache_owner_id_users_id_fk", type: "f", columns: ["owner_id"], references: "auth.users", refColumns: ["id"], onDelete: "c", since: M4 },
+    { table: "catalogue_private_cache", name: "catalogue_private_cache_provider_check", type: "c", columns: ["provider"], tokens: providerTokens, since: M4 },
+    { table: "catalogue_private_cache", name: "catalogue_private_cache_operation_check", type: "c", columns: ["operation"], tokens: ["'searchTitleAuthor'"], since: M4 },
+    { table: "catalogue_private_cache", name: "catalogue_private_cache_status_check", type: "c", columns: ["status"], tokens: ["'found'", "'notFound'"], since: M4 },
+    { table: "catalogue_private_cache", name: "catalogue_private_cache_key_check", type: "c", columns: ["key_hmac"], tokens: ["'^[0-9a-f]{64}$'"], since: M4 },
+    { table: "catalogue_private_cache", name: "catalogue_private_cache_payload_check", type: "c", columns: ["payload"], tokens: ["jsonb_typeof(payload)", "'array'"], since: M4 },
+    { table: "catalogue_private_cache", name: "catalogue_private_cache_expiry_check", type: "c", columns: ["fetched_at", "expires_at"], tokens: ["expires_at>fetched_at"], since: M4 },
   ],
   indexes: [
     { table: "shelves", name: "shelves_user_id_title_unique", unique: true, columns: ["user_id", "title"], partial: false, since: M0 },
@@ -106,6 +148,12 @@ export const MANIFEST = Object.freeze({
     { table: "import_previews", name: "import_previews_user_id_expires_at_idx", unique: false, columns: ["user_id", "expires_at"], partial: false, since: M3 },
     { table: "library_operations", name: "library_operations_key_unique", unique: true, columns: ["user_id", "operation", "idempotency_key"], partial: false, since: M3 },
     { table: "library_operations", name: "library_operations_preview_unique", unique: true, columns: ["user_id", "preview_id"], partial: true, since: M3 },
+    { table: "catalogue_cache", name: "catalogue_cache_expires_at_idx", unique: false, columns: ["expires_at"], partial: false, since: M4 },
+    { table: "catalogue_inflight", name: "catalogue_inflight_fence_unique", unique: true, columns: ["fence"], partial: false, since: M4 },
+    { table: "catalogue_quota_reservations", name: "catalogue_quota_reservations_fence_unique", unique: true, columns: ["fence"], partial: false, since: M4 },
+    { table: "catalogue_quota_reservations", name: "catalogue_quota_reservations_active_idx", unique: false, columns: ["provider", "credential_scope", "owner_id", "purpose"], partial: true, since: M4 },
+    { table: "catalogue_quota_reservations", name: "catalogue_quota_reservations_expires_at_idx", unique: false, columns: ["provider", "credential_scope", "expires_at"], partial: false, since: M4 },
+    { table: "catalogue_private_cache", name: "catalogue_private_cache_expires_at_idx", unique: false, columns: ["owner_id", "expires_at"], partial: false, since: M4 },
   ],
   columns: [
     { table: "books", name: "catalogue", type: "jsonb", notNull: true, since: M1 },
@@ -114,12 +162,26 @@ export const MANIFEST = Object.freeze({
     { table: "library_state", name: "rotated_xact", type: "xid8", notNull: false, since: M3 },
     { table: "import_previews", name: "revision", type: "uuid", notNull: true, since: M3 },
     { table: "import_previews", name: "expires_at", type: "timestamp with time zone", notNull: true, since: M3 },
+    { table: "catalogue_cache", name: "fence", type: "bigint", notNull: true, since: M4 },
+    { table: "catalogue_cache", name: "expires_at", type: "timestamp with time zone", notNull: true, since: M4 },
+    { table: "catalogue_inflight", name: "lease_expires_at", type: "timestamp with time zone", notNull: true, since: M4 },
+    { table: "catalogue_quota_buckets", name: "cooldown_until", type: "timestamp with time zone", notNull: false, since: M4 },
+    { table: "catalogue_quota_reservations", name: "owner_id", type: "uuid", notNull: false, since: M4 },
+    { table: "catalogue_quota_reservations", name: "expires_at", type: "timestamp with time zone", notNull: true, since: M4 },
+    { table: "catalogue_private_cache", name: "owner_id", type: "uuid", notNull: true, since: M4 },
   ],
   functions: [
     { name: "rotate_book_version", language: "plpgsql", returns: "trigger", args: 0, searchPath: "search_path=pg_catalog", securityDefiner: false, body: "beginnew.version:=gen_random_uuid();returnnew;end;", since: M2 },
     // SECURITY DEFINER con search_path fijo: única vía de escritura de library_state.
     { name: "rotate_library_revision", language: "plpgsql", returns: "trigger", args: 0, searchPath: "search_path=pg_catalog", securityDefiner: true, body: normalizeBody(ROTATE_LIBRARY_REVISION), execute: { authenticated: false, anon: false }, since: M3 },
     { name: "lock_library", language: "plpgsql", returns: "uuid", args: 0, searchPath: "search_path=pg_catalog", securityDefiner: true, body: normalizeBody(LOCK_LIBRARY), execute: { authenticated: true, anon: false }, since: M3 },
+    catalogueFunction("catalogue_reserve", "jsonb", 8),
+    catalogueFunction("catalogue_release", "boolean", 3),
+    catalogueFunction("catalogue_begin", "jsonb", 9),
+    catalogueFunction("catalogue_complete", "text", 11),
+    catalogueFunction("catalogue_private_get", "jsonb", 7),
+    catalogueFunction("catalogue_private_put", "boolean", 10),
+    catalogueFunction("catalogue_invalidate", "integer", 3),
   ],
   // tgtype: ROW(1) | BEFORE(2) | INSERT(4) | DELETE(8) | UPDATE(16). BEFORE INSERT OR UPDATE = 23; AFTER INSERT OR UPDATE OR DELETE = 29.
   triggers: [

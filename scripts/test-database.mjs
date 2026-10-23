@@ -33,7 +33,7 @@ async function run() {
       await new Promise((resolve) => setTimeout(resolve, 250))
     }
     if (!ready) throw new Error("Postgres de pruebas no respondió en el tiempo previsto.")
-    const files = ["tests/db/bootstrap.sql", "drizzle/0000_biblib_init.sql", "tests/db/legacy.sql", "drizzle/0001_library_integrity.sql", "drizzle/0002_book_versions.sql", "drizzle/0003_library_revision.sql", "tests/db/versions.sql", "tests/db/rls.sql", "tests/db/revision.sql"]
+    const files = ["tests/db/bootstrap.sql", "drizzle/0000_biblib_init.sql", "tests/db/legacy.sql", "drizzle/0001_library_integrity.sql", "drizzle/0002_book_versions.sql", "drizzle/0003_library_revision.sql", "tests/db/versions.sql", "tests/db/rls.sql", "tests/db/revision.sql", "drizzle/0004_catalogue_coordination.sql"]
     for (const relativePath of files) {
       const sql = readFileSync(new URL(`../${relativePath}`, import.meta.url), "utf8")
       const output = docker(["exec", "-i", containerId, "psql", "--no-psqlrc", "--quiet", "--tuples-only", "--no-align", "-U", "postgres", "-d", "biblib_test", "-v", "ON_ERROR_STOP=1"], sql)

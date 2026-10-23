@@ -1,6 +1,6 @@
 import { sql } from "drizzle-orm"
 import { authenticatedRole, authUsers } from "drizzle-orm/supabase"
-import { pgSchema, uuid, text, timestamp, boolean, integer, jsonb, uniqueIndex, index, check, pgPolicy, foreignKey, customType, type AnyPgColumn } from "drizzle-orm/pg-core"
+import { pgSchema, uuid, text, timestamp, boolean, integer, bigint, jsonb, uniqueIndex, index, check, pgPolicy, foreignKey, primaryKey, customType, type AnyPgColumn } from "drizzle-orm/pg-core"
 import type { Author, Publisher, Book, CatalogueMetadata, LibraryData } from "@/lib/types"
 import type { ImportPlan, ImportOperationResult } from "@/lib/import-plan"
 
@@ -207,6 +207,153 @@ export const libraryOperations = biblibSchema.table(
       for: "insert",
       to: authenticatedRole,
       withCheck: ownRow(table.userId),
+    }),
+  ],
+).enableRLS()
+
+/*
+ * Coordinación del catálogo bibliográfico (U-DAT-05). Tablas internas sin acceso directo de
+ * `authenticated`/`anon`: solo las funciones `biblib.catalogue_*` (SECURITY DEFINER, search_path
+ * fijo y sin EXECUTE para roles de cliente) las leen o escriben desde el servidor. Las filas
+ * compartidas no contienen propietarios ni consultas privadas.
+ */
+const catalogueProviders = sql`('open-library', 'bne', 'google-books')`
+
+/** Testigo de fencing común: cada concesión en vuelo o de cuota recibe un valor creciente. */
+export const catalogueFenceSeq = biblibSchema.sequence("catalogue_fence_seq")
+
+/** Caché compartida de metadatos públicos. Nunca guarda una caída como ausencia. */
+export const catalogueCache = biblibSchema.table(
+  "catalogue_cache",
+  {
+    provider: text("provider").notNull(),
+    policyVersion: text("policy_version").notNull(),
+    credentialScope: text("credential_scope").notNull(),
+    schemaVersion: integer("schema_version").notNull(),
+    operation: text("operation").notNull(),
+    canonicalKey: text("canonical_key").notNull(),
+    status: text("status").$type<"found" | "notFound">().notNull(),
+    payload: jsonb("payload").$type<unknown[]>().notNull(),
+    provenance: jsonb("provenance").$type<Record<string, string>>().notNull().default({}),
+    fence: bigint("fence", { mode: "bigint" }).notNull(),
+    fetchedAt: timestamp("fetched_at", { withTimezone: true }).notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  },
+  (table) => [
+    primaryKey({ name: "catalogue_cache_pkey", columns: [table.provider, table.policyVersion, table.credentialScope, table.schemaVersion, table.operation, table.canonicalKey] }),
+    index("catalogue_cache_expires_at_idx").on(table.expiresAt),
+    check("catalogue_cache_provider_check", sql`${table.provider} in ${catalogueProviders}`),
+    check("catalogue_cache_operation_check", sql`${table.operation} in ('lookupISBN', 'resolveEditions', 'getCover')`),
+    check("catalogue_cache_status_check", sql`${table.status} in ('found', 'notFound')`),
+    check("catalogue_cache_key_check", sql`length(${table.canonicalKey}) between 1 and 200`),
+    check("catalogue_cache_payload_check", sql`jsonb_typeof(${table.payload}) = 'array'`),
+    check("catalogue_cache_expiry_check", sql`${table.expiresAt} > ${table.fetchedAt}`),
+  ],
+).enableRLS()
+
+/** Consulta en vuelo por clave: un único trabajador la resuelve mientras dure su concesión. */
+export const catalogueInflight = biblibSchema.table(
+  "catalogue_inflight",
+  {
+    provider: text("provider").notNull(),
+    policyVersion: text("policy_version").notNull(),
+    credentialScope: text("credential_scope").notNull(),
+    schemaVersion: integer("schema_version").notNull(),
+    operation: text("operation").notNull(),
+    canonicalKey: text("canonical_key").notNull(),
+    fence: bigint("fence", { mode: "bigint" }).notNull(),
+    leaseExpiresAt: timestamp("lease_expires_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    primaryKey({ name: "catalogue_inflight_pkey", columns: [table.provider, table.policyVersion, table.credentialScope, table.schemaVersion, table.operation, table.canonicalKey] }),
+    uniqueIndex("catalogue_inflight_fence_unique").on(table.fence),
+    check("catalogue_inflight_provider_check", sql`${table.provider} in ${catalogueProviders}`),
+  ],
+).enableRLS()
+
+/** Ritmo compartido por proveedor y ámbito de credencial (despliegue), con cooldown tras 429. */
+export const catalogueQuotaBuckets = biblibSchema.table(
+  "catalogue_quota_buckets",
+  {
+    provider: text("provider").notNull(),
+    credentialScope: text("credential_scope").notNull(),
+    intervalMs: integer("interval_ms").notNull(),
+    nextSlotAt: timestamp("next_slot_at", { withTimezone: true }).notNull(),
+    cooldownUntil: timestamp("cooldown_until", { withTimezone: true }),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    primaryKey({ name: "catalogue_quota_buckets_pkey", columns: [table.provider, table.credentialScope] }),
+    check("catalogue_quota_buckets_provider_check", sql`${table.provider} in ${catalogueProviders}`),
+    check("catalogue_quota_buckets_interval_check", sql`${table.intervalMs} between 1 and 3600000`),
+  ],
+).enableRLS()
+
+/** Reserva de una petición externa por dueño (o trabajador sin dueño), con caducidad y fencing. */
+export const catalogueQuotaReservations = biblibSchema.table(
+  "catalogue_quota_reservations",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    provider: text("provider").notNull(),
+    credentialScope: text("credential_scope").notNull(),
+    ownerId: uuid("owner_id").references(() => authUsers.id, { onDelete: "cascade" }),
+    purpose: text("purpose").$type<"interactive" | "batch">().notNull(),
+    fence: bigint("fence", { mode: "bigint" }).notNull(),
+    slotAt: timestamp("slot_at", { withTimezone: true }).notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    releasedAt: timestamp("released_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    foreignKey({ name: "catalogue_quota_reservations_bucket_fk", columns: [table.provider, table.credentialScope], foreignColumns: [catalogueQuotaBuckets.provider, catalogueQuotaBuckets.credentialScope] }).onDelete("cascade"),
+    uniqueIndex("catalogue_quota_reservations_fence_unique").on(table.fence),
+    index("catalogue_quota_reservations_active_idx").on(table.provider, table.credentialScope, table.ownerId, table.purpose).where(sql`${table.releasedAt} is null`),
+    index("catalogue_quota_reservations_expires_at_idx").on(table.provider, table.credentialScope, table.expiresAt),
+    check("catalogue_quota_reservations_purpose_check", sql`${table.purpose} in ('interactive', 'batch')`),
+    check("catalogue_quota_reservations_expiry_check", sql`${table.expiresAt} > ${table.slotAt}`),
+  ],
+).enableRLS()
+
+/**
+ * Caché privada de búsquedas de texto: por dueño y con la consulta reducida a un HMAC. El dueño
+ * puede leer y purgar sus filas; las escrituras solo ocurren por función desde el servidor.
+ */
+export const cataloguePrivateCache = biblibSchema.table(
+  "catalogue_private_cache",
+  {
+    ownerId: uuid("owner_id")
+      .notNull()
+      .references(() => authUsers.id, { onDelete: "cascade" }),
+    provider: text("provider").notNull(),
+    policyVersion: text("policy_version").notNull(),
+    credentialScope: text("credential_scope").notNull(),
+    schemaVersion: integer("schema_version").notNull(),
+    operation: text("operation").notNull(),
+    keyHmac: text("key_hmac").notNull(),
+    status: text("status").$type<"found" | "notFound">().notNull(),
+    payload: jsonb("payload").$type<unknown[]>().notNull(),
+    fetchedAt: timestamp("fetched_at", { withTimezone: true }).notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  },
+  (table) => [
+    primaryKey({ name: "catalogue_private_cache_pkey", columns: [table.ownerId, table.provider, table.policyVersion, table.credentialScope, table.schemaVersion, table.operation, table.keyHmac] }),
+    index("catalogue_private_cache_expires_at_idx").on(table.ownerId, table.expiresAt),
+    check("catalogue_private_cache_provider_check", sql`${table.provider} in ${catalogueProviders}`),
+    check("catalogue_private_cache_operation_check", sql`${table.operation} in ('searchTitleAuthor')`),
+    check("catalogue_private_cache_status_check", sql`${table.status} in ('found', 'notFound')`),
+    check("catalogue_private_cache_key_check", sql`${table.keyHmac} ~ '^[0-9a-f]{64}$'`),
+    check("catalogue_private_cache_payload_check", sql`jsonb_typeof(${table.payload}) = 'array'`),
+    check("catalogue_private_cache_expiry_check", sql`${table.expiresAt} > ${table.fetchedAt}`),
+    pgPolicy("catalogue_private_cache_select_own", {
+      for: "select",
+      to: authenticatedRole,
+      using: ownRow(table.ownerId),
+    }),
+    pgPolicy("catalogue_private_cache_delete_own", {
+      for: "delete",
+      to: authenticatedRole,
+      using: ownRow(table.ownerId),
     }),
   ],
 ).enableRLS()
