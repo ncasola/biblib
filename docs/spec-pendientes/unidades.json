@@ -1134,8 +1134,12 @@
         "BE-04",
         "SEC-03"
       ],
-      "status": "in-progress",
-      "note": "Hallazgo de U-QA-02: en fixture la app salía a openlibrary.org."
+      "status": "implemented",
+      "note": "Hallazgo de U-QA-02: en fixture la app salía a openlibrary.org.",
+      "evidence": "O09 · merge 0bfea68 + 136b2ea; cero fetch en fixture, 404 real, portadas Google filtradas (docs/validacion/2026-10-23/O09/fix-01.md)",
+      "pending": [
+        "Gateway de lotes en live: U-BIB-05."
+      ]
     }
   ]
 }
