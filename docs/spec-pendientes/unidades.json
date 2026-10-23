@@ -187,8 +187,13 @@
         "QA-02",
         "OPS-02"
       ],
-      "status": "in-progress",
-      "note": "Se entrega preparada: sin destino remoto autorizado."
+      "status": "implemented-local",
+      "note": "Se entrega preparada: sin destino remoto autorizado.",
+      "evidence": "O08 · merge 9441517; 8/8 escenarios contra Postgres efímero con TLS y scratch",
+      "pending": [
+        "Toda verificación contra preprod/prod reales: autorización de Néstor, ref real, preprod inexistente, plan del proveedor.",
+        "docs/recuperacion.md desfasado respecto al recibo ampliado."
+      ]
     },
     {
       "id": "U-DAT-01",
@@ -724,7 +729,12 @@
         "FE-01",
         "UI-03"
       ],
-      "status": "in-progress"
+      "status": "implemented",
+      "evidence": "O07 · merge 504c310; Chromium ×2, Firefox/WebKit 66/66; G07 en docs/validacion/2026-10-23/O08/g07-g08-coordinador.md",
+      "pending": [
+        "23 escenarios fixme ligados a unidades futuras.",
+        "Recuperación de portadas solo en smoke hasta U-BIB-05."
+      ]
     },
     {
       "id": "U-QA-03",
@@ -1028,8 +1038,12 @@
         "BE-04",
         "OPS-02"
       ],
-      "status": "in-progress",
-      "activationCondition": "Entrega técnica aceptable con fixtures y flag apagado. Live permanece deshabilitado hasta comprobar clave, cuota/coste, comunicación de privacidad y uso permitido; OL+BNE no dependen de su activación."
+      "status": "implemented",
+      "activationCondition": "Entrega técnica aceptable con fixtures y flag apagado. Live permanece deshabilitado hasta comprobar clave, cuota/coste, comunicación de privacidad y uso permitido; OL+BNE no dependen de su activación.",
+      "evidence": "O09 · merge e0dabf9; apagado por defecto, cero peticiones sin flag/clave",
+      "pending": [
+        "Activación real condicionada a consola/cuota/términos (Néstor)."
+      ]
     },
     {
       "id": "U-BIB-04",
@@ -1050,7 +1064,13 @@
         "UX-08",
         "UX-01"
       ],
-      "status": "in-progress"
+      "status": "implemented",
+      "evidence": "O09 · merge adf0d03 + f4fef4c; v2 tras BIBLIB_BIBLIOGRAPHY_REVIEW_ENABLED (apagado)",
+      "pending": [
+        "E2E con la bandera activa.",
+        "Ruta de búsqueda debe filtrar portadas google-books.",
+        "Idioma/formato persistidos con U-DAT-06; manually-verified con U-DAT-07."
+      ]
     },
     {
       "id": "U-BIB-05",
