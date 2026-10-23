@@ -1,0 +1,45 @@
+{
+  "kind": "books#volumes",
+  "totalItems": 4,
+  "items": [
+    {
+      "id": "distinct-edition",
+      "volumeInfo": {
+        "title": "Edición diferente",
+        "industryIdentifiers": [{ "type": "ISBN_13", "identifier": "9788401337208" }]
+      }
+    },
+    {
+      "id": "matching-ten",
+      "volumeInfo": {
+        "title": "Árboles de papel",
+        "subtitle": "Una ficha sintética",
+        "authors": ["Autora ficticia"],
+        "publisher": "Editorial de prueba",
+        "publishedDate": "2001-03",
+        "language": "es",
+        "printType": "BOOK",
+        "pageCount": 123,
+        "industryIdentifiers": [{ "type": "ISBN_10", "identifier": "0-8044-2957-X" }],
+        "imageLinks": { "thumbnail": "http://books.google.com/books/content?id=matching-ten&img=1&zoom=1" }
+      }
+    },
+    {
+      "id": "no-identifiers",
+      "volumeInfo": {
+        "title": "Árboles de papel",
+        "imageLinks": { "thumbnail": "https://books.google.com/books/content?id=no-identifiers" }
+      }
+    },
+    {
+      "id": "matching-thirteen",
+      "volumeInfo": {
+        "title": "Árboles de papel, otra ficha",
+        "industryIdentifiers": [
+          { "type": "OTHER", "identifier": "código editorial" },
+          { "type": "ISBN_13", "identifier": "978-0-8044-2957-3" }
+        ]
+      }
+    }
+  ]
+}
