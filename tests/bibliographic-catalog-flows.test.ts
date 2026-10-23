@@ -3,7 +3,10 @@ import { describe, test } from "node:test"
 import { DEFAULT_BOOK_COVER } from "../lib/book-covers"
 import { createCatalogGateway, type CatalogGateway } from "../lib/bibliographic-catalog/gateway"
 import { readCatalogConfig } from "../lib/bibliographic-catalog/config"
+import { catalogResultError } from "../lib/bibliographic-catalog/action-result"
+import { readCatalogueFixture } from "../lib/catalogue-fixtures"
 import { createBibliographicCatalogService } from "../lib/bibliographic-catalog/orchestrator"
+import { FIXTURE_BNE_ONLY_ISBN, FIXTURE_BUDGET_EXHAUSTED_ISBN, FIXTURE_RATE_LIMITED_ISBN, FIXTURE_TIMEOUT_ISBN, FIXTURE_UNAVAILABLE_ISBN } from "../lib/bibliographic-catalog/providers/fixture"
 import { createOpenLibraryProvider } from "../lib/bibliographic-catalog/providers/open-library"
 import { createConfiguredCatalog } from "../lib/bibliographic-catalog/registry"
 import { providerRightsPolicy } from "../lib/bibliographic-catalog/rights"
@@ -451,5 +454,51 @@ describe("contrato completo por operación", () => {
       await assert.rejects(service.getCover(bad))
     }
     assert.deepEqual(calls, [])
+  })
+})
+
+describe("fixtures reservados de proveedor (E2E sin red)", () => {
+  const catalog = () => createConfiguredCatalog(readCatalogConfig({ BIBLIB_TARGET: "test" }))
+  const statuses = (providers: { status: string }[]) => providers.map((provider) => provider.status)
+
+  test("un proveedor vacío y otro disponible: la ficha de BNE conserva su fuente y la consulta es completa", async (t) => {
+    t.mock.method(globalThis, "fetch", async () => assert.fail("Fixture no puede llamar a Internet"))
+    const result = await catalog().lookupISBN(FIXTURE_BNE_ONLY_ISBN)
+    assert.deepEqual([result.status, result.complete], ["found", true])
+    assert.deepEqual(statuses(result.providers), ["notFound", "found", "disabled"])
+    assert.deepEqual(result.candidates.map((candidate) => [candidate.provider, candidate.title, candidate.evidence.isbnExact]), [["bne", "El archivo de las mareas", true]])
+    assert.ok(result.candidates[0].sourceUrl?.startsWith("https://"))
+  })
+
+  test("429, plazo agotado, 5xx y cuota global agotada nunca son «no encontrado»", async () => {
+    const service = catalog()
+    const limited = await service.lookupISBN(FIXTURE_RATE_LIMITED_ISBN)
+    assert.deepEqual([limited.status, statuses(limited.providers).slice(0, 2), limited.providers[0].retryAfterSeconds], ["incomplete", ["rateLimited", "notFound"], 30])
+    assert.equal(catalogResultError(limited)?.code, "RATE_LIMITED")
+    const unavailable = await service.lookupISBN(FIXTURE_UNAVAILABLE_ISBN)
+    assert.deepEqual([unavailable.status, catalogResultError(unavailable)?.code], ["incomplete", "PROVIDER_UNAVAILABLE"])
+    const exhausted = await service.lookupISBN(FIXTURE_BUDGET_EXHAUSTED_ISBN)
+    assert.deepEqual([exhausted.status, statuses(exhausted.providers).slice(0, 2), exhausted.providers[1].retryAfterSeconds], ["incomplete", ["rateLimited", "rateLimited"], 3600])
+    assert.equal(catalogResultError(exhausted)?.code, "RATE_LIMITED")
+    // El plazo se reduce en la prueba; en la app es el de la fuente (3,5 s).
+    const silent = await service.lookupISBN(FIXTURE_TIMEOUT_ISBN, { providerTimeoutMs: 60 })
+    assert.deepEqual([silent.status, silent.deadlineExceeded, silent.providers[0].status, silent.providers[0].reason], ["incomplete", true, "unavailable", "deadline"])
+    assert.equal(silent.providers[1].status, "notFound", "la fuente siguiente sigue consultándose tras el plazo de la primera")
+    assert.equal(catalogResultError(silent)?.code, "PROVIDER_UNAVAILABLE")
+  })
+
+  test("ninguno de los ISBN reservados está en el censo ni en las fichas de fixture", () => {
+    const reserved = [FIXTURE_UNAVAILABLE_ISBN, FIXTURE_RATE_LIMITED_ISBN, FIXTURE_TIMEOUT_ISBN, FIXTURE_BUDGET_EXHAUSTED_ISBN, FIXTURE_BNE_ONLY_ISBN]
+    assert.equal(new Set(reserved).size, reserved.length)
+    for (const isbn of reserved) {
+      assert.ok(normalizeIsbn(isbn), `${isbn} debe ser un ISBN válido`)
+      assert.deepEqual(readCatalogueFixture(isbn), {})
+    }
+  })
+
+  test("con BNE apagada en fixture solo participa Open Library y la ficha solo-BNE no existe", async () => {
+    const service = createConfiguredCatalog(readCatalogConfig({ BIBLIB_TARGET: "test", BIBLIB_BNE_ENABLED: "false" }))
+    const result = await service.lookupISBN(FIXTURE_BNE_ONLY_ISBN)
+    assert.deepEqual([result.status, result.complete, statuses(result.providers)], ["notFound", true, ["notFound", "disabled", "disabled"]])
   })
 })
