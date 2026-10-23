@@ -18,7 +18,8 @@
     "test:import": "tsc -p tsconfig.tests.json && node --test .next/tests/tests/library-import.test.js",
     "start": "next start",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate"
+    "db:migrate": "drizzle-kit migrate",
+    "test:scripts": "node --test \"tests/scripts/**/*.test.mjs\""
   },
   "dependencies": {
     "@hookform/resolvers": "^5.5.7",
