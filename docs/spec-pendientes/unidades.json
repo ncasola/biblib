@@ -258,7 +258,12 @@
         "BE-06",
         "UX-04"
       ],
-      "status": "in-progress"
+      "status": "implemented",
+      "evidence": "O09 · merge 3a0458b + 8d39ff1; 0005_library_jobs; test:integration:jobs 19/19 en scratch con código integrado (docs/validacion/2026-10-23/O09/dat-03/)",
+      "pending": [
+        "startImportJobAction sin consumidor en la UI.",
+        "prepareImport sigue usando enrichImportedBookCovers (fixture ya sin red): U-BIB-05."
+      ]
     },
     {
       "id": "U-DAT-04",
