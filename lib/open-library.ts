@@ -1,5 +1,6 @@
 import { normalizeBookCover } from "./book-covers"
 import { normalizeIsbn } from "./isbn"
+import { upgradeOpenLibraryUrl } from "./bibliographic-catalog/providers/endpoints"
 import { createOpenLibraryProvider, type OpenLibraryOptions, type OpenLibraryRecord } from "./bibliographic-catalog/providers/open-library"
 import type { Book } from "./types"
 
@@ -16,9 +17,9 @@ export function createOpenLibraryClient(options: OpenLibraryOptions = {}) {
     const data = result.record
     const cover = normalizeBookCover(data.cover)
     for (const size of ["small", "medium", "large"] as const) {
-      if (cover[size].startsWith("http://covers.openlibrary.org/")) cover[size] = cover[size].replace("http:", "https:")
+      cover[size] = upgradeOpenLibraryUrl(cover[size]) ?? cover[size]
     }
-    const sourceUrl = data.url?.replace(/^http:\/\/openlibrary\.org\//, "https://openlibrary.org/")
+    const sourceUrl = upgradeOpenLibraryUrl(data.url)
     const book: Book = {
       id: `book-${isbn}`, isbn, title: data.title, subtitle: data.subtitle,
       authors: data.authors?.length ? data.authors : [{ name: "Autor desconocido" }],

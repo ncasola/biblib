@@ -4,15 +4,14 @@ import { createHash, randomUUID } from "node:crypto"
 import { and, desc, eq, inArray, lt, sql } from "drizzle-orm"
 import { z } from "zod"
 import { withRlsContext } from "@/lib/db/client"
-import { books, importPreviews } from "@/lib/db/schema"
+import { importPreviews } from "@/lib/db/schema"
 import { ensureDefaultShelf, lockLibrary } from "@/lib/db/library"
 import { getRequiredUserId } from "@/lib/server-user"
 import { DomainError, translateDatabaseError } from "@/lib/domain-errors"
 import type { ActionResult } from "@/lib/action-result"
 import { domainMutation } from "@/lib/server-action"
 import { DEFAULT_BOOK_COVER } from "@/lib/book-covers"
-import { normalizedBookIdentifier } from "@/lib/isbn"
-import { enrichImportedBookCovers, parseLibraryImport } from "@/lib/library-import"
+import { parseLibraryImport } from "@/lib/library-import"
 import {
   buildImportPlan, canonicalJson, IMPORT_RULES_VERSION, MAX_ACTIVE_PREVIEWS, previewTtlMinutes,
   type ImportMode, type ImportOperationResult, type ImportPlan,
@@ -26,7 +25,9 @@ import { observeOperation } from "@/lib/observability/operations"
 import { emitSafely } from "@/lib/observability/emitter"
 
 // U-DAT-01 · Importación en dos pasos vinculada a la revisión de la colección.
-// prepare: valida, busca portadas fuera de cualquier transacción y guarda entrada + plan privados.
+// prepare: valida y guarda entrada + plan privados. No consulta catálogos: las portadas pendientes las
+// busca después el trabajo de portadas (U-DAT-03) con el orquestador y el gateway en modo lote, sin
+// bloquear la revisión ni la importación (U-BIB-05).
 // confirm: publica mediante un trabajo persistente (U-DAT-03); bajo el bloqueo de colección compara
 // clave, caducidad, reglas y revisión y nunca fuerza.
 
@@ -72,12 +73,7 @@ async function prepareImport(input: unknown, mode: unknown): Promise<PreparedImp
   const imported = parseInput(input)
   const digest = sha256(canonicalJson(imported))
 
-  // Red fuera de cualquier transacción y del bloqueo: solo libros que probablemente se añadirán.
-  const existing = importMode === "merge" ? await withRlsContext(userId, async (tx) =>
-    new Set((await tx.select({ isbn: books.isbn }).from(books).where(eq(books.userId, userId))).map((book) => normalizedBookIdentifier(book.isbn)))) : new Set<string>()
-  const probableNew = imported.books.filter((book) => !existing.has(normalizedBookIdentifier(book.isbn)))
-  const enriched = new Map((await enrichImportedBookCovers(probableNew, telemetry)).map((book) => [book.isbn, book]))
-  const payload: LibraryData = { shelves: imported.shelves, books: imported.books.map((book) => enriched.get(book.isbn) ?? book) }
+  const payload: LibraryData = { shelves: imported.shelves, books: imported.books }
   const previewId = randomUUID()
   const ttl = previewTtlMinutes(process.env.BIBLIB_IMPORT_PREVIEW_TTL_MINUTES)
 
@@ -87,9 +83,9 @@ async function prepareImport(input: unknown, mode: unknown): Promise<PreparedImp
       await ensureDefaultShelf(tx, userId)
       const revision = await lockLibrary(tx)
       const plan = buildImportPlan({ imported: payload, current: await readCollectionSnapshot(tx, userId), mode: importMode, allocateId: previewAllocator(previewId) })
-      const originals = new Map(imported.books.map((book) => [book.id, book.cover.large]))
+      // Ninguna portada se busca al preparar: las genéricas quedan pendientes para el trabajo de portadas.
       const covers = new Map(payload.books.map((book) => [book.id, book.cover.large]))
-      plan.counts.coversFound = plan.books.insert.filter((entry) => originals.get(entry.sourceId) === DEFAULT_BOOK_COVER && covers.get(entry.sourceId) !== DEFAULT_BOOK_COVER).length
+      plan.counts.coversFound = 0
       plan.counts.coversPending = plan.books.insert.filter((entry) => covers.get(entry.sourceId) === DEFAULT_BOOK_COVER).length
 
       // Las vistas previas caducadas se conservan un día para diagnóstico; cada cuenta guarda un número acotado.

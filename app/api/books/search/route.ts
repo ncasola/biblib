@@ -1,6 +1,7 @@
 import { bibliographicCatalog } from "@/lib/bibliographic-catalog/server"
 import { catalogResultError } from "@/lib/bibliographic-catalog/action-result"
 import { candidateToLegacyBook } from "@/lib/bibliographic-catalog/normalize"
+import { retainableCandidates, retainableCovers } from "@/lib/bibliographic-catalog/retention"
 import { normalizeIsbn } from "@/lib/isbn"
 import { DomainError, httpStatusForDomainError } from "@/lib/domain-errors"
 import { getRequiredUserId } from "@/lib/server-user"
@@ -25,10 +26,11 @@ export async function GET(request: NextRequest) {
       }
       const failure = catalogResultError(result)
       if (failure) throw failure
-      const candidate = result.candidates[0]
+      // Esta respuesta es una ficha guardable: solo fuentes cuya política permite conservarla (nunca Google).
+      const candidate = retainableCandidates(result.candidates)[0]
+      if (!candidate) return NextResponse.json({ error: "Libro no encontrado" }, { status: 404 })
       const cover = candidate.coverUrl ? await bibliographicCatalog.getCover(isbn, { userId, signal: request.signal }) : undefined
-      // Google autoriza solo preview: esta respuesta se usa como Book guardable en el alta.
-      const persistentCover = cover?.candidates.find((entry) => entry.provider !== "google-books" && entry.imageUrl)
+      const persistentCover = cover && retainableCovers(cover.candidates).find((entry) => entry.imageUrl)
       const book = candidateToLegacyBook(candidate, normalizeIsbn(isbn)!, persistentCover?.imageUrl)
 
       return NextResponse.json(book, { headers: { "Cache-Control": "private, no-store" } })

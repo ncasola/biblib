@@ -6,11 +6,13 @@ import { books, libraryJobItems, libraryJobs } from "../db/schema"
 import type { DatabaseTransaction } from "../db/client"
 import { databaseErrorCode } from "../domain-errors"
 import { DEFAULT_BOOK_COVER } from "../book-covers"
+import { catalogueWithField } from "../catalogue-provenance"
+import type { RetainedProvider } from "../bibliographic-catalog/retention"
 import {
   countsFromItems, EMPTY_COUNTS, isTerminal, rotatesVersion,
   type ImportJobResult, type JobCounts, type JobItemState, type JobKind, type JobPhase, type JobState, type LibraryJobView,
 } from "./contracts"
-import type { Book } from "../types"
+import type { Book, CatalogueMetadata } from "../types"
 
 // Acceso a Postgres del ejecutor de trabajos (U-DAT-03). Reclamar, renovar y cercar el lease usan
 // las funciones de 0005, que solo ejecuta la conexión del servidor. Cada transacción de escritura
@@ -256,10 +258,27 @@ export function createJobRepository(db: JobDatabase) {
 export type JobRepository = ReturnType<typeof createJobRepository>
 
 /** Portada recuperada solo si el libro conserva la versión y la preimagen vistas al crear el elemento. */
-export async function applyRecoveredCovers(tx: DatabaseTransaction, owner: string, recovered: { id: string; version: string; cover: Book["cover"] }[]): Promise<Set<string>> {
+export interface RecoveredCover { id: string; version: string; cover: Book["cover"]; provider?: RetainedProvider; sourceUrl?: string }
+
+/**
+ * Con la revisión bibliográfica activa, la fuente de la portada queda en la procedencia del campo
+ * `cover` (selección «sin verificar»: la eligió el trabajo, no la persona). Con ella apagada la
+ * procedencia sigue en v1 y la fuente solo consta en el resultado del elemento y la telemetría.
+ */
+export async function applyRecoveredCovers(tx: DatabaseTransaction, owner: string, recovered: RecoveredCover[], options: { reviewEnabled?: boolean; now?: () => Date } = {}): Promise<Set<string>> {
   const applied = new Set<string>()
   for (const entry of recovered) {
-    const rows = await tx.update(books).set({ coverSmall: entry.cover.small, coverMedium: entry.cover.medium, coverLarge: entry.cover.large, updatedAt: new Date() })
+    let catalogue: CatalogueMetadata | undefined
+    if (entry.provider) {
+      const [current] = await tx.select({ catalogue: books.catalogue }).from(books)
+        .where(and(eq(books.userId, owner), eq(books.id, entry.id), eq(books.version, entry.version))).limit(1)
+      if (!current) continue
+      catalogue = catalogueWithField(current.catalogue, "cover", {
+        provider: entry.provider, ...(entry.sourceUrl ? { sourceUrl: entry.sourceUrl } : {}),
+        retrievedAt: (options.now?.() ?? new Date()).toISOString(), selection: "unverified",
+      }, options.reviewEnabled === true)
+    }
+    const rows = await tx.update(books).set({ coverSmall: entry.cover.small, coverMedium: entry.cover.medium, coverLarge: entry.cover.large, ...(catalogue ? { catalogue } : {}), updatedAt: new Date() })
       .where(and(eq(books.userId, owner), eq(books.id, entry.id), eq(books.version, entry.version), missingCover("biblib.books")))
       .returning({ id: books.id })
     if (rows.length) applied.add(entry.id)

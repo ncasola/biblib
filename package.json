@@ -64,7 +64,9 @@
     "perf:local": "node scripts/performance/run.mjs",
     "perf:local:cleanup": "node scripts/performance/run.mjs cleanup",
     "security:headers:local": "node scripts/security/headers-local.mjs",
-    "test:integration:security": "node tests/integration/security/run.mjs"
+    "test:integration:security": "node tests/integration/security/run.mjs",
+    "perf:catalogue": "node scripts/performance/catalogue-bench.mjs",
+    "catalogue:telemetry": "node scripts/catalogue-telemetry.mjs"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "1.1.15",

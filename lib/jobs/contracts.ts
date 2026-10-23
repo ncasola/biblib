@@ -1,4 +1,5 @@
 import { DEFAULT_BOOK_COVER, normalizeBookCover } from "../book-covers"
+import { retainableCovers, type RetainedProvider } from "../bibliographic-catalog/retention"
 import type { CatalogLookupResult, CoverCandidate } from "../bibliographic-catalog/types"
 import type { ImportOperationResult } from "../import-plan"
 import type { Book } from "../types"
@@ -133,7 +134,7 @@ export function stateAfterCovers(input: { pendingDue: number; retrying: number; 
 }
 
 export type CoverOutcome =
-  | { kind: "found"; cover: Book["cover"] }
+  | { kind: "found"; cover: Book["cover"]; provider: RetainedProvider; sourceUrl?: string }
   | { kind: "notFound" }
   | { kind: "retry"; code: "RATE_LIMITED" | "PROVIDER_UNAVAILABLE"; retryAfterMs?: number }
   | { kind: "failed"; code: "PROVIDER_DISABLED" }
@@ -150,10 +151,12 @@ export function coverFromImage(imageUrl: string): Book["cover"] {
  * portada»: solo una ausencia confirmada por todas las fuentes elegibles es `notFound`.
  */
 export function classifyCoverLookup(result: CatalogLookupResult<CoverCandidate>): CoverOutcome {
-  const image = result.candidates.find((candidate) => candidate.imageUrl)?.imageUrl
-  if (image) {
-    const cover = coverFromImage(image)
-    if (cover.large !== DEFAULT_BOOK_COVER) return { kind: "found", cover }
+  // Solo las portadas cuya política permite conservarlas: una vista previa de Google o una imagen de
+  // BNE nunca se guardan en la ficha (U-BIB-05).
+  for (const candidate of retainableCovers(result.candidates)) {
+    if (!candidate.imageUrl || candidate.provider === "google-books") continue
+    const cover = coverFromImage(candidate.imageUrl)
+    if (cover.large !== DEFAULT_BOOK_COVER) return { kind: "found", cover, provider: candidate.provider, ...(candidate.sourceUrl ? { sourceUrl: candidate.sourceUrl } : {}) }
   }
   if (result.status === "notFound" || (result.status === "found" && result.complete)) return { kind: "notFound" }
   const limited = result.providers.filter((provider) => provider.status === "rateLimited")

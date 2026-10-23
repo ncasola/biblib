@@ -11,7 +11,7 @@ import type { ProviderId, ProviderRegistration } from "./types"
 export function createConfiguredCatalog(config: CatalogConfig = readCatalogConfig(), options: { telemetry?: TelemetryEmitter; order?: readonly ProviderId[]; fetch?: typeof fetch; gateway?: CatalogGateway } = {}) {
   const providers: ProviderRegistration[] = [
     { id: "open-library", enabled: config.enabled["open-library"], adapter: config.mode === "fixture" ? createFixtureProvider() : createOpenLibraryProvider({ fetch: options.fetch }) },
-    { id: "bne", enabled: config.enabled.bne, ...(config.mode === "live" && config.enabled.bne ? { adapter: createBneSruProvider({ fetch: options.fetch }) } : {}) },
+    { id: "bne", enabled: config.enabled.bne, ...(config.enabled.bne ? { adapter: config.mode === "fixture" ? createFixtureProvider("bne") : createBneSruProvider({ fetch: options.fetch }) } : {}) },
     { id: "google-books", enabled: config.enabled["google-books"], configured: config.mode === "fixture" || config.googleConfigured,
       ...(config.mode === "live" && config.enabled["google-books"] && config.googleConfigured
         ? { adapter: createGoogleBooksProvider({ enabled: true, mode: config.mode, fetch: options.gateway?.fetch ?? options.fetch }) } : {}) },

@@ -175,3 +175,42 @@ test("reemplazar sustituye la colección (la biblioteca ficticia de A se restaur
   expect(await fixtureBooksPresent(stack)).toBe(4)
   expect(await libraryCount(stack)).toBe(snapshot.books.length)
 })
+
+// U-BIB-05 · La revisión no espera a los catálogos: las portadas pendientes son una fase posterior del
+// trabajo de importación (U-DAT-03), acotada y sin red en fixture. Una portada pendiente no bloquea nada.
+test("importar libros con ISBN: la revisión no consulta catálogos y sus portadas se buscan después sin bloquear", async ({ page, stack, data }) => {
+  const slug = data.slug("portadas")
+  const shelfId = `e2e-${slug}`
+  const shelfTitle = data.marked(`${slug} Importadas`)
+  const isbns = ["9780000000033", "9780000000095"] // Fixtures de catálogo fuera del censo A/B: sin imagen de fuente.
+  const books = isbns.map((isbn, index) => ({ id: randomUUID(), isbn, title: data.marked(`${slug} con ISBN ${index + 1}`), authors: [], number_of_pages: 0, publish_date: "", cover: DEFAULT_COVER, status: "unread", shelf_id: shelfId, shelf_name: shelfTitle }))
+  const file = { name: `${slug}.json`, mimeType: "application/json", buffer: Buffer.from(JSON.stringify({ shelves: [{ id: shelfId, title: shelfTitle, book_count: books.length }], books })) }
+  const [{ started }] = await stack.sql`select clock_timestamp() as started`
+  const jobsSince = async () => Number((await stack.sql`select count(*)::int as count from biblib.library_jobs where user_id = ${stack.users.a} and created_at >= ${started}`)[0].count)
+  try {
+    await openSettings(page)
+    await page.locator("#import-file").setInputFiles(file)
+    await expect(page.getByRole("heading", { name: `Revisión: ${file.name}` })).toBeVisible()
+    await expect(planValue(page, "Libros nuevos")).toHaveText("2")
+    await expect(planValue(page, "Sin portada")).toHaveText("2")
+    expect(await jobsSince(), "Preparar la revisión no crea trabajos ni consulta portadas").toBe(0)
+
+    await page.getByRole("button", { name: "Continuar y confirmar" }).click()
+    await page.getByRole("button", { name: "Sí, fusionar biblioteca" }).click()
+    const result = page.getByRole("region", { name: "Resultado de la importación" })
+    await expect(result).toContainText("Libros importados: 2")
+    await expect(result).toContainText("pendientes de búsqueda: 2")
+
+    // El trabajo continúa con las portadas en el servidor; en fixture todas terminan «sin resultado».
+    const [job] = await stack.sql`select id from biblib.library_jobs where user_id = ${stack.users.a} and kind = 'import' and created_at >= ${started}`
+    await expect.poll(async () => {
+      const rows = await stack.sql`select state, count(*)::int as n from biblib.library_job_items where job_id = ${job.id} group by state`
+      return Object.fromEntries(rows.map((row) => [String(row.state), Number(row.n)]))
+    }, { timeout: 30_000, message: "Las portadas pendientes se resuelven sin red" }).toEqual({ not_found: 2 })
+    const stored = await stack.sql`select cover_large from biblib.books where user_id = ${stack.users.a} and isbn in ${stack.sql(isbns)}`
+    expect(stored).toHaveLength(2)
+    expect(stored.every((row) => row.cover_large === DEFAULT_COVER.large), "Sin imagen de fuente, conservan la portada genérica").toBe(true)
+  } finally {
+    await stack.sql`delete from biblib.library_jobs where user_id = ${stack.users.a} and created_at >= ${started}`
+  }
+})

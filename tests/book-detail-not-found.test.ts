@@ -52,6 +52,7 @@ test("ficha: ID inválido e inexistente activan 404 y título español; un fallo
 
 test("lector de ficha: un ID inválido devuelve ausencia antes de Auth o de la base", async () => {
   const actions = loadSource<{ getBookDetailAction: (id: string) => Promise<Book | null> }>("app/actions/books.ts", {
+    "@/lib/bibliographic-catalog/server": {},
     "@/lib/db/client": { withRlsContext: () => assert.fail("No debe consultar la base") },
     "@/lib/db/library": {},
     "@/lib/db/schema": {},

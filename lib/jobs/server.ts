@@ -65,7 +65,7 @@ function batchCatalog() {
 }
 
 export function workerDeps(): WorkerDeps {
-  shared.biblibJobsDeps ??= { repo: jobRepository(), catalog: batchCatalog(), telemetry }
+  shared.biblibJobsDeps ??= { repo: jobRepository(), catalog: batchCatalog(), telemetry, reviewEnabled: () => { try { return readCatalogConfig().reviewEnabled } catch { return false } } }
   return shared.biblibJobsDeps
 }
 

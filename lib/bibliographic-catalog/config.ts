@@ -26,7 +26,8 @@ export function readCatalogConfig(env: Readonly<Record<string, string | undefine
     mode,
     enabled: {
       "open-library": flag(env.BIBLIB_OPEN_LIBRARY_ENABLED, true),
-      bne: flag(env.BIBLIB_BNE_ENABLED, false),
+      // En fixture BNE participa con su adaptador ficticio (sin red) para ensayar el flujo de dos fuentes.
+      bne: flag(env.BIBLIB_BNE_ENABLED, mode === "fixture"),
       "google-books": flag(env.BIBLIB_GOOGLE_BOOKS_ENABLED, false),
     },
     googleConfigured: Boolean(env.GOOGLE_BOOKS_API_KEY?.trim()),

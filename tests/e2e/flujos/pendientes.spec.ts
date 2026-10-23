@@ -3,6 +3,8 @@ import { test } from "../lib/fixtures"
 // Grupos de U-QA-02 que dependen de unidades futuras. Son esqueletos `test.fixme`: aparecen como
 // pendientes en el informe, nunca como superados, y cada uno nombra la unidad que lo activará.
 // Al cerrar esa unidad se sustituye el fixme por el recorrido real (criterio de «terminada»).
+// Proveedores: «un proveedor vacío y otro disponible», «429, plazo agotado y 5xx» y «presupuesto global
+// agotado» pasaron a flujos/proveedores.spec.ts con U-BIB-05.
 
 const pending = (unit: string, title: string) => test.fixme(`${title} · se activa con ${unit}`, async () => {})
 
@@ -28,11 +30,8 @@ test.describe("Copias multipart", () => {
 })
 
 test.describe("Proveedores · BNE y Google Books", () => {
-  pending("U-BIB-02", "un proveedor vacío y otro disponible (Open Library + BNE)")
-  pending("U-BIB-02", "429, timeout y 5xx distinguidos de «no encontrado»")
   pending("U-BIB-04", "edición discrepante entre proveedores")
   pending("U-BIB-03", "clave de Google Books ausente")
-  pending("U-DAT-05", "presupuesto global agotado")
 })
 
 test.describe("Privacidad · pendientes", () => {

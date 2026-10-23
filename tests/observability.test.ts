@@ -4,7 +4,7 @@ import { test, type TestContext } from "node:test"
 import { normalizeBookCover } from "../lib/book-covers"
 import { recordCoverRecovery } from "../lib/cover-recovery"
 import { DomainError } from "../lib/domain-errors"
-import { enrichImportedBookCovers, parseLibraryImport } from "../lib/library-import"
+import { parseLibraryImport } from "../lib/library-import"
 import { createOpenLibraryClient } from "../lib/open-library"
 import { CORRELATION_HEADER, correlationHeaders, getCorrelationId, isValidCorrelationId, parseCorrelationIdHeader, withCorrelation } from "../lib/observability/correlation"
 import { classifyProviderFailure, TELEMETRY_EVENTS, type TelemetryEvent } from "../lib/observability/events"
@@ -250,9 +250,8 @@ test("preview válido/inválido y conflicto de commit no registran el mensaje pr
 test("portadas 429 conservan el fallback y los contadores excluyen cursor y fichas", async (t) => {
   environment(t, "BIBLIB_CATALOGUE_MODE", "live")
   const { logger, records } = capture(t)
-  t.mock.method(globalThis, "fetch", async () => new Response(null, { status: 429 }))
   await withCorrelation(async () => {
-    assert.deepEqual(await enrichImportedBookCovers([book], logger), [book])
+    await assert.rejects(createOpenLibraryClient({ telemetry: logger, fetch: async () => new Response(null, { status: 429 }) }).searchBookByISBN(isbn), (error) => error instanceof DomainError && error.code === "RATE_LIMITED")
     recordCoverRecovery({ nextCursor: "cursor-privado", scanned: 3, recovered: 1, unavailable: 2, skipped: 0 }, logger)
   }, "portadas-123")
   assert.equal(records[0].fields.errorCode, "rate_limited")
@@ -270,7 +269,5 @@ test("telemetría apagada conserva ficha, ausencia, error de cuota e importació
   assert.equal((await full.searchBookByISBN(isbn))?.title, book.title)
   assert.equal(await createOpenLibraryClient({ telemetry: logger, fetch: async () => Response.json({}) }).searchBookByISBN(isbn), null)
   await assert.rejects(createOpenLibraryClient({ telemetry: logger, fetch: async () => new Response(null, { status: 429 }) }).searchBookByISBN(isbn), (error) => error instanceof DomainError && error.code === "RATE_LIMITED")
-  t.mock.method(globalThis, "fetch", async () => new Response(null, { status: 429 }))
-  assert.deepEqual(await enrichImportedBookCovers([book], logger), [book])
   assert.deepEqual(parseLibraryImport({ books: [], shelves: [] }, logger), { books: [], shelves: [] })
 })
