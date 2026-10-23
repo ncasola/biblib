@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "profile": "scratch",
+  "censusId": "biblib-local-v1",
+  "repeatedSeed": {
+    "sameAuthIds": true,
+    "sameBookIds": true,
+    "sameShelfIds": true,
+    "books": 8,
+    "shelves": 6,
+    "manualPreserved": true,
+    "versionTrigger": true
+  },
+  "accounts": [
+    {
+      "key": "a",
+      "getUser": true,
+      "alteredTokenRejected": true,
+      "nameUpdated": true,
+      "refresh": true,
+      "signOut": true,
+      "revokedRefreshRejected": true,
+      "ssrCookies": true
+    },
+    {
+      "key": "b",
+      "getUser": true,
+      "alteredTokenRejected": true,
+      "nameUpdated": true,
+      "refresh": true,
+      "signOut": true,
+      "revokedRefreshRejected": true,
+      "ssrCookies": true
+    }
+  ],
+  "storage": {
+    "bucket": "biblib-test-assets",
+    "object": "fixtures/portada.webp",
+    "private": true,
+    "anonymousDenied": true,
+    "signedDownload": true,
+    "deterministicBytes": true
+  },
+  "mailpit": {
+    "recipient": "lector-a@biblib.test",
+    "received": true
+  },
+  "catalogue": {
+    "offlineFiles": true
+  }
+}

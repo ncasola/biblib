@@ -1,0 +1,102 @@
+{
+  "code": 0,
+  "result": {
+    "schemaVersion": 1,
+    "target": "local",
+    "profile": "scratch",
+    "fingerprint": "ea260283d87954c1c405cb5ee4875867dd8b103c86084460f3a74244e06b13fa",
+    "endpoints": {
+      "api": "http://127.0.0.1:55341",
+      "postgres": {
+        "host": "127.0.0.1",
+        "port": 55342,
+        "database": "postgres"
+      },
+      "studio": "http://127.0.0.1:55343",
+      "mailpit": "http://127.0.0.1:55344"
+    },
+    "services": [
+      {
+        "name": "postgres",
+        "status": "healthy"
+      },
+      {
+        "name": "auth",
+        "status": "healthy"
+      },
+      {
+        "name": "rest",
+        "status": "running"
+      },
+      {
+        "name": "storage",
+        "status": "healthy"
+      },
+      {
+        "name": "studio",
+        "status": "healthy"
+      },
+      {
+        "name": "mailpit",
+        "status": "healthy"
+      }
+    ],
+    "head": {
+      "tag": "0002_book_versions",
+      "applied": 3,
+      "expected": 3,
+      "state": "up-to-date"
+    },
+    "checks": [
+      {
+        "id": "bootstrap",
+        "status": "ok",
+        "message": "Stack propio sano."
+      },
+      {
+        "id": "bindings.loopback",
+        "status": "warn",
+        "message": "Bindings fuera de loopback; consulta alternativas A/B en docs/operacion.md."
+      },
+      {
+        "id": "bootstrap.pending",
+        "status": "pending",
+        "message": "preflight, stack, env, migrate y seed completados; verify pendiente de U-INF-06."
+      }
+    ],
+    "bootstrap": {
+      "status": "pending",
+      "phase": "verify",
+      "phases": {
+        "preflight": {
+          "status": "passed"
+        },
+        "stack": {
+          "status": "healthy"
+        },
+        "env": {
+          "status": "passed",
+          "message": "Sin archivo: scratch/test consumen contexto explícito; solo main genera .env.local."
+        },
+        "migrate": {
+          "status": "passed",
+          "head": {
+            "tag": "0002_book_versions",
+            "applied": 3,
+            "expected": 3,
+            "state": "up-to-date"
+          },
+          "message": "Plan + migrate locales (U-INF-04): sin cambios: el destino ya estaba al día."
+        },
+        "seed": {
+          "status": "passed",
+          "censusId": "biblib-local-v1"
+        },
+        "verify": {
+          "status": "pending",
+          "message": "Verificación completa pendiente de U-INF-06."
+        }
+      }
+    }
+  }
+}
