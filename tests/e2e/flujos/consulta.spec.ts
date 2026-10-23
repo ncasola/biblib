@@ -2,6 +2,9 @@ import { randomUUID } from "node:crypto"
 import type { Page } from "@playwright/test"
 import { capture, type Data, expect, test } from "../lib/fixtures"
 
+// Desde U-FIX-01 una ficha inexistente o ajena responde 404 real; el navegador lo anota en consola como recurso fallido.
+const BOOK_404 = /status of 404 \(Not Found\) \[\/book\//
+
 // Consulta (A): tildes, ISBN-10/13, filtros en la URL, atrás/adelante, cero resultados, página que deja
 // de existir y retorno contextual de U-EXP-01 (filtros, página, vista y fila al volver de la ficha).
 
@@ -67,7 +70,8 @@ test("los filtros de la URL se aplican al cargar y la página inexistente se aju
   await expect(page.getByText("Página 1 de 1")).toBeVisible()
 })
 
-test("retorno contextual: la ficha vuelve a filtros, página, vista y fila; atrás y adelante", async ({ page, stack, data }, testInfo) => {
+test("retorno contextual: la ficha vuelve a filtros, página, vista y fila; atrás y adelante", async ({ page, stack, data, guard }, testInfo) => {
+  guard.allowConsole(BOOK_404)
   const slug = data.slug("retorno")
   await seedCatalogue(data, slug)
   const listing = `/books?q=${encodeURIComponent(slug)}&sort=-title&page=2&view=grid`
@@ -109,7 +113,8 @@ test("retorno contextual: la ficha vuelve a filtros, página, vista y fila; atr�
 
 // Hallazgo QA-02 (23-10-2026), corregido por U-FIX-01: un id que no es UUID o un UUID inexistente
 // responde 404 con la página «Libro no encontrado» en español, sin error de servidor.
-test("un identificador inválido muestra «Libro no encontrado» sin error de servidor", async ({ page }) => {
+test("un identificador inválido muestra «Libro no encontrado» sin error de servidor", async ({ page, guard }) => {
+  guard.allowConsole(BOOK_404)
   const response = await page.goto("/book/no-es-un-uuid")
   expect(response?.status()).toBe(404)
   await expect(page).toHaveTitle("Libro no encontrado · BibLib")

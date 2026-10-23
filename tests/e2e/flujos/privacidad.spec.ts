@@ -6,7 +6,9 @@ import { accountMenu, capture, expect, test } from "../lib/fixtures"
 
 test.use({ account: "b" })
 
-test("los datos de A son invisibles para B", async ({ page, stack }, testInfo) => {
+test("los datos de A son invisibles para B", async ({ page, stack, guard }, testInfo) => {
+  // B abriendo la ficha de A recibe un 404 real (U-FIX-01): es el resultado esperado, no un error.
+  guard.allowConsole(/status of 404 \(Not Found\) \[\/book\//)
   const aBook = stack.fixtureBookId("a", "cuaderno")
   const [{ shelf_id: aShelf }] = await stack.sql`select shelf_id from biblib.books where id = ${aBook}`
 
