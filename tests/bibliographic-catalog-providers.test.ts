@@ -59,8 +59,9 @@ test("desactivar OL evita sus consultas; BNE declara capacidades y Google perman
   assert.equal(service.capabilities().bne.getCover, false)
   assert.equal(service.capabilities()["open-library"].lookupISBN, false)
   assert.equal(requests, 1)
-  const keyed = createConfiguredCatalog(readCatalogConfig({ BIBLIB_TARGET: "test", BIBLIB_CATALOGUE_MODE: "live", BIBLIB_OPEN_LIBRARY_ENABLED: "false", BIBLIB_GOOGLE_BOOKS_ENABLED: "true", GOOGLE_BOOKS_API_KEY: "clave-sintetica" }))
-  assert.equal((await keyed.lookupISBN(isbn)).providers[2].status, "notAttempted")
+  const keyed = createConfiguredCatalog(readCatalogConfig({ BIBLIB_TARGET: "test", BIBLIB_CATALOGUE_MODE: "live", BIBLIB_OPEN_LIBRARY_ENABLED: "false", BIBLIB_GOOGLE_BOOKS_ENABLED: "true", GOOGLE_BOOKS_API_KEY: "clave-sintetica" }), { fetch: async () => { requests++; assert.fail("Sin clave de runtime no debe consultar Google") } })
+  assert.equal((await keyed.lookupISBN(isbn)).providers[2].status, "misconfigured")
+  assert.equal(requests, 1)
   assert.ok(!JSON.stringify(config).includes("clave-sintetica"))
 })
 
