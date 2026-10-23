@@ -274,8 +274,17 @@ describe("cola y caché compartidas entre instancias", () => {
     clock.now += providerRightsPolicy("open-library").metadataTtlSeconds * 1000 + 1
     assert.equal((await first.lookupISBN(list[1], { userId: OWNER })).status, "found")
     assert.equal(network.log.length, hits + 1)
-    // Invalidación: una versión de política distinta no reutiliza lo guardado y se limpia lo anterior.
-    assert.ok(shared.calls.invalidate.length >= 1, "al arrancar se retiran las entradas de versiones incompatibles")
+    // Invalidación: con otra versión de política nada de lo guardado se reutiliza y se avisa a la base.
+    const published = providerRightsPolicy("open-library")
+    const newer = { ...published, version: "2026-11-01.1" }
+    const rights = { policy: () => newer, allows: (policy: typeof newer, capability: keyof typeof newer) => policy[capability] === true }
+    const upgraded = createBibliographicCatalogService({ providers: [{ id: "open-library", enabled: true, adapter: createOpenLibraryProvider({ fetch: createCatalogGateway({ store: shared.store, fetch: network.fetch, sleep: fakeSleep(clock), rights }).fetch, now: () => clock.now, wait: fakeSleep(clock) }) }],
+      gateway: createCatalogGateway({ store: shared.store, fetch: network.fetch, sleep: fakeSleep(clock), rights }) })
+    const requestsBefore = network.log.length
+    assert.equal((await upgraded.lookupISBN(list[2], { userId: OWNER })).status, "found")
+    assert.equal(network.log.length, requestsBefore + 1, "la ficha guardada con la política anterior no se reutiliza")
+    assert.ok(shared.calls.invalidate.includes(newer.version), "se retiran las entradas de versiones incompatibles")
+    assert.ok(shared.calls.invalidate.includes(published.version), "al arrancar cada instancia limpia lo incompatible con su versión")
   })
 
   test("la cuota agotada se informa como rateLimited con espera, sin pasar por «no encontrado»", async () => {
