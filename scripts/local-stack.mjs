@@ -242,8 +242,8 @@ export async function runLocalStack(argv, options = {}) {
     }
     return { code: diagnostic.code, result: diagnostic.result }
   }
-  // Un checkout hijo nunca puede iniciar main/test por accidente.
-  if (["up", "bootstrap"].includes(parsed.command) && existsSync(path.join(ctx.root, ".git")) && !lstatSync(path.join(ctx.root, ".git")).isDirectory() && ctx.profile.name !== "scratch") fail(EXIT.IDENTITY_MISMATCH, "preflight", "Desde un worktree solo se permite arrancar el perfil scratch.")
+  // Un checkout hijo nunca puede iniciar main por accidente; test es el de test:integration:local (U-QA-01).
+  if (["up", "bootstrap"].includes(parsed.command) && existsSync(path.join(ctx.root, ".git")) && !lstatSync(path.join(ctx.root, ".git")).isDirectory() && !["scratch", "test"].includes(ctx.profile.name)) fail(EXIT.IDENTITY_MISMATCH, "preflight", "Desde un worktree solo se permite arrancar los perfiles scratch y test.")
   const release = acquireLock(ctx)
   let receipt = parsed.command === "bootstrap" ? { runId: randomUUID(), status: "pending", phase: "preflight", phases: Object.fromEntries(PHASES.map((name) => [name, { status: "pending" }])) } : null
   let resources = emptyResources(), phase = "preflight", recorded = false, lastStatus
