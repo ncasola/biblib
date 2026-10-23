@@ -19,7 +19,12 @@ const policies: Record<ProviderId, ProviderRightsPolicy> = {
     attribution: "Metadatos: Open Library. Las imágenes conservan los derechos de sus titulares.",
     termsUrl: "https://openlibrary.org/developers/licensing",
   },
-  bne: { ...denied, provider: "bne", version: "2026-10-23.1", metadataTtlSeconds: 0, coverTtlSeconds: 0, attribution: "Biblioteca Nacional de España", termsUrl: "https://www.bne.es/es/aviso-legal" },
+  bne: {
+    ...denied, provider: "bne", version: "2026-10-23.2", metadataTtlSeconds: 3600, coverTtlSeconds: 0,
+    cacheMetadata: true, persistMetadata: true, exportMetadata: true,
+    attribution: "Metadatos CC0: Biblioteca Nacional de España. Conservar URL del registro y fecha de recuperación.",
+    termsUrl: "https://www.bne.es/es/aviso-legal",
+  },
   "google-books": { ...denied, provider: "google-books", version: "2026-10-23.1", metadataTtlSeconds: 0, coverTtlSeconds: 0, attribution: "Google Books", termsUrl: "https://developers.google.com/books/terms" },
 }
 
