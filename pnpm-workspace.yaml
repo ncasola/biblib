@@ -7,6 +7,10 @@ allowBuilds:
   # decisión de autorizarlo es de una persona, no de este playbook.
   esbuild: false
   sharp: false
+  # Supabase CLI fijada (U-INF-01). La 2.117.0 resuelve el binario mediante
+  # dependencias opcionales por plataforma; se autoriza por si una versión
+  # fijada posterior vuelve a descargarlo en su script de instalación.
+  supabase: true
 
 # Overrides de dependencias transitivas con avisos de seguridad. Todos son
 # saltos dentro del mismo major: sólo suben el paquete vulnerable, sin
