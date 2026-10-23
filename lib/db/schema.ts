@@ -574,7 +574,7 @@ export const librarySnapshotChunks = biblibSchema.table(
     foreignKey({ name: "library_snapshot_chunks_owner_snapshot_fk", columns: [table.userId, table.snapshotId], foreignColumns: [librarySnapshots.userId, librarySnapshots.id] }).onDelete("cascade"),
     check("library_snapshot_chunks_kind_check", sql`${table.kind} in ('shelves', 'books')`),
     check("library_snapshot_chunks_seq_check", sql`${table.seq} >= 0`),
-    check("library_snapshot_chunks_size_check", sql`${table.itemCount} between 1 and 200 and jsonb_typeof(${table.payload}) = 'array' and jsonb_array_length(${table.payload}) = ${table.itemCount}`),
+    check("library_snapshot_chunks_size_check", sql`${table.itemCount} >= 1 and ${table.itemCount} <= 200 and jsonb_typeof(${table.payload}) = 'array' and jsonb_array_length(${table.payload}) = ${table.itemCount}`),
     check("library_snapshot_chunks_digest_check", sql`${table.digest} ~ '^[0-9a-f]{64}$'`),
     pgPolicy("library_snapshot_chunks_select_own", {
       for: "select",

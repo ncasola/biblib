@@ -9,7 +9,7 @@ CREATE TABLE "biblib"."library_snapshot_chunks" (
 	CONSTRAINT "library_snapshot_chunks_pkey" PRIMARY KEY("snapshot_id","seq"),
 	CONSTRAINT "library_snapshot_chunks_kind_check" CHECK ("biblib"."library_snapshot_chunks"."kind" in ('shelves', 'books')),
 	CONSTRAINT "library_snapshot_chunks_seq_check" CHECK ("biblib"."library_snapshot_chunks"."seq" >= 0),
-	CONSTRAINT "library_snapshot_chunks_size_check" CHECK ("biblib"."library_snapshot_chunks"."item_count" between 1 and 200 and jsonb_typeof("biblib"."library_snapshot_chunks"."payload") = 'array' and jsonb_array_length("biblib"."library_snapshot_chunks"."payload") = "biblib"."library_snapshot_chunks"."item_count"),
+	CONSTRAINT "library_snapshot_chunks_size_check" CHECK ("biblib"."library_snapshot_chunks"."item_count" >= 1 and "biblib"."library_snapshot_chunks"."item_count" <= 200 and jsonb_typeof("biblib"."library_snapshot_chunks"."payload") = 'array' and jsonb_array_length("biblib"."library_snapshot_chunks"."payload") = "biblib"."library_snapshot_chunks"."item_count"),
 	CONSTRAINT "library_snapshot_chunks_digest_check" CHECK ("biblib"."library_snapshot_chunks"."digest" ~ '^[0-9a-f]{64}$')
 );
 --> statement-breakpoint

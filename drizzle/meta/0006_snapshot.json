@@ -2145,7 +2145,7 @@
         },
         "library_snapshot_chunks_size_check": {
           "name": "library_snapshot_chunks_size_check",
-          "value": "\"biblib\".\"library_snapshot_chunks\".\"item_count\" between 1 and 200 and jsonb_typeof(\"biblib\".\"library_snapshot_chunks\".\"payload\") = 'array' and jsonb_array_length(\"biblib\".\"library_snapshot_chunks\".\"payload\") = \"biblib\".\"library_snapshot_chunks\".\"item_count\""
+          "value": "\"biblib\".\"library_snapshot_chunks\".\"item_count\" >= 1 and \"biblib\".\"library_snapshot_chunks\".\"item_count\" <= 200 and jsonb_typeof(\"biblib\".\"library_snapshot_chunks\".\"payload\") = 'array' and jsonb_array_length(\"biblib\".\"library_snapshot_chunks\".\"payload\") = \"biblib\".\"library_snapshot_chunks\".\"item_count\""
         },
         "library_snapshot_chunks_digest_check": {
           "name": "library_snapshot_chunks_digest_check",
