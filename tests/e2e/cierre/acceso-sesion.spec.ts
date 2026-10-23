@@ -14,8 +14,9 @@ const sessionCookies = (cookies: Cookie[]) => cookies.filter((cookie) => /^sb-.+
 test("sesión: destino interno, renovación, cierre y cambio de cuenta A→B sin restos", async ({ page, context, stack, guard }) => {
   guard.allowConsole(SIGN_OUT_RSC_404)
   const appOrigin = new URL(stack.appUrl).origin
+  const step = (title: string, body: () => Promise<void>) => test.step(title, async () => { guard.mark(title); await body() })
 
-  await test.step("una ruta privada directa vuelve a su destino tras entrar por el formulario", async () => {
+  await step("una ruta privada directa vuelve a su destino tras entrar por el formulario", async () => {
     await page.goto("/books?status=read&view=grid")
     await page.waitForURL((url) => url.pathname === "/login")
     await loginWithForm(page, stack, "a")
@@ -23,7 +24,7 @@ test("sesión: destino interno, renovación, cierre y cambio de cuenta A→B sin
     await expect(page.getByRole("link", { name: "La isla de papel", exact: true })).toBeVisible()
   })
 
-  await test.step("una sesión vencida se renueva con GoTrue y conserva la página", async () => {
+  await step("una sesión vencida se renueva con GoTrue y conserva la página", async () => {
     const current = sessionCookies(await context.cookies())
     const before = readSession(current)
     expect(before?.user?.id).toBe(stack.users.a)
@@ -39,7 +40,7 @@ test("sesión: destino interno, renovación, cierre y cambio de cuenta A→B sin
     expect(Number(after?.expires_at) > Date.now() / 1000, "El token renovado no está vencido").toBe(true)
   })
 
-  await test.step("cerrar sesión elimina la vista privada y revoca la copia de las cookies", async () => {
+  await step("cerrar sesión elimina la vista privada y revoca la copia de las cookies", async () => {
     const copy = sessionCookies(await context.cookies())
     await signOut(page, stack, "a")
     expect(sessionCookies(await context.cookies())).toEqual([])
@@ -51,7 +52,7 @@ test("sesión: destino interno, renovación, cierre y cambio de cuenta A→B sin
     await context.clearCookies()
   })
 
-  await test.step("entrar como B en el mismo navegador no deja restos de A", async () => {
+  await step("entrar como B en el mismo navegador no deja restos de A", async () => {
     await page.goto("/login")
     await loginWithForm(page, stack, "b")
     await page.waitForURL((url) => url.pathname === "/")
@@ -67,7 +68,7 @@ test("sesión: destino interno, renovación, cierre y cambio de cuenta A→B sin
     await signOut(page, stack, "b")
   })
 
-  await test.step("un destino externo en ?redirect= se sustituye por el inicio", async () => {
+  await step("un destino externo en ?redirect= se sustituye por el inicio", async () => {
     await page.goto(`/login?redirect=${encodeURIComponent("https://example.invalid/robo")}`)
     await loginWithForm(page, stack, "a")
     await page.waitForURL((url) => url.origin === appOrigin && url.pathname === "/")

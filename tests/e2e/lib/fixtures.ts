@@ -36,6 +36,8 @@ export interface Guard {
   allowConsole(pattern: RegExp): void
   /** Aplica la misma vigilancia a otro contexto abierto por la prueba. */
   watch(context: BrowserContext): Promise<void>
+  /** Marca en la línea temporal de diagnóstico (se muestra solo si la prueba falla por consola/red). */
+  mark(label: string): void
 }
 
 export interface BookSpec {
@@ -125,6 +127,9 @@ export function accountMenu(page: Page, stack: Stack, account: Account): Locator
 export const SIGN_OUT_RSC_404 = /status of 404 \(Not Found\) \[\/login\]$/
 
 export async function signOut(page: Page, stack: Stack, account: Account): Promise<void> {
+  // Una acción de servidor aún en curso al revocar la sesión llega sin ella y responde 500 (visto una vez
+  // en Chromium cerrando sesión desde /books): se espera a que la página quede en reposo antes de cerrar.
+  await page.waitForLoadState("networkidle")
   await accountMenu(page, stack, account).click()
   await page.getByRole("menuitem", { name: "Cerrar sesión" }).click()
   await page.waitForURL((url) => url.pathname === "/login")
@@ -194,19 +199,24 @@ export const test = base.extend<{ account: Session; guard: Guard; data: Data }, 
     const allowedOrigins = new Set([appOrigin, stack.apiOrigin])
     const blocked: string[] = []
     const problems: Observed[] = []
-    const failedResponses: string[] = []
+    const started = Date.now()
+    // Línea temporal de diagnóstico: marcas de la prueba, respuestas ≥400 y errores, con su página.
+    const timeline: string[] = []
+    const note = (text: string) => timeline.push(`+${Date.now() - started} ms ${text}`)
     const consoleErrors: Observed[] = []
     const navigations: number[] = []
     const allowed: RegExp[] = []
     const watchPage = (page: Page) => {
-      page.on("pageerror", (error) => problems.push({ text: `Excepción JS: ${error.message}`, at: Date.now() }))
-      page.on("response", (response) => { if (response.status() >= 400) failedResponses.push(`${response.status()} ${response.request().method()} ${new URL(response.url()).pathname}`) })
+      const where = () => new URL(page.url()).pathname
+      page.on("pageerror", (error) => { problems.push({ text: `Excepción JS: ${error.message}`, at: Date.now() }); note(`excepción en ${where()}`) })
+      page.on("response", (response) => { if (response.status() >= 400) note(`${response.status()} ${response.request().method()} ${new URL(response.url()).pathname} (página ${where()})`) })
       page.on("request", (request) => { if (request.isNavigationRequest() && request.frame() === page.mainFrame()) navigations.push(Date.now()) })
       page.on("console", (message) => {
         if (message.type() !== "error") return
         // Se añade la ruta del recurso (sin consulta) para poder diagnosticar sin volcar datos.
         const where = message.location().url ? new URL(message.location().url).pathname : ""
         consoleErrors.push({ text: `${message.text()}${where ? ` [${where}]` : ""}`, at: Date.now() })
+        note(`consola: ${message.text().slice(0, 120)}`)
       })
     }
     // Firefox y WebKit informan de las peticiones de la app que una navegación cancela (prefetch RSC,
@@ -229,12 +239,13 @@ export const test = base.extend<{ account: Session; guard: Guard; data: Data }, 
       target.on("page", watchPage)
     }
     await watch(context)
-    await provide({ allowConsole: (pattern) => { allowed.push(pattern) }, watch })
+    await provide({ allowConsole: (pattern) => { allowed.push(pattern) }, watch, mark: (label) => note(`— ${label}`) })
     const observed = [...problems, ...consoleErrors.filter((entry) => !allowed.some((pattern) => pattern.test(entry.text)))]
     const tolerated = observed.filter(navigationAbort)
     for (const entry of tolerated) testInfo.annotations.push({ type: "cancelación al navegar", description: entry.text })
     expect(blocked, "Sin tráfico externo desde el navegador").toEqual([])
-    expect(observed.filter((entry) => !tolerated.includes(entry)).map((entry) => entry.text), `Sin excepciones JS, errores de hidratación ni errores de consola (respuestas ≥400: ${failedResponses.join("; ") || "ninguna"})`).toEqual([])
+    const diagnosis = `Sin excepciones JS, errores de hidratación ni errores de consola. Línea temporal:\n${timeline.join("\n") || "(vacía)"}\n`
+    expect(observed.filter((entry) => !tolerated.includes(entry)).map((entry) => entry.text), diagnosis).toEqual([])
   }, { auto: true }],
 
   // Al terminar cada prueba se borra lo marcado con sus fragmentos: así un ISBN real dado de alta en
