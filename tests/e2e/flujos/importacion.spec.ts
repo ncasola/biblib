@@ -149,6 +149,7 @@ test("reemplazar sustituye la colección (la biblioteca ficticia de A se restaur
   const file = libraryFile(data, slug, 2)
   const snapshot = await snapshotLibrary(stack.sql, stack.users.a)
   recordSnapshot(stack.manifest, snapshot)
+  const [{ started }] = await stack.sql`select clock_timestamp() as started`
   try {
     const before = await libraryCount(stack)
     await openSettings(page)
@@ -171,6 +172,8 @@ test("reemplazar sustituye la colección (la biblioteca ficticia de A se restaur
   } finally {
     await restoreLibrary(stack.sql, snapshot)
     forgetSnapshot(stack.manifest, stack.users.a)
+    // U-DAT-02: el reemplazo guarda una versión anterior de A; se retira para no agotar su cuota entre ejecuciones.
+    await stack.sql`delete from biblib.library_snapshots where user_id = ${stack.users.a} and created_at >= ${started}`
   }
   expect(await fixtureBooksPresent(stack)).toBe(4)
   expect(await libraryCount(stack)).toBe(snapshot.books.length)
