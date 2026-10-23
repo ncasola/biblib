@@ -297,7 +297,7 @@ export default function SettingsPage() {
         : " Se usa el formato 1, compatible con versiones anteriores, porque conserva todos tus datos."
       setMessage({ type: "success", text: (parts.length === 1
         ? `Copia preparada con ${current.books.length} libros y ${current.shelves.length} estanterías. Conserva el archivo descargado para restaurar la colección.`
-        : `Copia dividida en ${parts.length} archivos importables. Descarga y conserva todas las partes que aparecen debajo.`) + format })
+        : `Copia dividida en ${parts.length} archivos importables. Descarga y conserva todas las partes; puedes volver a abrir la lista con «Ver las ${parts.length} partes de la última copia».`) + format })
     } catch {
       setMessage({ type: "error", text: "No se pudo preparar la copia. No se han modificado tus datos; vuelve a intentarlo." })
     } finally {
