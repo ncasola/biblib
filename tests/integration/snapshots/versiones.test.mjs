@@ -292,3 +292,20 @@ test("una cuenta bloqueada no admite versiones nuevas: ni restaurar ni reemplaza
     await ctx.sql`select biblib.account_set_state(${ctx.users.a}, 'active')`
   }
 })
+
+test("el restore administrativo comprueba en Postgres la integridad de las versiones restauradas", async () => {
+  const { verifyRestoredSnapshots } = await import("../../../scripts/db/restore-local.mjs")
+  const { confirmed } = await ctx.replace(a, "respaldo", 1)
+  assert.ok(ok(confirmed))
+  const [snapshot] = await snapshotOf(ctx.users.a, confirmed.value.value.operationId)
+  const healthy = await ctx.sql.begin("read only", (tx) => verifyRestoredSnapshots(tx))
+  assert.ok(healthy.restored >= 1 && healthy.chunks >= 2)
+  // Un trozo alterado dentro de una transacción que se revierte: la comprobación lo detecta.
+  const rollback = Symbol("revertir")
+  await assert.rejects(ctx.sql.begin(async (tx) => {
+    await tx`update biblib.library_snapshot_chunks set payload = jsonb_set(payload, '{0,title}', '"alterado"') where snapshot_id = ${snapshot.id} and seq = 0`
+    try { await verifyRestoredSnapshots(tx) } catch (error) { assert.equal(error.code, 11); throw rollback }
+    throw new Error("la versión alterada pasó la comprobación")
+  }), (error) => error === rollback)
+  assert.ok((await ctx.chunks(snapshot.id)).every((chunk) => chunk.valid), "la versión real sigue intacta")
+})
