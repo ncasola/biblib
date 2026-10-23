@@ -65,7 +65,8 @@ export function BookForm({ initialBook, initialIsbn = "", shelves, onSubmit, onC
         number_of_pages: fields.pages === "" ? 0 : Number(fields.pages), publish_date: fields.publish_date,
         cover: initialBook && coverUrl === initialCover ? initialBook.cover : { small: coverUrl, medium: coverUrl, large: coverUrl },
         status: fields.status, shelf_id: fields.shelf_id,
-        catalogue: { source: initialBook?.catalogue?.source ?? "manual", sourceUrl: initialBook?.catalogue?.sourceUrl, isbnVerified: Boolean(normalizeIsbn(fields.isbn)) && isbnVerified },
+        // Se envía la procedencia tal como se cargó (v1 o v2); al editar, el servidor la recalcula desde la ficha guardada.
+        catalogue: { ...(initialBook?.catalogue ?? { source: "manual" as const }), isbnVerified: Boolean(normalizeIsbn(fields.isbn)) && isbnVerified },
       })
       await onSubmit(input)
     } catch (caught) {
@@ -76,6 +77,7 @@ export function BookForm({ initialBook, initialIsbn = "", shelves, onSubmit, onC
 
   return (
     <form onSubmit={handleSubmit} aria-busy={pending} className="space-y-5">
+      {initialBook?.version && initialBook.catalogue?.schemaVersion === 2 && initialBook.catalogue.fields && <p className="rounded-xl border border-border bg-muted/40 p-3 text-sm">Esta ficha registra la fuente de cada campo. Si cambias un campo, pasará a constar como escrito por ti; los demás conservan su fuente.</p>}
       <fieldset disabled={pending} className="space-y-5 min-w-0">
         <div className="space-y-2"><Label htmlFor={`${id}-title`}>Título <span aria-hidden="true">*</span></Label><Input id={`${id}-title`} required maxLength={500} value={fields.title} onChange={(event) => update("title", event.target.value)} /></div>
         <div className="space-y-2"><Label htmlFor={`${id}-subtitle`}>Subtítulo</Label><Input id={`${id}-subtitle`} maxLength={1000} value={fields.subtitle} onChange={(event) => update("subtitle", event.target.value)} /></div>

@@ -79,6 +79,8 @@ export function candidateToLegacyBook(candidate: BibliographicCandidate, isbn: s
     number_of_pages: candidate.numberOfPages ?? 0, publish_date: candidate.publishDate ?? "",
     cover: { small: cover, medium: cover, large: cover }, status: "to-read", shelf_id: "", shelf_name: "Predeterminada",
     ...(candidate.provider === "open-library" ? { catalogue: { source: "open-library" as const, isbnVerified: false, ...(candidate.sourceUrl ? { sourceUrl: candidate.sourceUrl } : {}) } } : {}),
+    // BNE solo existe en la procedencia v2: se atribuye con su fuente real y el writer decide si puede guardarla.
+    ...(candidate.provider === "bne" ? { catalogue: { schemaVersion: 2 as const, source: "bne" as const, isbnVerified: false, ...(candidate.sourceUrl ? { sourceUrl: candidate.sourceUrl } : {}) } } : {}),
   }
 }
 

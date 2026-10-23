@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { BookForm } from "@/components/book-form"
 import { BookCover } from "@/components/book-cover"
 import { BookStatusForm } from "@/components/book-status-form"
+import { CatalogueProvenanceDetails } from "@/components/catalogue-provenance-details"
 import { getBookDetailAction, updateBookAction, updateBookStatusAction, deleteBookAction, refreshBookCoverAction, moveBookShelfAction } from "@/app/actions/books"
 import { getShelvesAction } from "@/app/actions/shelves"
 import {
@@ -119,7 +120,7 @@ export function BookDetailsScreen({ bookId, returnPath }: BookDetailsScreenProps
               <div><dt className="text-sm text-muted-foreground font-semibold">Publicación</dt><dd className="mt-1">{book.publish_date || "Desconocida"}</dd></div>
               <div><dt className="text-sm text-muted-foreground font-semibold">Páginas</dt><dd className="mt-1">{book.number_of_pages || "Desconocidas"}</dd></div>
               <div><dt className="text-sm text-muted-foreground font-semibold">ISBN</dt><dd className="mt-1 font-mono text-sm break-all">{book.isbn.startsWith("manual-") ? "Sin ISBN" : book.isbn}</dd></div>
-              <div className="sm:col-span-2"><dt className="text-sm text-muted-foreground font-semibold">Procedencia y edición</dt><dd className="mt-1 space-y-2"><p>{book.catalogue?.source === "open-library" ? "Ficha de Open Library" : book.catalogue?.source === "photo" ? "Identificado a partir de fotografías" : book.catalogue?.source === "manual" ? "Ficha manual" : "Ficha importada"}</p>{normalizeIsbn(book.isbn) && <p className="text-sm text-muted-foreground">{book.catalogue?.isbnVerified ? "ISBN comprobado para esta edición." : "Edición pendiente de verificar. Comprueba el ISBN en tu ejemplar y confírmalo al editar la ficha."}</p>}{book.catalogue?.sourceUrl?.startsWith("https://") && <a className="text-primary underline underline-offset-4 text-sm" href={book.catalogue.sourceUrl} target="_blank" rel="noopener noreferrer">Consultar fuente bibliográfica</a>}</dd></div>
+              <div className="sm:col-span-2"><dt className="text-sm text-muted-foreground font-semibold">Procedencia y edición</dt><dd className="mt-1"><CatalogueProvenanceDetails book={book} /></dd></div>
             </dl>
             <section className="rounded-2xl border border-border bg-card/80 p-5 shadow-lg"><BookStatusForm currentStatus={book.status} onStatusChange={changeStatus} disabled={Boolean(pending)} /></section>
             <section className="rounded-2xl border border-border bg-card/80 p-5 shadow-lg space-y-3"><label htmlFor="book-shelf" className="text-sm font-semibold">Estantería</label><div className="flex flex-col sm:flex-row gap-3"><select id="book-shelf" value={targetShelf} disabled={Boolean(pending)} onChange={(event) => setTargetShelf(event.target.value)} className="min-w-0 flex-1 rounded-lg border border-input bg-background p-2 text-foreground">{shelves.map((shelf) => <option key={shelf.id} value={shelf.id}>{shelf.title}{shelf.isDefault ? " (predeterminada)" : ""}</option>)}</select><Button type="button" disabled={Boolean(pending) || targetShelf === book.shelf_id} onClick={() => void changeShelf()}>{pending === "shelf" ? "Moviendo..." : "Mover libro"}</Button></div></section>
