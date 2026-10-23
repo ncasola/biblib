@@ -1,0 +1,7 @@
+Estado de migraciones · biblib-scratch · drift
+Head aplicado: 0005_library_jobs · esperado: 0005_library_jobs · pendientes: ninguna
+[fail] manifest.drift: Drift en 3 objeto(s) deliberado(s); no se corrige reaplicando migraciones antiguas: requiere corrección hacia delante revisada.
+[fail] policy.account_lifecycle_select_own: Política no declarada account_lifecycle_select_own en biblib.account_lifecycle: podría ampliar el acceso.
+[fail] policy.library_job_items_select_own: Política no declarada library_job_items_select_own en biblib.library_job_items: podría ampliar el acceso.
+[fail] policy.library_jobs_select_own: Política no declarada library_jobs_select_own en biblib.library_jobs: podría ampliar el acceso.
+142 comprobaciones correctas.

@@ -1,0 +1,36 @@
+# HolaERP antes y después de U-DAT-03 (nombre|estado|puertos; 'Up …' normalizado)
+## Antes
+holaerp-local-redis|Up|0.0.0.0:6379->6379/tcp, [::]:6379->6379/tcp
+supabase_auth_holaerp|Up|9999/tcp
+supabase_db_holaerp|Up|0.0.0.0:5432->5432/tcp, [::]:5432->5432/tcp
+supabase_edge_runtime_holaerp|Exited (255) 7 hours ago|
+supabase_inbucket_holaerp|Up|0.0.0.0:54324->8025/tcp, [::]:54324->8025/tcp
+supabase_kong_holaerp|Up|0.0.0.0:54321->8000/tcp, [::]:54321->8000/tcp
+supabase_pg_meta_holaerp|Up|8080/tcp
+supabase_realtime_holaerp|Up|4000/tcp
+supabase_rest_holaerp|Up|3000/tcp
+supabase_storage_holaerp|Up|5000/tcp
+supabase_studio_holaerp|Up|0.0.0.0:54323->3000/tcp, [::]:54323->3000/tcp
+## Después
+holaerp-local-redis|Up|0.0.0.0:6379->6379/tcp, [::]:6379->6379/tcp
+supabase_auth_holaerp|Up|9999/tcp
+supabase_db_holaerp|Up|0.0.0.0:5432->5432/tcp, [::]:5432->5432/tcp
+supabase_edge_runtime_holaerp|Exited (255) 7 hours ago|
+supabase_inbucket_holaerp|Up|0.0.0.0:54324->8025/tcp, [::]:54324->8025/tcp
+supabase_kong_holaerp|Up|0.0.0.0:54321->8000/tcp, [::]:54321->8000/tcp
+supabase_pg_meta_holaerp|Up|8080/tcp
+supabase_realtime_holaerp|Up|4000/tcp
+supabase_rest_holaerp|Up|3000/tcp
+supabase_storage_holaerp|Up|5000/tcp
+supabase_studio_holaerp|Up|0.0.0.0:54323->3000/tcp, [::]:54323->3000/tcp
+## Arranque (anterior a la sesión: no se reinició)
+/holaerp-local-redis 2026-10-23T11:44:51.288438023Z
+/supabase_auth_holaerp 2026-10-23T11:44:58.981935089Z
+/supabase_db_holaerp 2026-10-23T11:44:51.355723282Z
+/supabase_inbucket_holaerp 2026-10-23T11:44:51.316089813Z
+/supabase_kong_holaerp 2026-10-23T11:44:51.290405575Z
+/supabase_pg_meta_holaerp 2026-10-23T11:44:51.342126683Z
+/supabase_realtime_holaerp 2026-10-23T11:44:51.333542081Z
+/supabase_rest_holaerp 2026-10-23T11:44:51.320538507Z
+/supabase_storage_holaerp 2026-10-23T11:44:51.35153148Z
+/supabase_studio_holaerp 2026-10-23T11:44:51.34646201Z

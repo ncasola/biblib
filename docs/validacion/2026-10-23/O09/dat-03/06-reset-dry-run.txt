@@ -1,0 +1,2 @@
+BibLib local · scratch · ea260283d87954c1c405cb5ee4875867dd8b103c86084460f3a74244e06b13fa
+[ok] reset.plan: Plan guardado: .biblib\plans\reset-scratch-dat03.json · proyecto biblib-scratch · sha256 7ef70154ad132aeb22ba94e90411061495b61534ffa23c957a5e0eb9df5c408c

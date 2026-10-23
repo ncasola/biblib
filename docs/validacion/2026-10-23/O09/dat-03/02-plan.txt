@@ -1,0 +1,8 @@
+Plan de migración · biblib-scratch · estado pending
+Head aplicado: 0004_catalogue_coordination · pendientes: 0005_library_jobs
+[ok] prerequisite.auth.users: auth.users lo proporciona la plataforma.
+[ok] prerequisite.auth.uid(): auth.uid() lo proporciona la plataforma.
+[ok] prerequisite.role:authenticated: role:authenticated lo proporciona la plataforma.
+[ok] prerequisite.role:anon: role:anon lo proporciona la plataforma.
+Plan migrate guardado en .biblib\plans\dat03.json (caduca 2026-10-23T19:13:10.038Z).
+Para aplicarlo: pnpm db:migrate:local --plan .biblib\plans\dat03.json --expect-project biblib-scratch --expect-plan 5400a3f19d0399b905d9f95aa66a932fca67c3e03bf25e4d6021565839ea58f9

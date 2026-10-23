@@ -725,3 +725,64 @@ Para recuperar el flujo base, establecer `BIBLIB_GOOGLE_BOOKS_ENABLED=false` y r
 Orden de activación: primero se despliegan los lectores (esta versión lee legacy, v1 y v2, y la procedencia v1 y v2) y después se activa la bandera en el perfil aceptado al cerrar O09. Para volver atrás basta con `BIBLIB_BIBLIOGRAPHY_REVIEW_ENABLED=false`: no se borra procedencia ni cambian las fichas guardadas. No se debe volver a una versión de BibLib anterior a U-BIB-04 con fichas v2 sin antes descargar una copia v2.
 
 Ajustes exporta en formato 1 si no se pierde nada y en formato 2 si alguna ficha tiene procedencia BNE o por campo. La importación acepta los tres formatos y rechaza con explicación lo que el modelo actual no puede representar todavía, como varias copias por edición. Detalle de formatos, capacidades y rechazos en [formatos.md](formatos.md); validación en [el informe O09](validacion/2026-10-23/O09/bib-04.md). No requiere migración: `catalogue` es JSONB sin `CHECK` sobre su contenido.
+
+## Trabajos persistentes de importación y portadas · U-DAT-03
+
+La publicación de una importación y la búsqueda de portadas son **trabajos persistentes** en Postgres (`biblib.library_jobs` y `biblib.library_job_items`). Recargar o cerrar la página ya no pierde el progreso: Ajustes retoma el último trabajo de la cuenta y muestra lo confirmado en la base, con pausar, reanudar y cancelar.
+
+### Modelo y protocolo
+
+- **Trabajo**: `kind` (`import` | `covers`), `contract_version`, dueño, `idempotency_key` + `input_digest` (únicos por dueño y tipo), `expected_revision`, `state`, `phase` (`publish` → `covers` → `done`), `cursor`, `counts`, `next_attempt_at`, `lease_until`, `lease_token`, `fencing_number`, `expires_at` y `version`. Estados: `queued → running → waiting_retry/needs_review/paused → succeeded/partially_succeeded/failed/cancelled/expired`. La `version` que ve el cliente solo rota con pausa, reanudación, cancelación, revisión o final; alternar cola y ejecución no la cambia.
+- **Elemento**: único por `(job_id, item_key, phase)`, con la versión del libro al crearlo (`target_version`), intentos, resultado durable y el fencing que lo confirmó. FK `(user_id, job_id)` con propietario.
+- **Funciones** (`SECURITY DEFINER`, `search_path = pg_catalog`): `library_job_create` y `library_job_control` toman el dueño de `auth.uid()` (EXECUTE para `authenticated`); `library_job_claim` (con `FOR UPDATE SKIP LOCKED`), `library_job_renew`, `library_job_fence`, `account_is_active` y `account_set_state` solo las ejecuta la conexión del servidor. `authenticated` solo tiene `SELECT` de sus filas; la Data API sigue sin exponer `biblib`.
+- **Fencing**: cada transacción de escritura del ejecutor empieza con `library_job_fence`, que bloquea la fila del trabajo y exige estado `running`, el mismo token y número de fencing, lease vigente (hora de la base) y cuenta activa. Las escrituras de dominio se hacen después con el rol `authenticated` y los claims del dueño de la fila reclamada. Un trabajador detenido más allá del lease, pausado, cancelado o de una cuenta bloqueada no escribe nada.
+- **Ciclo de vida mínimo**: `biblib.account_lifecycle` (sin fila = activa). `select biblib.account_set_state('<uuid>', 'blocked')` desde la conexión administrativa expira los trabajos no terminados (`ACCOUNT_INACTIVE`) y ningún trabajador antiguo vuelve a escribir. U-OPS-03 completará la solicitud y la limpieza de cuenta.
+
+### Ejecución acotada
+
+- Hasta **20 elementos o 20 s por paso**; cada consulta externa con **8 s** como máximo (el orquestador aplica además su plazo de portada) y el presupuesto restante. Lease de **60 s**, renovado antes de consultar si quedan menos de 25 s.
+- La publicación (`lib/import-publisher.ts`) es una transacción corta sin red: bloqueo de colección, CAS de revisión, mapeo de IDs, inserciones por lotes y resultado durable en `library_operations`. En la misma transacción se crean los elementos de portada de los libros insertados con portada genérica. Una portada pendiente no revierte una importación publicada.
+- Las portadas pasan por el servicio bibliográfico U-BIB con el gateway U-DAT-05 en modo **lote** (`purpose: "batch"`). Fuera de `live` no hay red. Se omiten sin consultar los libros sin ISBN válido, cambiados (versión o preimagen) o con portada.
+- **Reintentos**: backoff exponencial con jitter (5 s a 15 min) y 5 intentos por elemento. Un `Retry-After` se respeta como mínimo y detiene el paso; esperar cuota no consume intentos ni se trata como «sin portada». Una caída, un plazo o un JSON roto se reintentan; solo una ausencia confirmada es `not_found`.
+- Caducidad: un trabajo activo caduca a los **7 días**; el resumen de uno terminado se conserva **30 días** (se purga al crear otro). Los trabajos no guardan el archivo: la entrada sigue en la vista previa de U-DAT-01.
+
+### Acciones y ejecutor
+
+| Acción | Contrato |
+| --- | --- |
+| `startImportJobAction({ previewId, idempotencyKey })` | Crea o recupera el trabajo de esa vista previa. Misma clave con otra entrada: `IDEMPOTENCY_CONFLICT`. |
+| `startCoverJobAction({ scope: "missing", idempotencyKey })` | Un trabajo de portadas activo por cuenta (`JOB_CONFLICT` si ya hay uno). Ajustes lo inicia con `recoverMissingCoversAction`. |
+| `getLibraryJobAction({ jobId })` / `listLibraryJobsAction()` | Vista con IDs técnicos y cantidades confirmadas, sin títulos ni ISBN. Un trabajo ajeno responde `NOT_FOUND`. |
+| `pause/resume/cancelLibraryJobAction({ jobId, expectedVersion })` | Versión antigua o transición inválida: `JOB_CONFLICT` (409). Trabajo caducado: `JOB_EXPIRED` (410). Cancelar indica si llegó antes o después de publicar; durante la publicación espera a su commit. |
+
+- `confirmImportAction` conserva su contrato de U-DAT-01 y publica a través de un trabajo: crea o recupera el de la clave, ejecuta en línea el paso de publicación y devuelve `committed` con `jobId`. Si otro trabajador lo tiene, devuelve `queued` con el trabajo. Repetir la clave tras perder la respuesta devuelve el mismo `operationId` con `replayed: true`. Un conflicto deja el trabajo en `needs_review` y nunca se aplica por reintento.
+- **Ejecución**: tras responder, las acciones continúan los pasos vencidos con `after()` del servidor Next (hasta 55 s por disparo). Si el proceso cae, el lease caduca y otro disparo continúa. Para avanzar sin la página abierta existe la entrada interna `POST /api/internal/jobs/run`. Solo acepta `Authorization: Bearer <token>`, no lee cuerpo ni sesión y responde 401 a cualquier otra petición. El token es `BIBLIB_JOBS_RUNNER_SECRET` (al menos 32 caracteres) o, si falta, un HMAC derivado de `SUPABASE_DB_URL`. El scheduler de despliegue pertenece a F4.
+
+```powershell
+pnpm dev:local --profile scratch                 # o start:local, en otra terminal
+pnpm jobs:run:local --profile scratch            # [--once] [--interval-ms 5000]; Ctrl+C para parar
+```
+
+`jobs:run:local` sale con **3** si la app rechaza el token y con **8** si la app no responde (`--once`); en bucle registra la caída y reintenta.
+
+### Migración `0005_library_jobs`, rollout y recuperación
+
+```powershell
+pnpm db:plan:local --profile scratch --out dat03.json
+pnpm db:migrate:local --plan .biblib/plans/dat03.json --expect-project biblib-scratch --expect-plan <sha256>
+pnpm db:status:local --profile scratch   # 195 comprobaciones, sin drift
+```
+
+La migración crea las tres tablas con RLS, la secuencia de fencing, las funciones y los permisos. El manifest de objetos declara tablas, políticas, grants, restricciones (incluido `library_jobs_lease_check`: en ejecución siempre hay lease y fuera de ella nunca), índices y el cuerpo normalizado de cada función. `objects-0005.json` contiene los metadatos reales tras `0005`.
+
+- **Rollout**: los estados que la página anterior tenía en memoria no se convierten en trabajos. Ajustes ofrece un recorrido nuevo de portadas que solo crea elementos para las portadas todavía genéricas. Orden: portadas primero, importación después.
+- **Desactivar**: no llamar a la entrada interna y dejar de usar las acciones. Los leases caducan solos y los resultados siguen consultables. No borrar trabajos activos. Corregir hacia delante con una migración nueva.
+
+### Pruebas
+
+- `pnpm test`: `tests/library-jobs.test.ts`, que cubre transiciones, control, versión, backoff con jitter y `Retry-After`, clasificación de portadas (cuota, caída, plazo y ausencia), el paso de portadas con un repositorio en memoria y el token del ejecutor.
+- `pnpm test:db`: `tests/db/jobs.sql` cubre el alta idempotente, A/B, los permisos de `authenticated`, la reclamación, el fencing, la expiración del lease, el control con versión, la cuenta bloqueada, la caducidad, los trabajos que fallan siempre, los elementos y el borrado en cascada.
+- `pnpm test:integration:jobs --profile scratch|test [--reuse-build]`: grupo `tests/integration/jobs` contra la base, GoTrue y la app compilada del perfil. Ejecuta procesos Node con el worker compilado y fetch simulado (solo los ISBN sintéticos `979-0-0003…` tienen portada). Cubre dos trabajadores, caídas antes y después del commit, lease vencido, cancelación en cada fase, 429/503/JSON roto, cuenta bloqueada, recargar y continuar desde otra sesión, aislamiento A/B y entrada interna. También corre dentro de `pnpm test:integration:local`. Limpia por ID, dueño y marca `[DAT-03 <run>]`.
+- `pnpm test:scripts`: `tests/scripts/jobs-runner.test.mjs` y las comprobaciones de drift de `0005` en `migrations.test.mjs`.
+
+Evidencia: [validacion/2026-10-23/O09/dat-03](validacion/2026-10-23/O09/dat-03/informe.md).
