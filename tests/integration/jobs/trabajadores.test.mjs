@@ -156,7 +156,9 @@ test("cuenta bloqueada: el trabajador antiguo no escribe y el trabajo queda no a
   const running = runWorker(ctx, { jobId, at: { afterFetch: 4000 } })
   await ctx.waitFor(async () => (await ctx.job(jobId)).state === "running", { message: "trabajo en ejecución" })
   try {
-    assert.equal((await ctx.sql`select biblib.account_set_state(${ctx.users.a}, 'blocked') as n`)[0].n, 1)
+    // Devuelve los trabajos activos de A invalidados: en la suite completa otros grupos dejan trabajos de A, así que ≥ 1.
+    const invalidated = Number((await ctx.sql`select biblib.account_set_state(${ctx.users.a}, 'blocked') as n`)[0].n)
+    assert.ok(invalidated >= 1, `trabajos invalidados: ${invalidated}`)
     assert.equal((await running).reports[0].outcome, "lease_lost")
     const job = await ctx.job(jobId)
     assert.equal(job.state, "expired")
