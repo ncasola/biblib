@@ -1,0 +1,50 @@
+{
+  "date": "2026-10-23T12:32:35.676Z",
+  "results": [
+    {
+      "script": "lint",
+      "exitCode": 0,
+      "elapsedMs": 7880,
+      "summary": []
+    },
+    {
+      "script": "typecheck",
+      "exitCode": 0,
+      "elapsedMs": 3241,
+      "summary": [
+        "✓ Types generated successfully"
+      ]
+    },
+    {
+      "script": "test",
+      "exitCode": 0,
+      "elapsedMs": 3316,
+      "summary": [
+        "ℹ tests 66",
+        "ℹ pass 66",
+        "ℹ fail 0",
+        "ℹ skipped 0"
+      ]
+    },
+    {
+      "script": "test:db",
+      "exitCode": 0,
+      "elapsedMs": 4341,
+      "summary": [
+        "Correcto: migraciones, aislamiento A/B, FK de propietario, predeterminada, integridad y rollback.",
+        "Pruebas de base de datos completadas en un contenedor aislado."
+      ]
+    },
+    {
+      "script": "test:scripts",
+      "exitCode": 0,
+      "elapsedMs": 15744,
+      "summary": [
+        "ℹ tests 119",
+        "ℹ pass 119",
+        "ℹ fail 0",
+        "ℹ skipped 0"
+      ]
+    }
+  ]
+}

@@ -90,7 +90,7 @@ Guarda los respaldos en una ubicación privada con controles de acceso y retenci
 
 ## Stack Supabase local
 
-BibLib tiene su propia configuración de Supabase local (U-INF-01), separada de cualquier otro proyecto de la máquina. Esta sección describe lo que existe hoy: configuración, perfiles y cómo se ensayó. Los comandos `pnpm db:local:*` todavía **no existen**; llegan con U-INF-02/U-INF-03 (olas O02/O03).
+BibLib tiene su propia configuración de Supabase local (U-INF-01), separada de cualquier otro proyecto de la máquina. Esta sección describe su configuración, perfiles y ensayos. Los wrappers `pnpm db:local:*` y `db:reset:local` están disponibles; las secciones siguientes describen su contrato vigente.
 
 ### Requisitos
 
@@ -166,12 +166,9 @@ Compruébala desde otro equipo de la red con `Test-NetConnection <IP-del-equipo>
 
 **C · Detección en `doctor`/`status` (U-INF-03).** Es la opción vigente. `checkPublishedBindings(perfil, contenedores)` recibe el `.NetworkSettings.Ports` de `docker inspect` de cada contenedor del perfil. Devuelve como `exposed` los bindings con IP distinta de `bindingCheck.allowedHostIps` (`127.0.0.1`, `::1`) y como `outOfBlock` los puertos fuera del bloque del perfil. `doctor` debe avisar o fallar con esa información. No corrige nada por su cuenta.
 
-### Qué no hace todavía
+### Evolución del stack local
 
-Esta lista describía el estado al cerrar U-INF-01. Ya están disponibles el ciclo de vida (`db:local:doctor|status|up|down`, U-INF-03), los objetivos y builds aislados (U-INF-02) y el runner de migraciones (U-INF-04). Siguen pendientes:
-
-- Seed/fixtures de GoTrue, Storage y correo (U-INF-05).
-- Reset y bootstrap completo (U-INF-06). Para descartar los datos de `scratch` hará falta ese flujo; no borres volúmenes a mano por patrón.
+Esta lista describía el estado al cerrar U-INF-01. Ya están disponibles el ciclo de vida (`db:local:doctor|status|up|down`, U-INF-03), los objetivos y builds aislados (U-INF-02), el runner de migraciones (U-INF-04), los fixtures reales (U-INF-05) y el [reset y bootstrap completo](#reset-y-bootstrap) (U-INF-06). No borres volúmenes a mano por patrón.
 
 ## Observabilidad sin datos privados · U-OPS-01 (F0)
 
@@ -261,11 +258,11 @@ Los comandos mutables usan un bloqueo exclusivo por perfil: un lifecycle concurr
 
 Los bindings reales se revisan con `checkPublishedBindings`. Publicar fuera del bloque del perfil falla con **3**. Publicar en `0.0.0.0`/`::` genera **warn** con referencia a las alternativas **A/B** de «Limitación conocida: bindings fuera de loopback». El aviso no bloquea el lifecycle ni aplica cambios de daemon/firewall. Esa limitación de Docker Desktop sigue abierta.
 
-### Bootstrap por fases (contrato para U-INF-06)
+### Bootstrap por fases
 
-El orden es **preflight → stack → env → migrate → seed → verify**. Cada invocación revalida las fases ejecutables y actualiza `.biblib/state/<perfil>-bootstrap.json`, con `schemaVersion: 1`, raíz/huella/perfil/proyecto, `runId`, `phase`, estado global y `phases` por nombre. U-INF-03 ejecuta solo las tres primeras: preflight `passed`, stack `healthy` y env `passed`. Solo `main` llama a `writeLocalEnvFile(loadTarget("local", ...))` para generar `.env.local`; scratch/test registran expresamente que no se escribe archivo y consumen contexto explícito. Nunca se sobrescribe un archivo no acreditado.
+El orden es **preflight → stack → env → migrate → seed → verify**. Cada invocación revalida las fases ejecutables y actualiza `.biblib/state/<perfil>-bootstrap.json`, con `schemaVersion: 1`, raíz/huella/perfil/proyecto, `runId`, `phase`, estado global y `phases` por nombre. El flujo vigente ejecuta las seis fases y solo termina con estado global `passed` cuando verify pasa. Solo `main` llama a `writeLocalEnvFile(loadTarget("local", ...))` para generar `.env.local`; scratch/test registran expresamente que no se escribe archivo y consumen contexto explícito. Nunca se sobrescribe un archivo no acreditado.
 
-`migrate`, `seed` y `verify` permanecen **pending**, con mensaje de no disponibilidad hasta U-INF-06. El recibo y la respuesta muestran estado global **pending**, próxima fase **migrate**. La salida **0** significa exclusivamente que las fases disponibles terminaron correctamente; **no acredita bootstrap completo, esquema ni fixtures**. Una fase ejecutada que falle devuelve su código distinto de cero y queda `failed`/`interrupted`, con las siguientes pendientes. U-INF-06 conectará U-INF-04/U-INF-05 en estos mismos puntos, sin segundo runner ni historial SQL paralelo.
+`migrate` usa el runner Drizzle, `seed` el censo local y `verify` comprueba esquema, sesiones y servicios reales. Una fase fallida devuelve su código distinto de cero y queda `failed`/`interrupted`; repetir revalida el estado actual antes de omitir trabajo. La salida **0** acredita las seis fases completas (véase [Reset y bootstrap](#reset-y-bootstrap)).
 
 Las pruebas de procesos/CLI/Docker simulados se ejecutan con `pnpm test:scripts`. El [informe U-INF-03](validacion/2026-10-23/O03/u-inf-03-informe.md) registra el ensayo real de scratch, la conservación de datos y la comparación de recursos HolaERP.
 
@@ -328,7 +325,7 @@ El runner solo lee `auth.users`, `auth.uid()` y los roles como prerrequisitos. N
 
 ### Estado, lifecycle y recuperación
 
-`db:status:local` es de solo lectura (transacción `read only`). Muestra estado, head aplicado/esperado, pendientes y comprobaciones. Sale con **0** si el destino está vacío, pendiente o al día, y con **5** ante adopción, divergencia o drift. `pnpm db:local:status` publica ahora `head: { tag, applied, expected, state }` cuando el Postgres propio está en marcha y acreditado (`null` si está parado o sin ledger). `doctor` sigue sin consultar datos. La fase `migrate` de `db:local:bootstrap` ejecuta plan + migrate locales con este mismo contrato (`.biblib/plans/bootstrap-<perfil>-<runId>.json`) y propaga su código. `seed` y `verify` siguen pendientes de U-INF-05/06.
+`db:status:local` es de solo lectura (transacción `read only`). Muestra estado, head aplicado/esperado, pendientes y comprobaciones. Sale con **0** si el destino está vacío, pendiente o al día, y con **5** ante adopción, divergencia o drift. `pnpm db:local:status` publica ahora `head: { tag, applied, expected, state }` cuando el Postgres propio está en marcha y acreditado (`null` si está parado o sin ledger). `doctor` sigue sin consultar datos. La fase `migrate` de `db:local:bootstrap` ejecuta plan + migrate locales con este mismo contrato (`.biblib/plans/bootstrap-<perfil>-<runId>.json`) y propaga su código. `seed` y `verify` están conectados mediante U-INF-05/06; bootstrap devuelve 0 solo tras verificar ambos.
 
 - **Drift** (por ejemplo, alguien borró el trigger): status/plan/migrate salen con **5** y no se reaplica una migración antigua. Corrige hacia delante con una migración nueva y revisada. Solo en un stack descartable puede recrearse el objeto con el mismo SQL de la migración y verificarlo con `db:status:local`.
 - **Adopción o hash legacy**: detén la aplicación y sigue U-INF-07. No borres el ledger ni rellenes filas a mano.
@@ -339,7 +336,7 @@ El runner solo lee `auth.users`, `auth.uid()` y los roles como prerrequisitos. N
 
 ## Fixtures y acceso local
 
-U-INF-05 añade el seed de cuentas reales de GoTrue, sus bibliotecas, un objeto Storage privado y correo a Mailpit. Esta sección sustituye las indicaciones anteriores que marcaban `seed` como pendiente. `db:local:bootstrap` ejecuta ahora **preflight → stack → env → migrate → seed**, registra `seed: passed` y deja **verify pendiente de U-INF-06**; su salida 0 todavía no acredita el bootstrap completo.
+U-INF-05 añade el seed de cuentas reales de GoTrue, sus bibliotecas, un objeto Storage privado y correo a Mailpit. Esta sección sustituye las indicaciones anteriores que marcaban `seed` como pendiente. `db:local:bootstrap` ejecuta **preflight → stack → env → migrate → seed → verify**; desde U-INF-06 su salida 0 acredita las seis fases completas.
 
 ```powershell
 pnpm db:local:up --profile scratch
@@ -363,10 +360,45 @@ El seed revalida `loadTarget`, huella, estado registrado y propiedad Docker medi
 
 La clave administrativa local, los IDs reales de Auth y contraseñas aleatorias fuertes quedan únicamente en memoria y en **`.biblib/fixtures/<perfil>.json`**, ignorado por Git. El directorio y archivo se restringen a 0700/0600 en POSIX y con ACL sin herencia para el usuario actual y SYSTEM en Windows, antes de escribir secretos; se rechazan enlaces y registros de otra huella/censo. No copies ese archivo a `public`, HTML, logs, capturas o evidencias. La salida JSON del seed contiene solo identidad del perfil, cuentas ficticias, IDs, recuentos y estado de fases. No se deben imprimir respuestas nativas de Supabase o errores internos.
 
-Se guardan contraseñas antes de crear/actualizar cuentas y se persisten los IDs devueltos inmediatamente. Un reintento recupera la ventana entre creación y guardado del ID mediante correo exacto + metadato de censo; una cuenta sin ese metadato, con otro ID registrado o ausente tras una reconstrucción se rechaza, sin adopción silenciosa. Ante fallo parcial, **10** identifica la fase (`auth`, `dominio`, `storage`, `correo` o `registro`); conserva el archivo privado y repite el comando. Las bibliotecas se actualizan en una transacción, solo en esos propietarios y fixtures; una colisión con un libro sin `fixtureKey` se rechaza. Los libros añadidos a mano sobreviven y el trigger SQL sigue rotando versiones. No hay `--remove` en esta entrega: no se borra ninguna cuenta ni biblioteca; el reset completo pertenece a U-INF-06.
+Se guardan contraseñas antes de crear/actualizar cuentas y se persisten los IDs devueltos inmediatamente. Un reintento recupera la ventana entre creación y guardado del ID mediante correo exacto + metadato de censo; una cuenta sin ese metadato, con otro ID registrado o ausente tras una reconstrucción se rechaza, sin adopción silenciosa. Ante fallo parcial, **10** identifica la fase (`auth`, `dominio`, `storage`, `correo` o `registro`); conserva el archivo privado y repite el comando. Las bibliotecas se actualizan en una transacción, solo en esos propietarios y fixtures; una colisión con un libro sin `fixtureKey` se rechaza. Los libros añadidos a mano sobreviven y el trigger SQL sigue rotando versiones. No hay `--remove` en esta entrega: no se borra ninguna cuenta ni biblioteca; el reset completo se hace con `db:reset:local` (U-INF-06).
 
 El bucket **privado** `biblib-test-assets` contiene `fixtures/portada.webp`, con los bytes deterministas de `public/default-book-cover.webp`. Si el bucket reservado ya es público, el seed exige revisión en vez de adoptarlo. Se puede inspeccionar en Studio del perfil (`scratch`: `http://127.0.0.1:55343`). Esto verifica Storage local y no define los buckets ni las políticas definitivas de portadas/avatares (U-DAT-10). GoTrue solicita un correo de recuperación para A y Mailpit lo captura (`scratch`: `http://127.0.0.1:55344`); un reintento antes de 65 s conserva el recibo del envío para respetar el límite de GoTrue. Ningún destinatario pertenece a un dominio real ni se usa SMTP externo.
 
 `tests/fixtures/catalogue/*.json` contiene respuestas de ISBN offline en formato Open Library; `lib/catalogue-fixtures.ts` ofrece `readCatalogueFixture(isbn)`, que devuelve una copia o `{}` sin red. **U-BIB conectará ese lector con el flujo de proveedores**: `BIBLIB_CATALOGUE_MODE=fixture` ya se propaga, pero esta entrega no cambia el proveedor actual. Las altas manuales y la lectura directa del catálogo fixture funcionan sin Internet; la búsqueda actual del producto aún usa Open Library.
 
 `pnpm test:scripts` incluye simulaciones de censo, identidad ajena, ledger pendiente, reintentos, cuenta existente, preservación de fichas y SQL acotado. La prueba **[stack]** de `tests/scripts/seed.test.mjs` usa solo `scratch` en marcha y acreditado; con `BIBLIB_SKIP_STACK_TESTS=1` se omite. Comprueba seed repetido, libro manual sin marcador, versiones, sesiones A/B, token alterado, nombre, refresh/signOut/revocación, cookies SSR, rechazo anónimo Storage, descarga firmada determinista y correo en Mailpit. Deja un libro manual ficticio `manual-ensayo-o05` en A para comprobar su conservación. Al terminar el ensayo ejecuta `pnpm db:local:down --profile scratch`; se conservan red y volúmenes propios. La matriz completa de RLS A/B corresponde a U-QA-01.
+
+## Reset y bootstrap
+
+`pnpm db:reset:local` es destructivo y exige una revisión en dos pasos. Arranca primero el perfil propio: el dry-run consulta cantidades y huellas reales de Postgres y Mailpit, sin arrancar servicios ni modificar datos. En un worktree este wrapper solo reconstruye `scratch`.
+
+```powershell
+pnpm db:local:up --profile scratch
+pnpm db:reset:local --dry-run --profile scratch --out .biblib/plans/reset-scratch.json
+# Revisa el plan privado y usa exactamente el sha256 que imprime:
+pnpm db:reset:local --apply --plan .biblib/plans/reset-scratch.json --expect-project biblib-scratch --expect-plan <sha256> --discard-local-data
+pnpm db:local:bootstrap --profile scratch --json
+pnpm db:local:down --profile scratch
+```
+
+El plan `kind: "reset-local"` vive exclusivamente en `.biblib/plans/`, caduca a los **30 minutos** y contiene raíz real, perfil, `projectId`, marcador operativo, huella del target, IDs de todos los contenedores/volúmenes/red, etiquetas, mounts y bindings exactos. Explicita lo que se elimina: dominio, usuarios/sesiones/tokens locales, metadatos y bytes de Storage, correo Mailpit, ledger y registro privado de fixtures; conserva la red del perfil, las imágenes, otros proyectos/perfiles y planes/recibos. Incluye cantidades por categoría y hashes de cada tabla de `biblib`, `auth`, `storage` y `drizzle`, calculados en Postgres sin devolver las filas; la huella conjunta incluye el inventario de Mailpit. Un cambio de datos, incluso con las mismas cantidades, o de recursos/bindings invalida el plan con **6**. Mantén detenidas las escrituras de la aplicación durante su revisión y aplicación.
+
+`--apply` requiere `--expect-project` y `--expect-plan` exactos y una de dos autorizaciones excluyentes: `--discard-local-data`, que registra la renuncia para ese proyecto local, o `--backup-receipt <ruta>`. `main` tampoco admite confirmación genérica: siempre exige su identificador `biblib-local`. `--yes` solo es compatible con un apply ya completo; no elimina ninguna guarda. No se aceptan `--linked`, `--all`, `--db-url`, `--force` ni opciones reenviadas. Puerto 5432, URL remota/túnel sin contenedor publicado, raíz ajena, marcador `holaerp`, red adicional ajena, contenedor sin registro o volumen recreado con otra fecha producen **3**, antes de parar, borrar o consultar datos de ese destino. El marcador aislado no autoriza nada.
+
+El adaptador de recibos locales exige `schemaVersion: 1`, `backupId`, `fingerprint`, `discardedStateHash` igual al plan, `createdAt` posterior al plan, `scope` con `domain`, `auth`, `storage`, `mailpit` y `ledger`, `restoreVerification.passed: true` y `files[{path, sha256}]`. Recibo y archivos deben permanecer dentro de `.biblib/` sin enlaces y sus hashes deben coincidir. Este wrapper **no genera respaldos ni ensaya su restauración**; el productor definitivo y su contrato de promoción se completan en U-OPS-02. Un JSON exportado de usuario no cumple este contrato. Para pruebas descartables se usa la renuncia explícita.
+
+### Mecanismo y recuperación
+
+Se revisó la [implementación exacta de reset de Supabase 2.117.0](https://github.com/supabase/cli/blob/v2.117.0/apps/cli/src/command-internal/db-bootstrap/recreate-local-database.ts) y su [composición local](https://github.com/supabase/cli/blob/v2.117.0/apps/cli/src/command-internal/db-bootstrap/reset-local-database.ts): en PG17 elimina y recrea el contenedor/volumen DB, de modo que ledger Drizzle, `biblib`, `auth` y metadatos Storage se reconstruyen juntos; reinicia Auth/Storage y recarga Kong, pero no elimina el volumen de bytes Storage ni el correo Mailpit. Las migraciones y el seed de usuario de Supabase siguen desactivados. Su secuencia interna no entrega recibos de IDs que permitan al wrapper continuar con propiedad comprobada tras cada eliminación.
+
+La reconstrucción física del wrapper usa exclusivamente los IDs previamente registrados: para los contenedores acreditados, elimina cada uno por ID, comprueba otra vez propiedad y mounts y elimina cada volumen por su identificador exacto (Docker identifica los volúmenes locales por nombre, vinculado además a `createdAt`). Conserva la misma red propia. No usa patrones, eliminación forzada de volúmenes, `stop --all`, prune ni SQL inverso. Elimina el registro privado del censo y el recibo anterior de bootstrap solo después de destruir el estado autorizado, mediante Node y rutas absolutas comprobadas con `lstat`/`realpath`; rechaza symlinks y junctions en cualquier componente. Después ejecuta el mismo bootstrap público: plataforma fresca → Drizzle → seed → verify. Nunca conserva un ledger antiguo sobre un esquema vacío.
+
+`.biblib/state/<perfil>-reset.json` registra autorización, hash del plan y fases `preflight`, `stop`, `destroy`, `local-state`, `bootstrap` y `verify`. El bloqueo del perfil cubre todo el reset y el bloqueo consultivo común impide competir con el runner antes de parar Postgres. Cada operación revalida los IDs restantes; solo admite que desaparezcan recursos del plan, nunca adopta reemplazos. SIGINT devuelve **130** y deja `interrupted`; una salida abrupta deja la fase `running`, que se reconoce como incompleta. Repite **la misma orden de apply**, con el mismo plan y autorización: continúa eliminaciones pendientes o vuelve al bootstrap no destructivo. Si la destrucción se autorizó dentro de los 30 minutos, su continuación puede terminar después de caducar el plan; un reset nuevo siempre requiere plan vigente. `up`/bootstrap independientes rechazan un reset incompleto con **6**. Un bloqueo residual por terminación forzada requiere acreditar que murió su PID antes de retirar ese archivo de bloqueo; no se recupera por antigüedad.
+
+### Bootstrap completo e idempotente
+
+`db:local:bootstrap` recorre **preflight → stack → env → migrate → seed → verify**. Repite las guardas y el plan/runner Drizzle, que no escribe DDL ni ledger cuando ya está al día. Antes de omitir seed verifica su censo/IDs/bibliotecas y Storage/Mailpit reales: así conserva versiones de libros, IDs y objetos en ejecuciones sucesivas. Si esos fixtures faltan, reejecuta el seed existente dentro de su scope. Un recibo previo por sí solo nunca acredita una fase. Las ejecuciones fallidas conservan `runId` y fase de continuación; todo se revalida al repetir.
+
+`verify` comprueba head completo y manifest de objetos, censo de A/B y libros/estanterías, bucket privado y descarga firmada con bytes esperados, Mailpit accesible con correo del fixture y sesiones **reales** A/B con `signInFixture` de `tests/integration/support/session.mjs`, `getUser` y cookies SSR. Cierra solo las sesiones que crea. Studio forma parte de las comprobaciones de salud de stack. No publica contraseñas, claves, JWT ni URLs firmadas. Las verificaciones de sesión generan actividad normal de Auth y los recibos operativos se actualizan; la idempotencia se refiere a recursos, dominio, ledger y activos, no a esos registros de actividad. Un fallo de verify devuelve **11** y nunca éxito parcial. Tras parar/arrancar Mailpit su correo efímero puede faltar y requerir seed; GoTrue limita reenvíos durante 65 segundos.
+
+`tests/scripts/reset.test.mjs` comprueba los rechazos, cambios sin cambio de cantidades, confinamiento de rutas/junctions, interrupción y continuación sin Docker. Su prueba `[stack]` revisa un plan real sin destruir; se omite con `BIBLIB_SKIP_STACK_TESTS=1`. El harness del ensayo destructivo, su estado de ejecución y la comparación de HolaERP se conservan en [la evidencia O06](validacion/2026-10-23/O06/); el informe distingue los ensayos ejecutados de los pendientes.

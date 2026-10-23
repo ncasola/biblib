@@ -1,0 +1,17 @@
+{
+  "results": [
+    {
+      "project": "holaerp",
+      "exitCode": 3,
+      "phase": "reset",
+      "message": "El plan, la confirmación del proyecto o la raíz real son ajenos."
+    },
+    {
+      "project": "biblib-scratch",
+      "exitCode": 6,
+      "phase": "reset",
+      "message": "Tipo o huella del plan incorrectos."
+    }
+  ],
+  "sameDockerInventory": true
+}
