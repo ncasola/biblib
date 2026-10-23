@@ -10,6 +10,7 @@ import { withRlsContext } from "@/lib/db/client"
 import { importPreviews, libraryJobs } from "@/lib/db/schema"
 import { DomainError, idempotencyConflict, jobConflict, jobExpired, previewExpired, revisionConflict, type DomainErrorCode } from "@/lib/domain-errors"
 import { confirmationDigest } from "@/lib/import-publisher"
+import { snapshotCaptureBlocked } from "@/lib/library-snapshots"
 import { telemetry } from "@/lib/observability/server"
 import { JOB_LIMITS, isTerminal, type ControlResult, type JobControl, type LibraryJobView } from "@/lib/jobs/contracts"
 import { createJobDatabase, createJobRepository, jobView, type JobRepository } from "@/lib/jobs/repository"
@@ -156,6 +157,8 @@ const FAILURE_MESSAGES: Partial<Record<DomainErrorCode, () => DomainError>> = {
   PREVIEW_EXPIRED: previewExpired,
   IDEMPOTENCY_CONFLICT: idempotencyConflict,
   JOB_EXPIRED: jobExpired,
+  // U-DAT-02: un reemplazo bloqueado por la cuota o el tamaño de las versiones anteriores.
+  LIMIT_EXCEEDED: snapshotCaptureBlocked,
 }
 
 /** Traduce el final no satisfactorio de una publicación al error de dominio que verá la persona. */
