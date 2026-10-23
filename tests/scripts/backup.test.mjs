@@ -191,10 +191,14 @@ test("destino recién reseteado: solo el censo de fixtures; cualquier otro dato 
   const fresh = { users, books: [{ user_id: "u0", census: census.censusId, fixture: true }], shelves: [{ user_id: "u1" }], otherRows: [], buckets: [{ id: "biblib-test-assets" }], objects: [{ bucket: "biblib-test-assets", name: "fixtures/portada.webp" }] }
   assert.equal(classifyDestination(fresh, census).fresh, true)
   assert.equal(classifyDestination({ users: [], books: [], shelves: [], otherRows: [], buckets: [], objects: [] }, census).fresh, true)
+  // Tras reset+seed en 0003+, el trigger crea library_state de A/B: estado derivado, no datos ajenos.
+  const derived = ["library_state", "import_previews", "catalogue_cache", "catalogue_inflight", "catalogue_quota_buckets", "catalogue_quota_reservations", "catalogue_private_cache"]
+  assert.equal(classifyDestination({ ...fresh, otherRows: derived.map((table) => ({ table, rows: 2 })) }, census).fresh, true)
   const cases = [
     { ...fresh, users: [...users, { id: "x", email: "persona@example.com", census: null }] },
     { ...fresh, books: [...fresh.books, { user_id: "u0", census: null, fixture: false }] },
-    { ...fresh, otherRows: [{ table: "library_state", rows: 1 }] },
+    { ...fresh, otherRows: [{ table: "library_operations", rows: 1 }] },
+    { ...fresh, otherRows: [{ table: "tabla_futura", rows: 1 }] },
     { ...fresh, objects: [...fresh.objects, { bucket: "biblib-test-assets", name: "otra.webp" }] },
   ]
   for (const destination of cases) assert.equal(classifyDestination(destination, census).fresh, false)
