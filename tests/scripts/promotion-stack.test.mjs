@@ -22,6 +22,12 @@ const created = []
 const journal = loadJournal(path.join(repo, "drizzle"))
 const tags = journal.entries.map((e) => e.tag)
 const rejection = (promise) => promise.then(() => null, (error) => error)
+// Con BIBLIB_INF07_EVIDENCE=<carpeta>, la misma ejecución deja la evidencia del ensayo (sin secretos).
+const EVIDENCE = process.env.BIBLIB_INF07_EVIDENCE
+const evidence = (name, value) => { if (EVIDENCE) writeFileSync(path.join(EVIDENCE, `${name}.json`), `${JSON.stringify(value, null, 2)}\n`) }
+const evidenceFile = (name, file) => { if (EVIDENCE && file) cpSync(path.join(repo, file), path.join(EVIDENCE, `${name}.json`)) }
+const summary = (result) => ({ ...result, checks: { ok: result.checks.filter((c) => c.status === "ok").length, other: result.checks.filter((c) => c.status !== "ok") } })
+const describeError = (error) => ({ code: error.code, phase: error.phase, message: error.message, ...(error.report ? { report: error.report } : {}), ...(error.record ? { record: error.record } : {}) })
 
 describe("promoción contra un remoto simulado [stack]", { skip }, () => {
   let remote, env, deps, admin
@@ -99,6 +105,8 @@ describe("promoción contra un remoto simulado [stack]", { skip }, () => {
     assert.equal(planned.plan.descriptor.tls.mode, "verify-full")
     assert.doesNotMatch(readFileSync(path.join(repo, planned.result.file), "utf8"), new RegExp(`${remote.password}|postgresql://`))
     assert.deepEqual(await schemas(), [])
+    evidence("01-status-vacio", summary(status.result))
+    evidenceFile("01-plan-vacio", planned.result.file)
   })
 
   test("2 · identidad errónea, sin TLS, plan de otro commit/head y respaldo ausente o ajeno abortan antes de DDL", async () => {
@@ -139,6 +147,7 @@ describe("promoción contra un remoto simulado [stack]", { skip }, () => {
     const stale = await rejection(promote(planned, backup))
     assert.equal(stale.code, EXIT.PLAN_REJECTED)
     assert.match(stale.message, /head aplicado o los pendientes cambiaron/)
+    evidence("02-rechazos-antes-de-ddl", { codes, ledgerSinCambios: true, objetosSinCambios: true, planDeOtroHead: describeError(stale) })
   })
 
   test("3 · copia equivalente a 0000: conserva IDs y datos, aplica 0001…0004 y verifica catálogo, FK, RLS y versión", async () => {
@@ -190,6 +199,9 @@ describe("promoción contra un remoto simulado [stack]", { skip }, () => {
     assert.equal(record.platform.unchanged, true)
     assert.ok(record.backup.backupId && record.lostWrites.since)
     assert.doesNotMatch(JSON.stringify(record), new RegExp(`${remote.password}|postgresql://|Ficción`))
+    evidenceFile("03-plan-desde-0000", planned.result.file)
+    evidence("03-promocion-desde-0000", { ...summary(result.result), idsYDatosConservados: true, versionRotada: true, fkPropietario: "23503", rls: { a: 2, b: 1, ajenasActualizadas: 0 }, claimsLocalesATransaccion: { ...session } })
+    evidenceFile("03-registro-promocion", result.result.record)
   })
 
   test("4 · datos incompatibles con 0001: listado restringido de correcciones, sin plan ni cambios", async () => {
@@ -208,6 +220,8 @@ describe("promoción contra un remoto simulado [stack]", { skip }, () => {
     assert.ok(listing.checks.filter((c) => c.status === "fail").every((c) => c.correction))
     assert.doesNotMatch(JSON.stringify(listing), new RegExp(`${a}|${b}|Cruzada|Demasiadas`))
     assert.deepEqual(await domainRows(), before)
+    evidence("04-plan-datos-incompatibles", { code: planned.code, state: planned.result.state, corrections: planned.result.corrections })
+    evidenceFile("04-correcciones-propuestas", planned.result.corrections)
   })
 
   test("5 · esquema manual sin ledger equivalente a 0002: adopt escribe solo el ledger y migrate aplica 0003/0004", async () => {
@@ -242,6 +256,11 @@ describe("promoción contra un remoto simulado [stack]", { skip }, () => {
     const migrated = await promote(next, await receipt())
     assert.equal(migrated.result.head.tag, tags.at(-1))
     assert.deepEqual(await domainRows(), data)
+    evidence("05-status-adopcion-requerida", summary(status.result))
+    evidenceFile("05-plan-adopcion", planned.result.file)
+    evidence("05-adopcion", { ...summary(adopted.result), soloLedger: true, objetosBiblibSinCambios: true, repetir: describeError(again) })
+    evidenceFile("05-registro-adopcion", adopted.result.record)
+    evidence("05-migracion-tras-adopcion", summary(migrated.result))
   })
 
   test("6 · esquema con drift (sin trigger): la adopción se rechaza con 5 y conciliación, sin ledger", async () => {
@@ -260,6 +279,7 @@ describe("promoción contra un remoto simulado [stack]", { skip }, () => {
     assert.deepEqual(refused.report.reconciliation.differences.map((d) => d.id), ["trigger.books_rotate_version"])
     assert.equal(await ledger(), null)
     assert.ok(JSON.parse(readFileSync(path.join(repo, refused.record), "utf8")).result.startsWith("rechazado"))
+    evidence("06-drift-sin-trigger", { plan: { code: replanned.code, state: replanned.result.state, reconciliation: replanned.result.reconciliation }, adopt: describeError(refused), ledger: null })
   })
 
   test("7 · fallo transaccional sin avance del ledger y restauración coherente desde el respaldo", async () => {
@@ -288,6 +308,9 @@ describe("promoción contra un remoto simulado [stack]", { skip }, () => {
       const restored = JSON.parse(readFileSync(path.join(repo, backupFile), "utf8"))
       const report = JSON.parse(readFileSync(path.join(repo, restored.restoreVerification.report), "utf8"))
       assert.deepEqual(report.checks.map((c) => [c.id, c.status]), [["ledger", "ok"], ["manifest", "ok"], ["objects.facts", "ok"]])
+      evidence("07-fallo-transaccional", { ...describeError(failure), ledgerSinAvance: true, objetoDePruebaAusente: true })
+      evidenceFile("07-registro-fallo", failure.record)
+      evidence("07-restauracion-tras-fallo", report)
     } finally { rmSync(dir, { recursive: true, force: true }) }
   })
 
@@ -298,5 +321,6 @@ describe("promoción contra un remoto simulado [stack]", { skip }, () => {
     const results = await Promise.all([1, 2].map(() => promote(planned, backup).then((r) => r.code, (error) => error.code)))
     assert.deepEqual(results.sort(), [EXIT.OK, EXIT.PLAN_REJECTED])
     assert.equal((await ledger()).length, tags.length)
+    evidence("08-concurrencia", { codes: results, ledgerRows: (await ledger()).length })
   })
 })
