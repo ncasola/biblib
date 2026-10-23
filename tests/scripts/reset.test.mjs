@@ -5,7 +5,7 @@ import path from "node:path"
 import { after, test } from "node:test"
 import { fileURLToPath } from "node:url"
 import { createContext, runLocalStack } from "../../scripts/local-stack.mjs"
-import { assertResetIdentity, buildResetPlan, parseResetArgs, runReset, validateResetBackup, validateResetPlan } from "../../scripts/db/reset-local.mjs"
+import { assertResetIdentity, buildResetPlan, mailpitInventory, parseResetArgs, runReset, validateResetBackup, validateResetPlan } from "../../scripts/db/reset-local.mjs"
 import { sha256 } from "../../scripts/db/journal-guard.mjs"
 import { computePlanHash, writePlan } from "../../scripts/db/plan.mjs"
 import { resourceRecord } from "../../scripts/lib/docker.mjs"
@@ -108,6 +108,18 @@ test("cambio de datos sin cambio de cantidades invalida el plan antes de parar",
   // El plan en disco conserva la huella aprobada.
   await assert.rejects(runReset(f.apply, f.deps), { code: 6 })
   assert.deepEqual(f.calls, [])
+})
+
+test("huella Mailpit incluye mensajes fuera de la primera página y detecta inventario inestable", async () => {
+  const f = fixture(), messages = [{ ID: "a", Subject: "ficticio" }, { ID: "b", Subject: "ficticio" }]
+  f.ctx.fetch = async (url) => new Response(JSON.stringify({ total: 2, messages: [messages[Number(new URL(url).searchParams.get("start"))]] }))
+  const first = await mailpitInventory(f.ctx)
+  messages[1].Subject = "cambio en otra página"
+  const second = await mailpitInventory(f.ctx)
+  assert.equal(first.total, second.total); assert.notDeepEqual(first.hashes, second.hashes)
+  assert.doesNotMatch(JSON.stringify(second), /ficticio|cambio/)
+  f.ctx.fetch = async () => new Response(JSON.stringify({ total: 2, messages: [] }))
+  await assert.rejects(mailpitInventory(f.ctx), { code: 8 })
 })
 
 test("rutas fuera de .biblib y junctions se rechazan sin eliminar el destino", () => {

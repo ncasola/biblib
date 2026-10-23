@@ -69,6 +69,26 @@ export function assertResetIdentity(ctx, state, all, target, { allowMissing = fa
   return resources
 }
 
+/** Recorre todo el buzón, también mensajes fuera de la primera página. */
+export async function mailpitInventory(ctx) {
+  const hashes = new Map()
+  let total
+  do {
+    const response = await ctx.fetch(`http://127.0.0.1:${ctx.profile.ports.mailpit}/api/v1/messages?limit=500&start=${hashes.size}`, { signal: AbortSignal.any([AbortSignal.timeout(5000), ...(ctx.signal ? [ctx.signal] : [])]), redirect: "error" })
+    if (!response.ok) fail(EXIT.SERVICE_UNAVAILABLE, "Mailpit no responde; no se puede revisar la pérdida de correo.")
+    const page = await response.json()
+    if (!Number.isSafeInteger(page.total) || page.total < 0 || !Array.isArray(page.messages) || total !== undefined && total !== page.total) fail(EXIT.SERVICE_UNAVAILABLE, "El inventario de Mailpit cambió durante la lectura o no tiene un recuento verificable.")
+    total = page.total
+    const before = hashes.size
+    for (const message of page.messages) {
+      if (typeof message.ID !== "string" || hashes.has(message.ID)) fail(EXIT.SERVICE_UNAVAILABLE, "El inventario de Mailpit no es estable; repite el dry-run sin escrituras concurrentes.")
+      hashes.set(message.ID, sha256(canonical(message)))
+    }
+    if (hashes.size > total || hashes.size === before && hashes.size !== total) fail(EXIT.SERVICE_UNAVAILABLE, "Mailpit no devolvió todo su inventario.")
+  } while (hashes.size < total)
+  return { total, hashes: [...hashes].sort(([a], [b]) => a.localeCompare(b)) }
+}
+
 /** Solo hashes y cantidades salen de Postgres; nunca filas, correos ni objetos. */
 export async function discardedState(ctx, target, { sql: provided } = {}) {
   const sql = provided ?? connect({ target }, { applicationName: "biblib-reset-plan" })
@@ -83,10 +103,7 @@ export async function discardedState(ctx, target, { sql: provided } = {}) {
       return result
     }
     const tables = provided ? await readTables(sql) : await sql.begin("isolation level repeatable read read only", readTables)
-    const response = await ctx.fetch(`http://127.0.0.1:${ctx.profile.ports.mailpit}/api/v1/messages`, { signal: AbortSignal.any([AbortSignal.timeout(5000), ...(ctx.signal ? [ctx.signal] : [])]), redirect: "error" })
-    if (!response.ok) fail(EXIT.SERVICE_UNAVAILABLE, "Mailpit no responde; no se puede revisar la pérdida de correo.")
-    const mailbox = await response.json()
-    if (!Number.isSafeInteger(mailbox.total) || mailbox.total < 0) fail(EXIT.SERVICE_UNAVAILABLE, "Mailpit no devolvió un recuento verificable de mensajes.")
+    const mailbox = await mailpitInventory(ctx)
     const count = (schema, table) => tables.find((t) => t.schema === schema && t.table === table)?.count ?? 0
     return { counts: { domain: { books: count("biblib", "books"), shelves: count("biblib", "shelves") }, auth: { users: count("auth", "users"), sessions: count("auth", "sessions"), refreshTokens: count("auth", "refresh_tokens") }, storage: { buckets: count("storage", "buckets"), objects: count("storage", "objects") }, mailpit: { messages: mailbox.total }, ledger: count("drizzle", "__drizzle_migrations") }, tables, mailpitHash: sha256(canonical(mailbox)), hash: sha256(canonical({ tables, mailbox })) }
   } finally { if (!provided) await closeConnection(sql) }
