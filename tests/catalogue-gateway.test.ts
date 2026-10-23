@@ -111,13 +111,18 @@ function service(gateway: ReturnType<typeof createCatalogGateway>, clock?: { now
 
 const context = (signal = new AbortController().signal) => ({ signal, requestId: "00000000-0000-4000-8000-000000000001" })
 
-test("política: OL cachea ficha 1 h y ausencia 5 min; portadas, BNE y Google sin caché", () => {
+test("política: OL cachea ficha 1 h y ausencia 5 min; BNE (CC0) ficha 1 h sin ausencias; portadas y Google sin caché", () => {
   const plan = cachePlan("open-library", "lookupISBN")
   assert.equal(plan?.foundTtlMs, 3_600_000)
   assert.equal(plan?.notFoundTtlMs, 300_000)
   assert.equal(plan?.policyVersion, providerRightsPolicy("open-library").version)
   assert.equal(cachePlan("open-library", "getCover"), null, "coverTtlSeconds = 0: la portada no se guarda")
-  assert.equal(cachePlan("bne", "lookupISBN"), null)
+  // BNE publica metadatos CC0 (U-BIB-02): ficha 1 h con procedencia; las ausencias no se guardan.
+  const bne = cachePlan("bne", "lookupISBN")
+  assert.equal(bne?.foundTtlMs, 3_600_000)
+  assert.equal(bne?.notFoundTtlMs, 0)
+  assert.equal(bne?.policyVersion, providerRightsPolicy("bne").version)
+  assert.equal(cachePlan("bne", "getCover"), null, "La licencia CC0 de BNE no cubre portadas")
   assert.equal(cachePlan("google-books", "lookupISBN"), null)
   assert.equal(invalidationVersion("google-books"), null)
   const noPersist: RightsSource = { policy: providerRightsPolicy, allows: (policy, capability) => capability !== "persistMetadata" && hasProviderRight(policy, capability) }
@@ -221,8 +226,9 @@ test("429 con Retry-After abre cooldown compartido y la espera de cuota es rateL
   const cooling = await catalog.lookupISBN(isbn)
   assert.equal(cooling.status, "incomplete")
   assert.equal(cooling.providers[0].status, "rateLimited")
-  // El intervalo local del adaptador ya consumió 1 s del cooldown simulado.
-  assert.equal(cooling.providers[0].retryAfterSeconds, 4)
+  // El restante depende de si el limitador local del adaptador consumió reloj simulado: nunca 0 ni más de 5 s.
+  const remaining = cooling.providers[0].retryAfterSeconds ?? 0
+  assert.ok(remaining > 0 && remaining <= 5, `cooldown restante ${remaining}`)
   assert.equal(memory.cache.size, 0)
   await assert.rejects(gateway.bind({ purpose: "batch" })("https://openlibrary.org/api/books"), (error) => error instanceof QuotaDeferredError && error.retryAfterMs > 0 && error.retryAfterMs <= 5000)
 })

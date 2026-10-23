@@ -359,7 +359,13 @@ test("check-client-bundle --forbid-local-login detecta los literales del formula
 
 // [build] Compila de verdad con placeholders: .next-test debe contener el formulario y .next-prod no.
 // Con BIBLIB_SKIP_BUILD_TESTS=1 se omite. No toca `.next`, que usa `pnpm test`.
-const skipBuild = process.env.BIBLIB_SKIP_BUILD_TESTS === "1" ? "BIBLIB_SKIP_BUILD_TESTS=1" : false
+// Un checkout con `.env`/`.env.local` sin acreditar (p. ej. la configuración privada de Néstor) hace que el
+// wrapper rechace el build con exit 3, como debe: esas pruebas se ejecutan en worktrees limpios y en CI.
+const foreignEnvFiles = [".env", ".env.local", ".env.production", ".env.production.local", ".env.test", ".env.test.local"]
+  .filter((name) => { try { return !readFileSync(path.join(REPO_ROOT, name), "utf8").startsWith("# biblib:generated") } catch { return false } })
+const skipBuild = process.env.BIBLIB_SKIP_BUILD_TESTS === "1"
+  ? "BIBLIB_SKIP_BUILD_TESTS=1"
+  : foreignEnvFiles.length > 0 ? `checkout con archivos de entorno sin acreditar (${foreignEnvFiles.join(", ")})` : false
 function buildTarget(target, injected) {
   const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => !/^(BIBLIB_|NEXT_PUBLIC_|SUPABASE_)/i.test(key)))
   // Una variable heredada en el shell no debe poder activar el formulario en el build remoto.
