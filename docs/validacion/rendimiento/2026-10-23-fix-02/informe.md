@@ -108,6 +108,7 @@ Acción p50 / p95 en ms. Todas las filas, SQL, filas, bytes y pool en [`antes/ta
 - Máquina de desarrollo con otros stacks en marcha; la dispersión entre ejecuciones es apreciable (sobre todo Auth y los p95 con 15–20 llamadas por sesión). Las conclusiones se apoyan en el rendimiento por variante y en órdenes de magnitud.
 - Kong/GoTrue y Postgres corren en el mismo Docker Desktop que la app y el generador de carga: la contención de CPU entre ellos forma parte de lo medido.
 - La ganancia de T3 depende de que el proxy y la acción compartan proceso (`next start`, proxy en runtime Node: confirmado con 1,01–1,05 llamadas por acción). Si el alojamiento los separa, la acción vuelve a `getUser()` y a dos llamadas por petición, con la misma seguridad.
+- Durante la medición «antes» se ejecutó a mano en el Postgres del perfil la comprobación de `set_config('role', …)` de §5 (dos transacciones triviales con un UUID ficticio, `00000000-…-0001`); aparece en el desglose de sentencias de `antes/resultados-10000.json` y no afecta a las cifras.
 - Con 4 conexiones el siguiente límite es GoTrue (~50 ms por llamada local, más con concurrencia). Un GoTrue remoto puede tener otra latencia; repetir en preproducción.
 
 ## 7. Recursos
