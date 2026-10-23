@@ -1,0 +1,583 @@
+{
+  "schemaVersion": 1,
+  "profile": "test",
+  "scale": 10000,
+  "results": [
+    {
+      "scenario": "dashboard",
+      "p50": 139.6,
+      "p95": 165.6,
+      "budget": 1000,
+      "status": "ok",
+      "unit": "ms",
+      "concurrency": 1
+    },
+    {
+      "scenario": "sql:dashboard",
+      "p50": 18.73,
+      "p95": 23.08,
+      "budget": 500,
+      "status": "ok",
+      "unit": "ms",
+      "concurrency": 1
+    },
+    {
+      "scenario": "dashboard@5",
+      "p50": 284.6,
+      "p95": 624.7,
+      "budget": 1000,
+      "status": "ok",
+      "unit": "ms",
+      "concurrency": 5
+    },
+    {
+      "scenario": "dashboard@10",
+      "p50": 561.5,
+      "p95": 753.4,
+      "budget": 1000,
+      "status": "ok",
+      "unit": "ms",
+      "concurrency": 10
+    },
+    {
+      "scenario": "listado-inicial",
+      "p50": 194.7,
+      "p95": 219.4,
+      "budget": 1000,
+      "status": "ok",
+      "unit": "ms",
+      "concurrency": 1
+    },
+    {
+      "scenario": "sql:listado-inicial",
+      "p50": 11.47,
+      "p95": 14.42,
+      "budget": 500,
+      "status": "ok",
+      "unit": "ms",
+      "concurrency": 1
+    },
+    {
+      "scenario": "listado-inicial@5",
+      "p50": 271.3,
+      "p95": 364.5,
+      "budget": 1000,
+      "status": "ok",
+      "unit": "ms",
+      "concurrency": 5
+    },
+    {
+      "scenario": "listado-inicial@10",
+      "p50": 531.1,
+      "p95": 686,
+      "budget": 1000,
+      "status": "ok",
+      "unit": "ms",
+      "concurrency": 10
+    },
+    {
+      "scenario": "listado-100-filas",
+      "p50": 141.5,
+      "p95": 172.5,
+      "budget": 1000,
+      "status": "ok",
+      "unit": "ms",
+      "concurrency": 1
+    },
+    {
+      "scenario": "sql:listado-100-filas",
+      "p50": 14.13,
+      "p95": 18.34,
+      "budget": 500,
+      "status": "ok",
+      "unit": "ms",
+      "concurrency": 1
+    },
+    {
+      "scenario": "listado-100-filas@5",
+      "p50": 253.2,
+      "p95": 347.3,
+      "budget": 1000,
+      "status": "ok",
+      "unit": "ms",
+      "concurrency": 5
+    },
+    {
+      "scenario": "listado-100-filas@10",
+      "p50": 544.9,
+      "p95": 752.5,
+      "budget": 1000,
+      "status": "ok",
+      "unit": "ms",
+      "concurrency": 10
+    },
+    {
+      "scenario": "listado-ultima-pagina",
+      "p50": 165.1,
+      "p95": 188.4,
+      "budget": 1000,
+      "status": "ok",
+      "unit": "ms",
+      "concurrency": 1
+    },
+    {
+      "scenario": "sql:listado-ultima-pagina",
+      "p50": 36.62,
+      "p95": 48.27,
+      "budget": 500,
+      "status": "ok",
+      "unit": "ms",
+      "concurrency": 1
+    },
+    {
+      "scenario": "listado-ultima-pagina@5",
+      "p50": 329.8,
+      "p95": 505.1,
+      "budget": 1000,
+      "status": "ok",
+      "unit": "ms",
+      "concurrency": 5
+    },
+    {
+      "scenario": "listado-ultima-pagina@10",
+      "p50": 625.6,
+      "p95": 721.1,
+      "budget": 1000,
+      "status": "ok",
+      "unit": "ms",
+      "concurrency": 10
+    },
+    {
+      "scenario": "filtrado-estado-estanteria",
+      "p50": 120.1,
+      "p95": 142.4,
+      "budget": 1000,
+      "status": "ok",
+      "unit": "ms",
+      "concurrency": 1
+    },
+    {
+      "scenario": "sql:filtrado-estado-estanteria",
+      "p50": 2.14,
+      "p95": 2.83,
+      "budget": 500,
+      "status": "ok",
+      "unit": "ms",
+      "concurrency": 1
+    },
+    {
+      "scenario": "filtrado-estado-estanteria@5",
+      "p50": 223.2,
+      "p95": 311,
+      "budget": 1000,
+      "status": "ok",
+      "unit": "ms",
+      "concurrency": 5
+    },
+    {
+      "scenario": "filtrado-estado-estanteria@10",
+      "p50": 445.5,
+      "p95": 644,
+      "budget": 1000,
+      "status": "ok",
+      "unit": "ms",
+      "concurrency": 10
+    },
+    {
+      "scenario": "ordenado-autor",
+      "p50": 258.1,
+      "p95": 619,
+      "budget": 1000,
+      "status": "ok",
+      "unit": "ms",
+      "concurrency": 1
+    },
+    {
+      "scenario": "sql:ordenado-autor",
+      "p50": 25.73,
+      "p95": 38.44,
+      "budget": 500,
+      "status": "ok",
+      "unit": "ms",
+      "concurrency": 1
+    },
+    {
+      "scenario": "ordenado-autor@5",
+      "p50": 365,
+      "p95": 480.7,
+      "budget": 1000,
+      "status": "ok",
+      "unit": "ms",
+      "concurrency": 5
+    },
+    {
+      "scenario": "ordenado-autor@10",
+      "p50": 889.1,
+      "p95": 2108.8,
+      "budget": 1000,
+      "status": "over-budget",
+      "unit": "ms",
+      "concurrency": 10
+    },
+    {
+      "scenario": "ordenado-fecha",
+      "p50": 179.6,
+      "p95": 276,
+      "budget": 1000,
+      "status": "ok",
+      "unit": "ms",
+      "concurrency": 1
+    },
+    {
+      "scenario": "sql:ordenado-fecha",
+      "p50": 32.56,
+      "p95": 44.63,
+      "budget": 500,
+      "status": "ok",
+      "unit": "ms",
+      "concurrency": 1
+    },
+    {
+      "scenario": "ordenado-fecha@5",
+      "p50": 340.3,
+      "p95": 755.4,
+      "budget": 1000,
+      "status": "ok",
+      "unit": "ms",
+      "concurrency": 5
+    },
+    {
+      "scenario": "ordenado-fecha@10",
+      "p50": 665.2,
+      "p95": 913.7,
+      "budget": 1000,
+      "status": "ok",
+      "unit": "ms",
+      "concurrency": 10
+    },
+    {
+      "scenario": "busqueda-local-texto",
+      "p50": 262,
+      "p95": 290.9,
+      "budget": 1000,
+      "status": "ok",
+      "unit": "ms",
+      "concurrency": 1
+    },
+    {
+      "scenario": "sql:busqueda-local-texto",
+      "p50": 128.32,
+      "p95": 141.99,
+      "budget": 500,
+      "status": "ok",
+      "unit": "ms",
+      "concurrency": 1
+    },
+    {
+      "scenario": "busqueda-local-texto@5",
+      "p50": 704.8,
+      "p95": 797.1,
+      "budget": 1000,
+      "status": "ok",
+      "unit": "ms",
+      "concurrency": 5
+    },
+    {
+      "scenario": "busqueda-local-texto@10",
+      "p50": 1296.2,
+      "p95": 2154.3,
+      "budget": 1000,
+      "status": "over-budget",
+      "unit": "ms",
+      "concurrency": 10
+    },
+    {
+      "scenario": "busqueda-local-isbn",
+      "p50": 217.8,
+      "p95": 245.5,
+      "budget": 1000,
+      "status": "ok",
+      "unit": "ms",
+      "concurrency": 1
+    },
+    {
+      "scenario": "sql:busqueda-local-isbn",
+      "p50": 102.55,
+      "p95": 120.43,
+      "budget": 500,
+      "status": "ok",
+      "unit": "ms",
+      "concurrency": 1
+    },
+    {
+      "scenario": "busqueda-local-isbn@5",
+      "p50": 638,
+      "p95": 819.2,
+      "budget": 1000,
+      "status": "ok",
+      "unit": "ms",
+      "concurrency": 5
+    },
+    {
+      "scenario": "busqueda-local-isbn@10",
+      "p50": 1227.1,
+      "p95": 1329.4,
+      "budget": 1000,
+      "status": "over-budget",
+      "unit": "ms",
+      "concurrency": 10
+    },
+    {
+      "scenario": "detalle",
+      "p50": 115.2,
+      "p95": 130,
+      "budget": 1000,
+      "status": "ok",
+      "unit": "ms",
+      "concurrency": 1
+    },
+    {
+      "scenario": "sql:detalle",
+      "p50": 0.06,
+      "p95": 0.08,
+      "budget": null,
+      "status": "no-budget",
+      "unit": "ms",
+      "concurrency": 1
+    },
+    {
+      "scenario": "detalle@5",
+      "p50": 162.6,
+      "p95": 197,
+      "budget": 1000,
+      "status": "ok",
+      "unit": "ms",
+      "concurrency": 5
+    },
+    {
+      "scenario": "detalle@10",
+      "p50": 285.6,
+      "p95": 425.1,
+      "budget": 1000,
+      "status": "ok",
+      "unit": "ms",
+      "concurrency": 10
+    },
+    {
+      "scenario": "estanterias",
+      "p50": 120.1,
+      "p95": 144.1,
+      "budget": 1000,
+      "status": "ok",
+      "unit": "ms",
+      "concurrency": 1
+    },
+    {
+      "scenario": "sql:estanterias",
+      "p50": 5.89,
+      "p95": 8.01,
+      "budget": null,
+      "status": "no-budget",
+      "unit": "ms",
+      "concurrency": 1
+    },
+    {
+      "scenario": "estanterias@5",
+      "p50": 202.1,
+      "p95": 337.6,
+      "budget": 1000,
+      "status": "ok",
+      "unit": "ms",
+      "concurrency": 5
+    },
+    {
+      "scenario": "estanterias@10",
+      "p50": 442.3,
+      "p95": 631,
+      "budget": 1000,
+      "status": "ok",
+      "unit": "ms",
+      "concurrency": 10
+    },
+    {
+      "scenario": "estanteria-3d-pagina-48",
+      "p50": 126.3,
+      "p95": 198.2,
+      "budget": 1000,
+      "status": "ok",
+      "unit": "ms",
+      "concurrency": 1
+    },
+    {
+      "scenario": "sql:estanteria-3d-pagina-48",
+      "p50": 4.05,
+      "p95": 5.17,
+      "budget": 500,
+      "status": "ok",
+      "unit": "ms",
+      "concurrency": 1
+    },
+    {
+      "scenario": "estanteria-3d-pagina-48@5",
+      "p50": 205,
+      "p95": 277.9,
+      "budget": 1000,
+      "status": "ok",
+      "unit": "ms",
+      "concurrency": 5
+    },
+    {
+      "scenario": "estanteria-3d-pagina-48@10",
+      "p50": 457.3,
+      "p95": 784.3,
+      "budget": 1000,
+      "status": "ok",
+      "unit": "ms",
+      "concurrency": 10
+    },
+    {
+      "scenario": "exportacion-lectura-completa",
+      "p50": 529.6,
+      "p95": 594.1,
+      "budget": null,
+      "status": "no-budget",
+      "unit": "ms",
+      "concurrency": 1
+    },
+    {
+      "scenario": "sql:exportacion-lectura-completa",
+      "p50": 106.38,
+      "p95": 126.65,
+      "budget": null,
+      "status": "no-budget",
+      "unit": "ms",
+      "concurrency": 1
+    },
+    {
+      "scenario": "exportacion-lectura-completa@5",
+      "p50": 1619.3,
+      "p95": 2157.1,
+      "budget": null,
+      "status": "no-budget",
+      "unit": "ms",
+      "concurrency": 5
+    },
+    {
+      "scenario": "exportacion-lectura-completa@10",
+      "p50": 3374.9,
+      "p95": 3901.8,
+      "budget": null,
+      "status": "no-budget",
+      "unit": "ms",
+      "concurrency": 10
+    },
+    {
+      "scenario": "preview-importacion-conservar",
+      "p50": 314.3,
+      "p95": 325.3,
+      "budget": null,
+      "status": "no-budget",
+      "unit": "ms",
+      "concurrency": 1
+    },
+    {
+      "scenario": "sql:preview-importacion-conservar",
+      "p50": 33.16,
+      "p95": 36.4,
+      "budget": null,
+      "status": "no-budget",
+      "unit": "ms",
+      "concurrency": 1
+    },
+    {
+      "scenario": "preview-importacion-conservar@5",
+      "p50": 950.3,
+      "p95": 1318.6,
+      "budget": null,
+      "status": "no-budget",
+      "unit": "ms",
+      "concurrency": 5
+    },
+    {
+      "scenario": "preview-importacion-conservar@10",
+      "p50": 1894,
+      "p95": 2280.9,
+      "budget": null,
+      "status": "no-budget",
+      "unit": "ms",
+      "concurrency": 10
+    },
+    {
+      "scenario": "preview-importacion-nuevos",
+      "p50": 355.5,
+      "p95": 368.3,
+      "budget": null,
+      "status": "no-budget",
+      "unit": "ms",
+      "concurrency": 1
+    },
+    {
+      "scenario": "sql:preview-importacion-nuevos",
+      "p50": 43.74,
+      "p95": 49.6,
+      "budget": null,
+      "status": "no-budget",
+      "unit": "ms",
+      "concurrency": 1
+    },
+    {
+      "scenario": "preview-importacion-nuevos@5",
+      "p50": 1030.5,
+      "p95": 1433.8,
+      "budget": null,
+      "status": "no-budget",
+      "unit": "ms",
+      "concurrency": 5
+    },
+    {
+      "scenario": "preview-importacion-nuevos@10",
+      "p50": 1842.4,
+      "p95": 2341.8,
+      "budget": null,
+      "status": "no-budget",
+      "unit": "ms",
+      "concurrency": 10
+    },
+    {
+      "scenario": "preview-importacion-reemplazo",
+      "p50": 358,
+      "p95": 375.1,
+      "budget": null,
+      "status": "no-budget",
+      "unit": "ms",
+      "concurrency": 1
+    },
+    {
+      "scenario": "sql:preview-importacion-reemplazo",
+      "p50": 43.95,
+      "p95": 47.98,
+      "budget": null,
+      "status": "no-budget",
+      "unit": "ms",
+      "concurrency": 1
+    },
+    {
+      "scenario": "preview-importacion-reemplazo@5",
+      "p50": 995.1,
+      "p95": 1464.4,
+      "budget": null,
+      "status": "no-budget",
+      "unit": "ms",
+      "concurrency": 5
+    },
+    {
+      "scenario": "preview-importacion-reemplazo@10",
+      "p50": 1962.7,
+      "p95": 2797.2,
+      "budget": null,
+      "status": "no-budget",
+      "unit": "ms",
+      "concurrency": 10
+    }
+  ]
+}
