@@ -1378,7 +1378,7 @@
    "references": null,
    "ref_columns": [],
    "on_delete": " ",
-   "definition": "CHECK ((((item_count >= 1) AND (item_count <= 200)) AND (jsonb_typeof(payload) = 'array'::text) AND (jsonb_array_length(payload) = item_count)))"
+   "definition": "CHECK (((item_count >= 1) AND (item_count <= 200) AND (jsonb_typeof(payload) = 'array'::text) AND (jsonb_array_length(payload) = item_count)))"
   },
   {
    "name": "library_snapshots_counts_check",
