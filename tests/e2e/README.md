@@ -29,7 +29,7 @@ pnpm db:local:down --profile test
 
 ## Criterios transversales en cada recorrido
 
-- **Sin excepciones JS ni errores de hidratación:** cada página escucha `pageerror` y `console` de tipo `error`. Un error de consola esperado (p. ej. el 404 de un ISBN sin ficha) se admite explícitamente en esa prueba con `guard.allowConsole(...)`.
+- **Sin excepciones JS ni errores de hidratación:** cada página escucha `pageerror` y `console` de tipo `error`. Un error de consola esperado (p. ej. el 404 de un ISBN sin ficha) se admite explícitamente en esa prueba con `guard.allowConsole(...)`. En Firefox y WebKit, las peticiones de la app que una navegación de la prueba cancela (prefetch RSC, cargas en curso) aparecen como «Error loading …: Load failed» o, en WebKit, como rechazo «due to access control checks»; solo se toleran si coinciden con una petición realmente abortada (`requestfailed`) y quedan anotadas como «cancelación al navegar» en el informe HTML.
 - **Sin tráfico externo:** el navegador solo puede hablar con la app y con el GoTrue/Storage del perfil (`context.route`); el servidor corre en modo `fixture` y con el guard de red. El runner exige que el guard conste como cargado y que no haya bloqueado ningún host.
 - **Sin éxito antes de persistir:** el alta retiene la respuesta del servidor ya persistida y comprueba que la pantalla no anuncia éxito hasta recibirla; un corte de red conserva el borrador.
 - **Capturas y datos ficticios:** solo cuentas `@biblib.test` y fichas del censo o marcadas `[QA-02 <run>]`. Las contraseñas se escriben sin pasar por títulos de pasos ni trazas (los proyectos de sesión y cierre no graban traza).

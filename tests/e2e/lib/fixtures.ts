@@ -60,6 +60,10 @@ export interface Data {
 }
 
 interface CensusAccount { key: Account; email: string; user_metadata: { full_name: string } }
+interface Observed { text: string; at: number }
+
+/** Errores con los que la app registra una carga interrumpida (`console.error` en su catch) en Firefox/WebKit. */
+const NAVIGATION_ABORT_CONSOLE = /^Error loading [a-z ]+: (TypeError: (Load failed|NetworkError when attempting to fetch resource\.)|JSHandle@object) \[/
 
 export const e2eDir = process.env.BIBLIB_E2E_DIR ?? path.join(process.cwd(), ".biblib", "e2e")
 
@@ -183,22 +187,35 @@ export const test = base.extend<{ account: Session; guard: Guard; data: Data }, 
     await provide(account === "anon" ? { cookies: [], origins: [] } : stateFile(testInfo, account))
   },
 
-  guard: [async ({ context, stack }, provide) => {
-    const allowedOrigins = new Set([new URL(stack.appUrl).origin, stack.apiOrigin])
+  guard: [async ({ context, stack }, provide, testInfo) => {
+    const appOrigin = new URL(stack.appUrl).origin
+    const allowedOrigins = new Set([appOrigin, stack.apiOrigin])
     const blocked: string[] = []
-    const problems: string[] = []
+    const problems: Observed[] = []
     const failedResponses: string[] = []
-    const consoleErrors: string[] = []
+    const consoleErrors: Observed[] = []
+    const aborted: Observed[] = []
     const allowed: RegExp[] = []
     const watchPage = (page: Page) => {
-      page.on("pageerror", (error) => problems.push(`Excepción JS: ${error.message}`))
+      page.on("pageerror", (error) => problems.push({ text: `Excepción JS: ${error.message}`, at: Date.now() }))
       page.on("response", (response) => { if (response.status() >= 400) failedResponses.push(`${response.status()} ${response.request().method()} ${new URL(response.url()).pathname}`) })
+      page.on("requestfailed", (request) => {
+        const url = new URL(request.url())
+        if (url.origin === appOrigin && /abort|cancel/i.test(request.failure()?.errorText ?? "")) aborted.push({ text: `${url.host}${url.pathname}${url.search}`, at: Date.now() })
+      })
       page.on("console", (message) => {
         if (message.type() !== "error") return
         // Se añade la ruta del recurso (sin consulta) para poder diagnosticar sin volcar datos.
         const where = message.location().url ? new URL(message.location().url).pathname : ""
-        consoleErrors.push(`${message.text()}${where ? ` [${where}]` : ""}`)
+        consoleErrors.push({ text: `${message.text()}${where ? ` [${where}]` : ""}`, at: Date.now() })
       })
+    }
+    // Firefox y WebKit informan de las peticiones de la app que una navegación cancela (prefetch RSC,
+    // cargas en curso) como error de consola o, en WebKit, como rechazo «access control checks». Solo se
+    // toleran si coinciden con una petición realmente abortada y quedan anotadas en el informe.
+    const navigationAbort = (entry: Observed) => {
+      if (/ due to access control checks\.$/.test(entry.text)) return aborted.some((request) => entry.text.includes(request.text))
+      return NAVIGATION_ABORT_CONSOLE.test(entry.text) && aborted.some((request) => Math.abs(request.at - entry.at) < 3_000)
     }
     const watch = async (target: BrowserContext) => {
       await target.route("**/*", async (route) => {
@@ -212,9 +229,11 @@ export const test = base.extend<{ account: Session; guard: Guard; data: Data }, 
     }
     await watch(context)
     await provide({ allowConsole: (pattern) => { allowed.push(pattern) }, watch })
-    const unexpected = consoleErrors.filter((text) => !allowed.some((pattern) => pattern.test(text)))
+    const observed = [...problems, ...consoleErrors.filter((entry) => !allowed.some((pattern) => pattern.test(entry.text)))]
+    const tolerated = observed.filter(navigationAbort)
+    for (const entry of tolerated) testInfo.annotations.push({ type: "cancelación al navegar", description: entry.text })
     expect(blocked, "Sin tráfico externo desde el navegador").toEqual([])
-    expect([...problems, ...unexpected], `Sin excepciones JS, errores de hidratación ni errores de consola (respuestas ≥400: ${failedResponses.join("; ") || "ninguna"})`).toEqual([])
+    expect(observed.filter((entry) => !tolerated.includes(entry)).map((entry) => entry.text), `Sin excepciones JS, errores de hidratación ni errores de consola (respuestas ≥400: ${failedResponses.join("; ") || "ninguna"})`).toEqual([])
   }, { auto: true }],
 
   // Al terminar cada prueba se borra lo marcado con sus fragmentos: así un ISBN real dado de alta en
