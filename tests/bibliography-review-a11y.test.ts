@@ -90,8 +90,9 @@ test("portada en control aparte con fallback; Google solo como vista previa no s
   assert.match(html, /Portada predeterminada/)
   assert.ok(html.includes("/default-book-cover.webp"))
   assert.equal(ids(html, /<input type="radio" id="[^"]*cover-([^"]+)"/g).sort().join(","), "default,ol")
-  // La política vigente de Google deniega previewCover: ni radio ni imagen.
-  assert.ok(!html.includes("books.google.test"))
+  // U-BIB-03 concede a Google solo previewCover: puede verse como vista previa, pero nunca como opción guardable.
+  assert.ok(!/<input[^>]*type="radio"[^>]*google/i.test(html), "Google no es una opción de portada seleccionable")
+  if (html.includes("books.google.test")) assert.match(html, /vista previa/i)
 })
 
 test("sin compatibilidad no se ofrece combinar y se explica por qué", () => {
