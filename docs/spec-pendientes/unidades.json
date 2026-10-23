@@ -777,7 +777,13 @@
         "QA-01",
         "QA-02"
       ],
-      "status": "in-progress"
+      "status": "implemented-local",
+      "evidence": "O09 · merge 8d58b4e; workflows PR, semanal y promoción (deshabilitada) validados localmente (docs/validacion/2026-10-23/O09/qa-04.md)",
+      "pending": [
+        "Ejecución real en GitHub: push de feature/spec-pendientes y PR (decisión de Néstor).",
+        "Integrar perf:local de U-QA-03.",
+        "Habilitar promoción tras autorizar destinos y respaldos."
+      ]
     },
     {
       "id": "U-QA-05",
