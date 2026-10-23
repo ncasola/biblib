@@ -5,7 +5,7 @@ import path from "node:path"
 import { fileURLToPath, pathToFileURL } from "node:url"
 import { createContext, runLocalStack } from "../../../../scripts/local-stack.mjs"
 import { discardedState } from "../../../../scripts/db/reset-local.mjs"
-import { inventory, selectResources } from "../../../../scripts/lib/docker.mjs"
+import { docker, inventory, selectResources } from "../../../../scripts/lib/docker.mjs"
 import { readState } from "../../../../scripts/lib/state.mjs"
 import { canonical } from "../../../../scripts/db/plan.mjs"
 import { sha256 } from "../../../../scripts/db/journal-guard.mjs"
@@ -31,7 +31,20 @@ const snapshot = async () => {
   return { domain: discarded.tables.filter((t) => ["biblib", "drizzle", "storage"].includes(t.schema)), resources, counts: discarded.counts }
 }
 
+// Lista blanca sin variables, comandos ni logs del stack ajeno.
+const holaerpSnapshot = async () => {
+  const all = await inventory(ctx)
+  const containers = all.containers.filter((c) => c.name.endsWith("_holaerp"))
+  assert.ok(containers.some((c) => c.name === "supabase_db_holaerp" && c.status === "running"), "HolaERP debe estar en marcha antes del ensayo")
+  const identities = await docker(ctx, ["container", "inspect", ...containers.map((c) => c.id), "--format", '{"id":{{json .Id}},"name":{{json .Name}},"status":{{json .State.Status}},"startedAt":{{json .State.StartedAt}},"restarts":{{json .RestartCount}},"ports":{{json .NetworkSettings.Ports}},"networks":{{json .NetworkSettings.Networks}},"mounts":{{json .Mounts}}}'])
+  const sorted = (records) => records.sort((a, b) => a.id.localeCompare(b.id))
+  return { containers: sorted(identities.trim().split(/\r?\n/).map((line) => JSON.parse(line))), networks: sorted(all.networks.filter((n) => n.name.includes("holaerp"))), volumes: sorted(all.volumes.filter((v) => v.name.endsWith("_holaerp"))) }
+}
+const baseline = await holaerpSnapshot()
+save("holaerp-reset-before.json", baseline)
+
 try {
+  await command(["up", "--profile", "scratch", "--json"])
   const first = await makePlan("o06-reset-first.json")
   const oldIds = first.resources.containers.map((c) => c.id)
   const applied = await command(applyArgs("o06-reset-first.json", first))
@@ -86,4 +99,8 @@ try {
   const down = await command(["down", "--profile", "scratch", "--json"])
   save("down-result.json", down)
   save("resources-left.json", readState(ctx).resources)
+  const final = await holaerpSnapshot()
+  save("holaerp-reset-after.json", final)
+  assert.deepEqual(final, baseline)
+  save("holaerp-comparison.json", { containers: baseline.containers.length, sameIdsStartedAtRestartsStatusBindingsNetworksMounts: true, sameNetworks: true, sameVolumes: true, destructiveResetExecuted: true })
 }

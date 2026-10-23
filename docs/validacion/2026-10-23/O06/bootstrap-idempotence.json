@@ -1,0 +1,9 @@
+{
+  "ledgerRows": 3,
+  "seedSkippedAfterVerification": true,
+  "domainLedgerStorageHashBefore": "f3ccaadea5d2c504c5401ae402995ae64f73495ce8062e6ea2e8ffa06f66a5ee",
+  "domainLedgerStorageHashAfter": "f3ccaadea5d2c504c5401ae402995ae64f73495ce8062e6ea2e8ffa06f66a5ee",
+  "sameResources": true,
+  "includesBookVersions": true,
+  "authVerificationCreatesNormalSessionActivity": true
+}

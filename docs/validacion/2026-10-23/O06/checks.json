@@ -1,16 +1,16 @@
 {
-  "date": "2026-10-23T12:32:35.676Z",
+  "date": "2026-10-23T12:46:06.750Z",
   "results": [
     {
       "script": "lint",
       "exitCode": 0,
-      "elapsedMs": 7880,
+      "elapsedMs": 7904,
       "summary": []
     },
     {
       "script": "typecheck",
       "exitCode": 0,
-      "elapsedMs": 3241,
+      "elapsedMs": 5652,
       "summary": [
         "✓ Types generated successfully"
       ]
@@ -18,7 +18,7 @@
     {
       "script": "test",
       "exitCode": 0,
-      "elapsedMs": 3316,
+      "elapsedMs": 3404,
       "summary": [
         "ℹ tests 66",
         "ℹ pass 66",
@@ -29,7 +29,7 @@
     {
       "script": "test:db",
       "exitCode": 0,
-      "elapsedMs": 4341,
+      "elapsedMs": 4331,
       "summary": [
         "Correcto: migraciones, aislamiento A/B, FK de propietario, predeterminada, integridad y rollback.",
         "Pruebas de base de datos completadas en un contenedor aislado."
@@ -38,10 +38,10 @@
     {
       "script": "test:scripts",
       "exitCode": 0,
-      "elapsedMs": 15744,
+      "elapsedMs": 15600,
       "summary": [
-        "ℹ tests 119",
-        "ℹ pass 119",
+        "ℹ tests 125",
+        "ℹ pass 125",
         "ℹ fail 0",
         "ℹ skipped 0"
       ]

@@ -1,8 +1,7 @@
 {
-  "containers": 11,
-  "sameIdsSinceInitialBaseline": true,
+  "containers": 10,
   "sameIdsStartedAtRestartsStatusBindingsNetworksMounts": true,
   "sameNetworks": true,
   "sameVolumes": true,
-  "destructiveResetExecuted": false
+  "destructiveResetExecuted": true
 }

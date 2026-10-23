@@ -1,0 +1,139 @@
+{
+  "runId": "63123d25-ab9e-465e-a6b7-2bffd8b8dae9",
+  "planHash": "8e96e6afc94ffde1e1b1b88f4b6951c705994721e9c1dfaa822b5256c4cb1711",
+  "plan": ".biblib\\plans\\o06-reset-interrupted.json",
+  "authorization": {
+    "discardLocalData": true,
+    "projectId": "biblib-scratch"
+  },
+  "authorizedAt": "2026-10-23T12:44:05.398Z",
+  "destructionStarted": true,
+  "phases": {
+    "preflight": {
+      "status": "passed",
+      "resumed": true
+    },
+    "stop": {
+      "status": "passed"
+    },
+    "destroy": {
+      "status": "passed",
+      "lastRemoved": "supabase_storage_biblib-scratch"
+    },
+    "local-state": {
+      "status": "passed"
+    },
+    "bootstrap": {
+      "status": "passed",
+      "phases": {
+        "preflight": {
+          "status": "passed"
+        },
+        "stack": {
+          "status": "healthy"
+        },
+        "env": {
+          "status": "passed",
+          "message": "Sin archivo: scratch/test consumen contexto explícito; solo main genera .env.local."
+        },
+        "migrate": {
+          "status": "passed",
+          "head": {
+            "tag": "0002_book_versions",
+            "applied": 3,
+            "expected": 3,
+            "state": "up-to-date"
+          },
+          "message": "Plan + migrate locales (U-INF-04): aplicado: 0000_biblib_init → 0001_library_integrity → 0002_book_versions."
+        },
+        "seed": {
+          "status": "passed",
+          "censusId": "biblib-local-v1",
+          "unchanged": false
+        },
+        "verify": {
+          "status": "passed",
+          "verification": {
+            "head": {
+              "tag": "0002_book_versions",
+              "applied": 3,
+              "expected": 3,
+              "state": "up-to-date"
+            },
+            "manifest": true,
+            "censusId": "biblib-local-v1",
+            "accounts": [
+              {
+                "key": "a",
+                "signIn": true,
+                "getUser": true,
+                "ssrCookies": true
+              },
+              {
+                "key": "b",
+                "signIn": true,
+                "getUser": true,
+                "ssrCookies": true
+              }
+            ],
+            "storage": {
+              "private": true,
+              "signedDownload": true,
+              "deterministicBytes": true
+            },
+            "mailpit": {
+              "accessible": true,
+              "received": true
+            }
+          }
+        }
+      }
+    },
+    "verify": {
+      "status": "passed",
+      "verification": {
+        "head": {
+          "tag": "0002_book_versions",
+          "applied": 3,
+          "expected": 3,
+          "state": "up-to-date"
+        },
+        "manifest": true,
+        "censusId": "biblib-local-v1",
+        "accounts": [
+          {
+            "key": "a",
+            "signIn": true,
+            "getUser": true,
+            "ssrCookies": true
+          },
+          {
+            "key": "b",
+            "signIn": true,
+            "getUser": true,
+            "ssrCookies": true
+          }
+        ],
+        "storage": {
+          "private": true,
+          "signedDownload": true,
+          "deterministicBytes": true
+        },
+        "mailpit": {
+          "accessible": true,
+          "received": true
+        }
+      }
+    }
+  },
+  "phase": "verify",
+  "status": "passed",
+  "schemaVersion": 1,
+  "target": "local",
+  "profile": "scratch",
+  "projectId": "biblib-scratch",
+  "root": "C:\\Users\\ncaso\\orca\\workspaces\\biblib\\u-inf-03",
+  "rootHash": "1521f98bc1f79009574e3fc3f32b948e779c84053bc7a1b3953f44dc7aac37e9",
+  "fingerprint": "ea260283d87954c1c405cb5ee4875867dd8b103c86084460f3a74244e06b13fa",
+  "updatedAt": "2026-10-23T12:44:57.700Z"
+}
