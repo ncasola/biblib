@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { DomainError } from "./domain-errors"
 import { normalizeIsbn } from "./isbn"
 import type {
   Book, CatalogueAttributionV2, CatalogueMetadata, CatalogueMetadataV1, CatalogueSourceV1, FieldProvenance,
@@ -188,15 +189,13 @@ export function provenanceFieldValue(book: BookFieldSource, field: ProvenanceFie
   }
 }
 
-export class CatalogueWriteError extends Error {}
-
 /**
  * Alta: con la revisión bibliográfica apagada se escribe v1 como hasta ahora y una procedencia v2
  * se rechaza (no se recorta). Con la revisión activa se guarda la procedencia elegida.
  */
 export function catalogueForCreate(catalogue: CatalogueMetadata, reviewEnabled: boolean): CatalogueMetadata {
   if (catalogue.schemaVersion === 2 && !reviewEnabled) {
-    throw new CatalogueWriteError("La revisión bibliográfica no está activada: no se puede guardar procedencia por campo.")
+    throw new DomainError("INVALID_INPUT", "La revisión bibliográfica no está activada: no se puede guardar procedencia por campo.")
   }
   return catalogue
 }
