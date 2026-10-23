@@ -36,7 +36,11 @@
     "db:seed:local": "node scripts/db/seed-local.mjs",
     "db:local:login": "node scripts/db/local-login.mjs",
     "db:reset:local": "node scripts/local-stack.mjs reset",
-    "test:integration:local": "node tests/integration/run.mjs"
+    "test:integration:local": "node tests/integration/run.mjs",
+    "db:backup:local": "node scripts/db/backup-local.mjs local",
+    "db:backup:prod": "node scripts/db/backup-local.mjs prod",
+    "db:restore:local": "node scripts/db/restore-local.mjs",
+    "db:restore:verify": "node scripts/db/restore-verify.mjs"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "1.1.15",
