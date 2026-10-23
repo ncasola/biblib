@@ -25,3 +25,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# archivos personales y resultados privados (U-OPS-05): no publicar fotos
+# personales, datos de importación ni evidencias con datos de la biblioteca.
+# Los fixtures ficticios de tests/ siguen versionados; estas reglas son
+# preventivas y no cubren archivos ya publicados deliberadamente.
+/imports/
+/fotos/
+/fotos-personales/
+docs/validacion/**/privado/
