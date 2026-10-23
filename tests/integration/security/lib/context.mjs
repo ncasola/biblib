@@ -5,7 +5,6 @@ import { readFixtureStore } from "../../../../scripts/db/fixture-store.mjs"
 import { closeConnection, connect } from "../../../../scripts/db/target.mjs"
 import { cookieHeader, decodeActionResponse, loadActions } from "../../lib/app.mjs"
 import { applySetCookies } from "../../lib/sessions.mjs"
-import { signInFixture } from "../../support/session.mjs"
 
 // Contexto del grupo security (U-OPS-04): GoTrue, Postgres, Mailpit y la app compilada del perfil
 // scratch o test. Las sesiones nacen en GoTrue real (formulario local, OTP con PKCE o el SDK) y viajan
@@ -49,7 +48,14 @@ export async function securityContext() {
     accounts: { a: store.accounts.a, b: store.accounts.b },
     mailpitUrl: `http://127.0.0.1:${resolved.stack.profile.ports.mailpit}`,
     actions: loadActions(resolved.stack.root),
-    signIn: (as) => signInFixture(as, { profile }),
+    /** Sesión real de GoTrue con el SDK SSR, reutilizando el stack ya acreditado (sin repetir la consulta a Docker). */
+    async signIn(as) {
+      const account = ctx.accounts[as]
+      const { client, cookies } = cookieClient(env)
+      const { data, error } = await client.auth.signInWithPassword({ email: account.email, password: account.password })
+      if (error || !data.session || data.user?.id !== account.id) throw new BiblibError(EXIT.VERIFICATION_FAILED, "sesión", "GoTrue no validó la sesión del fixture registrado.")
+      return { client, session: data.session, user: data.user, cookies }
+    },
     /** Petición a la app con cookies SSR; nunca sigue redirecciones. */
     async request(route, { cookies = [], method = "GET", headers = {}, body } = {}) {
       const response = await fetch(`${appUrl}${route}`, { method, body, redirect: "manual", signal: AbortSignal.timeout(30_000), headers: { ...headers, Cookie: cookieHeader(cookies) } })
