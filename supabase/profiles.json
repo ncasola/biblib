@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "description": "Perfiles del stack Supabase local de BibLib. El perfil base usa supabase/config.toml; el resto se genera en .biblib/stacks/<perfil>/ cambiando solo projectId, puertos y URL de la aplicación.",
+  "baseProfile": "main",
+  "baseConfig": "supabase/config.toml",
+  "stateDir": ".biblib",
+  "bindAddress": "127.0.0.1",
+  "bindingCheck": {
+    "description": "Docker Desktop 29.4.3 ignora host_binding_ipv4 de la red y el CLI 2.117.0 publica sin HostIp: los bindings reales se comprueban con docker inspect (.NetworkSettings.Ports) y cualquier HostIp fuera de esta lista es exposición.",
+    "allowedHostIps": ["127.0.0.1", "::1"]
+  },
+  "portKeys": ["shadow", "api", "db", "studio", "mailpit", "smtp", "pop3", "analytics", "inspector", "pooler"],
+  "services": {
+    "enabled": ["postgres", "auth", "rest", "storage", "studio", "mailpit"],
+    "disabled": ["realtime", "analytics", "pooler", "edge-functions"]
+  },
+  "profiles": {
+    "main": {
+      "projectId": "biblib-local",
+      "network": "biblib-local-network",
+      "app": { "host": "127.0.0.1", "port": 3147 },
+      "ports": {
+        "shadow": 55320,
+        "api": 55321,
+        "db": 55322,
+        "studio": 55323,
+        "mailpit": 55324,
+        "smtp": 55325,
+        "pop3": 55326,
+        "analytics": 55327,
+        "inspector": 55328,
+        "pooler": 55329
+      },
+      "use": "Desarrollo en el checkout principal. Nunca se levanta desde un worktree."
+    },
+    "test": {
+      "projectId": "biblib-test",
+      "network": "biblib-test-network",
+      "app": { "host": "127.0.0.1", "port": 3148 },
+      "ports": {
+        "shadow": 55330,
+        "api": 55331,
+        "db": 55332,
+        "studio": 55333,
+        "mailpit": 55334,
+        "smtp": 55335,
+        "pop3": 55336,
+        "analytics": 55337,
+        "inspector": 55338,
+        "pooler": 55339
+      },
+      "use": "Suite de integración local (test:integration:local) y CI."
+    },
+    "scratch": {
+      "projectId": "biblib-scratch",
+      "network": "biblib-scratch-network",
+      "app": { "host": "127.0.0.1", "port": 3149 },
+      "ports": {
+        "shadow": 55340,
+        "api": 55341,
+        "db": 55342,
+        "studio": 55343,
+        "mailpit": 55344,
+        "smtp": 55345,
+        "pop3": 55346,
+        "analytics": 55347,
+        "inspector": 55348,
+        "pooler": 55349
+      },
+      "use": "Worktrees y pruebas destructivas descartables."
+    }
+  }
+}
