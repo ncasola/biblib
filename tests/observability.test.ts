@@ -248,6 +248,7 @@ test("preview válido/inválido y conflicto de commit no registran el mensaje pr
 })
 
 test("portadas 429 conservan el fallback y los contadores excluyen cursor y fichas", async (t) => {
+  environment(t, "BIBLIB_CATALOGUE_MODE", "live")
   const { logger, records } = capture(t)
   t.mock.method(globalThis, "fetch", async () => new Response(null, { status: 429 }))
   await withCorrelation(async () => {
@@ -262,6 +263,7 @@ test("portadas 429 conservan el fallback y los contadores excluyen cursor y fich
 })
 
 test("telemetría apagada conserva ficha, ausencia, error de cuota e importación", async (t) => {
+  environment(t, "BIBLIB_CATALOGUE_MODE", "live")
   environment(t, "BIBLIB_TELEMETRY", "off")
   const logger = createLogger({ sink() { assert.fail("No debe emitir") } })
   const full = createOpenLibraryClient({ telemetry: logger, fetch: async () => Response.json({ [`ISBN:${isbn}`]: { title: book.title } }) })

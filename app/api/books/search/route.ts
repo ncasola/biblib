@@ -27,7 +27,9 @@ export async function GET(request: NextRequest) {
       if (failure) throw failure
       const candidate = result.candidates[0]
       const cover = candidate.coverUrl ? await bibliographicCatalog.getCover(isbn, { userId, signal: request.signal }) : undefined
-      const book = candidateToLegacyBook(candidate, normalizeIsbn(isbn)!, cover?.candidates[0]?.imageUrl)
+      // Google autoriza solo preview: esta respuesta se usa como Book guardable en el alta.
+      const persistentCover = cover?.candidates.find((entry) => entry.provider !== "google-books" && entry.imageUrl)
+      const book = candidateToLegacyBook(candidate, normalizeIsbn(isbn)!, persistentCover?.imageUrl)
 
       return NextResponse.json(book, { headers: { "Cache-Control": "private, no-store" } })
     } catch (error) {

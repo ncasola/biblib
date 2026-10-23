@@ -4,6 +4,7 @@ import { normalizeIsbn, normalizedBookIdentifier } from "./isbn"
 import { libraryRequiresV2, readBackupV2 } from "./backup-v2"
 import { catalogueProblem, catalogueSchema, normalizeCatalogue, toCatalogueV1 } from "./catalogue-provenance"
 import { openLibraryHeaders } from "./open-library"
+import { readCatalogConfig } from "./bibliographic-catalog/config"
 import { classifyProviderFailure } from "./observability/events"
 import { emitSafely, noopTelemetry, type TelemetryEmitter } from "./observability/emitter"
 import type { Book, LibraryData } from "./types"
@@ -193,6 +194,10 @@ const responseCoverSchema = z.object({
 
 export async function enrichImportedBookCovers(books: Book[], telemetry: TelemetryEmitter = noopTelemetry): Promise<Book[]> {
   const prepared = books.map((book) => ({ ...book, cover: normalizeBookCover(book.cover) }))
+  // Este módulo también contiene lectores usados en cliente: no importa el servicio server-only.
+  // Los fixtures actuales no aportan portadas fuente; «sin resultado» conserva el fallback local.
+  // El lote live mantiene sus límites hasta el enrutado completo de U-BIB-05.
+  if (readCatalogConfig().mode === "fixture") return prepared
   const isbns = [...new Set(prepared
     .filter((book) => book.cover.large === DEFAULT_BOOK_COVER)
     .map((book) => normalizeIsbn(book.isbn))

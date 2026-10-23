@@ -39,8 +39,9 @@ async function findBook(tx: DatabaseTransaction, userId: string, id: string): Pr
 }
 
 export async function getBookDetailAction(bookId: string): Promise<Book | null> {
+  let id: string
+  try { id = parseUuid(bookId) } catch { return null }
   const userId = await getRequiredUserId()
-  const id = parseUuid(bookId)
   return withRlsContext(userId, (tx) => findBook(tx, userId, id))
 }
 
