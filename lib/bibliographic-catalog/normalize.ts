@@ -1,9 +1,9 @@
 import { z } from "zod"
 import { normalizeIsbn } from "../isbn"
 import type { OpenLibraryRecord } from "../open-library"
-import type { Book } from "../types"
+import type { Author, Book, FieldProvenance, Publisher } from "../types"
 import { DEFAULT_BOOK_COVER } from "../book-covers"
-import type { BibliographicCandidate } from "./types"
+import type { BibliographicCandidate, CoverCandidate } from "./types"
 
 export function httpsUrl(value?: string): string | undefined {
   if (!value) return undefined
@@ -79,5 +79,53 @@ export function candidateToLegacyBook(candidate: BibliographicCandidate, isbn: s
     number_of_pages: candidate.numberOfPages ?? 0, publish_date: candidate.publishDate ?? "",
     cover: { small: cover, medium: cover, large: cover }, status: "to-read", shelf_id: "", shelf_name: "Predeterminada",
     ...(candidate.provider === "open-library" ? { catalogue: { source: "open-library" as const, isbnVerified: false, ...(candidate.sourceUrl ? { sourceUrl: candidate.sourceUrl } : {}) } } : {}),
+  }
+}
+
+/** Campos de ficha que aporta un candidato, con la forma de `Book`. Un valor ausente queda `undefined`. */
+export interface CandidateBookFields {
+  title?: string
+  subtitle?: string
+  authors?: Author[]
+  publishers?: Publisher[]
+  publish_date?: string
+  number_of_pages?: number
+}
+
+export function candidateBookFields(candidate: BibliographicCandidate): CandidateBookFields {
+  const text = (value?: string) => value?.trim() || undefined
+  return {
+    title: text(candidate.title),
+    subtitle: text(candidate.subtitle),
+    authors: candidate.authors.length ? candidate.authors.map((author) => ({ name: author.name.trim(), ...(author.sourceUrl ? { url: author.sourceUrl } : {}) })) : undefined,
+    publishers: candidate.publishers.length ? candidate.publishers.map((publisher) => ({ name: publisher.name.trim() })) : undefined,
+    publish_date: text(candidate.publishDate),
+    number_of_pages: candidate.numberOfPages ? candidate.numberOfPages : undefined,
+  }
+}
+
+/**
+ * Procedencia por campo de un candidato elegido por la persona. `null` para fuentes cuyo lector y
+ * validador aún no existen (Google Books, U-BIB-03): sus datos no se pueden guardar.
+ */
+export function candidateProvenance(candidate: BibliographicCandidate): FieldProvenance | null {
+  if (candidate.provider === "google-books") return null
+  return {
+    provider: candidate.provider,
+    ...(httpsUrl(candidate.sourceUrl) ? { sourceUrl: httpsUrl(candidate.sourceUrl) } : {}),
+    ...(candidate.recordId ? { recordId: candidate.recordId } : {}),
+    retrievedAt: candidate.retrievedAt,
+    selection: "user-selected",
+  }
+}
+
+/** Procedencia de una portada elegida; Google nunca se persiste (solo vista previa temporal). */
+export function coverProvenance(cover: CoverCandidate, retrievedAt?: string): FieldProvenance | null {
+  if (cover.provider === "google-books" || !httpsUrl(cover.imageUrl)) return null
+  return {
+    provider: cover.provider,
+    ...(httpsUrl(cover.sourceUrl) ? { sourceUrl: httpsUrl(cover.sourceUrl) } : {}),
+    ...(retrievedAt ? { retrievedAt } : {}),
+    selection: "user-selected",
   }
 }
