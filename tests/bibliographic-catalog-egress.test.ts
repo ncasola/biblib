@@ -14,7 +14,10 @@ const SOURCE_FILE = /\.(?:[cm]?[jt]sx?)$/
 const PROVIDER_HOST = /openlibrary\.org|catalogo\.bne\.es/i
 // Cabeceras y CSP pueden nombrar el host de imágenes: es una lista de lo que el navegador puede mostrar,
 // no una consulta. Solo ese host y solo en la configuración de la aplicación.
-const IMAGE_HOST_CONFIGURATION = new Set(["next.config.mjs", "proxy.ts"])
+// U-OPS-04 centraliza esa lista de la CSP en lib/security-headers.ts.
+const IMAGE_HOST_CONFIGURATION = new Set(["next.config.mjs", "proxy.ts", "lib/security-headers.ts"])
+// Los benchmarks (U-QA-03) construyen respuestas simuladas que citan una URL de registro ficticia; no salen a la red.
+const SIMULATED_RESPONSE = (file: string, text: string) => file.startsWith("scripts/performance/") && /\bResponse\.json\(/.test(text) && !/\bfetch\s*\(/.test(text)
 // Únicos módulos con `fetch` hacia el exterior: el gateway (fetch por defecto, con reserva de cuota) y los adaptadores.
 const NETWORK_MODULES = ["lib/bibliographic-catalog/gateway.ts"]
 
@@ -33,7 +36,7 @@ export function findEgressViolations(files: ReadonlyMap<string, string>): Egress
       const line = index + 1
       if (!file.startsWith(PROVIDERS_DIR) && PROVIDER_HOST.test(text)) {
         const onlyImageHost = IMAGE_HOST_CONFIGURATION.has(file) && !/catalogo\.bne\.es/i.test(text) && !/(?<!covers\.)openlibrary\.org/i.test(text)
-        if (!onlyImageHost) violations.push({ file, line, rule: "host", text: text.trim() })
+        if (!onlyImageHost && !SIMULATED_RESPONSE(file, text)) violations.push({ file, line, rule: "host", text: text.trim() })
       }
       // Los scripts de operación (smoke, CI) tienen su propio `fetch` hacia el stack local; solo se vigila el código de la aplicación.
       if (isProviderModule(file) || file.startsWith("scripts/")) return
