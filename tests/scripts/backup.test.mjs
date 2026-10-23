@@ -10,7 +10,7 @@ import { classifyDestination, loadBackup, parseRestoreArgs, runRestore } from ".
 import { compareRestored, parseVerifyArgs, recordRehearsal } from "../../scripts/db/restore-verify.mjs"
 import { loadCensus } from "../../scripts/db/seed-local.mjs"
 import { authExclusions, BACKUP_KIND, checkBackupFiles, compareMigrations, decrypt, encrypt, keyFingerprint, MANIFEST_FILE, newBackupId, objectFile, parseKey, readKeyFile, readManifest, resolveBackupsRoot, sealManifest, sha256 } from "../../scripts/lib/backup-files.mjs"
-import { ROTATING_COLUMNS } from "../../scripts/lib/backup-db.mjs"
+import { ROTATING_COLUMNS, TABLE_KEYS } from "../../scripts/lib/backup-db.mjs"
 import { streamCommand } from "../../scripts/lib/backup-process.mjs"
 import { EXIT } from "../../scripts/lib/exit-codes.mjs"
 
@@ -256,4 +256,6 @@ test("streamCommand captura bytes y entrega la entrada por stdin, no por argv", 
 test("verify excluye lo que la rotación renueva en library_state (trigger de 0003)", () => {
   assert.deepEqual([...ROTATING_COLUMNS["biblib.library_state"]].sort(), ["revision", "rotated_xact", "updated_at"])
   assert.deepEqual(ROTATING_COLUMNS["biblib.books"], ["version"])
+  // Sin columna id, la clave sería toda la fila, incluidos los tokens rotados.
+  assert.deepEqual(TABLE_KEYS["biblib.library_state"], ["user_id"])
 })
