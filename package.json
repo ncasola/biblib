@@ -18,7 +18,7 @@
     "test:import": "tsc -p tsconfig.tests.json && node --test .next/tests/tests/library-import.test.js",
     "start": "next start",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
+    "db:migrate": "node scripts/db/migrate.mjs legacy",
     "test:scripts": "node --test \"tests/scripts/**/*.test.mjs\"",
     "dev:local": "node scripts/next-target.mjs dev local",
     "build:local": "node scripts/next-target.mjs build local",
@@ -29,7 +29,10 @@
     "db:local:status": "node scripts/local-stack.mjs status",
     "db:local:up": "node scripts/local-stack.mjs up",
     "db:local:down": "node scripts/local-stack.mjs down",
-    "db:local:bootstrap": "node scripts/local-stack.mjs bootstrap"
+    "db:local:bootstrap": "node scripts/local-stack.mjs bootstrap",
+    "db:status:local": "node scripts/db/migrate.mjs status local",
+    "db:plan:local": "node scripts/db/plan.mjs local",
+    "db:migrate:local": "node scripts/db/migrate.mjs apply local"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "1.1.15",
