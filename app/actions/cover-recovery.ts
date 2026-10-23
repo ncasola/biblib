@@ -1,7 +1,7 @@
 "use server"
 
 import { and, asc, eq, gt, inArray, sql } from "drizzle-orm"
-import { mutationResult } from "@/lib/action-result"
+import { domainMutation } from "@/lib/server-action"
 import { DEFAULT_BOOK_COVER } from "@/lib/book-covers"
 import { parseUuid } from "@/lib/book-validation"
 import { COVER_RECOVERY_BATCH_SIZE, decideCoverRecovery, recordCoverRecovery, type CoverRecoveryResult, type CoverRecoverySnapshot } from "@/lib/cover-recovery"
@@ -12,7 +12,7 @@ import { translateDatabaseError } from "@/lib/domain-errors"
 import { normalizeIsbn } from "@/lib/isbn"
 import { enrichImportedBookCovers } from "@/lib/library-import"
 import { getRequiredUserId } from "@/lib/server-user"
-import { telemetry, withActionCorrelation } from "@/lib/observability/server"
+import { telemetry } from "@/lib/observability/server"
 import { observeOperation } from "@/lib/observability/operations"
 
 function snapshot(row: typeof books.$inferSelect): CoverRecoverySnapshot {
@@ -40,7 +40,7 @@ async function recoverMissingCovers(cursor: unknown): Promise<CoverRecoveryResul
   const found = new Map((await enrichImportedBookCovers(candidates, telemetry)).map((book) => [book.id, book.cover]))
   try {
     return await withRlsContext(userId, async (tx) => {
-      await lockLibrary(tx, userId)
+      await lockLibrary(tx)
       const currentRows = await tx.select().from(books).where(and(eq(books.userId, userId), inArray(books.id, batch.map((row) => row.id))))
       const current = new Map(currentRows.map((row) => [row.id, snapshot(row)]))
       for (const previous of batch.map(snapshot)) {
@@ -61,9 +61,9 @@ async function recoverMissingCovers(cursor: unknown): Promise<CoverRecoveryResul
 }
 
 export async function recoverMissingCoversAction(cursor: unknown = null) {
-  return withActionCorrelation(() => mutationResult(async () => {
+  return domainMutation(async () => {
     const result = await observeOperation("cover.recovery", "cover.batch", () => recoverMissingCovers(cursor), telemetry)
     recordCoverRecovery(result, telemetry)
     return result
-  }))
+  })
 }

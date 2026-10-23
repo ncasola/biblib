@@ -10,9 +10,9 @@ import { DomainError, translateDatabaseError } from "@/lib/domain-errors"
 import { normalizedBookIdentifier, normalizeIsbn } from "@/lib/isbn"
 import { enrichImportedBookCovers } from "@/lib/library-import"
 import type { Book } from "@/lib/types"
-import { mutationResult } from "@/lib/action-result"
+import { domainMutation } from "@/lib/server-action"
 import { assertBookVersion, bookVersionConflict } from "@/lib/book-version"
-import { telemetry, withActionCorrelation } from "@/lib/observability/server"
+import { telemetry } from "@/lib/observability/server"
 import { observeOperation } from "@/lib/observability/operations"
 
 async function getShelf(tx: DatabaseTransaction, userId: string, requested: string): Promise<string> {
@@ -62,7 +62,7 @@ async function addBook(input: unknown): Promise<Book> {
   const book = parseBookInput(input)
   try {
     return await withRlsContext(userId, async (tx) => {
-      await lockLibrary(tx, userId)
+      await lockLibrary(tx)
       const shelfId = await getShelf(tx, userId, book.shelf_id)
       const id = crypto.randomUUID()
       const isbn = book.isbn || `manual-${id}`
@@ -86,7 +86,7 @@ async function updateBook(bookId: string, input: unknown): Promise<Book> {
   const book = parseBookInput(input)
   try {
     return await withRlsContext(userId, async (tx) => {
-      await lockLibrary(tx, userId)
+      await lockLibrary(tx)
       const current = await findBook(tx, userId, id)
       if (!current) throw new DomainError("NOT_FOUND", "El libro ya no está disponible.")
       assertBookVersion(current, book.version)
@@ -112,7 +112,7 @@ async function updateBookStatus(bookId: string, input: Book["status"], version: 
   if (!status.success) throw new DomainError("INVALID_INPUT", "El estado de lectura no es válido.")
   try {
     return await withRlsContext(userId, async (tx) => {
-      await lockLibrary(tx, userId)
+      await lockLibrary(tx)
       const current = await findBook(tx, userId, id)
       if (!current) throw new DomainError("NOT_FOUND", "El libro ya no está disponible.")
       assertBookVersion(current, version)
@@ -129,7 +129,7 @@ async function deleteBook(bookId: string, version: unknown): Promise<void> {
   const id = parseUuid(bookId)
   try {
     await withRlsContext(userId, async (tx) => {
-      await lockLibrary(tx, userId)
+      await lockLibrary(tx)
       const current = await findBook(tx, userId, id)
       if (!current) throw new DomainError("NOT_FOUND", "El libro ya no está disponible.")
       assertBookVersion(current, version)
@@ -148,7 +148,7 @@ async function refreshBookCover(bookId: string, version: unknown): Promise<Book>
   if (enriched.cover.large === "/default-book-cover.webp") throw new DomainError("NOT_FOUND", "No se ha podido recuperar una portada. Puedes indicar su URL manualmente.")
   const userId = await getRequiredUserId()
   return withRlsContext(userId, async (tx) => {
-    await lockLibrary(tx, userId)
+    await lockLibrary(tx)
     const latest = await findBook(tx, userId, current.id)
     if (!latest) throw new DomainError("NOT_FOUND", "El libro ya no está disponible.")
     assertBookVersion(latest, current.version)
@@ -164,7 +164,7 @@ async function moveBookShelf(bookId: string, shelfId: string, version: unknown):
   const userId = await getRequiredUserId()
   const id = parseUuid(bookId)
   return withRlsContext(userId, async (tx) => {
-    await lockLibrary(tx, userId)
+    await lockLibrary(tx)
     const current = await findBook(tx, userId, id)
     if (!current) throw new DomainError("NOT_FOUND", "El libro ya no está disponible.")
     assertBookVersion(current, version)
@@ -181,7 +181,7 @@ async function moveBooksShelf(bookIds: string[], shelfId: string): Promise<void>
   if (!Array.isArray(bookIds) || bookIds.length === 0 || bookIds.length > 200) throw new DomainError("INVALID_INPUT", "Selecciona entre 1 y 200 libros.")
   const ids = [...new Set(bookIds.map(parseUuid))]
   await withRlsContext(userId, async (tx) => {
-    await lockLibrary(tx, userId)
+    await lockLibrary(tx)
     const target = await getShelf(tx, userId, shelfId)
     const changed = await tx.update(books).set({ shelfId: target, updatedAt: new Date() })
       .where(and(inArray(books.id, ids), eq(books.userId, userId))).returning({ id: books.id })
@@ -189,13 +189,13 @@ async function moveBooksShelf(bookIds: string[], shelfId: string): Promise<void>
   })
 }
 
-export async function addBookAction(input: unknown) { return mutationResult(() => addBook(input)) }
-export async function updateBookAction(id: string, input: unknown) { return mutationResult(() => updateBook(id, input)) }
-export async function updateBookStatusAction(id: string, status: Book["status"], version: unknown) { return mutationResult(() => updateBookStatus(id, status, version)) }
-export async function deleteBookAction(id: string, version: unknown) { return mutationResult(() => deleteBook(id, version)) }
+export async function addBookAction(input: unknown) { return domainMutation(() => addBook(input)) }
+export async function updateBookAction(id: string, input: unknown) { return domainMutation(() => updateBook(id, input)) }
+export async function updateBookStatusAction(id: string, status: Book["status"], version: unknown) { return domainMutation(() => updateBookStatus(id, status, version)) }
+export async function deleteBookAction(id: string, version: unknown) { return domainMutation(() => deleteBook(id, version)) }
 export async function refreshBookCoverAction(id: string, version: unknown) {
-  return withActionCorrelation(() => mutationResult(() =>
-    observeOperation("cover.recovery", "cover.refresh", () => refreshBookCover(id, version), telemetry)))
+  return domainMutation(() =>
+    observeOperation("cover.recovery", "cover.refresh", () => refreshBookCover(id, version), telemetry))
 }
-export async function moveBookShelfAction(id: string, shelfId: string, version: unknown) { return mutationResult(() => moveBookShelf(id, shelfId, version)) }
-export async function moveBooksShelfAction(ids: string[], shelfId: string) { return mutationResult(() => moveBooksShelf(ids, shelfId)) }
+export async function moveBookShelfAction(id: string, shelfId: string, version: unknown) { return domainMutation(() => moveBookShelf(id, shelfId, version)) }
+export async function moveBooksShelfAction(ids: string[], shelfId: string) { return domainMutation(() => moveBooksShelf(ids, shelfId)) }
