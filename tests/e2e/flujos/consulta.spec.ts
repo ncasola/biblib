@@ -107,12 +107,11 @@ test("retorno contextual: la ficha vuelve a filtros, página, vista y fila; atr�
   await expect(page.getByRole("heading", { name: "Libro no encontrado" })).toBeVisible()
 })
 
-// Hallazgo QA-02 (23-10-2026): con un id que no es UUID el título dice «Libro no encontrado · BibLib», pero
-// la acción del detalle responde 500 y la pantalla muestra «No se pudo cargar el libro. Comprueba la
-// conexión…» con «Reintentar». Se marca como fallo conocido: cuando se corrija, esta prueba avisará.
+// Hallazgo QA-02 (23-10-2026), corregido por U-FIX-01: un id que no es UUID o un UUID inexistente
+// responde 404 con la página «Libro no encontrado» en español, sin error de servidor.
 test("un identificador inválido muestra «Libro no encontrado» sin error de servidor", async ({ page }) => {
-  test.fail(true, "Fallo conocido de la ficha (U-EXP-01): id inválido → 500 y mensaje de conexión")
-  await page.goto("/book/no-es-un-uuid")
+  const response = await page.goto("/book/no-es-un-uuid")
+  expect(response?.status()).toBe(404)
   await expect(page).toHaveTitle("Libro no encontrado · BibLib")
   await expect(page.getByRole("heading", { name: "Libro no encontrado" })).toBeVisible({ timeout: 5_000 })
 })
