@@ -481,3 +481,20 @@ Diferencia con las suites existentes:
 | `pnpm test:integration:local` | GoTrue real, cookies `@supabase/ssr`, sesiones A/B | Postgres, PostgREST, Storage y Kong del perfil `test`; app compilada | Docker y perfil `test` preparado |
 
 Evidencia del ensayo: [validacion/2026-10-23/O06/qa-01](validacion/2026-10-23/O06/qa-01/informe.md).
+
+## Respaldo administrativo y restauración · U-OPS-02
+
+U-OPS-02 añade el respaldo administrativo local, su restauración y la verificación del ensayo. El procedimiento completo, los tres productos de recuperación (JSON de cuenta, respaldo administrativo y objetos Storage), RPO/RTO, retención, responsable y el procedimiento remoto pendiente están en [Recuperación de BibLib](recuperacion.md). El JSON de «Restaurar una colección» sigue siendo una copia por cuenta: no sustituye a este respaldo.
+
+```powershell
+pnpm db:backup:local --profile scratch [--out <carpeta fuera de Git>] [--encrypt-key-file <clave externa>] [--json]
+pnpm db:restore:local --backup .biblib/backups/<backupId> --profile scratch --expect-project biblib-scratch [--key-file <clave externa>]
+pnpm db:restore:verify --backup .biblib/backups/<backupId> --profile scratch [--json]
+```
+
+- `db:backup:local` guarda en `.biblib/backups/<backupId>/` (ignorado por Git) el volcado de `biblib` y del ledger `drizzle` con snapshot exportado, los datos de identidad de Auth con `supabase db dump --local --data-only --schema auth` y los bytes Storage leídos por la API del perfil, más el recibo `backup.json` con hashes, alcance y exclusiones. Usa `docker exec` sobre el ID registrado del contenedor Postgres, sin credenciales en argv ni en la salida.
+- `db:restore:local` solo restaura en un stack local propio, acreditado como reset y **vacío o recién reseteado**; antes de tocarlo valida archivos, clave e historial. Rota `books.version` (y `library_state.revision` si existe), invalida previews y leases y reasigna las credenciales de las cuentas fixture. No envía correo ni llama a proveedores.
+- `db:restore:verify` comprueba objetos de esquema, ledger, cantidades, tokens rotados, muestra de fichas, sesiones A/B reales con RLS y objetos Storage por sha256, y escribe el informe de recuperación. Una discrepancia sale con **11**.
+- `db:backup:prod` sale con **2**: pendiente de U-INF-07 y de un destino autorizado.
+
+`pnpm test:scripts` incluye `tests/scripts/backup.test.mjs` (sin Docker). Ensayo real sobre scratch: [validacion/2026-10-23/O07/ops-02](validacion/2026-10-23/O07/ops-02/informe.md).

@@ -1,0 +1,5 @@
+{
+  "code": 6,
+  "phase": "destino",
+  "message": "El destino no está vacío ni recién reseteado (libros que no son fixtures, objetos Storage fuera del fixture); reconstrúyelo con db:reset:local antes de restaurar."
+}

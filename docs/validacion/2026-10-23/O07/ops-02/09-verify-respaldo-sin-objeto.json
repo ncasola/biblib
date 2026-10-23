@@ -1,0 +1,10 @@
+{
+  "passed": false,
+  "discrepancies": [
+    {
+      "id": "backup.file.missing",
+      "status": "fail",
+      "message": "Falta storage/3f3140421a207dbc3363170f0bfb43a9dd70a0cd.bin.enc en el respaldo."
+    }
+  ]
+}
