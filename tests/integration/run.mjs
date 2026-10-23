@@ -13,10 +13,10 @@ import { listUsers, pipeRedacted, redactor, run, startApp, stopTree } from "./li
 
 export { redactor }
 
-// pnpm test:integration:local — U-QA-01. Ejecuta tests/integration/{auth,rls,storage,import,catalogue,jobs} contra el
+// pnpm test:integration:local — U-QA-01. Ejecuta tests/integration/{auth,rls,storage,import,catalogue,jobs,snapshots} contra el
 // stack Supabase real del perfil test y la app compilada para ese perfil (127.0.0.1:3148).
 
-const SUITES = ["rls", "storage", "import", "auth", "catalogue", "jobs"]
+const SUITES = ["rls", "storage", "import", "auth", "catalogue", "jobs", "snapshots"]
 const LOG_DIR = path.join(REPO_ROOT, ".biblib", "integration")
 const fail = (code, phase, message) => { throw new BiblibError(code, phase, message) }
 
