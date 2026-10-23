@@ -153,13 +153,13 @@ export function parsePlanArgs(argv) {
 export async function createPlan({ profile, out, root = REPO_ROOT, migrationsDir = MIGRATIONS_DIR, now }) {
   const outFile = resolvePlanPath(out, root)
   const journal = inspectJournal(migrationsDir)
-  if (journal.problems.length) return { code: EXIT.HISTORY_DIVERGED, result: { state: "journal-invalid", checks: journal.problems } }
+  if (journal.problems.length) return { code: EXIT.HISTORY_DIVERGED, result: { state: "journal-invalid", checks: journal.problems.map(({ id, status, message }) => ({ id, status, message })) } }
   const resolved = await resolveLocal(profile, { root })
   const commit = gitCommit(root)
   const sql = connect(resolved, { applicationName: "biblib-plan" })
   let inspection
   try { inspection = await sql.begin("read only", (tx) => inspectDatabase(tx, journal)) } catch (error) { throw connectionError(error) } finally { await closeConnection(sql) }
-  const base = { target: resolved.target.redacted(), state: inspection.state, appliedHead: inspection.appliedHead, pending: inspection.pending, checks: [...inspection.checks, ...inspection.prerequisites, ...inspection.manifest.filter((c) => c.status !== "ok")] }
+  const base = { target: resolved.target.redacted(), state: inspection.state, appliedHead: inspection.appliedHead, pending: inspection.pending, checks: [...inspection.checks, ...inspection.prerequisites, ...inspection.manifest.filter((c) => c.status !== "ok")].map(({ id, status, message }) => ({ id, status, message })) }
   if (inspection.code !== EXIT.OK) return { code: inspection.code, result: base }
   const plan = buildPlan({ resolved, journal, inspection, commit, drizzle: drizzleVersion(root), now })
   const file = writePlan(plan, outFile, root)
