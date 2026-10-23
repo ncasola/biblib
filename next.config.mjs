@@ -1,5 +1,11 @@
+import { validateTarget } from "./scripts/db/environment.mjs"
+
+const target = process.env.BIBLIB_TARGET
+if (target !== undefined) validateTarget(target)
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  distDir: target ? `.next-${target}` : ".next",
   experimental: { serverActions: { bodySizeLimit: "10mb" } },
   images: {
     unoptimized: true,

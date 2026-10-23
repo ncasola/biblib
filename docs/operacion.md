@@ -182,3 +182,53 @@ El servidor emite JSON por stdout/stderr para fallos de sesión, validación/com
 Para apagar la emisión, establece `BIBLIB_TELEMETRY=off` en el proceso de servidor; el catálogo conserva sus resultados. `createLogger({ enabled: false })` permite desactivar un adaptador concreto. El saneado descarta campos privados y valores inválidos, y expone únicamente un contador local de descartes. Los fallos del sink no deben interrumpir la operación. `BIBLIB_TELEMETRY_SALT` es una sal secreta exclusiva de servidor para la primitiva HMAC `accountRef`; sin ella se omite el campo, nunca se sustituye por el ID original. Los puntos instrumentados en F0 no necesitan registrar cuentas.
 
 No hay exportador, panel remoto ni alertas automáticas en F0. Se proponen 14 días de logs restringidos y 90 días de agregados sin cuentas/correlaciones; el alojamiento deberá configurar y verificar esa retención. Jobs, nuevos proveedores y fuentes métricas de DB/Storage se integrarán en las unidades siguientes. `pnpm test` ejecuta las pruebas de observabilidad con fallos simulados y sin red/base; también se comprueba el catálogo existente con `BIBLIB_TELEMETRY=off`.
+
+## Objetivos y builds
+
+U-INF-02 añade los contextos y wrappers descritos aquí; sustituye las notas anteriores que los indicaban pendientes. El lifecycle, el diagnóstico de propiedad y los bindings siguen correspondiendo a U-INF-03. Esta entrega no arranca servicios ni conecta con proyectos remotos.
+
+`BIBLIB_TARGET` admite `local`, `test`, `preprod` y `prod`. Los wrappers exigen un objetivo válido antes de crear clientes y lo fijan en el proceso hijo. `NODE_ENV=production` indica optimización de Next, no selecciona una base de producción. El perfil por defecto es `main` salvo en `test`, que usa `test`; en un worktree selecciona `scratch` explícitamente.
+
+| Comando | Contexto y artefacto |
+| --- | --- |
+| `pnpm dev:local --profile scratch` | Desarrollo con endpoints exactos del perfil y `.next-local`. |
+| `pnpm build:local --profile scratch` | Compilación local optimizada en `.next-local`. |
+| `pnpm start:local --profile scratch` | Comprueba la huella del build antes de servirlo en 127.0.0.1:3149. |
+| `pnpm build:test` | Compilación con variables explícitas del harness en `.next-test`, sin archivos de entorno. |
+| `pnpm check:bundle --dist-dir .next-test` | Inspección de todo el contenido de `.next-test/static`, sin imprimir coincidencias privadas. |
+
+`scripts/next-target.mjs dev|build|start <objetivo> [--profile <perfil>]` también acepta `preprod` y `prod` con variables inyectadas e identidad esperada. No reenvía flags arbitrarios a Next. Las salidas son `.next-local`, `.next-test`, `.next-preprod` y `.next-prod`; sin `BIBLIB_TARGET`, los comandos existentes `pnpm build`, `pnpm dev` y `pnpm start` conservan `.next` y su comportamiento actual. Usa los wrappers para obtener las comprobaciones de aislamiento. Cada build correcto del wrapper escribe `biblib-target.json` con el objetivo, un hash público y el `BUILD_ID` de Next; un build fallido invalida la huella anterior. Start rechaza huellas ausentes, malformadas o de otro objetivo/proyecto, incluida una clave pública distinta. También rechaza un build posterior hecho directamente con Next que haya conservado un recibo anterior.
+
+### Carga de configuración
+
+`scripts/db/environment.mjs` exporta `loadTarget(target, { profile, env, cwd })`, `childEnv(ctx)`, `assertNoForeignEnvFiles(ctx, { mode })` y `writeLocalEnvFile(ctx)`. `cwd` identifica la raíz del checkout y por defecto es la del módulo. El contexto entrega `target`, `profile`, `fingerprint`, `publicFingerprint`, `env()` y `redacted()`; solo `env()` contiene credenciales, siempre en memoria. La huella de destino combina objetivo, proyecto, host, puerto, base y raíz real del perfil sin contraseñas. La huella pública vincula además URL, clave pública y opción de Analytics al artefacto; solo se persiste su hash.
+
+- **Local:** ignora las variables del shell. Lee `.env.local` únicamente tras acreditar su primera línea `# biblib:generated target=local profile=<perfil> root=<sha256-raíz>`, o consulta `supabase status --output json` del workdir propio generado. Los endpoints deben coincidir exactamente con `127.0.0.1`, los puertos del perfil y la base `postgres`; `localhost` o un puerto ajeno no acreditan identidad. El estado nativo se captura en memoria y no se imprime.
+- **Test:** `loadTarget` exige un objeto `env` construido por el harness; no admite el objeto global `process.env` como entrada implícita. El wrapper construye una lista cerrada a partir de las variables inyectadas por el harness. No lee `.env*` y rechaza los archivos que Next podría cargar.
+- **Preprod/prod:** requieren URL pública, clave pública, `SUPABASE_DB_URL` y `BIBLIB_EXPECT_PROJECT_REF` inyectados. Se comprueba la correspondencia con el host Supabase del proyecto o el usuario del pooler; no se consulta el destino. No hay fallback a archivos locales. El preflight de identidad real, TLS, permisos y migraciones llegará en U-INF-04/U-INF-07.
+
+`childEnv` elimina la herencia de Supabase/Postgres, `DATABASE_URL`, selectores del CLI, variables `BIBLIB_*` y claves/contactos de catálogos antes de inyectar el contexto. Fija `BIBLIB_TARGET`, `BIBLIB_PROFILE`, `BIBLIB_CATALOGUE_MODE` y `NEXT_PUBLIC_ENABLE_ANALYTICS=false` salvo selección explícita. Local/test usan `fixture` por defecto y dejan vacías las opciones de catálogo externo; `live` debe elegirse en la configuración del contexto. La interpretación del modo fixture por los proveedores pertenece a las unidades U-BIB; esta entrega publica la opción de servidor.
+
+La comprobación de archivos cubre `.env`, `.env.local`, los archivos específicos de desarrollo/producción/test según el modo de Next y los `.env` de Supabase en checkout/workdir. Un archivo no acreditado produce salida 3 antes de invocar el hijo. El mensaje propone conservarlo fuera del camino de carga, por ejemplo `.biblib/remote/preprod.env`; no lee su cuerpo para mostrarlo, ni mueve ni borra archivos. Los archivos marcados también se validan contra una lista cerrada y el contexto elegido.
+
+`.env.local.example` está versionado como referencia con URLs y contraseña de demostración locales y marcadores para la clave pública y el hash de raíz. No se copia directamente como configuración acreditada. Una vez preparado el stack propio, el lifecycle podrá usar `writeLocalEnvFile(loadTarget("local", { profile: "scratch" }))`; el helper escribe con permisos privados y aborta si encuentra un `.env.local` sin marcador de esa raíz/perfil. Nunca sobrescribe una configuración anterior no reconocida. Los secretos de servidor (`SUPABASE_DB_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `GOOGLE_BOOKS_API_KEY`, `OPEN_LIBRARY_CONTACT`) no llevan prefijo `NEXT_PUBLIC_`.
+
+### Generación offline y verificación del bundle
+
+`pnpm db:generate` selecciona la rama offline de `drizzle.config.ts`: no carga `.env.local` ni `.env`, no incluye `dbCredentials` y no abre conexiones. Debe funcionar incluso sin variables de base y mostrar `No schema changes` si no cambió el schema. `pnpm db:migrate` conserva provisionalmente la carga y aplicación anteriores; U-INF-04 lo convertirá en despachador explícito. No uses ese comando legacy como validación local de esta entrega.
+
+Un harness puede construir sin stack ni red inyectando placeholders en un checkout sin archivos privados:
+
+```powershell
+$env:BIBLIB_TARGET = "test"
+$env:NODE_ENV = "production"
+$env:NEXT_PUBLIC_SUPABASE_URL = "http://127.0.0.1:55331"
+$env:NEXT_PUBLIC_SUPABASE_ANON_KEY = "public-build-placeholder"
+$env:SUPABASE_DB_URL = "postgresql://postgres:placeholder@127.0.0.1:55332/postgres"
+pnpm build:test
+pnpm check:bundle
+```
+
+`pnpm check:bundle` usa el directorio de `BIBLIB_TARGET`, o `.next` cuando no hay objetivo; `--dist-dir` permite elegirlo explícitamente. Busca URLs Postgres con credenciales, `service_role` (también dentro de JWT), `GOOGLE_BOOKS_API_KEY` y `SUPABASE_DB_URL`. Un hallazgo devuelve salida 11 sin mostrar el secreto; la ausencia de `static` devuelve 2. Es una comprobación del bundle generado, complementaria a mantener los módulos privados en el servidor.
+
+`pnpm test:scripts` cubre herencia remota falsa, archivos no acreditados, targets inválidos, perfiles con rutas con espacios, huellas y rechazo de artefactos, sin Docker ni conexiones. En la validación U-INF-02, las 40 pruebas de scripts y las 50 de aplicación pasaron, al igual que lint/typecheck; `db:generate` sin variables de base informó `No schema changes`, el build test con placeholders dejó limpio su bundle de 29 archivos y `pnpm build` sin objetivo siguió construyendo en `.next`.

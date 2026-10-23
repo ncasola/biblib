@@ -19,7 +19,12 @@
     "start": "next start",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "test:scripts": "node --test \"tests/scripts/**/*.test.mjs\""
+    "test:scripts": "node --test \"tests/scripts/**/*.test.mjs\"",
+    "dev:local": "node scripts/next-target.mjs dev local",
+    "build:local": "node scripts/next-target.mjs build local",
+    "start:local": "node scripts/next-target.mjs start local",
+    "build:test": "node scripts/next-target.mjs build test",
+    "check:bundle": "node scripts/check-client-bundle.mjs"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "1.1.15",
