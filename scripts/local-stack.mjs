@@ -42,6 +42,7 @@ export function createContext(profile, options = {}) {
     // Runner U-INF-04 cargado bajo demanda: doctor/up/down no lo necesitan.
     readHead: options.readHead ?? (async (stack) => (await import("./db/migrate.mjs")).readAppliedHead(stack)),
     migrateLocal: options.migrateLocal ?? (async (stack, opts) => (await import("./db/migrate.mjs")).runLocalMigration(stack, opts)),
+    seedLocal: options.seedLocal ?? (async (stack, opts) => (await import("./db/seed-local.mjs")).runSeed({ profile: stack.profile.name, root: stack.root, stack, lockHeld: true, ...opts })),
   }
 }
 
@@ -306,17 +307,21 @@ export async function runLocalStack(argv, options = {}) {
         const migrated = await ctx.migrateLocal(ctx, { runId: receipt.runId, signal: ctx.signal })
         interrupted(ctx)
         savePhase("migrate", "passed", resources, { head: migrated.head, message: `Plan + migrate locales (U-INF-04): ${migrated.result}.` })
-        receipt.phase = "seed"
+        savePhase("seed", "running", resources)
+        const seeded = await ctx.seedLocal(ctx, { signal: ctx.signal })
+        interrupted(ctx)
+        savePhase("seed", "passed", resources, { censusId: seeded.censusId })
+        receipt.phase = "verify"
         receipt.status = "pending"
-        for (const name of ["seed", "verify"]) receipt.phases[name] = { status: "pending", message: "Fase todavía no disponible; integración en U-INF-05/06." }
+        receipt.phases.verify = { status: "pending", message: "Verificación completa pendiente de U-INF-06." }
         writeState(ctx, receipt, "-bootstrap")
       }
     }
     const checks = [{ id: parsed.command, status: "ok", message: parsed.command === "down" ? "Perfil parado; volúmenes conservados." : "Stack propio sano." }]
     const bindings = checkPublishedBindings(ctx.profile.name, resources.containers, { root: ctx.root })
     if (bindings.exposed.length) checks.push({ id: "bindings.loopback", status: "warn", message: "Bindings fuera de loopback; consulta alternativas A/B en docs/operacion.md." })
-    if (receipt) checks.push({ id: "bootstrap.pending", status: "pending", message: "preflight, stack, env y migrate completados; seed y verify pendientes de U-INF-05/06." })
-    return { code: EXIT.OK, result: { ...publicResult(ctx, resources, checks, receipt ? receipt.phases.migrate.head ?? null : null), ...(receipt ? { bootstrap: { status: "pending", phase: "seed", phases: receipt.phases } } : {}) } }
+    if (receipt) checks.push({ id: "bootstrap.pending", status: "pending", message: "preflight, stack, env, migrate y seed completados; verify pendiente de U-INF-06." })
+    return { code: EXIT.OK, result: { ...publicResult(ctx, resources, checks, receipt ? receipt.phases.migrate.head ?? null : null), ...(receipt ? { bootstrap: { status: "pending", phase: "verify", phases: receipt.phases } } : {}) } }
   } catch (error) {
     if (!recorded && ctx.signal?.aborted) {
       // También registra una interrupción temprana, siempre que la identidad sea válida.

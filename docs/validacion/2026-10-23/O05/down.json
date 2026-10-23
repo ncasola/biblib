@@ -1,0 +1,53 @@
+{
+  "code": 0,
+  "result": {
+    "schemaVersion": 1,
+    "target": "local",
+    "profile": "scratch",
+    "fingerprint": "ea260283d87954c1c405cb5ee4875867dd8b103c86084460f3a74244e06b13fa",
+    "endpoints": {
+      "api": "http://127.0.0.1:55341",
+      "postgres": {
+        "host": "127.0.0.1",
+        "port": 55342,
+        "database": "postgres"
+      },
+      "studio": "http://127.0.0.1:55343",
+      "mailpit": "http://127.0.0.1:55344"
+    },
+    "services": [
+      {
+        "name": "postgres",
+        "status": "stopped"
+      },
+      {
+        "name": "auth",
+        "status": "stopped"
+      },
+      {
+        "name": "rest",
+        "status": "stopped"
+      },
+      {
+        "name": "storage",
+        "status": "stopped"
+      },
+      {
+        "name": "studio",
+        "status": "stopped"
+      },
+      {
+        "name": "mailpit",
+        "status": "stopped"
+      }
+    ],
+    "head": null,
+    "checks": [
+      {
+        "id": "down",
+        "status": "ok",
+        "message": "Perfil parado; volúmenes conservados."
+      }
+    ]
+  }
+}

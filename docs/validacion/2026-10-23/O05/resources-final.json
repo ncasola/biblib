@@ -1,0 +1,25 @@
+{
+  "holaerpUnchanged": true,
+  "holaerpContainers": 11,
+  "scratchStopped": true,
+  "appStopped": true,
+  "retained": {
+    "network": {
+      "id": "6da7397786e3b33fb372d7b587d9eea41376f390462853725139085946f66797",
+      "name": "biblib-scratch-network"
+    },
+    "containers": [],
+    "volumes": [
+      {
+        "id": "supabase_db_biblib-scratch",
+        "name": "supabase_db_biblib-scratch",
+        "createdAt": "2026-10-23T10:52:22Z"
+      },
+      {
+        "id": "supabase_storage_biblib-scratch",
+        "name": "supabase_storage_biblib-scratch",
+        "createdAt": "2026-10-23T10:52:38Z"
+      }
+    ]
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "censusVersion": 1,
+  "censusId": "biblib-local-v1",
+  "accounts": [
+    {
+      "key": "a",
+      "email": "lector-a@biblib.test",
+      "user_metadata": { "biblib_fixture": "biblib-local-v1", "full_name": "Lectora de prueba A" },
+      "shelves": [
+        { "fixtureKey": "default", "title": "Sin estantería", "isDefault": true },
+        { "fixtureKey": "aventuras", "title": "Aventuras de prueba" },
+        { "fixtureKey": "ensayos", "title": "Ensayos de prueba" }
+      ],
+      "books": [
+        { "fixtureKey": "cuaderno", "isbn": "manual-fixture-a-cuaderno", "title": "El cuaderno de la bruma", "authors": [{ "name": "Alba Inventada" }], "number_of_pages": 128, "publish_date": "2024", "status": "reading", "shelfKey": "default", "source": "manual" },
+        { "fixtureKey": "isla", "isbn": "9780000000019", "title": "La isla de papel", "authors": [{ "name": "Bruno Ficticio" }], "number_of_pages": 240, "publish_date": "2025", "status": "read", "shelfKey": "aventuras", "source": "open-library" },
+        { "fixtureKey": "reloj", "isbn": "9780000000026", "title": "El reloj de las mareas", "authors": [{ "name": "Clara Imaginaria" }], "number_of_pages": 192, "publish_date": "2023", "status": "to-read", "shelfKey": "ensayos", "source": "open-library" },
+        { "fixtureKey": "mapas", "isbn": "manual-fixture-a-mapas", "title": "Mapas de una ciudad inventada", "authors": [{ "name": "Alba Inventada" }], "number_of_pages": 64, "publish_date": "", "status": "unread", "shelfKey": "aventuras", "source": "manual" }
+      ]
+    },
+    {
+      "key": "b",
+      "email": "lector-b@biblib.test",
+      "user_metadata": { "biblib_fixture": "biblib-local-v1", "full_name": "Lector de prueba B" },
+      "shelves": [
+        { "fixtureKey": "default", "title": "Sin estantería", "isDefault": true },
+        { "fixtureKey": "poesia", "title": "Poesía de prueba" },
+        { "fixtureKey": "ciencia", "title": "Ciencia de prueba" }
+      ],
+      "books": [
+        { "fixtureKey": "versos", "isbn": "manual-fixture-b-versos", "title": "Versos para un faro", "authors": [{ "name": "Dalia Supuesta" }], "number_of_pages": 80, "publish_date": "2022", "status": "read", "shelfKey": "poesia", "source": "manual" },
+        { "fixtureKey": "isla", "isbn": "9780000000019", "title": "La isla de papel", "authors": [{ "name": "Bruno Ficticio" }], "number_of_pages": 240, "publish_date": "2025", "status": "unread", "shelfKey": "default", "source": "open-library" },
+        { "fixtureKey": "reloj", "isbn": "9780000000026", "title": "El reloj de las mareas", "authors": [{ "name": "Clara Imaginaria" }], "number_of_pages": 192, "publish_date": "2023", "status": "reading", "shelfKey": "ciencia", "source": "open-library" },
+        { "fixtureKey": "astros", "isbn": "manual-fixture-b-astros", "title": "Pequeño atlas de astros ficticios", "authors": [{ "name": "Elio Imaginado" }], "number_of_pages": 112, "publish_date": "2026", "status": "to-read", "shelfKey": "ciencia", "source": "manual" }
+      ]
+    }
+  ]
+}

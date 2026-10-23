@@ -1,0 +1,12 @@
+{
+  "profile": "scratch",
+  "method": "fetch del proceso Next limitado a loopback mediante preload temporal; sin cambios de red global",
+  "externalHttpProbeRejected": true,
+  "authenticatedRoutes": {
+    "/": 200,
+    "/books": 200,
+    "/books/add": 200
+  },
+  "catalogueFixtureFilesReadWithoutNetwork": true,
+  "providerFlowUnchanged": true
+}

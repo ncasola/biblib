@@ -1,0 +1,13 @@
+
+> biblib@1.0.0 test:db C:\Users\ncaso\orca\workspaces\biblib\u-inf-03
+> node scripts/test-database.mjs
+
+Correcto: tests/db/bootstrap.sql
+Correcto: drizzle/0000_biblib_init.sql
+Correcto: tests/db/legacy.sql
+Correcto: drizzle/0001_library_integrity.sql
+Correcto: drizzle/0002_book_versions.sql
+Correcto: tests/db/versions.sql
+Correcto: tests/db/rls.sql
+Correcto: migraciones, aislamiento A/B, FK de propietario, predeterminada, integridad y rollback.
+Pruebas de base de datos completadas en un contenedor aislado.

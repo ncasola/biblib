@@ -60,7 +60,7 @@ function fixture(platform = "linux", profile = "scratch") {
     root, data, calls, clone, container,
     options: { root, run, platform, nodeVersion: "24.11.1", portListening: async () => occupied, health: async (_ctx, resources) => healthy && resources.containers.length >= 7, healthTimeoutMs: 0,
       // Runner U-INF-04 simulado: estas pruebas no abren conexiones Postgres.
-      readHead: async () => null, migrateLocal: async () => ({ head: { tag: "0002_book_versions", applied: 3, expected: 3, state: "up-to-date" }, result: "aplicado: 0000_biblib_init → 0001_library_integrity → 0002_book_versions" }) },
+      readHead: async () => null, migrateLocal: async () => ({ head: { tag: "0002_book_versions", applied: 3, expected: 3, state: "up-to-date" }, result: "aplicado: 0000_biblib_init → 0001_library_integrity → 0002_book_versions" }), seedLocal: async () => ({ censusId: "biblib-local-v1" }) },
     setHealthy: (value) => { healthy = value }, setFailStart: () => { failStart = true }, setOnStart: (fn) => { onStart = fn }, setDockerMissing: (value = true) => { dockerMissing = value }, setExcluded: (value) => { excluded = value }, setOccupied: () => { occupied = true }, starts: () => starts,
   }
 }
@@ -177,7 +177,7 @@ test("SIGINT registra fase, elimina solo contenedores/red creados y conserva vol
   assert.ok(f.calls.filter((c) => c.args.includes("rm")).every((c) => !c.args.includes("holaerp-id")))
 })
 
-test("bootstrap migra con el runner U-INF-04, deja seed/verify pendientes y solo main escribe entorno", async () => {
+test("bootstrap migra y siembra con U-INF-04/05, deja verify pendiente y solo main escribe entorno", async () => {
   const f = fixture()
   let wrote = false, migrations = 0
   f.options.writeLocalEnvFile = () => { wrote = true }
@@ -187,16 +187,17 @@ test("bootstrap migra con el runner U-INF-04, deja seed/verify pendientes y solo
   assert.equal(response.code, 0)
   assert.equal(migrations, 1)
   assert.equal(response.result.bootstrap.status, "pending")
-  assert.equal(response.result.bootstrap.phase, "seed")
+  assert.equal(response.result.bootstrap.phase, "verify")
   assert.equal(response.result.head.tag, "0002_book_versions")
   assert.equal(wrote, false)
   const receipt = readState(createContext("scratch", f.options), "-bootstrap")
-  assert.equal(receipt.phase, "seed")
+  assert.equal(receipt.phase, "verify")
   assert.match(receipt.phases.env.message, /Sin archivo/)
   for (const name of ["preflight", "env", "migrate"]) assert.equal(receipt.phases[name].status, "passed")
   assert.equal(receipt.phases.migrate.head.tag, "0002_book_versions")
   assert.equal(receipt.phases.stack.status, "healthy")
-  for (const name of ["seed", "verify"]) assert.equal(receipt.phases[name].status, "pending")
+  assert.equal(receipt.phases.seed.status, "passed")
+  assert.equal(receipt.phases.verify.status, "pending")
 })
 
 test("bootstrap propaga el código del runner y marca migrate como fallida", async () => {
@@ -208,6 +209,17 @@ test("bootstrap propaga el código del runner y marca migrate como fallida", asy
   assert.equal(receipt.phases.migrate.status, "failed")
   assert.equal(receipt.phases.env.status, "passed")
   for (const name of ["seed", "verify"]) assert.equal(receipt.phases[name].status, "pending")
+})
+
+test("bootstrap propaga el fallo del seed y deja verify pendiente", async () => {
+  const f = fixture()
+  f.options.seedLocal = async () => { throw new BiblibError(EXIT.SEED_FAILED, "storage", "Fallo de fixture Storage.") }
+  await assert.rejects(runLocalStack(["bootstrap", "--profile", "scratch"], f.options), { code: EXIT.SEED_FAILED })
+  const receipt = readState(createContext("scratch", f.options), "-bootstrap")
+  assert.equal(receipt.phase, "seed")
+  assert.equal(receipt.phases.seed.status, "failed")
+  assert.equal(receipt.phases.migrate.status, "passed")
+  assert.equal(receipt.phases.verify.status, "pending")
 })
 
 test("status publica el head aplicado solo con Postgres propio en marcha", async () => {
