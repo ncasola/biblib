@@ -24,7 +24,12 @@
     "build:local": "node scripts/next-target.mjs build local",
     "start:local": "node scripts/next-target.mjs start local",
     "build:test": "node scripts/next-target.mjs build test",
-    "check:bundle": "node scripts/check-client-bundle.mjs"
+    "check:bundle": "node scripts/check-client-bundle.mjs",
+    "db:local:doctor": "node scripts/local-stack.mjs doctor",
+    "db:local:status": "node scripts/local-stack.mjs status",
+    "db:local:up": "node scripts/local-stack.mjs up",
+    "db:local:down": "node scripts/local-stack.mjs down",
+    "db:local:bootstrap": "node scripts/local-stack.mjs bootstrap"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "1.1.15",

@@ -232,3 +232,39 @@ pnpm check:bundle
 `pnpm check:bundle` usa el directorio de `BIBLIB_TARGET`, o `.next` cuando no hay objetivo; `--dist-dir` permite elegirlo explícitamente. Busca URLs Postgres con credenciales, `service_role` (también dentro de JWT), `GOOGLE_BOOKS_API_KEY` y `SUPABASE_DB_URL`. Un hallazgo devuelve salida 11 sin mostrar el secreto; la ausencia de `static` devuelve 2. Es una comprobación del bundle generado, complementaria a mantener los módulos privados en el servidor.
 
 `pnpm test:scripts` cubre herencia remota falsa, archivos no acreditados, targets inválidos, perfiles con rutas con espacios, huellas y rechazo de artefactos, sin Docker ni conexiones. En la validación U-INF-02, las 40 pruebas de scripts y las 50 de aplicación pasaron, al igual que lint/typecheck; `db:generate` sin variables de base informó `No schema changes`, el build test con placeholders dejó limpio su bundle de 29 archivos y `pnpm build` sin objetivo siguió construyendo en `.next`.
+
+## Ciclo de vida del stack
+
+U-INF-03 incorpora los siguientes wrappers y sustituye las indicaciones anteriores que los marcaban pendientes. No cambia la configuración global de Docker ni ejecuta migraciones o seed. Usa Node 24.11.1–24.x, pnpm **10.32.1** y Supabase CLI **2.117.0** instalado en este repositorio; no instala herramientas automáticamente.
+
+```powershell
+pnpm db:local:doctor --profile scratch
+pnpm db:local:up --profile scratch
+pnpm --silent db:local:status --profile scratch --json
+pnpm db:local:down --profile scratch
+pnpm db:local:bootstrap --profile scratch --json
+```
+
+Todos aceptan únicamente `--profile main|test|scratch` y `--json`. El perfil predeterminado es `main`; desde un worktree `up` y `bootstrap` exigen `scratch`. Para consumir JSON usa `pnpm --silent` (suprime la cabecera propia de pnpm) o `node scripts/local-stack.mjs status --profile scratch --json`. El CLI usa la raíz del módulo, no el directorio actual de la terminal. Los procesos reciben argumentos separados, sin shell, con `--workdir` y `--network-id` explícitos y entorno limpiado por `childEnv`. Windows y Linux usan el entrypoint JS del paquete fijado que respalda `node_modules/.bin/supabase`.
+
+`doctor` es de solo lectura: valida manifiesto/configuración, versiones fijadas frente a instaladas, motor Docker, identidad, archivos de entorno mediante `assertNoForeignEnvFiles`, puertos ocupados (incluidos los reservados) y rangos TCP excluidos de Windows. Detecta el PID con netstat/ss cuando está disponible y nunca termina al ocupante. No abre Docker Desktop, no genera workdirs, no modifica esquema ni consulta datos. Un `.env*` no acreditado produce salida 3 sin mostrar su contenido. No consulta `supabase status` ni carga credenciales para diagnosticar un stack parado.
+
+`status` también es de solo lectura. Su contrato JSON es `{ schemaVersion: 1, target: "local", profile, fingerprint, endpoints, services: [{ name, status }], head: null, checks: [{ id, status, message }] }`. La huella coincide con la de `loadTarget` para ese perfil. Postgres se presenta como host/puerto/base, sin URL con usuario/contraseña; no aparecen claves, JWT, configuración de contenedores ni la salida nativa de Supabase. `head` seguirá en `null` hasta la integración de U-INF-04. Los servicios se proyectan desde su estado Docker; `running` indica que ese servicio no declara un HEALTHCHECK Docker.
+
+`up` exige un preflight correcto, crea la red etiquetada si falta y arranca el proyecto con las comprobaciones de salud del CLI, sin `--ignore-health-check`. Comprueba además la salud Docker de todos los contenedores y HTTP de GoTrue, Storage, Studio (`/project/default`, evita la redirección normal de `/`) y Mailpit. Sobre el mismo stack sano verifica la salud y conserva los IDs, sin volver a ejecutar start. Un puerto ocupado por un proceso ajeno devuelve 8 con diagnóstico antes de crear red/contenedores; una herramienta ausente, versión incorrecta o puerto excluido devuelve 4.
+
+La propiedad se registra en `.biblib/state/<perfil>.json`: huella, raíz real, proyecto, fase, red por ID, contenedores por ID y volúmenes por nombre/fecha de creación. La red exige etiquetas `biblib.profile` y `biblib.root`. Como Supabase CLI no admite etiquetas personalizadas para sus contenedores/volúmenes, estos exigen el ID registrado, etiqueta `com.supabase.cli.project` (o compose), y pertenencia a la red propia en los contenedores. Un nombre parecido, el puerto o la respuesta HTTP no acreditan propiedad. Un recurso sin registro, de otra raíz o con identidad cambiada aborta con **3**; no se adopta, borra ni renombra automáticamente. El directorio de estado/workdir no puede atravesar enlaces a otra raíz.
+
+Los comandos mutables usan un bloqueo exclusivo por perfil: un lifecycle concurrente devuelve **7**. Si el proceso muere sin liberar el archivo `.biblib/state/<perfil>-lock.json`, comprueba manualmente que ese PID ya no existe antes de retirar únicamente ese bloqueo. Un registro dañado requiere recuperar la evidencia de propiedad; no lo soluciones borrando recursos por nombre. El estado local no se comparte entre checkouts: libera o transfiere explícitamente un perfil antes de reutilizar sus nombres desde otra raíz.
+
+`down` verifica propiedad y configuración antes de invocar stop únicamente sobre ese workdir/proyecto. Conserva la red y todos los volúmenes, y comprueba que no quedan servicios propios activos. No usa `--all`, `--no-backup`, prune ni compose. Si falla la salud, se registra fase `stack`, estado `failed` y recursos pendientes; la salida es **8**, nunca un éxito parcial. SIGINT devuelve **130**, registra la fase y retira solo los contenedores/red creados por ese intento, tras comprobar IDs, etiquetas y red; conserva volúmenes y recursos preexistentes. El recibo indica `cleanup: pending` si no pudo terminar esa limpieza. El ejecutor aplica timeout y captura acotada/saneada; nunca publica stdout/stderr nativos del arranque.
+
+Los bindings reales se revisan con `checkPublishedBindings`. Publicar fuera del bloque del perfil falla con **3**. Publicar en `0.0.0.0`/`::` genera **warn** con referencia a las alternativas **A/B** de «Limitación conocida: bindings fuera de loopback». El aviso no bloquea el lifecycle ni aplica cambios de daemon/firewall. Esa limitación de Docker Desktop sigue abierta.
+
+### Bootstrap por fases (contrato para U-INF-06)
+
+El orden es **preflight → stack → env → migrate → seed → verify**. Cada invocación revalida las fases ejecutables y actualiza `.biblib/state/<perfil>-bootstrap.json`, con `schemaVersion: 1`, raíz/huella/perfil/proyecto, `runId`, `phase`, estado global y `phases` por nombre. U-INF-03 ejecuta solo las tres primeras: preflight `passed`, stack `healthy` y env `passed`. Solo `main` llama a `writeLocalEnvFile(loadTarget("local", ...))` para generar `.env.local`; scratch/test registran expresamente que no se escribe archivo y consumen contexto explícito. Nunca se sobrescribe un archivo no acreditado.
+
+`migrate`, `seed` y `verify` permanecen **pending**, con mensaje de no disponibilidad hasta U-INF-06. El recibo y la respuesta muestran estado global **pending**, próxima fase **migrate**. La salida **0** significa exclusivamente que las fases disponibles terminaron correctamente; **no acredita bootstrap completo, esquema ni fixtures**. Una fase ejecutada que falle devuelve su código distinto de cero y queda `failed`/`interrupted`, con las siguientes pendientes. U-INF-06 conectará U-INF-04/U-INF-05 en estos mismos puntos, sin segundo runner ni historial SQL paralelo.
+
+Las pruebas de procesos/CLI/Docker simulados se ejecutan con `pnpm test:scripts`. El [informe U-INF-03](u-inf-03-informe.md) registra el ensayo real de scratch, la conservación de datos y la comparación de recursos HolaERP.
