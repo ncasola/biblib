@@ -39,6 +39,7 @@ export const TELEMETRY_FIELDS = [
   "batch",
   "attempt",
   "correlationId",
+  "requestId",
   "httpStatus",
   "accountRef",
 ] as const
