@@ -30,15 +30,22 @@ export async function getLibraryDataAction(): Promise<LibraryData> {
 export async function getLibrarySummaryAction() {
   const userId = await getRequiredUserId()
   return withRlsContext(userId, async (tx) => {
-    await ensureDefaultShelf(tx, userId)
-    const [totals] = await tx.select({
+    // Recuentos y comprobación de la predeterminada en una sola consulta; ensureDefaultShelf solo si falta (U-FIX-02).
+    const [{ hasDefaultShelf, shelfCount, ...totals }] = await tx.select({
       totalBooks: count(),
       read: sql<number>`count(*) filter (where ${books.status} = 'read')::int`,
       reading: sql<number>`count(*) filter (where ${books.status} = 'reading')::int`,
       toRead: sql<number>`count(*) filter (where ${books.status} = 'to-read')::int`,
       unread: sql<number>`count(*) filter (where ${books.status} = 'unread')::int`,
+      shelfCount: sql<number>`(select count(*)::int from ${shelves} where ${shelves.userId} = ${userId})`,
+      hasDefaultShelf: sql<boolean>`exists (select 1 from ${shelves} where ${shelves.userId} = ${userId} and ${shelves.isDefault})`,
     }).from(books).where(eq(books.userId, userId))
-    const [shelfTotals] = await tx.select({ totalShelves: count() }).from(shelves).where(eq(shelves.userId, userId))
+    let shelfTotals = { totalShelves: shelfCount }
+    if (!hasDefaultShelf) {
+      await ensureDefaultShelf(tx, userId)
+      const [recounted] = await tx.select({ totalShelves: count() }).from(shelves).where(eq(shelves.userId, userId))
+      shelfTotals = recounted
+    }
     const recent = await tx.select({ book: books, shelfTitle: shelves.title }).from(books)
       .innerJoin(shelves, and(eq(books.shelfId, shelves.id), eq(shelves.userId, userId)))
       .where(eq(books.userId, userId)).orderBy(desc(books.createdAt), desc(books.id)).limit(5)
