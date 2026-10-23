@@ -129,17 +129,17 @@ test("política: OL cachea ficha 1 h y ausencia 5 min; BNE (CC0) ficha 1 h sin a
   assert.equal(cachePlan("open-library", "lookupISBN", noPersist), null, "Sin persistMetadata no hay caché aunque cacheMetadata esté aprobada")
 })
 
-test("cuota: OL y BNE con políticas propias, Google sin política y hosts ajenos bloqueados", () => {
+test("cuota: OL, BNE y Google con políticas propias y hosts ajenos bloqueados", () => {
   const ol = providerQuotaPolicy("open-library")
   const bne = providerQuotaPolicy("bne")
   assert.equal(ol?.intervalMs, 1000)
   assert.ok(bne && bne.intervalMs !== ol?.intervalMs)
-  assert.equal(providerQuotaPolicy("google-books"), undefined)
+  assert.equal(providerQuotaPolicy("google-books")?.intervalMs, 2000)
   assert.ok(ol && ol.horizonMs.batch < ol.horizonMs.interactive, "El lote no hace cola por delante de una búsqueda")
   assert.equal(providerForUrl(new URL("https://openlibrary.org/api/books")), "open-library")
   assert.equal(providerForUrl(new URL("https://covers.openlibrary.org/b/id/1-L.jpg")), "open-library")
   assert.equal(providerForUrl(new URL("https://catalogo.bne.es/view/sru")), "bne")
-  assert.equal(providerForUrl(new URL("https://www.googleapis.com/books/v1/volumes")), undefined)
+  assert.equal(providerForUrl(new URL("https://www.googleapis.com/books/v1/volumes")), "google-books")
   assert.equal(providerForUrl(new URL("http://openlibrary.org/api/books")), undefined)
   assert.equal(providerForUrl(new URL("https://openlibrary.org.example.com/")), undefined)
   assert.equal(providerForUrl(new URL("https://user:pw@openlibrary.org/")), undefined)
@@ -252,11 +252,10 @@ test("intervalo global: lote cede ante interactivo y espera fuera de la base", a
   await assert.rejects(gatewayBusy.bind({ purpose: "interactive", owner })("https://openlibrary.org/api/books"), QuotaDeferredError)
 })
 
-test("Google deshabilitado o sin política no recibe peticiones ni crea caché", async () => {
+test("Google deshabilitado no recibe peticiones ni crea caché", async () => {
   const memory = memoryStore()
   let requests = 0
   const gateway = createCatalogGateway({ store: memory.store, sleep: fakeSleep(memory.clock), fetch: async () => { requests++; return Response.json({}) } })
-  await assert.rejects(gateway.fetch("https://www.googleapis.com/books/v1/volumes?q=isbn:1"), TypeError)
   const catalog = createBibliographicCatalogService({ providers: [{ id: "google-books", enabled: false }], gateway })
   const result = await catalog.lookupISBN(isbn)
   assert.equal(result.providers.find((p) => p.provider === "google-books")?.status, "disabled")

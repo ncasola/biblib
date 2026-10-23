@@ -25,7 +25,8 @@ const policies: Record<ProviderId, ProviderRightsPolicy> = {
     attribution: "Metadatos CC0: Biblioteca Nacional de España. Conservar URL del registro y fecha de recuperación.",
     termsUrl: "https://www.bne.es/es/aviso-legal",
   },
-  "google-books": { ...denied, provider: "google-books", version: "2026-10-23.1", metadataTtlSeconds: 0, coverTtlSeconds: 0, attribution: "Google Books", termsUrl: "https://developers.google.com/books/terms" },
+  "google-books": { ...denied, provider: "google-books", version: "2026-10-23.3", previewCover: true, metadataTtlSeconds: 0, coverTtlSeconds: 0,
+    attribution: "Google Books. Portada solo para previsualización temporal; derechos de sus titulares.", termsUrl: "https://developers.google.com/books/terms" },
 }
 
 export function providerRightsPolicy(provider: ProviderId): ProviderRightsPolicy {

@@ -25,8 +25,8 @@ export const QUOTA_MAX_COOLDOWN_MS = 3_600_000
 /**
  * Open Library: 1 petición/s por despliegue mientras no haya identificación acordada
  * (https://openlibrary.org/developers/api). BNE tiene su propia política, provisional y más
- * conservadora hasta que U-BIB la valide; nunca hereda la de OL. Google Books no tiene política
- * aprobada: sin entrada aquí no se reserva ni se envía ninguna petición.
+ * conservadora hasta que U-BIB la valide; nunca hereda la de OL. Google Books usa un techo técnico
+ * conservador de opt-in, no una cuota/precio garantizados por Google; requiere revisión de consola.
  */
 const policies: Partial<Record<ProviderId, ProviderQuotaPolicy>> = {
   "open-library": {
@@ -38,6 +38,11 @@ const policies: Partial<Record<ProviderId, ProviderQuotaPolicy>> = {
     provider: "bne", intervalMs: 2_000, leaseMs: 15_000,
     horizonMs: { interactive: 2_500, batch: 250 }, maxWaitMs: { interactive: 2_500, batch: 15_000 },
     ownerCap: { interactive: 2, batch: 1 }, hosts: ["bne.es"],
+  },
+  "google-books": {
+    provider: "google-books", intervalMs: 2_000, leaseMs: 15_000,
+    horizonMs: { interactive: 2_500, batch: 250 }, maxWaitMs: { interactive: 2_500, batch: 15_000 },
+    ownerCap: { interactive: 1, batch: 1 }, hosts: ["www.googleapis.com"],
   },
 }
 

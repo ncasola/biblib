@@ -690,3 +690,30 @@ pnpm db:adopt:preprod --plan .biblib/plans/preprod.json --expect-project <ref> -
 - `db:backup:local` escribe ahora `receipt.json` junto a `backup.json`, con alcance Mailpit (copia RAW de los mensajes, sin reinyectarlos), rutas relativas a la raíz y `discardedStateHash`. `db:backup:local --receipt-of <carpeta>` lo reemite tras `db:restore:verify`. Ese recibo es el que aceptan `db:reset:local --backup-receipt` y la promoción.
 
 `pnpm test:scripts` incluye `tests/scripts/promotion.test.mjs` (sin Docker) y `tests/scripts/promotion-stack.test.mjs` (`[stack]`: Postgres efímero propio con TLS autofirmado; se omite con `BIBLIB_SKIP_STACK_TESTS=1`). Evidencia: [O08/inf-07](validacion/2026-10-23/O08/inf-07/informe.md).
+
+## Google Books opcional · U-BIB-03
+
+Google Books permanece apagado por defecto (`BIBLIB_GOOGLE_BOOKS_ENABLED=false`). Cada entorno exige una decisión manual independiente: desplegar el adaptador no lo activa. No hay código para contratar productos, activar facturación ni ampliar cuotas de pago. Sin flag el estado es `disabled`; en `live`, flag activo sin `GOOGLE_BOOKS_API_KEY` da `misconfigured` y cero peticiones. `fixture` prevalece sobre los flags y nunca consulta Google, incluso con una clave sintética.
+
+Antes de permitir tráfico real, el responsable debe comprobar y registrar:
+
+1. Proyecto y consola Google Cloud correctos, Books API habilitada, cuota disponible y límites por día/minuto aplicables al despliegue. El techo técnico de BibLib (una petición cada dos segundos, compartida mediante U-DAT-05, una reserva interactiva por cuenta) no demuestra una cuota del proveedor ni un presupuesto monetario.
+2. Precio y coste previstos en ese proyecto, alertas/presupuesto y autorización para cualquier cargo. No se presupone tarifa gratuita garantizada; si no se confirma el coste, dejar Google apagado. Esta entrega no habilita billing ni ejecuta un canary real.
+3. [Condiciones de Google Books](https://developers.google.com/books/terms), condiciones generales enlazadas y derechos de contenido; autorización separada o permiso escrito si se pretende cobrar por la aplicación. Facilitar contacto para solicitudes de retirada de contenido.
+4. [Privacidad de Google Books](https://books.google.com/googlebooks/privacy.html) y [privacidad de Google](https://policies.google.com/privacy), además del aviso que exige Google sobre contenido enviado que podría hacerse público. Integrar `GoogleBooksNotice` junto al selector antes del primer uso, con su botón que deselecciona Google y permite seguir con OL/BNE/manual. El componente está preparado y probado, pero esta unidad no lo monta en páginas: la integración pertenece al flujo U-BIB-04/05 y debe estar terminada antes del opt-in de usuarios.
+5. Key de servidor limitada a Books API y restringida por las IP de salida si la infraestructura lo permite; permisos mínimos en el gestor de secretos del entorno. No usar prefijo `NEXT_PUBLIC_`, pasar claves al navegador, añadir scopes a Google OAuth ni registrar URLs completas. Revisar que proxies, APM y trazas de fetch omitan la query: la clave viaja en ella. El adaptador no registra URL/cuerpo/error externo; `redactGoogleBooksUrl()` devuelve solo el endpoint sin query para cualquier diagnóstico futuro.
+6. Procedimiento de rotación: crear una key nueva con las mismas restricciones, sustituirla en el gestor de secretos solo del entorno aprobado, reiniciar el servidor, verificar el estado y revocar la anterior en consola. Ante exposición, revocar la key afectada y desactivar primero el flag; nunca copiarla en informes, incidencias o comandos de diagnóstico.
+
+Tras esas comprobaciones, configurar **en el gestor de secretos del servidor del entorno elegido** `BIBLIB_CATALOGUE_MODE=live`, `BIBLIB_GOOGLE_BOOKS_ENABLED=true` y `GOOGLE_BOOKS_API_KEY`. No hay activación automática por build ni fallback a una key de otro entorno. Para consultar únicamente el estado de configuración, ejecutar con el entorno ya inyectado:
+
+```text
+node scripts/catalogue-status.mjs
+```
+
+El diagnóstico es local al operador: no crea una acción, endpoint o página, no lee `.env*`, no imprime valores de variables ni claves y no abre conexiones. `ready` indica configuración presente; no certifica permisos de consola, coste ni aceptación de términos. `fixture` indica que no habrá tráfico externo.
+
+Solo se envían el ISBN canónico o título/autor introducidos, además de los parámetros técnicos de API; no se envían identidad, notas, fotos, préstamos ni colección. La respuesta se valida con Zod y se acepta un match ISBN únicamente si un `industryIdentifiers` de tipo ISBN coincide tras normalizarlo. Cada operación consulta como máximo diez volúmenes, sin paginación ni reintentos automáticos, con máximo 1 MiB y 3,5 segundos incluyendo cola/cuerpo. Un 429 conserva `Retry-After`; 403/5xx son indisponibilidad, nunca ausencia de libro.
+
+La política Google `2026-10-23.3` permite **solo preview temporal de portada** y deniega caché/retención de metadatos, persistencia, exportación, offline, rehosting y backup de assets. El adaptador no mantiene caché, los candidatos de metadatos carecen de `coverUrl` y `getCover` entrega por separado la URL HTTPS de imagen sin descargarla. La selección de preview no autoriza escribir `Book.cover`, exportar la imagen ni guardarla en caché permanente; la UI y futuros callers deben aplicar esta política. Hasta revisión legal separada, tampoco persistir/exportar metadatos Google. La coordinación compartida solo conserva claves operativas/reservas, sin payload de Google ni credenciales.
+
+Para recuperar el flujo base, establecer `BIBLIB_GOOGLE_BOOKS_ENABLED=false` y reiniciar el proceso del entorno: Google queda sin peticiones y siguen disponibles OL, BNE según su propia bandera y el alta manual. No se reescriben libros guardados. Las pruebas usan fixtures sintéticos y fetch simulado; [evidencia O09](validacion/2026-10-23/O09/bib-03.md).
