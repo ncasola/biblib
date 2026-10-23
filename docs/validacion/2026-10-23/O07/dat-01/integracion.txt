@@ -1,0 +1,57 @@
+# pnpm test:integration:local --reuse-build · perfil test · 2026-10-23T14:49:45Z
+Integración Supabase real · perfil test · biblib-test · huella b831ef825c09 · run 6846ea2b4fdc
+Bundle de cliente sin credenciales administrativas ni URLs privadas.
+✔ Auth del perfil test solo contiene las cuentas ficticias A/B del censo, sin identidades externas
+✔ el correo local solo se entrega a Mailpit y a destinatarios @biblib.test
+✔ getUser identifica a A y B en GoTrue y rechaza un token alterado
+✔ cookies SSR: nombre sb-<ref>-auth-token, Path=/, SameSite=Lax y sesión en base64url
+✔ renovación por el SDK: tokens nuevos, misma identidad y cookies actualizadas
+✔ anónimo en una ruta privada con consulta vuelve al acceso conservando la ruta
+✔ con sesión, /login devuelve a la ruta con consulta y descarta destinos externos
+✔ una sesión vencida con refresh válido se renueva en el proxy y mantiene el destino
+✔ cookies fragmentadas producidas por el SDK funcionan en el proxy y en las acciones
+✔ cerrar sesión elimina la vista privada, también con una copia antigua de las cookies
+✔ cierre y renovación concurrentes no dejan ninguna sesión utilizable
+✔ B no lee, enumera ni confirma vistas previas u operaciones de A por SQL
+✔ authenticated no altera library_state, ni la suya ni la de otro; lock_library solo bloquea la propia
+✔ anon no accede a la revisión, las vistas previas ni la función de bloqueo
+✔ la Data API no expone revisión, vistas previas, operaciones ni lock_library
+✔ reemplazo preparado y cambio posterior en otra sesión de A: conflicto, nada se borra y el reintento no lo fuerza
+✔ una mutación de B no invalida la revisión de A; la confirmación aplica el plan una sola vez
+✔ doble confirmación simultánea con la misma clave produce una única operación
+✔ una vista previa caducada exige volver a revisar y no aplica nada
+✔ B no puede confirmar ni descubrir una vista previa de A
+✔ los 111 registros sintéticos legacy se revisan y se importan completos
+✔ los fixtures de A siguen intactos tras todos los escenarios
+✔ cada cuenta solo recibe su biblioteca desde las acciones
+✔ A no lee, modifica, mueve ni borra recursos de B manipulando IDs
+✔ anónimo no obtiene datos: el proxy redirige las acciones y la API responde 401
+✔ CRUD propio como A: versión rotada por el trigger, conflicto con versión antigua y portada por defecto
+✔ la estantería predeterminada no se borra ni se renombra desde la app
+✔ la conexión de la app no arrastra claims: A, B, fallo de A y B otra vez
+✔ conexión reutilizada A → B → sin claims, también tras una transacción fallida
+✔ PostgREST rechaza el esquema biblib para anónimo y para A (lectura y escritura)
+✔ el esquema público no expone tablas de BibLib
+✔ supabase-js con .schema('biblib') no obtiene datos
+✔ GraphQL no expone libros ni estanterías (pg_graphql desactivado en el stack)
+✔ A solo ve sus filas: los libros y estanterías de B no existen para A
+✔ A no actualiza ni borra libros o estanterías de B (0 filas afectadas)
+✔ A no inserta para B ni enlaza sus libros con estanterías de B
+✔ la estantería predeterminada está protegida también para su dueño
+✔ anon no tiene acceso al esquema biblib, ni siquiera con claims de A
+✔ books_rotate_version rota la versión con el rol authenticated en alta, cambio y versión forzada
+✔ el bucket de fixtures es privado y rechaza la lectura anónima por todas las rutas
+✔ una sesión de A tampoco lee el bucket de fixtures sin firma (sin políticas por cuenta todavía)
+✔ la URL firmada por el proceso de prueba descarga los bytes exactos; alterada o caducada se rechaza
+✔ un objeto creado por el run se sirve solo firmado y se elimina sin tocar el fixture
+✔ la portada por defecto se sirve desde la app, sin red externa ni sesión
+ℹ tests 44
+ℹ pass 44
+ℹ fail 0
+✔ con Auth y Storage inaccesibles no se sirven datos privados ni objetos, y todo vuelve al recuperarlos
+ℹ tests 1
+ℹ pass 1
+ℹ fail 0
+Cuentas de Auth sin cambios (2, todas @biblib.test). Limpieza del run completa.
+Resultado: 45 escenarios superados, 0 fallidos.
+exit 0

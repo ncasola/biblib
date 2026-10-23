@@ -8,7 +8,9 @@ import { BUCKET, RUN_MARKER } from "./context.mjs"
 // claves de metadatos, nunca sesiones. La limpieza borra exclusivamente esas entradas y, si falla,
 // el archivo se conserva como evidencia mínima para el siguiente intento.
 
-const KINDS = ["books", "shelves", "objects", "metadata"]
+const BASE_KINDS = ["books", "shelves", "objects", "metadata"]
+// U-DAT-01: vistas previas y operaciones de importación. Opcionales para leer manifiestos anteriores.
+const KINDS = [...BASE_KINDS, "previews", "operations"]
 
 export function manifestFile(profile, root = REPO_ROOT) {
   const dir = path.join(root, ".biblib", "integration")
@@ -22,7 +24,8 @@ export function readManifest(file) {
   if (!existsSync(file)) return null
   try {
     const manifest = JSON.parse(readFileSync(file, "utf8"))
-    if (manifest.schemaVersion !== 1 || !/^[0-9a-f]{12}$/.test(manifest.runId) || KINDS.some((kind) => !Array.isArray(manifest.created?.[kind]))) throw new Error()
+    if (manifest.schemaVersion !== 1 || !/^[0-9a-f]{12}$/.test(manifest.runId) || BASE_KINDS.some((kind) => !Array.isArray(manifest.created?.[kind]))) throw new Error()
+    if (KINDS.some((kind) => manifest.created[kind] !== undefined && !Array.isArray(manifest.created[kind]))) throw new Error()
     return manifest
   } catch { throw new BiblibError(EXIT.IDENTITY_MISMATCH, "manifiesto", "Manifiesto de ejecución dañado; revísalo antes de borrar nada a mano.") }
 }
@@ -49,15 +52,18 @@ const same = (a, b) => Object.keys(a).every((key) => a[key] === b[key])
 
 /** Se registra antes o justo después de crear, para que un fallo intermedio no deje restos sin rastro. */
 export function recordCreated(file, kind, entry) {
-  update(file, (manifest) => { if (!manifest.created[kind].some((item) => same(item, entry))) manifest.created[kind].push(entry) })
+  update(file, (manifest) => {
+    manifest.created[kind] ??= []
+    if (!manifest.created[kind].some((item) => same(item, entry))) manifest.created[kind].push(entry)
+  })
 }
 
 export function forgetCreated(file, kind, entry) {
-  update(file, (manifest) => { manifest.created[kind] = manifest.created[kind].filter((item) => !same(item, entry)) })
+  update(file, (manifest) => { manifest.created[kind] = (manifest.created[kind] ?? []).filter((item) => !same(item, entry)) })
 }
 
 export function isEmpty(manifest) {
-  return KINDS.every((kind) => manifest.created[kind].length === 0)
+  return KINDS.every((kind) => (manifest.created[kind] ?? []).length === 0)
 }
 
 /**
@@ -68,6 +74,19 @@ export function isEmpty(manifest) {
 export async function cleanupManifest({ sql, admin, manifest }) {
   const marker = `[${RUN_MARKER} ${manifest.runId}]%`
   const pending = { books: [], shelves: [], objects: [], metadata: [] }
+  // Operaciones primero (claves marcadas con el run) y después sus vistas previas, siempre por ID + propietario.
+  if (manifest.created.operations) {
+    pending.operations = []
+    for (const operation of manifest.created.operations) {
+      try { await sql`delete from biblib.library_operations where id = ${operation.id} and user_id = ${operation.userId} and idempotency_key like ${`qa01-${manifest.runId}-%`}` } catch { pending.operations.push(operation) }
+    }
+  }
+  if (manifest.created.previews) {
+    pending.previews = []
+    for (const preview of manifest.created.previews) {
+      try { await sql`delete from biblib.import_previews where id = ${preview.id} and user_id = ${preview.userId}` } catch { pending.previews.push(preview) }
+    }
+  }
   for (const book of manifest.created.books) {
     try { await sql`delete from biblib.books where id = ${book.id} and user_id = ${book.userId} and title like ${marker}` } catch { pending.books.push(book) }
   }

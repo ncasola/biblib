@@ -12,10 +12,10 @@ import { inspectDatabase } from "../../scripts/db/target.mjs"
 import { adminClient, closeConnection, database, integrationContext, PROFILE } from "./lib/context.mjs"
 import { cleanupManifest, isEmpty, manifestFile, readManifest, startManifest, writeManifest } from "./lib/run-manifest.mjs"
 
-// pnpm test:integration:local — U-QA-01. Ejecuta tests/integration/{auth,rls,storage} contra el
+// pnpm test:integration:local — U-QA-01. Ejecuta tests/integration/{auth,rls,storage,import} contra el
 // stack Supabase real del perfil test y la app compilada para ese perfil (127.0.0.1:3148).
 
-const SUITES = ["rls", "storage", "auth"]
+const SUITES = ["rls", "storage", "import", "auth"]
 const LOG_DIR = path.join(REPO_ROOT, ".biblib", "integration")
 const fail = (code, phase, message) => { throw new BiblibError(code, phase, message) }
 

@@ -8,7 +8,7 @@ import { getRequiredUserId } from "@/lib/server-user"
 import { parseShelfTitle, parseUuid } from "@/lib/book-validation"
 import { DomainError, translateDatabaseError } from "@/lib/domain-errors"
 import type { Shelf } from "@/lib/types"
-import { mutationResult } from "@/lib/action-result"
+import { domainMutation } from "@/lib/server-action"
 
 export async function getShelvesAction(): Promise<Shelf[]> {
   const userId = await getRequiredUserId()
@@ -26,7 +26,7 @@ async function createShelf(input: string): Promise<void> {
   const title = parseShelfTitle(input)
   try {
     await withRlsContext(userId, async (tx) => {
-      await lockLibrary(tx, userId)
+      await lockLibrary(tx)
       const [existing] = await tx.select({ id: shelves.id }).from(shelves)
         .where(and(eq(shelves.userId, userId), sql`lower(${shelves.title}) = lower(${title})`)).limit(1)
       if (existing) throw new DomainError("CONFLICT", "Ya existe una estantería con ese nombre.")
@@ -41,7 +41,7 @@ async function renameShelf(shelfId: string, input: string): Promise<void> {
   const title = parseShelfTitle(input)
   try {
     await withRlsContext(userId, async (tx) => {
-      await lockLibrary(tx, userId)
+      await lockLibrary(tx)
       const duplicate = await tx.select({ id: shelves.id }).from(shelves)
         .where(and(eq(shelves.userId, userId), sql`lower(${shelves.title}) = lower(${title})`, sql`${shelves.id} <> ${id}`)).limit(1)
       if (duplicate.length) throw new DomainError("CONFLICT", "Ya existe una estantería con ese nombre.")
@@ -57,7 +57,7 @@ async function deleteShelf(shelfId: string): Promise<void> {
   const id = parseUuid(shelfId)
   try {
     await withRlsContext(userId, async (tx) => {
-      await lockLibrary(tx, userId)
+      await lockLibrary(tx)
       const defaultId = await ensureDefaultShelf(tx, userId)
       if (id === defaultId) throw new DomainError("CONFLICT", "No se puede eliminar la estantería predeterminada.")
       await tx.update(books).set({ shelfId: defaultId, updatedAt: new Date() })
@@ -68,6 +68,6 @@ async function deleteShelf(shelfId: string): Promise<void> {
   } catch (error) { translateDatabaseError(error) }
 }
 
-export async function createShelfAction(title: string) { return mutationResult(() => createShelf(title)) }
-export async function renameShelfAction(id: string, title: string) { return mutationResult(() => renameShelf(id, title)) }
-export async function deleteShelfAction(id: string) { return mutationResult(() => deleteShelf(id)) }
+export async function createShelfAction(title: string) { return domainMutation(() => createShelf(title)) }
+export async function renameShelfAction(id: string, title: string) { return domainMutation(() => renameShelf(id, title)) }
+export async function deleteShelfAction(id: string) { return domainMutation(() => deleteShelf(id)) }
