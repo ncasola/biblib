@@ -126,7 +126,7 @@ function SnapshotHistory({ refreshKey, disabled, onNotice, onRestored }: {
       setPreview(null)
       onNotice({ type: "success", text: `${replayed ? "Esta restauración ya se había aplicado. " : "Versión restaurada. "}Tu biblioteca tiene ahora ${result.imported} libros en ${result.shelves} estanterías. La colección que había antes se ha guardado como otra versión anterior.` })
       onRestored()
-      void load()
+      await load()
     } catch {
       // Respuesta perdida: la misma clave permite reintentar sin restaurar dos veces.
       onNotice({ type: "error", text: "No se recibió la respuesta de la restauración. Puedes volver a confirmarla: si ya se aplicó, verás el mismo resultado sin repetirla." })
@@ -145,7 +145,7 @@ function SnapshotHistory({ refreshKey, disabled, onNotice, onRestored }: {
       if (!response.ok) onNotice({ type: "error", text: response.error.message, reference: response.error.correlationId })
       else onNotice({ type: "success", text: `Se ha eliminado la versión del ${longDate(target.createdAt)}.` })
       if (preview?.snapshot.id === target.id) setPreview(null)
-      void load()
+      await load()
     } catch {
       onNotice({ type: "error", text: "No se pudo eliminar la versión. Vuelve a intentarlo." })
     } finally {
@@ -516,7 +516,7 @@ export default function SettingsPage() {
 
           <ImportJobPanel jobId={importJobId} disabled={loading} />
 
-          <SnapshotHistory refreshKey={historyKey} disabled={busy || loading} onNotice={setMessage} onRestored={() => { setResult(null); getLibraryDataAction().then(setData).catch(() => setData(null)) }} />
+          <SnapshotHistory refreshKey={historyKey} disabled={busy} onNotice={setMessage} onRestored={() => { setResult(null); getLibraryDataAction().then(setData).catch(() => setData(null)) }} />
 
           <CoverRecoveryJobPanel disabled={busy || loading || !data} onRunningChange={setIsRecovering} onFinish={refresh} />
 
