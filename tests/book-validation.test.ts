@@ -74,12 +74,12 @@ test("conserva la procedencia de una ficha sin confundir ISBN bibliográfico con
 test("las mutaciones conservan errores de dominio y ocultan errores técnicos", async (t) => {
   assert.equal(unwrapAction(await mutationResult(async () => 42)), 42)
   const expected = await mutationResult(async () => { throw new DomainError("CONFLICT", "El libro ya está en la biblioteca.") })
-  assert.deepEqual(expected, { ok: false, error: { code: "CONFLICT", message: "El libro ya está en la biblioteca." } })
+  assert.deepEqual(expected, { ok: false, error: { code: "CONFLICT", message: "El libro ya está en la biblioteca.", retryable: false } })
   assert.throws(() => unwrapAction(expected), (error: unknown) => error instanceof DomainError && error.code === "CONFLICT")
   const logs: string[] = []
   t.mock.method(console, "error", (entry: string) => { logs.push(entry) })
   const failure = await mutationResult(async () => { throw new Error("fixture-interna-no-publicar") })
-  assert.deepEqual(failure, { ok: false, error: { code: "PROVIDER_UNAVAILABLE", message: "No se pudo guardar el cambio. Inténtalo de nuevo." } })
+  assert.deepEqual(failure, { ok: false, error: { code: "PROVIDER_UNAVAILABLE", message: "No se pudo guardar el cambio. Inténtalo de nuevo.", retryable: true } })
   assert.equal(logs.length, 1)
   assert.equal(logs[0].includes("fixture-interna"), false)
 })
