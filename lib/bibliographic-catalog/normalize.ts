@@ -3,6 +3,7 @@ import { normalizeIsbn } from "../isbn"
 import type { OpenLibraryRecord } from "../open-library"
 import type { Author, Book, FieldProvenance, Publisher } from "../types"
 import { DEFAULT_BOOK_COVER } from "../book-covers"
+import { upgradeOpenLibraryUrl } from "./providers/endpoints"
 import type { BibliographicCandidate, CoverCandidate } from "./types"
 
 export function httpsUrl(value?: string): string | undefined {
@@ -36,7 +37,7 @@ export function fromOpenLibrary(record: OpenLibraryRecord, isbn: string, retriev
   const identifiers = [...(record.identifiers?.isbn_10 ?? []), ...(record.identifiers?.isbn_13 ?? [])]
   // La clave ISBN de Books API es un identificador publicado; no se infiere del título.
   const isbns = identifiers.length ? identifiers : [isbn]
-  const sourceUrl = record.url?.replace(/^http:\/\/openlibrary\.org\//, "https://openlibrary.org/")
+  const sourceUrl = upgradeOpenLibraryUrl(record.url)
   const cover = record.cover?.large ?? record.cover?.medium ?? record.cover?.small
   return normalizeCandidate({
     provider: "open-library", level: "edition", recordId: record.identifiers?.openlibrary?.[0] ?? sourceUrl?.match(/\/books\/([^/]+)/)?.[1],
@@ -44,7 +45,7 @@ export function fromOpenLibrary(record: OpenLibraryRecord, isbn: string, retriev
     authors: (record.authors ?? []).map((author) => ({ name: author.name, sourceUrl: author.url })),
     publishers: record.publishers ?? [], language: record.languages?.[0]?.key.split("/").at(-1), format: record.physical_format,
     publishDate: record.publish_date, numberOfPages: record.number_of_pages,
-    coverUrl: cover?.replace(/^http:\/\/covers\.openlibrary\.org\//, "https://covers.openlibrary.org/"),
+    coverUrl: upgradeOpenLibraryUrl(cover),
     evidence: { isbnExact: false }, retrievedAt,
   }, isbn)
 }

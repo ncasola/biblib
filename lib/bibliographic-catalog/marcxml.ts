@@ -1,6 +1,7 @@
 import { XMLParser, XMLValidator } from "fast-xml-parser"
 import { normalizeIsbn } from "../isbn"
 import { normalizeCandidate } from "./normalize"
+import { bneRecordUrl } from "./providers/endpoints"
 import type { BibliographicCandidate } from "./types"
 
 export const MAX_BNE_XML_BYTES = 524288
@@ -120,7 +121,7 @@ function mapRecord(record: Element, identifier: string | undefined, retrievedAt:
   })
   return normalizeCandidate({
     provider: "bne", level: "edition", recordId: id,
-    sourceUrl: id ? `https://catalogo.bne.es/discovery/fulldisplay?docid=alma${encodeURIComponent(id)}&context=L&vid=34BNE_INST:CATALOGO` : undefined,
+    sourceUrl: id ? bneRecordUrl(id) : undefined,
     isbns, title: title ? clean(values(title, "a")[0]) : undefined, subtitle: title ? clean(values(title, "b")[0]) : undefined,
     authors: creators.flatMap((field) => values(field, "a")).map((name) => ({ name: clean(name) ?? name })),
     publishers: publication ? values(publication, "b").map((name) => ({ name: clean(name) ?? name })) : [],
