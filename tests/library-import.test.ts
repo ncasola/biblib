@@ -1,11 +1,22 @@
 import assert from "node:assert/strict"
-import { test } from "node:test"
+import { afterEach, beforeEach, test } from "node:test"
 import { DEFAULT_BOOK_COVER, normalizeBookCover } from "../lib/book-covers"
 import {
   createLibraryExport, enrichImportedBookCovers, MAX_IMPORT_BOOKS, MAX_IMPORT_BYTES,
   MAX_IMPORT_SHELVES, parseLibraryImport, summarizeLibraryImport,
 } from "../lib/library-import"
 import type { Book, LibraryData } from "../lib/types"
+
+// Estas pruebas verifican el lote live mediante fetch simulado; fixture se prueba por separado.
+let previousMode: string | undefined
+beforeEach(() => {
+  previousMode = process.env.BIBLIB_CATALOGUE_MODE
+  process.env.BIBLIB_CATALOGUE_MODE = "live"
+})
+afterEach(() => {
+  if (previousMode === undefined) delete process.env.BIBLIB_CATALOGUE_MODE
+  else process.env.BIBLIB_CATALOGUE_MODE = previousMode
+})
 
 function book(overrides: Partial<Book> = {}): Book {
   return {
