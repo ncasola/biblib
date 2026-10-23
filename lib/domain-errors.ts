@@ -1,6 +1,6 @@
 export type DomainErrorCode =
   | "INVALID_INPUT" | "UNAUTHORIZED" | "NOT_FOUND" | "CONFLICT" | "PROVIDER_UNAVAILABLE" | "RATE_LIMITED"
-  | "REVISION_CONFLICT" | "PREVIEW_EXPIRED" | "IDEMPOTENCY_CONFLICT"
+  | "REVISION_CONFLICT" | "PREVIEW_EXPIRED" | "IDEMPOTENCY_CONFLICT" | "JOB_CONFLICT" | "JOB_EXPIRED"
 
 /**
  * Solo los fallos transitorios admiten reintento automático. Un conflicto de revisión, una
@@ -16,13 +16,15 @@ const RETRYABLE: Readonly<Record<DomainErrorCode, boolean>> = {
   REVISION_CONFLICT: false,
   PREVIEW_EXPIRED: false,
   IDEMPOTENCY_CONFLICT: false,
+  JOB_CONFLICT: false,
+  JOB_EXPIRED: false,
 }
 
 export function isRetryable(code: DomainErrorCode): boolean {
   return RETRYABLE[code]
 }
 
-/** Traducción HTTP del contrato transversal de 02: 409 conflicto, 410 vista previa caducada. */
+/** Traducción HTTP del contrato transversal de 02: 409 conflicto, 410 vista previa o trabajo caducados. */
 const HTTP_STATUS: Readonly<Record<DomainErrorCode, number>> = {
   INVALID_INPUT: 400,
   UNAUTHORIZED: 401,
@@ -33,6 +35,8 @@ const HTTP_STATUS: Readonly<Record<DomainErrorCode, number>> = {
   REVISION_CONFLICT: 409,
   PREVIEW_EXPIRED: 410,
   IDEMPOTENCY_CONFLICT: 409,
+  JOB_CONFLICT: 409,
+  JOB_EXPIRED: 410,
 }
 
 export function httpStatusForDomainError(code: DomainErrorCode): number {
@@ -56,6 +60,15 @@ export function previewExpired(): DomainError {
 
 export function idempotencyConflict(): DomainError {
   return new DomainError("IDEMPOTENCY_CONFLICT", "Esta confirmación ya se usó con otro archivo o modo de importación. No se ha aplicado nada; prepara una revisión nueva.")
+}
+
+/** El trabajo cambió de estado o de versión: hay que consultar su estado actual antes de repetir la acción. */
+export function jobConflict(message = "El trabajo ha cambiado desde la última consulta. Revisa su estado actual antes de repetir la acción."): DomainError {
+  return new DomainError("JOB_CONFLICT", message)
+}
+
+export function jobExpired(): DomainError {
+  return new DomainError("JOB_EXPIRED", "El trabajo ha caducado y ya no se puede continuar. Su resultado confirmado se conserva; inicia uno nuevo si lo necesitas.")
 }
 
 export function databaseErrorCode(error: unknown): string | undefined {
