@@ -18,11 +18,7 @@ interface AuthContextType {
   session: Session | null
   loading: boolean
   signInWithGoogle: (nextPath?: string) => Promise<void>
-  signIn: (email: string, password: string) => Promise<void>
-  signUp: (email: string, password: string, name: string) => Promise<void>
   signOut: () => Promise<void>
-  resetPassword: (email: string) => Promise<void>
-  updatePassword: (newPassword: string) => Promise<void>
   updateProfile: (name: string) => Promise<void>
 }
 
@@ -99,19 +95,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  const signIn = async (_email: string, _password: string) => {
-    void _email
-    void _password
-    throw new Error("El inicio de sesión con correo/contraseña está deshabilitado. Usa Google.")
-  }
-
-  const signUp = async (_email: string, _password: string, _name: string) => {
-    void _email
-    void _password
-    void _name
-    throw new Error("El registro se gestiona con Google OAuth.")
-  }
-
   const signOut = async () => {
     const { error } = await supabase.auth.signOut()
     if (error) throw new Error("No se pudo cerrar la sesión. Vuelve a intentarlo.")
@@ -127,16 +110,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(mapUser(data.user))
   }
 
-  const resetPassword = async (_email: string) => {
-    void _email
-    throw new Error("La recuperación de contraseña no está disponible con Google OAuth")
-  }
-
-  const updatePassword = async (_newPassword: string) => {
-    void _newPassword
-    throw new Error("El cambio de contraseña no está disponible con Google OAuth")
-  }
-
   return (
     <AuthContext.Provider
       value={{
@@ -144,11 +117,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         session,
         loading,
         signInWithGoogle,
-        signIn,
-        signUp,
         signOut,
-        resetPassword,
-        updatePassword,
         updateProfile,
       }}
     >

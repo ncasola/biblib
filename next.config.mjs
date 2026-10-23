@@ -12,6 +12,14 @@ const nextConfig = {
       { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
     ] }]
   },
+  // Pantallas retiradas del prototipo: el acceso publicado es solo Google OAuth,
+  // así que las rutas antiguas devuelven al login en lugar de un 404.
+  async redirects() {
+    return [
+      { source: "/signup", destination: "/login", permanent: false },
+      { source: "/forgot-password", destination: "/login", permanent: false },
+    ]
+  },
 }
 
 export default nextConfig

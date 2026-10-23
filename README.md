@@ -2,7 +2,7 @@
 
 Biblioteca personal con Next.js, React, Supabase y Drizzle ORM. Permite catalogar y editar libros, organizar estanterías, gestionar el estado de lectura y consultar la colección en tabla, cuadrícula o vista 3D.
 
-La [spec de pendientes](docs/spec-pendientes/README.md) organiza el trabajo futuro en 45 unidades, cinco fases y 17 olas: Supabase local completo, scripts por entorno, varios proveedores ISBN, recuperación, UX y funciones de biblioteca. Es una propuesta; sus comandos nuevos todavía no están implementados.
+La [spec de pendientes](docs/spec-pendientes/README.md) organiza el trabajo futuro en 45 unidades, cinco fases y 17 olas: Supabase local completo, scripts por entorno, varios proveedores ISBN, recuperación, UX y funciones de biblioteca. Es una propuesta; sus comandos nuevos todavía no están implementados. La política de dependencias, el inventario de scripts y la guía de contribución están en [mantenimiento](docs/mantenimiento.md).
 
 ## Desarrollo
 
