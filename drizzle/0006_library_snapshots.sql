@@ -44,7 +44,7 @@ ALTER TABLE "biblib"."import_previews" ADD COLUMN "snapshot_id" uuid;--> stateme
 CREATE UNIQUE INDEX "library_operations_user_id_id_unique" ON "biblib"."library_operations" USING btree ("user_id","id");--> statement-breakpoint
 CREATE UNIQUE INDEX "library_snapshots_user_id_id_unique" ON "biblib"."library_snapshots" USING btree ("user_id","id");--> statement-breakpoint
 CREATE UNIQUE INDEX "library_snapshots_operation_unique" ON "biblib"."library_snapshots" USING btree ("user_id","source_operation_id");--> statement-breakpoint
-CREATE INDEX "library_snapshots_user_id_created_at_idx" ON "biblib"."library_snapshots" USING btree ("user_id","created_at" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "library_snapshots_user_id_created_at_idx" ON "biblib"."library_snapshots" USING btree ("user_id","created_at" DESC NULLS FIRST,"id" DESC NULLS FIRST);--> statement-breakpoint
 CREATE INDEX "library_snapshots_expires_at_idx" ON "biblib"."library_snapshots" USING btree ("expires_at");--> statement-breakpoint
 ALTER TABLE "biblib"."library_snapshot_chunks" ADD CONSTRAINT "library_snapshot_chunks_owner_snapshot_fk" FOREIGN KEY ("user_id","snapshot_id") REFERENCES "biblib"."library_snapshots"("user_id","id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "biblib"."library_snapshots" ADD CONSTRAINT "library_snapshots_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -55,7 +55,7 @@ CREATE INDEX "import_previews_snapshot_id_idx" ON "biblib"."import_previews" USI
 -- Retirada: DROP INDEX de cada uno en una migración posterior; books_user_id_idx se conserva.
 CREATE INDEX "books_user_title_idx" ON "biblib"."books" USING btree ("user_id","title","id");--> statement-breakpoint
 CREATE INDEX "books_user_shelf_title_idx" ON "biblib"."books" USING btree ("user_id","shelf_id","title","id");--> statement-breakpoint
-CREATE INDEX "books_user_created_idx" ON "biblib"."books" USING btree ("user_id","created_at" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "books_user_created_idx" ON "biblib"."books" USING btree ("user_id","created_at" DESC NULLS FIRST,"id" DESC NULLS FIRST);--> statement-breakpoint
 ALTER TABLE "biblib"."import_previews" ADD CONSTRAINT "import_previews_source_check" CHECK (("biblib"."import_previews"."payload" is null) <> ("biblib"."import_previews"."snapshot_id" is null));--> statement-breakpoint
 ALTER TABLE "biblib"."library_operations" ADD CONSTRAINT "library_operations_operation_check" CHECK ("biblib"."library_operations"."operation" in ('import.confirm', 'snapshot.restore'));--> statement-breakpoint
 CREATE POLICY "library_snapshot_chunks_select_own" ON "biblib"."library_snapshot_chunks" AS PERMISSIVE FOR SELECT TO "authenticated" USING ((select auth.uid() = "biblib"."library_snapshot_chunks"."user_id"));--> statement-breakpoint

@@ -91,7 +91,7 @@ export const books = biblibSchema.table(
     // por estantería y «Añadidos recientemente». Aditivos; su retirada es DROP INDEX (docs/operacion.md).
     index("books_user_title_idx").on(table.userId, table.title, table.id),
     index("books_user_shelf_title_idx").on(table.userId, table.shelfId, table.title, table.id),
-    index("books_user_created_idx").on(table.userId, table.createdAt.desc(), table.id.desc()),
+    index("books_user_created_idx").on(table.userId, table.createdAt.desc().nullsFirst(), table.id.desc().nullsFirst()),
     check("books_status_check", sql`${table.status} in ('read', 'reading', 'unread', 'to-read')`),
     check("books_pages_check", sql`${table.numberOfPages} between 0 and 100000`),
     check("books_title_check", sql`length(btrim(${table.title})) between 1 and 500`),
@@ -538,7 +538,7 @@ export const librarySnapshots = biblibSchema.table(
   (table) => [
     uniqueIndex("library_snapshots_user_id_id_unique").on(table.userId, table.id),
     uniqueIndex("library_snapshots_operation_unique").on(table.userId, table.sourceOperationId),
-    index("library_snapshots_user_id_created_at_idx").on(table.userId, table.createdAt.desc(), table.id.desc()),
+    index("library_snapshots_user_id_created_at_idx").on(table.userId, table.createdAt.desc().nullsFirst(), table.id.desc().nullsFirst()),
     index("library_snapshots_expires_at_idx").on(table.expiresAt),
     foreignKey({ name: "library_snapshots_owner_operation_fk", columns: [table.userId, table.sourceOperationId], foreignColumns: [libraryOperations.userId, libraryOperations.id] }),
     check("library_snapshots_reason_check", sql`${table.reason} in ('import.replace', 'snapshot.restore')`),
