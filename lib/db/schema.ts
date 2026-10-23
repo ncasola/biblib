@@ -87,6 +87,11 @@ export const books = biblibSchema.table(
     uniqueIndex("books_user_id_id_unique").on(table.userId, table.id),
     index("books_user_id_idx").on(table.userId),
     index("books_shelf_id_idx").on(table.shelfId),
+    // Índices de lectura medidos por U-QA-03 (tarea T8, migración 0006): listado por título, vista 3D
+    // por estantería y «Añadidos recientemente». Aditivos; su retirada es DROP INDEX (docs/operacion.md).
+    index("books_user_title_idx").on(table.userId, table.title, table.id),
+    index("books_user_shelf_title_idx").on(table.userId, table.shelfId, table.title, table.id),
+    index("books_user_created_idx").on(table.userId, table.createdAt.desc(), table.id.desc()),
     check("books_status_check", sql`${table.status} in ('read', 'reading', 'unread', 'to-read')`),
     check("books_pages_check", sql`${table.numberOfPages} between 0 and 100000`),
     check("books_title_check", sql`length(btrim(${table.title})) between 1 and 500`),
@@ -142,7 +147,11 @@ export const libraryState = biblibSchema.table(
   ],
 ).enableRLS()
 
-/** Vista previa servidor de una importación: entrada validada, plan privado y revisión revisada. */
+/**
+ * Vista previa servidor de una importación: entrada validada, plan privado y revisión revisada.
+ * La de una restauración (U-DAT-02) no copia el contenido: apunta a la versión anterior propia, y
+ * borrar esa versión borra también sus vistas previas.
+ */
 export const importPreviews = biblibSchema.table(
   "import_previews",
   {
@@ -155,15 +164,20 @@ export const importPreviews = biblibSchema.table(
     mode: text("mode").$type<"merge" | "replace">().notNull(),
     rulesVersion: integer("rules_version").notNull(),
     plan: jsonb("plan").$type<ImportPlan>().notNull(),
-    payload: jsonb("payload").$type<LibraryData>().notNull(),
+    payload: jsonb("payload").$type<LibraryData>(),
+    snapshotId: uuid("snapshot_id"),
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
     uniqueIndex("import_previews_user_id_id_unique").on(table.userId, table.id),
     index("import_previews_user_id_expires_at_idx").on(table.userId, table.expiresAt),
+    index("import_previews_snapshot_id_idx").on(table.userId, table.snapshotId).where(sql`${table.snapshotId} is not null`),
     check("import_previews_mode_check", sql`${table.mode} in ('merge', 'replace')`),
     check("import_previews_digest_check", sql`${table.inputDigest} ~ '^[0-9a-f]{64}$'`),
+    // Un archivo importado o una versión anterior propia, nunca las dos cosas ni ninguna.
+    check("import_previews_source_check", sql`(${table.payload} is null) <> (${table.snapshotId} is null)`),
+    foreignKey({ name: "import_previews_owner_snapshot_fk", columns: [table.userId, table.snapshotId], foreignColumns: [librarySnapshots.userId, librarySnapshots.id] }).onDelete("cascade"),
     pgPolicy("import_previews_select_own", {
       for: "select",
       to: authenticatedRole,
@@ -190,7 +204,7 @@ export const libraryOperations = biblibSchema.table(
     userId: uuid("user_id")
       .notNull()
       .references(() => authUsers.id, { onDelete: "cascade" }),
-    operation: text("operation").$type<"import.confirm">().notNull(),
+    operation: text("operation").$type<"import.confirm" | "snapshot.restore">().notNull(),
     idempotencyKey: text("idempotency_key").notNull(),
     inputDigest: text("input_digest").notNull(),
     previewId: uuid("preview_id"),
@@ -201,7 +215,9 @@ export const libraryOperations = biblibSchema.table(
   (table) => [
     uniqueIndex("library_operations_key_unique").on(table.userId, table.operation, table.idempotencyKey),
     uniqueIndex("library_operations_preview_unique").on(table.userId, table.previewId).where(sql`${table.previewId} is not null`),
-    check("library_operations_operation_check", sql`${table.operation} in ('import.confirm')`),
+    // Destino de la FK con propietario de las versiones anteriores (U-DAT-02).
+    uniqueIndex("library_operations_user_id_id_unique").on(table.userId, table.id),
+    check("library_operations_operation_check", sql`${table.operation} in ('import.confirm', 'snapshot.restore')`),
     check("library_operations_status_check", sql`${table.status} in ('committed')`),
     check("library_operations_key_check", sql`length(${table.idempotencyKey}) between 16 and 128`),
     check("library_operations_digest_check", sql`${table.inputDigest} ~ '^[0-9a-f]{64}$'`),
@@ -483,6 +499,84 @@ export const libraryJobItems = biblibSchema.table(
     check("library_job_items_key_check", sql`length(${table.itemKey}) between 1 and 200`),
     check("library_job_items_attempts_check", sql`${table.attempts} >= 0`),
     pgPolicy("library_job_items_select_own", {
+      for: "select",
+      to: authenticatedRole,
+      using: ownRow(table.userId),
+    }),
+  ],
+).enableRLS()
+
+/*
+ * Versiones anteriores de la colección (U-DAT-02). Cada operación destructiva (reemplazo por
+ * importación o restauración) captura antes, en su misma transacción, el estado que sustituye:
+ * una cabecera con cantidades, caducidad y hash, y trozos acotados de filas con su propio hash.
+ * `authenticated` solo lee sus filas; capturar y borrar pasan por `biblib.library_snapshot_*`.
+ */
+export type LibrarySnapshotReason = "import.replace" | "snapshot.restore"
+export interface LibrarySnapshotCounts { books: number; shelves: number; chunks: number; bytes: number }
+
+export const librarySnapshots = biblibSchema.table(
+  "library_snapshots",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => authUsers.id, { onDelete: "cascade" }),
+    // Operación durable (library_operations) que sustituyó este estado, en la misma transacción.
+    sourceOperationId: uuid("source_operation_id").notNull(),
+    reason: text("reason").$type<LibrarySnapshotReason>().notNull(),
+    capturedRevision: uuid("captured_revision").notNull(),
+    schemaVersion: integer("schema_version").notNull().default(1),
+    state: text("state").$type<"capturing" | "ready">().notNull().default("capturing"),
+    counts: jsonb("counts").$type<LibrarySnapshotCounts>().notNull().default({ books: 0, shelves: 0, chunks: 0, bytes: 0 }),
+    digest: text("digest"),
+    // Autoriza borrar esta versión; nunca autoriza escribir datos de la colección.
+    version: uuid("version").notNull().defaultRandom(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("library_snapshots_user_id_id_unique").on(table.userId, table.id),
+    uniqueIndex("library_snapshots_operation_unique").on(table.userId, table.sourceOperationId),
+    index("library_snapshots_user_id_created_at_idx").on(table.userId, table.createdAt.desc(), table.id.desc()),
+    index("library_snapshots_expires_at_idx").on(table.expiresAt),
+    foreignKey({ name: "library_snapshots_owner_operation_fk", columns: [table.userId, table.sourceOperationId], foreignColumns: [libraryOperations.userId, libraryOperations.id] }),
+    check("library_snapshots_reason_check", sql`${table.reason} in ('import.replace', 'snapshot.restore')`),
+    check("library_snapshots_state_check", sql`${table.state} in ('capturing', 'ready')`),
+    check("library_snapshots_digest_check", sql`${table.digest} is null or ${table.digest} ~ '^[0-9a-f]{64}$'`),
+    // Solo se anuncia como válida una versión completa con hash.
+    check("library_snapshots_ready_check", sql`${table.state} <> 'ready' or ${table.digest} is not null`),
+    check("library_snapshots_counts_check", sql`jsonb_typeof(${table.counts}) = 'object'`),
+    check("library_snapshots_schema_version_check", sql`${table.schemaVersion} >= 1`),
+    check("library_snapshots_expiry_check", sql`${table.expiresAt} > ${table.createdAt}`),
+    pgPolicy("library_snapshots_select_own", {
+      for: "select",
+      to: authenticatedRole,
+      using: ownRow(table.userId),
+    }),
+  ],
+).enableRLS()
+
+/** Trozo de una versión anterior: hasta 200 filas de un tipo, con hash de su contenido. */
+export const librarySnapshotChunks = biblibSchema.table(
+  "library_snapshot_chunks",
+  {
+    snapshotId: uuid("snapshot_id").notNull(),
+    userId: uuid("user_id").notNull(),
+    seq: integer("seq").notNull(),
+    kind: text("kind").$type<"shelves" | "books">().notNull(),
+    itemCount: integer("item_count").notNull(),
+    payload: jsonb("payload").$type<Record<string, unknown>[]>().notNull(),
+    digest: text("digest").notNull(),
+  },
+  (table) => [
+    primaryKey({ name: "library_snapshot_chunks_pkey", columns: [table.snapshotId, table.seq] }),
+    foreignKey({ name: "library_snapshot_chunks_owner_snapshot_fk", columns: [table.userId, table.snapshotId], foreignColumns: [librarySnapshots.userId, librarySnapshots.id] }).onDelete("cascade"),
+    check("library_snapshot_chunks_kind_check", sql`${table.kind} in ('shelves', 'books')`),
+    check("library_snapshot_chunks_seq_check", sql`${table.seq} >= 0`),
+    check("library_snapshot_chunks_size_check", sql`${table.itemCount} between 1 and 200 and jsonb_typeof(${table.payload}) = 'array' and jsonb_array_length(${table.payload}) = ${table.itemCount}`),
+    check("library_snapshot_chunks_digest_check", sql`${table.digest} ~ '^[0-9a-f]{64}$'`),
+    pgPolicy("library_snapshot_chunks_select_own", {
       for: "select",
       to: authenticatedRole,
       using: ownRow(table.userId),

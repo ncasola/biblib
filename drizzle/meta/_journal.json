@@ -43,6 +43,13 @@
       "when": 1792780222704,
       "tag": "0005_library_jobs",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792790005512,
+      "tag": "0006_library_snapshots",
+      "breakpoints": true
     }
   ]
 }
