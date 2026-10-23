@@ -1,0 +1,9 @@
+BibLib local · scratch · ea260283d87954c1c405cb5ee4875867dd8b103c86084460f3a74244e06b13fa
+[ok] down: Perfil parado; volúmenes conservados.
+postgres: stopped
+auth: stopped
+rest: stopped
+storage: stopped
+studio: stopped
+mailpit: stopped
+down exit 0
