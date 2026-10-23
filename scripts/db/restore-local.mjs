@@ -74,6 +74,10 @@ export const DERIVED_TABLES = Object.freeze(["library_state", "import_previews",
 // de restauración caen con las demás en la rotación. Tras restaurar se comprueba su integridad.
 export const SNAPSHOT_TABLES = Object.freeze(["library_snapshots", "library_snapshot_chunks"])
 
+// U-EXP-02: preferencias de usuario restaurables con su versión; nunca son caché regenerable.
+// El volcado incluye nombres, filtros, fechas y tokens. Un destino con vistas no está vacío.
+export const SAVED_VIEW_TABLES = Object.freeze(["saved_book_views"])
+
 /**
  * Integridad de las versiones restauradas a partir de hechos agregados (sin IDs ni contenido): un
  * trozo o hash final que no cuadra es un respaldo dañado; una versión vencida o sin completar se

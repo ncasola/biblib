@@ -3,6 +3,7 @@ import { authenticatedRole } from "drizzle-orm/supabase"
 import { pgSchema, uuid, text, timestamp, boolean, integer, bigint, jsonb, uniqueIndex, index, check, pgPolicy, foreignKey, primaryKey, customType, type AnyPgColumn } from "drizzle-orm/pg-core"
 import type { Author, Publisher, Book, CatalogueMetadata, LibraryData } from "@/lib/types"
 import type { ImportPlan, ImportOperationResult } from "@/lib/import-plan"
+import type { SavedViewFilters } from "@/lib/saved-views"
 
 /**
  * `auth.users` de Supabase, solo como destino de las FK (no se exporta: Drizzle Kit no la genera).
@@ -13,6 +14,26 @@ const authUsers = pgSchema("auth").table("users", { id: uuid("id").primaryKey().
 
 export const biblibSchema = pgSchema("biblib")
 const ownRow = (userIdColumn: AnyPgColumn) => sql`(select auth.uid() = ${userIdColumn})`
+
+/** Preferencias privadas independientes de la revisión de colección (U-EXP-02). */
+export const savedBookViews = biblibSchema.table("saved_book_views", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id").notNull().references(() => authUsers.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  filters: jsonb("filters").$type<SavedViewFilters>().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  version: uuid("version").notNull().defaultRandom(),
+}, (table) => [
+  uniqueIndex("saved_book_views_user_name_unique").on(table.userId, sql`lower(${table.name})`),
+  index("saved_book_views_user_updated_idx").on(table.userId, table.updatedAt.desc().nullsFirst()),
+  check("saved_book_views_name_check", sql`length(btrim(${table.name})) between 1 and 80 and ${table.name} = btrim(${table.name})`),
+  check("saved_book_views_filters_check", sql`biblib.saved_view_filters_valid(${table.filters})`),
+  pgPolicy("saved_book_views_select_own", { for: "select", to: authenticatedRole, using: ownRow(table.userId) }),
+  pgPolicy("saved_book_views_insert_own", { for: "insert", to: authenticatedRole, withCheck: ownRow(table.userId) }),
+  pgPolicy("saved_book_views_update_own", { for: "update", to: authenticatedRole, using: ownRow(table.userId), withCheck: ownRow(table.userId) }),
+  pgPolicy("saved_book_views_delete_own", { for: "delete", to: authenticatedRole, using: ownRow(table.userId) }),
+]).enableRLS()
 
 export const shelves = biblibSchema.table(
   "shelves",

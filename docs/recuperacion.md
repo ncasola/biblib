@@ -77,6 +77,20 @@ No contiene contraseñas, claves, JWT, URLs con credenciales ni filas completas.
 
 Ensayo con una versión real (backup → reset → restore → verify): [O10/dat-02](validacion/2026-10-23/O10/dat-02/informe.md).
 
+#### Vistas guardadas (U-EXP-02)
+
+`biblib.saved_book_views` contiene preferencias privadas de la cuenta y es dato restaurable
+(`SAVED_VIEW_TABLES` en `scripts/db/restore-local.mjs`), nunca caché derivada. El volcado de dominio
+incluye nombres, filtros, fechas y versiones; `db:restore:verify` compara sus claves y contenido.
+Un destino con vistas existentes no está vacío: el restore lo rechaza con **6** antes de escribir.
+Su versión controla solo el cambio de la vista y se conserva al restaurar; no autoriza escrituras
+de colección. Tras una recuperación, recargar la lista antes de editar vistas desde una pestaña
+que ya estuviera abierta. El JSON portable actual de Ajustes sigue conteniendo solo libros y
+estanterías; para conservar vistas hay que usar el respaldo administrativo.
+
+Desactivar el panel de vistas conserva tanto sus filas como la navegación por parámetros URL.
+La migración `0007_saved_views` es aditiva; la recuperación no elimina la tabla ni sus datos.
+
 ### Verificación (`db:restore:verify`)
 
 Comprueba los archivos del respaldo; que hay un restore completado de ese respaldo; el ledger idéntico; el manifest de objetos de U-INF-04 (RLS, políticas, grants, FK, índices, columnas, función y trigger de versión) y los hechos de catálogo idénticos al origen; cantidades, claves y contenido por tabla (dominio y ledger completos salvo el token rotado; Auth y Storage por cantidad y claves); que ningún token coincide con el respaldo; la muestra de fichas; sesiones GoTrue reales de A y B con `tests/integration/support/session.mjs`, sus IDs restaurados y RLS con sus claims (solo ven lo suyo, actualizar lo ajeno afecta 0 filas); buckets y cada objeto Storage con su sha256. Escribe el informe en `<respaldo>/rehearsals/` con duración del restore, de la verificación y total, discrepancias y la ventana de datos perdidos, y lo enlaza desde el recibo. Cualquier discrepancia sale con **11**.
