@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 import { createProxyClient } from "@/lib/supabase/proxy"
+import { createSessionAttestation, SESSION_ATTESTATION_HEADER, unverifiedSubject } from "@/lib/supabase/session-attestation"
 import { getSafeRedirectPath, isProtectedPath } from "@/lib/auth-navigation"
 import { buildContentSecurityPolicy, createNonce, CSP_REPORT_ONLY_HEADER, NONCE_HEADER, PRIVATE_CACHE_CONTROL } from "@/lib/security-headers"
 
@@ -14,11 +15,16 @@ export async function proxy(request: NextRequest) {
     googleBooksPreview: process.env.BIBLIB_GOOGLE_BOOKS_ENABLED === "true",
     development: process.env.NODE_ENV === "development",
   })
+  // Atestación de la sesión que este proxy ha verificado con GoTrue (U-FIX-02); vacía hasta entonces.
+  let attestation: string | null = null
   // Se reconstruye en cada uso para incluir las cookies renovadas que se copian a la petición.
   const forward = () => {
     const headers = new Headers(request.headers)
+    // La atestación es interna: la que envíe el cliente se descarta siempre, en cualquier ruta.
+    headers.delete(SESSION_ATTESTATION_HEADER)
     headers.set(NONCE_HEADER, nonce)
     headers.set(CSP_REPORT_ONLY_HEADER, csp)
+    if (attestation) headers.set(SESSION_ATTESTATION_HEADER, attestation)
     return NextResponse.next({ request: { headers } })
   }
   const finish = (response: NextResponse) => {
@@ -44,6 +50,16 @@ export async function proxy(request: NextRequest) {
     const { data: { user }, error } = await supabase.auth.getUser()
     isAuthenticated = Boolean(user)
     sessionError = Boolean(error && error.name !== "AuthSessionMissingError")
+    if (user && !error) {
+      // El token que GoTrue acaba de validar (ya renovado si hacía falta): no hay otra llamada de red.
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session?.access_token && unverifiedSubject(session.access_token) === user.id) {
+        attestation = createSessionAttestation({ userId: user.id, accessToken: session.access_token, nonce })
+        const previousCookies = response.cookies.getAll()
+        response = forward()
+        previousCookies.forEach((cookie) => response.cookies.set(cookie))
+      }
+    }
   } catch {
     sessionError = true
   }
