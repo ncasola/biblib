@@ -1,0 +1,27 @@
+{
+ "comment": "Actualización real 0002→0003 del perfil test con el runner U-INF-04 (sin datos de usuario).",
+ "project": "biblib-test",
+ "profile": "test",
+ "planHash": "a01d86e1a2b1a7ae803bbff3465881c909e22ff8410d3d58b6e54e5b618589f3",
+ "stateBefore": "pending",
+ "pending": [
+  "0003_library_revision"
+ ],
+ "ddlOperations": 36,
+ "risks": [
+  "Todas las migraciones pendientes se aplican en una única transacción: un error revierte el conjunto sin avanzar el ledger.",
+  "0003_library_revision: Añade restricciones sobre datos existentes: falla (y revierte) si hay filas incompatibles.",
+  "0003_library_revision: Crea función/trigger SQL que el snapshot de Drizzle no representa; lo verifica el manifest de objetos.",
+  "drizzle/ o .gitattributes tienen cambios sin commitear: revisa los SQL antes de aplicar."
+ ],
+ "code": 0,
+ "previousHead": "0002_book_versions",
+ "head": "0003_library_revision",
+ "result": "aplicado: 0003_library_revision",
+ "checks": {
+  "total": 76,
+  "ok": 76,
+  "fail": []
+ },
+ "finishedAt": "2026-10-23T14:30:48.054Z"
+}
