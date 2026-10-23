@@ -4,16 +4,27 @@ import { expect, test } from "../lib/fixtures"
 // Escenarios heredados de scripts/smoke-app.mjs que no encajan en otro grupo: recuperación de portadas
 // sin red externa, exportación dividida en partes y nombre de perfil guardado en GoTrue (como A).
 
-// Hallazgo QA-02 (23-10-2026): la recuperación de portadas, «Buscar portada» y el enriquecimiento de la
-// importación llaman a https://openlibrary.org/api/books con fetch directo (lib/library-import.ts) aunque
-// BIBLIB_CATALOGUE_MODE=fixture. Con ISBN reales en A el servidor saldría a Internet: el guard del runner lo
-// bloquea y lo anota. Se activa cuando U-BIB-05 centralice esos flujos en el servicio de catálogo.
-test.fixme("la recuperación de portadas termina en modo fixture sin salir a la red · se activa con U-BIB-05", async ({ page }) => {
-  await page.goto("/settings")
-  await page.getByRole("button", { name: "Recuperar portadas pendientes" }).click()
-  await expect(page.getByText("Búsqueda terminada. Las portadas encontradas ya están guardadas.")).toBeVisible({ timeout: 30_000 })
-  const panel = page.locator("[aria-labelledby=covers-title]")
-  await expect(panel.locator("dl > div").filter({ has: page.locator("dt", { hasText: "Portadas recuperadas" }) }).locator("dd")).toHaveText("0")
+// Recuperación de portadas (U-DAT-03 + U-BIB-05): el trabajo consulta el orquestador en modo fixture, sin
+// salir de loopback (lo vigilan el guard del servidor y el runner). Los fixtures no aportan imágenes: todo
+// libro con ISBN válido y portada genérica termina «sin resultado» y ninguno se modifica.
+test("la recuperación de portadas termina en modo fixture sin salir a la red ni modificar fichas", async ({ page, stack }) => {
+  const [{ started }] = await stack.sql`select clock_timestamp() as started`
+  const coversBefore = await stack.sql`select id, version, cover_large from biblib.books where user_id = ${stack.users.a} order by id`
+  try {
+    await page.goto("/settings")
+    await page.getByRole("button", { name: /^(Recuperar portadas pendientes|Buscar portadas de nuevo)$/ }).click()
+    const panel = page.locator("[aria-labelledby=covers-title]")
+    await expect(panel.getByText("Búsqueda terminada. Las portadas encontradas ya están guardadas.")).toBeVisible({ timeout: 30_000 })
+    await expect(panel.locator("dl > div").filter({ has: page.locator("dt", { hasText: "Portadas recuperadas" }) }).locator("dd")).toHaveText("0")
+    const [job] = await stack.sql`select id, state, counts from biblib.library_jobs where user_id = ${stack.users.a} and kind = 'covers' and created_at >= ${started}`
+    expect(job.state).toBe("succeeded")
+    const states = await stack.sql`select state, count(*)::int as n from biblib.library_job_items where job_id = ${job.id} group by state`
+    expect(states.every((row) => ["not_found", "skipped"].includes(String(row.state))), "Sin fuente de imágenes en fixture: sin portadas recuperadas ni fallos").toBe(true)
+    expect(await stack.sql`select id, version, cover_large from biblib.books where user_id = ${stack.users.a} order by id`, "Ninguna ficha cambia").toEqual(coversBefore)
+  } finally {
+    // Los trabajos del ensayo no son datos del censo: se retiran para no acumularlos entre ejecuciones.
+    await stack.sql`delete from biblib.library_jobs where user_id = ${stack.users.a} and created_at >= ${started}`
+  }
 })
 
 test("una colección de más de 2000 fichas se exporta en dos partes importables", async ({ page, stack, data }) => {
