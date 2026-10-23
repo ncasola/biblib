@@ -4,8 +4,8 @@ import { EXIT } from "../lib/exit-codes.mjs"
 // Manifest de objetos deliberados de BibLib. Se comprueba con metadatos de pg_catalog e
 // information_schema y con expresiones normalizadas, nunca comparando el pretty-print.
 // `since`/`until` indican la migración que introduce o retira cada objeto.
-const M0 = "0000_biblib_init", M1 = "0001_library_integrity", M2 = "0002_book_versions", M3 = "0003_library_revision", M4 = "0004_catalogue_coordination", M5 = "0005_library_jobs"
-export const MANIFEST_MIGRATIONS = [M0, M1, M2, M3, M4, M5]
+const M0 = "0000_biblib_init", M1 = "0001_library_integrity", M2 = "0002_book_versions", M3 = "0003_library_revision", M4 = "0004_catalogue_coordination", M5 = "0005_library_jobs", M6 = "0006_library_snapshots"
+export const MANIFEST_MIGRATIONS = [M0, M1, M2, M3, M4, M5, M6]
 
 const own = "user_id=auth.uid"
 const ownNotDefault = "user_id=auth.uidandnotis_default"
@@ -64,10 +64,14 @@ const catalogueFunction = (name, returns, args) => ({ name, language: "plpgsql",
 // Trabajos (0005): crear y controlar con auth.uid(); reclamar, renovar, cercar y el ciclo de vida solo desde el servidor.
 const jobTables = ["library_jobs", "library_job_items", "account_lifecycle"]
 const jobFunction = (name, returns, args, authenticated = false) => ({ name, language: "plpgsql", returns, args, searchPath: "search_path=pg_catalog", securityDefiner: true, body: JOBS[name], execute: { authenticated, anon: false }, since: M5 })
+// Versiones anteriores (0006): authenticated captura, consulta IDs ocupados y borra con auth.uid(); la purga solo desde el servidor.
+const SNAPSHOTS = migrationBodies(M6)
+const snapshotTables = ["library_snapshots", "library_snapshot_chunks"]
+const snapshotFunction = (name, returns, args, authenticated = true) => ({ name, language: "plpgsql", returns, args, searchPath: "search_path=pg_catalog", securityDefiner: true, body: SNAPSHOTS[name], execute: { authenticated, anon: false }, since: M6 })
 const jobStateTokens = ["'queued'", "'running'", "'waiting_retry'", "'needs_review'", "'paused'", "'succeeded'", "'partially_succeeded'", "'failed'", "'cancelled'", "'expired'"]
 
 export const MANIFEST = Object.freeze({
-  tables: [{ name: "shelves", since: M0 }, { name: "books", since: M0 }, { name: "library_state", since: M3 }, { name: "import_previews", since: M3 }, { name: "library_operations", since: M3 }, ...catalogueTables.map((name) => ({ name, since: M4 })), ...jobTables.map((name) => ({ name, since: M5 }))],
+  tables: [{ name: "shelves", since: M0 }, { name: "books", since: M0 }, { name: "library_state", since: M3 }, { name: "import_previews", since: M3 }, { name: "library_operations", since: M3 }, ...catalogueTables.map((name) => ({ name, since: M4 })), ...jobTables.map((name) => ({ name, since: M5 })), ...snapshotTables.map((name) => ({ name, since: M6 }))],
   policies: [
     policy("shelves", "shelves_select_own", "SELECT", own, null),
     policy("shelves", "shelves_insert_own", "INSERT", null, own),
@@ -86,12 +90,13 @@ export const MANIFEST = Object.freeze({
     policy("catalogue_private_cache", "catalogue_private_cache_select_own", "SELECT", "selectauth.uid=catalogue_private_cache.owner_id", null, M4),
     policy("catalogue_private_cache", "catalogue_private_cache_delete_own", "DELETE", "selectauth.uid=catalogue_private_cache.owner_id", null, M4),
     ...jobTables.map((table) => policy(table, `${table}_select_own`, "SELECT", ownSelect(table), null, M5)),
+    ...snapshotTables.map((table) => policy(table, `${table}_select_own`, "SELECT", ownSelect(table), null, M6)),
   ],
   // library_state solo se lee: la revisión cambia por lock_library()/triggers, nunca por escritura directa.
   // La caché compartida, las consultas en vuelo y las cuotas no tienen ningún privilegio de cliente.
   grants: {
-    authenticated: { shelves: ["DELETE", "INSERT", "SELECT", "UPDATE"], books: ["DELETE", "INSERT", "SELECT", "UPDATE"], library_state: ["SELECT"], import_previews: ["DELETE", "INSERT", "SELECT"], library_operations: ["INSERT", "SELECT"], catalogue_cache: [], catalogue_inflight: [], catalogue_quota_buckets: [], catalogue_quota_reservations: [], catalogue_private_cache: ["DELETE", "SELECT"], library_jobs: ["SELECT"], library_job_items: ["SELECT"], account_lifecycle: ["SELECT"] },
-    anon: { shelves: [], books: [], library_state: [], import_previews: [], library_operations: [], ...Object.fromEntries([...catalogueTables, ...jobTables].map((name) => [name, []])) },
+    authenticated: { shelves: ["DELETE", "INSERT", "SELECT", "UPDATE"], books: ["DELETE", "INSERT", "SELECT", "UPDATE"], library_state: ["SELECT"], import_previews: ["DELETE", "INSERT", "SELECT"], library_operations: ["INSERT", "SELECT"], catalogue_cache: [], catalogue_inflight: [], catalogue_quota_buckets: [], catalogue_quota_reservations: [], catalogue_private_cache: ["DELETE", "SELECT"], library_jobs: ["SELECT"], library_job_items: ["SELECT"], account_lifecycle: ["SELECT"], library_snapshots: ["SELECT"], library_snapshot_chunks: ["SELECT"] },
+    anon: { shelves: [], books: [], library_state: [], import_previews: [], library_operations: [], ...Object.fromEntries([...catalogueTables, ...jobTables, ...snapshotTables].map((name) => [name, []])) },
   },
   constraints: [
     { table: "shelves", name: "shelves_pkey", type: "p", columns: ["id"], since: M0 },
@@ -162,6 +167,27 @@ export const MANIFEST = Object.freeze({
     { table: "library_job_items", name: "library_job_items_state_check", type: "c", columns: ["state"], tokens: ["'pending'", "'waiting_retry'", "'succeeded'", "'not_found'", "'skipped'", "'failed'"], since: M5 },
     { table: "library_job_items", name: "library_job_items_key_check", type: "c", columns: ["item_key"], tokens: ["length(item_key)", ">=1", "<=200"], since: M5 },
     { table: "library_job_items", name: "library_job_items_attempts_check", type: "c", columns: ["attempts"], tokens: ["attempts>=0"], since: M5 },
+    // Una vista previa importa un archivo o restaura una versión propia; borrar la versión borra sus vistas previas.
+    { table: "import_previews", name: "import_previews_source_check", type: "c", columns: ["payload", "snapshot_id"], tokens: ["payload is null", "<>", "snapshot_id is null"], since: M6 },
+    { table: "import_previews", name: "import_previews_owner_snapshot_fk", type: "f", columns: ["user_id", "snapshot_id"], references: "biblib.library_snapshots", refColumns: ["user_id", "id"], onDelete: "c", since: M6 },
+    { table: "library_snapshots", name: "library_snapshots_pkey", type: "p", columns: ["id"], since: M6 },
+    { table: "library_snapshots", name: "library_snapshots_user_id_users_id_fk", type: "f", columns: ["user_id"], references: "auth.users", refColumns: ["id"], onDelete: "c", since: M6 },
+    // La operación que sustituyó el estado: sin acción al borrar, para que purgar operaciones no borre versiones en silencio.
+    { table: "library_snapshots", name: "library_snapshots_owner_operation_fk", type: "f", columns: ["user_id", "source_operation_id"], references: "biblib.library_operations", refColumns: ["user_id", "id"], onDelete: "a", since: M6 },
+    { table: "library_snapshots", name: "library_snapshots_reason_check", type: "c", columns: ["reason"], tokens: ["'import.replace'", "'snapshot.restore'"], since: M6 },
+    { table: "library_snapshots", name: "library_snapshots_state_check", type: "c", columns: ["state"], tokens: ["'capturing'", "'ready'"], since: M6 },
+    { table: "library_snapshots", name: "library_snapshots_digest_check", type: "c", columns: ["digest"], tokens: ["digest is null", "'^[0-9a-f]{64}$'"], since: M6 },
+    // Solo se anuncia como válida una versión completa con hash.
+    { table: "library_snapshots", name: "library_snapshots_ready_check", type: "c", columns: ["state", "digest"], tokens: ["state<>'ready'", "digest is not null"], since: M6 },
+    { table: "library_snapshots", name: "library_snapshots_counts_check", type: "c", columns: ["counts"], tokens: ["jsonb_typeof(counts)", "'object'"], since: M6 },
+    { table: "library_snapshots", name: "library_snapshots_schema_version_check", type: "c", columns: ["schema_version"], tokens: ["schema_version>=1"], since: M6 },
+    { table: "library_snapshots", name: "library_snapshots_expiry_check", type: "c", columns: ["expires_at", "created_at"], tokens: ["expires_at>created_at"], since: M6 },
+    { table: "library_snapshot_chunks", name: "library_snapshot_chunks_pkey", type: "p", columns: ["snapshot_id", "seq"], since: M6 },
+    { table: "library_snapshot_chunks", name: "library_snapshot_chunks_owner_snapshot_fk", type: "f", columns: ["user_id", "snapshot_id"], references: "biblib.library_snapshots", refColumns: ["user_id", "id"], onDelete: "c", since: M6 },
+    { table: "library_snapshot_chunks", name: "library_snapshot_chunks_kind_check", type: "c", columns: ["kind"], tokens: ["'shelves'", "'books'"], since: M6 },
+    { table: "library_snapshot_chunks", name: "library_snapshot_chunks_seq_check", type: "c", columns: ["seq"], tokens: ["seq>=0"], since: M6 },
+    { table: "library_snapshot_chunks", name: "library_snapshot_chunks_size_check", type: "c", columns: ["item_count", "payload"], tokens: [">=1", "<=200", "jsonb_array_length(payload)=item_count"], since: M6 },
+    { table: "library_snapshot_chunks", name: "library_snapshot_chunks_digest_check", type: "c", columns: ["digest"], tokens: ["'^[0-9a-f]{64}$'"], since: M6 },
   ],
   indexes: [
     { table: "shelves", name: "shelves_user_id_title_unique", unique: true, columns: ["user_id", "title"], partial: false, since: M0 },
@@ -187,6 +213,16 @@ export const MANIFEST = Object.freeze({
     { table: "library_jobs", name: "library_jobs_due_idx", unique: false, columns: ["next_attempt_at"], partial: true, since: M5 },
     { table: "library_job_items", name: "library_job_items_job_item_phase_unique", unique: true, columns: ["job_id", "item_key", "phase"], partial: false, since: M5 },
     { table: "library_job_items", name: "library_job_items_due_idx", unique: false, columns: ["job_id", "state", "next_attempt_at"], partial: false, since: M5 },
+    // Tarea T8 de U-QA-03: listado por título, vista 3D por estantería y «Añadidos recientemente».
+    { table: "books", name: "books_user_title_idx", unique: false, columns: ["user_id", "title", "id"], partial: false, since: M6 },
+    { table: "books", name: "books_user_shelf_title_idx", unique: false, columns: ["user_id", "shelf_id", "title", "id"], partial: false, since: M6 },
+    { table: "books", name: "books_user_created_idx", unique: false, columns: ["user_id", "created_at", "id"], partial: false, since: M6 },
+    { table: "import_previews", name: "import_previews_snapshot_id_idx", unique: false, columns: ["user_id", "snapshot_id"], partial: true, since: M6 },
+    { table: "library_operations", name: "library_operations_user_id_id_unique", unique: true, columns: ["user_id", "id"], partial: false, since: M6 },
+    { table: "library_snapshots", name: "library_snapshots_user_id_id_unique", unique: true, columns: ["user_id", "id"], partial: false, since: M6 },
+    { table: "library_snapshots", name: "library_snapshots_operation_unique", unique: true, columns: ["user_id", "source_operation_id"], partial: false, since: M6 },
+    { table: "library_snapshots", name: "library_snapshots_user_id_created_at_idx", unique: false, columns: ["user_id", "created_at", "id"], partial: false, since: M6 },
+    { table: "library_snapshots", name: "library_snapshots_expires_at_idx", unique: false, columns: ["expires_at"], partial: false, since: M6 },
   ],
   columns: [
     { table: "books", name: "catalogue", type: "jsonb", notNull: true, since: M1 },
@@ -210,6 +246,14 @@ export const MANIFEST = Object.freeze({
     { table: "library_jobs", name: "expires_at", type: "timestamp with time zone", notNull: true, since: M5 },
     { table: "library_jobs", name: "input_digest", type: "text", notNull: true, since: M5 },
     { table: "library_job_items", name: "target_version", type: "uuid", notNull: false, since: M5 },
+    { table: "import_previews", name: "snapshot_id", type: "uuid", notNull: false, since: M6 },
+    { table: "library_snapshots", name: "state", type: "text", notNull: true, defaultTokens: ["'capturing'"], since: M6 },
+    { table: "library_snapshots", name: "digest", type: "text", notNull: false, since: M6 },
+    { table: "library_snapshots", name: "version", type: "uuid", notNull: true, defaultTokens: ["gen_random_uuid()"], since: M6 },
+    { table: "library_snapshots", name: "expires_at", type: "timestamp with time zone", notNull: true, since: M6 },
+    { table: "library_snapshots", name: "source_operation_id", type: "uuid", notNull: true, since: M6 },
+    { table: "library_snapshot_chunks", name: "payload", type: "jsonb", notNull: true, since: M6 },
+    { table: "library_snapshot_chunks", name: "digest", type: "text", notNull: true, since: M6 },
   ],
   functions: [
     { name: "rotate_book_version", language: "plpgsql", returns: "trigger", args: 0, searchPath: "search_path=pg_catalog", securityDefiner: false, body: "beginnew.version:=gen_random_uuid();returnnew;end;", since: M2 },
@@ -230,6 +274,10 @@ export const MANIFEST = Object.freeze({
     jobFunction("library_job_claim", "jsonb", 3),
     jobFunction("library_job_renew", "boolean", 4),
     jobFunction("library_job_fence", "uuid", 3),
+    snapshotFunction("library_snapshot_capture", "jsonb", 2),
+    snapshotFunction("library_snapshot_foreign_ids", "uuid[]", 1),
+    snapshotFunction("library_snapshot_delete", "text", 2),
+    snapshotFunction("library_snapshot_purge_expired", "integer", 1, false),
   ],
   // tgtype: ROW(1) | BEFORE(2) | INSERT(4) | DELETE(8) | UPDATE(16). BEFORE INSERT OR UPDATE = 23; AFTER INSERT OR UPDATE OR DELETE = 29.
   triggers: [

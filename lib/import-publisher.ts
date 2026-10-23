@@ -1,20 +1,25 @@
-import { createHash } from "node:crypto"
+import { createHash, randomUUID } from "node:crypto"
 import { and, asc, eq, sql } from "drizzle-orm"
 import type { DatabaseTransaction } from "./db/client"
-import { books, importPreviews, libraryOperations, shelves } from "./db/schema"
+import { books, importPreviews, libraryOperations, librarySnapshots, shelves } from "./db/schema"
 import { DomainError, idempotencyConflict, previewExpired, revisionConflict } from "./domain-errors"
 import { normalizedBookIdentifier } from "./isbn"
 import { parseLibraryImport } from "./library-import"
 import {
   buildImportPlan, canonicalJson, confirmationInput, decideConfirmation, operationResult,
-  type CollectionSnapshot, type IdAllocator, type ImportOperationResult, type ImportPlan,
+  type CollectionSnapshot, type ConfirmDecision, type IdAllocator, type ImportOperationResult, type ImportPlan,
 } from "./import-plan"
+import {
+  applyRestorePlan, buildRestorePlan, captureSnapshot, foreignSnapshotIds, readSnapshotContent, readSnapshotHeader, restoreDigest,
+  snapshotExpired, snapshotUnavailable,
+} from "./library-snapshots"
 import type { LibraryData } from "./types"
 
 // Publicador base de importaciones (U-DAT-03), extraído de la confirmación de U-DAT-01. Recibe una
 // transacción ya situada en el contexto RLS del dueño y no hace red: bloqueo de colección, CAS de
-// revisión, mapeo de IDs, SQL por conjuntos y resultado durable. U-DAT-02 le añadirá el snapshot y
-// U-DAT-04 los conjuntos multiparte.
+// revisión, mapeo de IDs, SQL por conjuntos y resultado durable. U-DAT-02 añade la versión anterior:
+// un reemplazo o una restauración capturan el estado que sustituyen en esta misma transacción, antes
+// de escribir; si la captura falla no se publica nada. U-DAT-04 añadirá los conjuntos multiparte.
 
 export interface PublishRequest {
   userId: string
@@ -30,6 +35,13 @@ export interface PublishOutcome {
   replayed: boolean
   /** IDs de los libros insertados por esta publicación (vacío al recuperar un resultado). */
   insertedBookIds: string[]
+  /** Versión anterior capturada por esta publicación (reemplazo o restauración); null al fusionar o recuperar. */
+  snapshotId: string | null
+}
+
+/** Puntos de prueba entre la captura y la publicación; producción no los usa. */
+export interface PublishHooks {
+  afterCapture?(snapshotId: string): Promise<void> | void
 }
 
 const sha256 = (text: string) => createHash("sha256").update(text).digest("hex")
@@ -89,7 +101,7 @@ async function applyPlan(tx: DatabaseTransaction, userId: string, payload: Libra
  * (una repetición idéntica recupera el resultado durable), caducidad/reglas y revisión. Nunca
  * fuerza: un rechazo lanza `DomainError` sin escribir nada.
  */
-export async function publishImport(tx: DatabaseTransaction, request: PublishRequest): Promise<PublishOutcome> {
+export async function publishImport(tx: DatabaseTransaction, request: PublishRequest, hooks: PublishHooks = {}): Promise<PublishOutcome> {
   const { userId, previewId, expectedRevision, idempotencyKey } = request
   const currentRevision = await lockCollection(tx)
   const [preview] = await tx.select({ preview: importPreviews, expired: sql<boolean>`${importPreviews.expiresAt} <= now()` }).from(importPreviews)
@@ -105,26 +117,93 @@ export async function publishImport(tx: DatabaseTransaction, request: PublishReq
     preview: preview ? { id: preview.preview.id, revision: preview.preview.revision, expired: preview.expired, rulesVersion: preview.preview.rulesVersion, confirmed: Boolean(consumed) } : null,
     previewId, digest, expectedRevision, currentRevision,
   })
-  if (decision.kind === "replay") return { operationId: existing!.id, result: existing!.result, replayed: true, insertedBookIds: [] }
-  if (decision.kind === "reject") {
-    if (decision.code === "IDEMPOTENCY_CONFLICT") throw idempotencyConflict()
-    if (decision.code === "PREVIEW_EXPIRED") throw previewExpired()
-    if (decision.code === "REVISION_CONFLICT") throw revisionConflict()
-    if (decision.code === "ALREADY_CONFIRMED") throw new DomainError("CONFLICT", "Esta revisión ya se confirmó. Prepara una nueva si quieres volver a importar el archivo.")
-    throw new DomainError("NOT_FOUND", "La revisión de la importación no está disponible. Prepárala de nuevo.")
-  }
+  if (decision.kind === "replay") return { operationId: existing!.id, result: existing!.result, replayed: true, insertedBookIds: [], snapshotId: null }
+  if (decision.kind === "reject") rejectConfirmation(decision.code, {
+    notFound: "La revisión de la importación no está disponible. Prepárala de nuevo.",
+    alreadyConfirmed: "Esta revisión ya se confirmó. Prepara una nueva si quieres volver a importar el archivo.",
+  })
 
   // Se vuelve a validar la entrada almacenada y a derivar el plan: con la misma revisión debe coincidir.
   const stored = preview!.preview
+  // Una vista previa de restauración solo se confirma con restoreSnapshotAction.
+  if (stored.snapshotId || !stored.payload) throw new DomainError("NOT_FOUND", "La revisión de la importación no está disponible. Prepárala de nuevo.")
   let payload: LibraryData
   try { payload = parseLibraryImport(stored.payload) } catch { throw previewExpired() }
   const plan = buildImportPlan({ imported: payload, current: await readCollectionSnapshot(tx, userId), mode: stored.mode, allocateId: previewAllocator(stored.id),
     covers: { found: stored.plan.counts.coversFound, pending: stored.plan.counts.coversPending } })
   if (canonicalJson(plan) !== canonicalJson(stored.plan)) throw revisionConflict()
-  await applyPlan(tx, userId, payload, plan)
   const result = operationResult(plan)
-  const [operation] = await tx.insert(libraryOperations).values({
-    userId, operation: "import.confirm", idempotencyKey, inputDigest: digest!, previewId: stored.id, status: "committed", result,
-  }).returning({ id: libraryOperations.id })
-  return { operationId: operation.id, result, replayed: false, insertedBookIds: plan.books.insert.map((entry) => entry.id) }
+  // La operación se registra antes de escribir para que la versión anterior la cite en esta misma transacción.
+  const operationId = randomUUID()
+  await tx.insert(libraryOperations).values({
+    id: operationId, userId, operation: "import.confirm", idempotencyKey, inputDigest: digest!, previewId: stored.id, status: "committed", result,
+  })
+  let snapshotId: string | null = null
+  if (plan.mode === "replace") {
+    snapshotId = (await captureSnapshot(tx, { operationId, reason: "import.replace" })).id
+    await hooks.afterCapture?.(snapshotId)
+  }
+  await applyPlan(tx, userId, payload, plan)
+  return { operationId, result, replayed: false, insertedBookIds: plan.books.insert.map((entry) => entry.id), snapshotId }
+}
+
+function rejectConfirmation(code: Extract<ConfirmDecision, { kind: "reject" }>["code"], messages: { notFound: string; alreadyConfirmed: string }): never {
+  if (code === "IDEMPOTENCY_CONFLICT") throw idempotencyConflict()
+  if (code === "PREVIEW_EXPIRED") throw previewExpired()
+  if (code === "REVISION_CONFLICT") throw revisionConflict()
+  if (code === "ALREADY_CONFIRMED") throw new DomainError("CONFLICT", messages.alreadyConfirmed)
+  throw new DomainError("NOT_FOUND", messages.notFound)
+}
+
+/**
+ * Restaura una versión anterior propia a partir de su vista previa (U-DAT-02), con el mismo orden de
+ * decisión que una importación: clave, caducidad/reglas y revisión, bajo el bloqueo de colección.
+ * Antes de sustituir nada captura otra versión del estado actual en esta transacción. La versión
+ * restaurada se verifica por hash y el plan se vuelve a derivar: si la colección cambió, conflicto.
+ */
+export async function publishSnapshotRestore(tx: DatabaseTransaction, request: PublishRequest, hooks: PublishHooks = {}): Promise<PublishOutcome> {
+  const { userId, previewId, expectedRevision, idempotencyKey } = request
+  const currentRevision = await lockCollection(tx)
+  const [preview] = await tx.select({ preview: importPreviews, expired: sql<boolean>`${importPreviews.expiresAt} <= now()` }).from(importPreviews)
+    .where(and(eq(importPreviews.id, previewId), eq(importPreviews.userId, userId))).limit(1)
+  const restorable = preview?.preview.snapshotId ? preview : undefined
+  const [existing] = await tx.select().from(libraryOperations)
+    .where(and(eq(libraryOperations.userId, userId), eq(libraryOperations.operation, "snapshot.restore"), eq(libraryOperations.idempotencyKey, idempotencyKey))).limit(1)
+  const [consumed] = restorable ? await tx.select({ id: libraryOperations.id }).from(libraryOperations)
+    .where(and(eq(libraryOperations.userId, userId), eq(libraryOperations.previewId, previewId))).limit(1) : []
+  const digest = restorable ? restoreDigest(restorable.preview) : null
+
+  const decision = decideConfirmation({
+    existing: existing ? { operationId: existing.id, inputDigest: existing.inputDigest, previewId: existing.previewId } : null,
+    preview: restorable ? { id: restorable.preview.id, revision: restorable.preview.revision, expired: restorable.expired, rulesVersion: restorable.preview.rulesVersion, confirmed: Boolean(consumed) } : null,
+    previewId, digest, expectedRevision, currentRevision,
+  })
+  if (decision.kind === "replay") {
+    const [snapshot] = await tx.select({ id: librarySnapshots.id }).from(librarySnapshots)
+      .where(and(eq(librarySnapshots.userId, userId), eq(librarySnapshots.sourceOperationId, existing!.id))).limit(1)
+    return { operationId: existing!.id, result: existing!.result, replayed: true, insertedBookIds: [], snapshotId: snapshot?.id ?? null }
+  }
+  // Borrar la versión borra sus vistas previas: una restauración en preparación responde «no disponible».
+  if (decision.kind === "reject") rejectConfirmation(decision.code, {
+    notFound: snapshotUnavailable().message,
+    alreadyConfirmed: "Esta restauración ya se aplicó. Revisa el historial y prepara otra si la necesitas.",
+  })
+
+  const stored = restorable!.preview
+  const header = await readSnapshotHeader(tx, userId, stored.snapshotId!)
+  if (!header) throw snapshotUnavailable()
+  if (header.expired) throw snapshotExpired()
+  if (header.digest !== stored.inputDigest) throw revisionConflict()
+  const content = await readSnapshotContent(tx, userId, header)
+  const plan = buildRestorePlan({ snapshot: content, current: await readCollectionSnapshot(tx, userId), foreign: await foreignSnapshotIds(tx, header.id), allocateId: previewAllocator(stored.id) })
+  if (canonicalJson(plan) !== canonicalJson(stored.plan)) throw revisionConflict()
+  const result = operationResult(plan)
+  const operationId = randomUUID()
+  await tx.insert(libraryOperations).values({
+    id: operationId, userId, operation: "snapshot.restore", idempotencyKey, inputDigest: digest!, previewId: stored.id, status: "committed", result,
+  })
+  const snapshotId = (await captureSnapshot(tx, { operationId, reason: "snapshot.restore" })).id
+  await hooks.afterCapture?.(snapshotId)
+  await applyRestorePlan(tx, userId, content, plan)
+  return { operationId, result, replayed: false, insertedBookIds: [], snapshotId }
 }

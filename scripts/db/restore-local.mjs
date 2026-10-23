@@ -68,6 +68,41 @@ export function loadBackup(root, options) {
 // confirmadas, es decir, actividad real.
 export const DERIVED_TABLES = Object.freeze(["library_state", "import_previews", "catalogue_cache", "catalogue_inflight", "catalogue_quota_buckets", "catalogue_quota_reservations", "catalogue_private_cache"])
 
+// Versiones anteriores (U-DAT-02, 0006): son datos de la cuenta, no derivados. Se restauran tal cual
+// con el volcado de dominio (también su `version`, que solo autoriza borrar esa versión, y su
+// caducidad, que sigue corriendo), por eso un destino con versiones no está vacío. Sus vistas previas
+// de restauración caen con las demás en la rotación. Tras restaurar se comprueba su integridad.
+export const SNAPSHOT_TABLES = Object.freeze(["library_snapshots", "library_snapshot_chunks"])
+
+/**
+ * Integridad de las versiones restauradas a partir de hechos agregados (sin IDs ni contenido): un
+ * trozo o hash final que no cuadra es un respaldo dañado; una versión vencida o sin completar se
+ * informa para revisión, porque ninguna de las dos se lista ni se restaura.
+ */
+export function classifySnapshots(rows) {
+  const damaged = rows.filter((row) => row.state === "ready" && (!row.chunksOk || !row.digestOk || row.chunks === 0))
+  if (damaged.length) fail(EXIT.VERIFICATION_FAILED, `${damaged.length} versión(es) anterior(es) restauradas no superan su hash: el respaldo está dañado o alterado.`, "rotate")
+  const review = []
+  const capturing = rows.filter((row) => row.state !== "ready").length
+  const expired = rows.filter((row) => row.state === "ready" && row.expired).length
+  if (capturing) review.push({ table: "biblib.library_snapshots", message: `${capturing} versión(es) sin completar: no se listan ni se restauran; elimínalas tras revisar su origen.` })
+  if (expired) review.push({ table: "biblib.library_snapshots", message: `${expired} versión(es) vencidas: se retirarán en la siguiente captura o con library_snapshot_purge_expired.` })
+  return { restored: rows.length - capturing, chunks: rows.reduce((total, row) => total + row.chunks, 0), expired, capturing, review }
+}
+
+/** Lee los hechos de integridad de las versiones restauradas dentro de la transacción del llamador. */
+export async function verifyRestoredSnapshots(tx) {
+  const [present] = await tx`select to_regclass('biblib.library_snapshots') is not null as found`
+  if (!present.found) return { restored: 0, chunks: 0, expired: 0, capturing: 0, review: [] }
+  const rows = await tx`select s.state, s.expires_at <= now() as expired, count(c.seq)::integer as chunks,
+      coalesce(bool_and(c.digest = encode(sha256(convert_to(c.payload::text, 'UTF8')), 'hex')), true) as chunks_ok,
+      coalesce(s.digest = encode(sha256(convert_to(concat_ws('|', 'biblib.snapshot.v1', (s.counts->>'books')::integer, (s.counts->>'shelves')::integer,
+        coalesce(string_agg(c.digest, '' order by c.seq), '')), 'UTF8')), 'hex'), false) as digest_ok
+    from biblib.library_snapshots as s left join biblib.library_snapshot_chunks as c on c.snapshot_id = s.id
+    group by s.id`
+  return classifySnapshots(rows.map((row) => ({ state: row.state, expired: row.expired, chunks: row.chunks, chunksOk: row.chunks_ok, digestOk: row.digest_ok })))
+}
+
 /**
  * Destino vacío o recién reseteado: solo puede contener las cuentas, bibliotecas y el objeto
  * del censo de fixtures que vuelve a crear `db:reset:local`, más filas de tablas derivadas.
@@ -219,7 +254,11 @@ export async function runRestore(options, deps = {}) {
     save("storage", "passed", await restoreStorage(admin, manifest, backup.objects, destination))
 
     save("rotate", "running")
-    const rotation = await sql.begin((tx) => rotateRestoredTokens(tx))
+    const rotation = await sql.begin(async (tx) => {
+      const rotated = await rotateRestoredTokens(tx)
+      const snapshots = await verifyRestoredSnapshots(tx)
+      return { ...rotated, snapshots, review: [...rotated.review, ...snapshots.review] }
+    })
     if (rotation.staleWriteRejected === false) fail(EXIT.VERIFICATION_FAILED, "Una escritura condicional con una versión del respaldo siguió aplicando tras la rotación.", "rotate")
     save("rotate", "passed", rotation)
 

@@ -1,0 +1,41 @@
+# Antes (inicio de la unidad)
+supabase_studio_holaerp Up 10 hours (healthy)
+supabase_pg_meta_holaerp Up 10 hours (healthy)
+supabase_edge_runtime_holaerp Exited (255) 10 hours ago
+supabase_storage_holaerp Up 10 hours (healthy)
+supabase_rest_holaerp Up 10 hours
+supabase_realtime_holaerp Up 10 hours (healthy)
+supabase_inbucket_holaerp Up 10 hours (healthy)
+supabase_auth_holaerp Up 10 hours (healthy)
+supabase_kong_holaerp Up 10 hours (healthy)
+supabase_db_holaerp Up 10 hours (healthy)
+holaerp-local-redis Up 10 hours (healthy)
+holaerp-ps_db-data
+holaerp-ps_ps-data
+holaerp-woo_db-data
+holaerp-woo_wp-data
+supabase_db_holaerp
+supabase_edge_runtime_holaerp
+supabase_storage_holaerp
+
+# Después
+supabase_studio_holaerp Up 11 hours (healthy)
+supabase_pg_meta_holaerp Up 11 hours (healthy)
+supabase_edge_runtime_holaerp Exited (255) 11 hours ago
+supabase_storage_holaerp Up 11 hours (healthy)
+supabase_rest_holaerp Up 11 hours
+supabase_realtime_holaerp Up 11 hours (healthy)
+supabase_inbucket_holaerp Up 11 hours (healthy)
+supabase_auth_holaerp Up 11 hours (healthy)
+supabase_kong_holaerp Up 11 hours (healthy)
+supabase_db_holaerp Up 11 hours (healthy)
+holaerp-local-redis Up 11 hours (healthy)
+holaerp-ps_db-data
+holaerp-ps_ps-data
+holaerp-woo_db-data
+holaerp-woo_wp-data
+supabase_db_holaerp
+supabase_edge_runtime_holaerp
+supabase_storage_holaerp
+
+Mismos contenedores, estados y volúmenes; solo cambia el tiempo transcurrido.

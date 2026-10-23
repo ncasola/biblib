@@ -15,11 +15,12 @@ import { classify, closeConnection, connect, inspectDatabase, readLedger, resolv
 
 const repo = fileURLToPath(new URL("../../", import.meta.url))
 const drizzleDir = path.join(repo, "drizzle")
-// Metadatos reales capturados de Supabase local: tras 0002 (U-INF-04), tras 0003 (U-DAT-01), tras 0004 (U-DAT-05) y tras 0005 (U-DAT-03, head actual).
+// Metadatos reales capturados de Supabase local: tras 0002 (U-INF-04), tras 0003 (U-DAT-01), tras 0004 (U-DAT-05), tras 0005 (U-DAT-03) y tras 0006 (U-DAT-02, head actual).
 const facts0002 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0002.json"), "utf8"))
 const facts0003 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0003.json"), "utf8"))
 const facts0004 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0004.json"), "utf8"))
-const facts = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0005.json"), "utf8"))
+const facts0005 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0005.json"), "utf8"))
+const facts = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0006.json"), "utf8"))
 const named = (list, name) => list.find((item) => item.name === name)
 const temporary = []
 after(() => { for (const dir of temporary) rmSync(dir, { recursive: true, force: true }) })
@@ -104,8 +105,8 @@ describe("ledger", () => {
     assert.deepEqual(compareLedger(entries, rowsFor(entries)).pending, [])
     const partial = compareLedger(entries, rowsFor(entries, 1))
     assert.equal(partial.appliedHead.tag, "0000_biblib_init")
-    assert.deepEqual(partial.pending, ["0001_library_integrity", "0002_book_versions", "0003_library_revision", "0004_catalogue_coordination", "0005_library_jobs"])
-    assert.equal(compareLedger(entries, []).pending.length, 6)
+    assert.deepEqual(partial.pending, ["0001_library_integrity", "0002_book_versions", "0003_library_revision", "0004_catalogue_coordination", "0005_library_jobs", "0006_library_snapshots"])
+    assert.equal(compareLedger(entries, []).pending.length, 7)
   })
 
   test("hash legacy CRLF exige conciliación y no se reescribe", () => {
@@ -165,12 +166,21 @@ describe("manifest de objetos", () => {
     assert.ok(checks.length >= 135)
   })
 
-  test("los metadatos reales tras 0005 cumplen el manifest completo", () => {
-    const checks = verifyManifest(facts, MANIFEST_MIGRATIONS)
+  test("los metadatos reales tras 0005 cumplen el manifest de 0000→0005", () => {
+    const checks = verifyManifest(facts0005, MANIFEST_MIGRATIONS.slice(0, 6))
     assert.deepEqual(failing(checks), [])
     assert.ok(checks.length >= 190)
-    // Un head anterior que aún no conoce los trabajos marca sus políticas como no declaradas.
+  })
+
+  test("los metadatos reales tras 0006 cumplen el manifest completo", () => {
+    const checks = verifyManifest(facts, MANIFEST_MIGRATIONS)
+    assert.deepEqual(failing(checks), [])
+    assert.ok(checks.length >= 235)
+    // Un head anterior que aún no conoce los trabajos o las versiones anteriores marca sus políticas como no declaradas.
     assert.ok(failing(verifyManifest(facts, MANIFEST_MIGRATIONS.slice(0, 5))).includes("policy.library_jobs_select_own"))
+    assert.ok(failing(verifyManifest(facts, MANIFEST_MIGRATIONS.slice(0, 6))).includes("policy.library_snapshots_select_own"))
+    // Antes de 0006 faltan las funciones de captura: los metadatos de 0005 no cumplen el manifest completo.
+    assert.ok(failing(verifyManifest(facts0005, MANIFEST_MIGRATIONS)).includes("function.library_snapshot_capture"))
     assert.equal(expectedObjects().triggers[0], "books_rotate_version:BEFORE INSERT OR UPDATE ROW")
     assert.deepEqual(expectedObjects().triggers.slice(1), ["books_rotate_library_revision:AFTER INSERT OR UPDATE OR DELETE ROW", "shelves_rotate_library_revision:AFTER INSERT OR UPDATE OR DELETE ROW"])
     // Las tablas de 0003 con RLS y un head anterior que aún no las conoce marcan drift.
@@ -230,6 +240,34 @@ describe("manifest de objetos", () => {
     assert.deepEqual(failing(verifyManifest(open, MANIFEST_MIGRATIONS)), ["policy.library_jobs_select_own"])
     const ownerless = clone(facts); ownerless.constraints = ownerless.constraints.filter((c) => c.name !== "library_job_items_owner_job_fk")
     assert.deepEqual(failing(verifyManifest(ownerless, MANIFEST_MIGRATIONS)), ["constraint.library_job_items_owner_job_fk"])
+  })
+
+  test("drift de las versiones anteriores (0006): escritura de cliente, purga, propietario e índices", () => {
+    for (const table of ["library_snapshots", "library_snapshot_chunks"]) {
+      for (const privilege of ["INSERT", "UPDATE", "DELETE"]) {
+        const writable = clone(facts); writable.grants.push({ grantee: "authenticated", table, privilege })
+        assert.deepEqual(failing(verifyManifest(writable, MANIFEST_MIGRATIONS)), [`grant.authenticated.${table}`])
+      }
+      const readable = clone(facts); readable.grants.push({ grantee: "anon", table, privilege: "SELECT" })
+      assert.deepEqual(failing(verifyManifest(readable, MANIFEST_MIGRATIONS)), [`grant.anon.${table}`])
+    }
+    const purge = clone(facts); named(purge.functions, "library_snapshot_purge_expired").execute_authenticated = true
+    assert.deepEqual(failing(verifyManifest(purge, MANIFEST_MIGRATIONS)), ["function.library_snapshot_purge_expired"])
+    const anon = clone(facts); named(anon.functions, "library_snapshot_capture").execute_anon = true
+    assert.deepEqual(failing(verifyManifest(anon, MANIFEST_MIGRATIONS)), ["function.library_snapshot_capture"])
+    // Una captura que no exige la operación de su transacción o que borra para hacer sitio deja de ser la declarada.
+    const detached = clone(facts); named(detached.functions, "library_snapshot_capture").body = named(detached.functions, "library_snapshot_capture").body.replace("AND o.created_at = now()", "")
+    assert.deepEqual(failing(verifyManifest(detached, MANIFEST_MIGRATIONS)), ["function.library_snapshot_capture"])
+    const path = clone(facts); named(path.functions, "library_snapshot_delete").config = ["search_path=public"]
+    assert.deepEqual(failing(verifyManifest(path, MANIFEST_MIGRATIONS)), ["function.library_snapshot_delete"])
+    const open = clone(facts); named(open.policies, "library_snapshot_chunks_select_own").using = "true"
+    assert.deepEqual(failing(verifyManifest(open, MANIFEST_MIGRATIONS)), ["policy.library_snapshot_chunks_select_own"])
+    const ownerless = clone(facts); ownerless.constraints = ownerless.constraints.filter((c) => c.name !== "library_snapshot_chunks_owner_snapshot_fk")
+    assert.deepEqual(failing(verifyManifest(ownerless, MANIFEST_MIGRATIONS)), ["constraint.library_snapshot_chunks_owner_snapshot_fk"])
+    const partial = clone(facts); named(partial.constraints, "library_snapshots_ready_check").definition = "CHECK ((schema_version >= 1))"
+    assert.deepEqual(failing(verifyManifest(partial, MANIFEST_MIGRATIONS)), ["constraint.library_snapshots_ready_check"])
+    const unindexed = clone(facts); unindexed.indexes = unindexed.indexes.filter((i) => i.name !== "books_user_created_idx")
+    assert.deepEqual(failing(verifyManifest(unindexed, MANIFEST_MIGRATIONS)), ["index.books_user_created_idx"])
   })
 
   test("drift de los objetos de 0003: escritura directa, permisos, seguridad y triggers", () => {

@@ -1,6 +1,6 @@
 export type DomainErrorCode =
   | "INVALID_INPUT" | "UNAUTHORIZED" | "NOT_FOUND" | "CONFLICT" | "PROVIDER_UNAVAILABLE" | "RATE_LIMITED"
-  | "REVISION_CONFLICT" | "PREVIEW_EXPIRED" | "IDEMPOTENCY_CONFLICT" | "JOB_CONFLICT" | "JOB_EXPIRED"
+  | "REVISION_CONFLICT" | "PREVIEW_EXPIRED" | "IDEMPOTENCY_CONFLICT" | "JOB_CONFLICT" | "JOB_EXPIRED" | "LIMIT_EXCEEDED"
 
 /**
  * Solo los fallos transitorios admiten reintento automático. Un conflicto de revisión, una
@@ -18,13 +18,14 @@ const RETRYABLE: Readonly<Record<DomainErrorCode, boolean>> = {
   IDEMPOTENCY_CONFLICT: false,
   JOB_CONFLICT: false,
   JOB_EXPIRED: false,
+  LIMIT_EXCEEDED: false,
 }
 
 export function isRetryable(code: DomainErrorCode): boolean {
   return RETRYABLE[code]
 }
 
-/** Traducción HTTP del contrato transversal de 02: 409 conflicto, 410 vista previa o trabajo caducados. */
+/** Traducción HTTP del contrato transversal de 02: 409 conflicto, 410 vista previa o trabajo caducados, 413 límite agotado. */
 const HTTP_STATUS: Readonly<Record<DomainErrorCode, number>> = {
   INVALID_INPUT: 400,
   UNAUTHORIZED: 401,
@@ -37,6 +38,7 @@ const HTTP_STATUS: Readonly<Record<DomainErrorCode, number>> = {
   IDEMPOTENCY_CONFLICT: 409,
   JOB_CONFLICT: 409,
   JOB_EXPIRED: 410,
+  LIMIT_EXCEEDED: 413,
 }
 
 export function httpStatusForDomainError(code: DomainErrorCode): number {

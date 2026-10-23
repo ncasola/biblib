@@ -1,0 +1,3476 @@
+{
+ "comment": "Metadatos reales de Supabase local (perfil scratch, Postgres 17.6) tras 0000→0006 con el runner U-INF-04; sin datos de usuario.",
+ "roles": [
+  "anon",
+  "authenticated"
+ ],
+ "prerequisites": {
+  "users": true,
+  "uid": true
+ },
+ "tables": [
+  {
+   "name": "account_lifecycle",
+   "rls": true
+  },
+  {
+   "name": "books",
+   "rls": true
+  },
+  {
+   "name": "catalogue_cache",
+   "rls": true
+  },
+  {
+   "name": "catalogue_inflight",
+   "rls": true
+  },
+  {
+   "name": "catalogue_private_cache",
+   "rls": true
+  },
+  {
+   "name": "catalogue_quota_buckets",
+   "rls": true
+  },
+  {
+   "name": "catalogue_quota_reservations",
+   "rls": true
+  },
+  {
+   "name": "import_previews",
+   "rls": true
+  },
+  {
+   "name": "library_job_items",
+   "rls": true
+  },
+  {
+   "name": "library_jobs",
+   "rls": true
+  },
+  {
+   "name": "library_operations",
+   "rls": true
+  },
+  {
+   "name": "library_snapshot_chunks",
+   "rls": true
+  },
+  {
+   "name": "library_snapshots",
+   "rls": true
+  },
+  {
+   "name": "library_state",
+   "rls": true
+  },
+  {
+   "name": "shelves",
+   "rls": true
+  }
+ ],
+ "policies": [
+  {
+   "name": "account_lifecycle_select_own",
+   "table": "account_lifecycle",
+   "cmd": "r",
+   "permissive": true,
+   "roles": [
+    "authenticated"
+   ],
+   "using": "( SELECT (auth.uid() = account_lifecycle.user_id))",
+   "check": null
+  },
+  {
+   "name": "books_delete_own",
+   "table": "books",
+   "cmd": "d",
+   "permissive": true,
+   "roles": [
+    "authenticated"
+   ],
+   "using": "(user_id = auth.uid())",
+   "check": null
+  },
+  {
+   "name": "books_insert_own",
+   "table": "books",
+   "cmd": "a",
+   "permissive": true,
+   "roles": [
+    "authenticated"
+   ],
+   "using": null,
+   "check": "(user_id = auth.uid())"
+  },
+  {
+   "name": "books_select_own",
+   "table": "books",
+   "cmd": "r",
+   "permissive": true,
+   "roles": [
+    "authenticated"
+   ],
+   "using": "(user_id = auth.uid())",
+   "check": null
+  },
+  {
+   "name": "books_update_own",
+   "table": "books",
+   "cmd": "w",
+   "permissive": true,
+   "roles": [
+    "authenticated"
+   ],
+   "using": "(user_id = auth.uid())",
+   "check": "(user_id = auth.uid())"
+  },
+  {
+   "name": "catalogue_private_cache_delete_own",
+   "table": "catalogue_private_cache",
+   "cmd": "d",
+   "permissive": true,
+   "roles": [
+    "authenticated"
+   ],
+   "using": "( SELECT (auth.uid() = catalogue_private_cache.owner_id))",
+   "check": null
+  },
+  {
+   "name": "catalogue_private_cache_select_own",
+   "table": "catalogue_private_cache",
+   "cmd": "r",
+   "permissive": true,
+   "roles": [
+    "authenticated"
+   ],
+   "using": "( SELECT (auth.uid() = catalogue_private_cache.owner_id))",
+   "check": null
+  },
+  {
+   "name": "import_previews_delete_own",
+   "table": "import_previews",
+   "cmd": "d",
+   "permissive": true,
+   "roles": [
+    "authenticated"
+   ],
+   "using": "( SELECT (auth.uid() = import_previews.user_id))",
+   "check": null
+  },
+  {
+   "name": "import_previews_insert_own",
+   "table": "import_previews",
+   "cmd": "a",
+   "permissive": true,
+   "roles": [
+    "authenticated"
+   ],
+   "using": null,
+   "check": "( SELECT (auth.uid() = import_previews.user_id))"
+  },
+  {
+   "name": "import_previews_select_own",
+   "table": "import_previews",
+   "cmd": "r",
+   "permissive": true,
+   "roles": [
+    "authenticated"
+   ],
+   "using": "( SELECT (auth.uid() = import_previews.user_id))",
+   "check": null
+  },
+  {
+   "name": "library_job_items_select_own",
+   "table": "library_job_items",
+   "cmd": "r",
+   "permissive": true,
+   "roles": [
+    "authenticated"
+   ],
+   "using": "( SELECT (auth.uid() = library_job_items.user_id))",
+   "check": null
+  },
+  {
+   "name": "library_jobs_select_own",
+   "table": "library_jobs",
+   "cmd": "r",
+   "permissive": true,
+   "roles": [
+    "authenticated"
+   ],
+   "using": "( SELECT (auth.uid() = library_jobs.user_id))",
+   "check": null
+  },
+  {
+   "name": "library_operations_insert_own",
+   "table": "library_operations",
+   "cmd": "a",
+   "permissive": true,
+   "roles": [
+    "authenticated"
+   ],
+   "using": null,
+   "check": "( SELECT (auth.uid() = library_operations.user_id))"
+  },
+  {
+   "name": "library_operations_select_own",
+   "table": "library_operations",
+   "cmd": "r",
+   "permissive": true,
+   "roles": [
+    "authenticated"
+   ],
+   "using": "( SELECT (auth.uid() = library_operations.user_id))",
+   "check": null
+  },
+  {
+   "name": "library_snapshot_chunks_select_own",
+   "table": "library_snapshot_chunks",
+   "cmd": "r",
+   "permissive": true,
+   "roles": [
+    "authenticated"
+   ],
+   "using": "( SELECT (auth.uid() = library_snapshot_chunks.user_id))",
+   "check": null
+  },
+  {
+   "name": "library_snapshots_select_own",
+   "table": "library_snapshots",
+   "cmd": "r",
+   "permissive": true,
+   "roles": [
+    "authenticated"
+   ],
+   "using": "( SELECT (auth.uid() = library_snapshots.user_id))",
+   "check": null
+  },
+  {
+   "name": "library_state_select_own",
+   "table": "library_state",
+   "cmd": "r",
+   "permissive": true,
+   "roles": [
+    "authenticated"
+   ],
+   "using": "( SELECT (auth.uid() = library_state.user_id))",
+   "check": null
+  },
+  {
+   "name": "shelves_delete_own",
+   "table": "shelves",
+   "cmd": "d",
+   "permissive": true,
+   "roles": [
+    "authenticated"
+   ],
+   "using": "((user_id = auth.uid()) AND (NOT is_default))",
+   "check": null
+  },
+  {
+   "name": "shelves_insert_own",
+   "table": "shelves",
+   "cmd": "a",
+   "permissive": true,
+   "roles": [
+    "authenticated"
+   ],
+   "using": null,
+   "check": "(user_id = auth.uid())"
+  },
+  {
+   "name": "shelves_select_own",
+   "table": "shelves",
+   "cmd": "r",
+   "permissive": true,
+   "roles": [
+    "authenticated"
+   ],
+   "using": "(user_id = auth.uid())",
+   "check": null
+  },
+  {
+   "name": "shelves_update_own",
+   "table": "shelves",
+   "cmd": "w",
+   "permissive": true,
+   "roles": [
+    "authenticated"
+   ],
+   "using": "((user_id = auth.uid()) AND (NOT is_default))",
+   "check": "((user_id = auth.uid()) AND (NOT is_default))"
+  }
+ ],
+ "grants": [
+  {
+   "grantee": "authenticated",
+   "table": "account_lifecycle",
+   "privilege": "SELECT"
+  },
+  {
+   "grantee": "authenticated",
+   "table": "books",
+   "privilege": "DELETE"
+  },
+  {
+   "grantee": "authenticated",
+   "table": "books",
+   "privilege": "INSERT"
+  },
+  {
+   "grantee": "authenticated",
+   "table": "books",
+   "privilege": "SELECT"
+  },
+  {
+   "grantee": "authenticated",
+   "table": "books",
+   "privilege": "UPDATE"
+  },
+  {
+   "grantee": "authenticated",
+   "table": "catalogue_private_cache",
+   "privilege": "DELETE"
+  },
+  {
+   "grantee": "authenticated",
+   "table": "catalogue_private_cache",
+   "privilege": "SELECT"
+  },
+  {
+   "grantee": "authenticated",
+   "table": "import_previews",
+   "privilege": "DELETE"
+  },
+  {
+   "grantee": "authenticated",
+   "table": "import_previews",
+   "privilege": "INSERT"
+  },
+  {
+   "grantee": "authenticated",
+   "table": "import_previews",
+   "privilege": "SELECT"
+  },
+  {
+   "grantee": "authenticated",
+   "table": "library_job_items",
+   "privilege": "SELECT"
+  },
+  {
+   "grantee": "authenticated",
+   "table": "library_jobs",
+   "privilege": "SELECT"
+  },
+  {
+   "grantee": "authenticated",
+   "table": "library_operations",
+   "privilege": "INSERT"
+  },
+  {
+   "grantee": "authenticated",
+   "table": "library_operations",
+   "privilege": "SELECT"
+  },
+  {
+   "grantee": "authenticated",
+   "table": "library_snapshot_chunks",
+   "privilege": "SELECT"
+  },
+  {
+   "grantee": "authenticated",
+   "table": "library_snapshots",
+   "privilege": "SELECT"
+  },
+  {
+   "grantee": "authenticated",
+   "table": "library_state",
+   "privilege": "SELECT"
+  },
+  {
+   "grantee": "authenticated",
+   "table": "shelves",
+   "privilege": "DELETE"
+  },
+  {
+   "grantee": "authenticated",
+   "table": "shelves",
+   "privilege": "INSERT"
+  },
+  {
+   "grantee": "authenticated",
+   "table": "shelves",
+   "privilege": "SELECT"
+  },
+  {
+   "grantee": "authenticated",
+   "table": "shelves",
+   "privilege": "UPDATE"
+  }
+ ],
+ "schemaUsage": [
+  {
+   "role": "anon",
+   "usage": false
+  },
+  {
+   "role": "authenticated",
+   "usage": true
+  }
+ ],
+ "constraints": [
+  {
+   "name": "account_lifecycle_pkey",
+   "table": "account_lifecycle",
+   "type": "p",
+   "validated": true,
+   "columns": [
+    "user_id"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": null
+  },
+  {
+   "name": "account_lifecycle_state_check",
+   "table": "account_lifecycle",
+   "type": "c",
+   "validated": true,
+   "columns": [
+    "state"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": "CHECK ((state = ANY (ARRAY['active'::text, 'blocked'::text])))"
+  },
+  {
+   "name": "account_lifecycle_user_id_users_id_fk",
+   "table": "account_lifecycle",
+   "type": "f",
+   "validated": true,
+   "columns": [
+    "user_id"
+   ],
+   "references": "auth.users",
+   "ref_columns": [
+    "id"
+   ],
+   "on_delete": "c",
+   "definition": null
+  },
+  {
+   "name": "books_owner_shelf_fk",
+   "table": "books",
+   "type": "f",
+   "validated": true,
+   "columns": [
+    "user_id",
+    "shelf_id"
+   ],
+   "references": "biblib.shelves",
+   "ref_columns": [
+    "user_id",
+    "id"
+   ],
+   "on_delete": "r",
+   "definition": null
+  },
+  {
+   "name": "books_pages_check",
+   "table": "books",
+   "type": "c",
+   "validated": true,
+   "columns": [
+    "number_of_pages"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": "CHECK (((number_of_pages >= 0) AND (number_of_pages <= 100000)))"
+  },
+  {
+   "name": "books_pkey",
+   "table": "books",
+   "type": "p",
+   "validated": true,
+   "columns": [
+    "id"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": null
+  },
+  {
+   "name": "books_status_check",
+   "table": "books",
+   "type": "c",
+   "validated": true,
+   "columns": [
+    "status"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": "CHECK ((status = ANY (ARRAY['read'::text, 'reading'::text, 'unread'::text, 'to-read'::text])))"
+  },
+  {
+   "name": "books_title_check",
+   "table": "books",
+   "type": "c",
+   "validated": true,
+   "columns": [
+    "title"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": "CHECK (((length(btrim(title)) >= 1) AND (length(btrim(title)) <= 500)))"
+  },
+  {
+   "name": "books_user_fk",
+   "table": "books",
+   "type": "f",
+   "validated": true,
+   "columns": [
+    "user_id"
+   ],
+   "references": "auth.users",
+   "ref_columns": [
+    "id"
+   ],
+   "on_delete": "c",
+   "definition": null
+  },
+  {
+   "name": "catalogue_cache_expiry_check",
+   "table": "catalogue_cache",
+   "type": "c",
+   "validated": true,
+   "columns": [
+    "expires_at",
+    "fetched_at"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": "CHECK ((expires_at > fetched_at))"
+  },
+  {
+   "name": "catalogue_cache_key_check",
+   "table": "catalogue_cache",
+   "type": "c",
+   "validated": true,
+   "columns": [
+    "canonical_key"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": "CHECK (((length(canonical_key) >= 1) AND (length(canonical_key) <= 200)))"
+  },
+  {
+   "name": "catalogue_cache_operation_check",
+   "table": "catalogue_cache",
+   "type": "c",
+   "validated": true,
+   "columns": [
+    "operation"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": "CHECK ((operation = ANY (ARRAY['lookupISBN'::text, 'resolveEditions'::text, 'getCover'::text])))"
+  },
+  {
+   "name": "catalogue_cache_payload_check",
+   "table": "catalogue_cache",
+   "type": "c",
+   "validated": true,
+   "columns": [
+    "payload"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": "CHECK ((jsonb_typeof(payload) = 'array'::text))"
+  },
+  {
+   "name": "catalogue_cache_pkey",
+   "table": "catalogue_cache",
+   "type": "p",
+   "validated": true,
+   "columns": [
+    "provider",
+    "policy_version",
+    "credential_scope",
+    "schema_version",
+    "operation",
+    "canonical_key"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": null
+  },
+  {
+   "name": "catalogue_cache_provider_check",
+   "table": "catalogue_cache",
+   "type": "c",
+   "validated": true,
+   "columns": [
+    "provider"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": "CHECK ((provider = ANY (ARRAY['open-library'::text, 'bne'::text, 'google-books'::text])))"
+  },
+  {
+   "name": "catalogue_cache_status_check",
+   "table": "catalogue_cache",
+   "type": "c",
+   "validated": true,
+   "columns": [
+    "status"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": "CHECK ((status = ANY (ARRAY['found'::text, 'notFound'::text])))"
+  },
+  {
+   "name": "catalogue_inflight_pkey",
+   "table": "catalogue_inflight",
+   "type": "p",
+   "validated": true,
+   "columns": [
+    "provider",
+    "policy_version",
+    "credential_scope",
+    "schema_version",
+    "operation",
+    "canonical_key"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": null
+  },
+  {
+   "name": "catalogue_inflight_provider_check",
+   "table": "catalogue_inflight",
+   "type": "c",
+   "validated": true,
+   "columns": [
+    "provider"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": "CHECK ((provider = ANY (ARRAY['open-library'::text, 'bne'::text, 'google-books'::text])))"
+  },
+  {
+   "name": "catalogue_private_cache_expiry_check",
+   "table": "catalogue_private_cache",
+   "type": "c",
+   "validated": true,
+   "columns": [
+    "expires_at",
+    "fetched_at"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": "CHECK ((expires_at > fetched_at))"
+  },
+  {
+   "name": "catalogue_private_cache_key_check",
+   "table": "catalogue_private_cache",
+   "type": "c",
+   "validated": true,
+   "columns": [
+    "key_hmac"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": "CHECK ((key_hmac ~ '^[0-9a-f]{64}$'::text))"
+  },
+  {
+   "name": "catalogue_private_cache_operation_check",
+   "table": "catalogue_private_cache",
+   "type": "c",
+   "validated": true,
+   "columns": [
+    "operation"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": "CHECK ((operation = 'searchTitleAuthor'::text))"
+  },
+  {
+   "name": "catalogue_private_cache_owner_id_users_id_fk",
+   "table": "catalogue_private_cache",
+   "type": "f",
+   "validated": true,
+   "columns": [
+    "owner_id"
+   ],
+   "references": "auth.users",
+   "ref_columns": [
+    "id"
+   ],
+   "on_delete": "c",
+   "definition": null
+  },
+  {
+   "name": "catalogue_private_cache_payload_check",
+   "table": "catalogue_private_cache",
+   "type": "c",
+   "validated": true,
+   "columns": [
+    "payload"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": "CHECK ((jsonb_typeof(payload) = 'array'::text))"
+  },
+  {
+   "name": "catalogue_private_cache_pkey",
+   "table": "catalogue_private_cache",
+   "type": "p",
+   "validated": true,
+   "columns": [
+    "owner_id",
+    "provider",
+    "policy_version",
+    "credential_scope",
+    "schema_version",
+    "operation",
+    "key_hmac"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": null
+  },
+  {
+   "name": "catalogue_private_cache_provider_check",
+   "table": "catalogue_private_cache",
+   "type": "c",
+   "validated": true,
+   "columns": [
+    "provider"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": "CHECK ((provider = ANY (ARRAY['open-library'::text, 'bne'::text, 'google-books'::text])))"
+  },
+  {
+   "name": "catalogue_private_cache_status_check",
+   "table": "catalogue_private_cache",
+   "type": "c",
+   "validated": true,
+   "columns": [
+    "status"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": "CHECK ((status = ANY (ARRAY['found'::text, 'notFound'::text])))"
+  },
+  {
+   "name": "catalogue_quota_buckets_interval_check",
+   "table": "catalogue_quota_buckets",
+   "type": "c",
+   "validated": true,
+   "columns": [
+    "interval_ms"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": "CHECK (((interval_ms >= 1) AND (interval_ms <= 3600000)))"
+  },
+  {
+   "name": "catalogue_quota_buckets_pkey",
+   "table": "catalogue_quota_buckets",
+   "type": "p",
+   "validated": true,
+   "columns": [
+    "provider",
+    "credential_scope"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": null
+  },
+  {
+   "name": "catalogue_quota_buckets_provider_check",
+   "table": "catalogue_quota_buckets",
+   "type": "c",
+   "validated": true,
+   "columns": [
+    "provider"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": "CHECK ((provider = ANY (ARRAY['open-library'::text, 'bne'::text, 'google-books'::text])))"
+  },
+  {
+   "name": "catalogue_quota_reservations_bucket_fk",
+   "table": "catalogue_quota_reservations",
+   "type": "f",
+   "validated": true,
+   "columns": [
+    "provider",
+    "credential_scope"
+   ],
+   "references": "biblib.catalogue_quota_buckets",
+   "ref_columns": [
+    "provider",
+    "credential_scope"
+   ],
+   "on_delete": "c",
+   "definition": null
+  },
+  {
+   "name": "catalogue_quota_reservations_expiry_check",
+   "table": "catalogue_quota_reservations",
+   "type": "c",
+   "validated": true,
+   "columns": [
+    "expires_at",
+    "slot_at"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": "CHECK ((expires_at > slot_at))"
+  },
+  {
+   "name": "catalogue_quota_reservations_owner_id_users_id_fk",
+   "table": "catalogue_quota_reservations",
+   "type": "f",
+   "validated": true,
+   "columns": [
+    "owner_id"
+   ],
+   "references": "auth.users",
+   "ref_columns": [
+    "id"
+   ],
+   "on_delete": "c",
+   "definition": null
+  },
+  {
+   "name": "catalogue_quota_reservations_pkey",
+   "table": "catalogue_quota_reservations",
+   "type": "p",
+   "validated": true,
+   "columns": [
+    "id"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": null
+  },
+  {
+   "name": "catalogue_quota_reservations_purpose_check",
+   "table": "catalogue_quota_reservations",
+   "type": "c",
+   "validated": true,
+   "columns": [
+    "purpose"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": "CHECK ((purpose = ANY (ARRAY['interactive'::text, 'batch'::text])))"
+  },
+  {
+   "name": "import_previews_digest_check",
+   "table": "import_previews",
+   "type": "c",
+   "validated": true,
+   "columns": [
+    "input_digest"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": "CHECK ((input_digest ~ '^[0-9a-f]{64}$'::text))"
+  },
+  {
+   "name": "import_previews_mode_check",
+   "table": "import_previews",
+   "type": "c",
+   "validated": true,
+   "columns": [
+    "mode"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": "CHECK ((mode = ANY (ARRAY['merge'::text, 'replace'::text])))"
+  },
+  {
+   "name": "import_previews_owner_snapshot_fk",
+   "table": "import_previews",
+   "type": "f",
+   "validated": true,
+   "columns": [
+    "user_id",
+    "snapshot_id"
+   ],
+   "references": "biblib.library_snapshots",
+   "ref_columns": [
+    "user_id",
+    "id"
+   ],
+   "on_delete": "c",
+   "definition": null
+  },
+  {
+   "name": "import_previews_pkey",
+   "table": "import_previews",
+   "type": "p",
+   "validated": true,
+   "columns": [
+    "id"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": null
+  },
+  {
+   "name": "import_previews_source_check",
+   "table": "import_previews",
+   "type": "c",
+   "validated": true,
+   "columns": [
+    "payload",
+    "snapshot_id"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": "CHECK (((payload IS NULL) <> (snapshot_id IS NULL)))"
+  },
+  {
+   "name": "import_previews_user_id_users_id_fk",
+   "table": "import_previews",
+   "type": "f",
+   "validated": true,
+   "columns": [
+    "user_id"
+   ],
+   "references": "auth.users",
+   "ref_columns": [
+    "id"
+   ],
+   "on_delete": "c",
+   "definition": null
+  },
+  {
+   "name": "library_job_items_attempts_check",
+   "table": "library_job_items",
+   "type": "c",
+   "validated": true,
+   "columns": [
+    "attempts"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": "CHECK ((attempts >= 0))"
+  },
+  {
+   "name": "library_job_items_key_check",
+   "table": "library_job_items",
+   "type": "c",
+   "validated": true,
+   "columns": [
+    "item_key"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": "CHECK (((length(item_key) >= 1) AND (length(item_key) <= 200)))"
+  },
+  {
+   "name": "library_job_items_owner_job_fk",
+   "table": "library_job_items",
+   "type": "f",
+   "validated": true,
+   "columns": [
+    "user_id",
+    "job_id"
+   ],
+   "references": "biblib.library_jobs",
+   "ref_columns": [
+    "user_id",
+    "id"
+   ],
+   "on_delete": "c",
+   "definition": null
+  },
+  {
+   "name": "library_job_items_phase_check",
+   "table": "library_job_items",
+   "type": "c",
+   "validated": true,
+   "columns": [
+    "phase"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": "CHECK ((phase = 'covers'::text))"
+  },
+  {
+   "name": "library_job_items_pkey",
+   "table": "library_job_items",
+   "type": "p",
+   "validated": true,
+   "columns": [
+    "id"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": null
+  },
+  {
+   "name": "library_job_items_state_check",
+   "table": "library_job_items",
+   "type": "c",
+   "validated": true,
+   "columns": [
+    "state"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": "CHECK ((state = ANY (ARRAY['pending'::text, 'waiting_retry'::text, 'succeeded'::text, 'not_found'::text, 'skipped'::text, 'failed'::text])))"
+  },
+  {
+   "name": "library_jobs_attempts_check",
+   "table": "library_jobs",
+   "type": "c",
+   "validated": true,
+   "columns": [
+    "attempts",
+    "fencing_number"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": "CHECK (((attempts >= 0) AND (fencing_number >= 0)))"
+  },
+  {
+   "name": "library_jobs_counts_check",
+   "table": "library_jobs",
+   "type": "c",
+   "validated": true,
+   "columns": [
+    "counts"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": "CHECK ((jsonb_typeof(counts) = 'object'::text))"
+  },
+  {
+   "name": "library_jobs_digest_check",
+   "table": "library_jobs",
+   "type": "c",
+   "validated": true,
+   "columns": [
+    "input_digest"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": "CHECK ((input_digest ~ '^[0-9a-f]{64}$'::text))"
+  },
+  {
+   "name": "library_jobs_import_check",
+   "table": "library_jobs",
+   "type": "c",
+   "validated": true,
+   "columns": [
+    "kind",
+    "preview_id",
+    "expected_revision"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": "CHECK (((kind <> 'import'::text) OR ((preview_id IS NOT NULL) AND (expected_revision IS NOT NULL))))"
+  },
+  {
+   "name": "library_jobs_key_check",
+   "table": "library_jobs",
+   "type": "c",
+   "validated": true,
+   "columns": [
+    "idempotency_key"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": "CHECK (((length(idempotency_key) >= 16) AND (length(idempotency_key) <= 128)))"
+  },
+  {
+   "name": "library_jobs_kind_check",
+   "table": "library_jobs",
+   "type": "c",
+   "validated": true,
+   "columns": [
+    "kind"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": "CHECK ((kind = ANY (ARRAY['import'::text, 'covers'::text])))"
+  },
+  {
+   "name": "library_jobs_lease_check",
+   "table": "library_jobs",
+   "type": "c",
+   "validated": true,
+   "columns": [
+    "state",
+    "lease_token",
+    "lease_until"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": "CHECK (((state = 'running'::text) = ((lease_token IS NOT NULL) AND (lease_until IS NOT NULL))))"
+  },
+  {
+   "name": "library_jobs_phase_check",
+   "table": "library_jobs",
+   "type": "c",
+   "validated": true,
+   "columns": [
+    "phase"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": "CHECK ((phase = ANY (ARRAY['publish'::text, 'covers'::text, 'done'::text])))"
+  },
+  {
+   "name": "library_jobs_pkey",
+   "table": "library_jobs",
+   "type": "p",
+   "validated": true,
+   "columns": [
+    "id"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": null
+  },
+  {
+   "name": "library_jobs_state_check",
+   "table": "library_jobs",
+   "type": "c",
+   "validated": true,
+   "columns": [
+    "state"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": "CHECK ((state = ANY (ARRAY['queued'::text, 'running'::text, 'waiting_retry'::text, 'needs_review'::text, 'paused'::text, 'succeeded'::text, 'partially_succeeded'::text, 'failed'::text, 'cancelled'::text, 'expired'::text])))"
+  },
+  {
+   "name": "library_jobs_user_id_users_id_fk",
+   "table": "library_jobs",
+   "type": "f",
+   "validated": true,
+   "columns": [
+    "user_id"
+   ],
+   "references": "auth.users",
+   "ref_columns": [
+    "id"
+   ],
+   "on_delete": "c",
+   "definition": null
+  },
+  {
+   "name": "library_operations_digest_check",
+   "table": "library_operations",
+   "type": "c",
+   "validated": true,
+   "columns": [
+    "input_digest"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": "CHECK ((input_digest ~ '^[0-9a-f]{64}$'::text))"
+  },
+  {
+   "name": "library_operations_key_check",
+   "table": "library_operations",
+   "type": "c",
+   "validated": true,
+   "columns": [
+    "idempotency_key"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": "CHECK (((length(idempotency_key) >= 16) AND (length(idempotency_key) <= 128)))"
+  },
+  {
+   "name": "library_operations_operation_check",
+   "table": "library_operations",
+   "type": "c",
+   "validated": true,
+   "columns": [
+    "operation"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": "CHECK ((operation = ANY (ARRAY['import.confirm'::text, 'snapshot.restore'::text])))"
+  },
+  {
+   "name": "library_operations_pkey",
+   "table": "library_operations",
+   "type": "p",
+   "validated": true,
+   "columns": [
+    "id"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": null
+  },
+  {
+   "name": "library_operations_status_check",
+   "table": "library_operations",
+   "type": "c",
+   "validated": true,
+   "columns": [
+    "status"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": "CHECK ((status = 'committed'::text))"
+  },
+  {
+   "name": "library_operations_user_id_users_id_fk",
+   "table": "library_operations",
+   "type": "f",
+   "validated": true,
+   "columns": [
+    "user_id"
+   ],
+   "references": "auth.users",
+   "ref_columns": [
+    "id"
+   ],
+   "on_delete": "c",
+   "definition": null
+  },
+  {
+   "name": "library_snapshot_chunks_digest_check",
+   "table": "library_snapshot_chunks",
+   "type": "c",
+   "validated": true,
+   "columns": [
+    "digest"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": "CHECK ((digest ~ '^[0-9a-f]{64}$'::text))"
+  },
+  {
+   "name": "library_snapshot_chunks_kind_check",
+   "table": "library_snapshot_chunks",
+   "type": "c",
+   "validated": true,
+   "columns": [
+    "kind"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": "CHECK ((kind = ANY (ARRAY['shelves'::text, 'books'::text])))"
+  },
+  {
+   "name": "library_snapshot_chunks_owner_snapshot_fk",
+   "table": "library_snapshot_chunks",
+   "type": "f",
+   "validated": true,
+   "columns": [
+    "user_id",
+    "snapshot_id"
+   ],
+   "references": "biblib.library_snapshots",
+   "ref_columns": [
+    "user_id",
+    "id"
+   ],
+   "on_delete": "c",
+   "definition": null
+  },
+  {
+   "name": "library_snapshot_chunks_pkey",
+   "table": "library_snapshot_chunks",
+   "type": "p",
+   "validated": true,
+   "columns": [
+    "snapshot_id",
+    "seq"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": null
+  },
+  {
+   "name": "library_snapshot_chunks_seq_check",
+   "table": "library_snapshot_chunks",
+   "type": "c",
+   "validated": true,
+   "columns": [
+    "seq"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": "CHECK ((seq >= 0))"
+  },
+  {
+   "name": "library_snapshot_chunks_size_check",
+   "table": "library_snapshot_chunks",
+   "type": "c",
+   "validated": true,
+   "columns": [
+    "item_count",
+    "payload"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": "CHECK (((item_count >= 1) AND (item_count <= 200) AND (jsonb_typeof(payload) = 'array'::text) AND (jsonb_array_length(payload) = item_count)))"
+  },
+  {
+   "name": "library_snapshots_counts_check",
+   "table": "library_snapshots",
+   "type": "c",
+   "validated": true,
+   "columns": [
+    "counts"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": "CHECK ((jsonb_typeof(counts) = 'object'::text))"
+  },
+  {
+   "name": "library_snapshots_digest_check",
+   "table": "library_snapshots",
+   "type": "c",
+   "validated": true,
+   "columns": [
+    "digest"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": "CHECK (((digest IS NULL) OR (digest ~ '^[0-9a-f]{64}$'::text)))"
+  },
+  {
+   "name": "library_snapshots_expiry_check",
+   "table": "library_snapshots",
+   "type": "c",
+   "validated": true,
+   "columns": [
+    "expires_at",
+    "created_at"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": "CHECK ((expires_at > created_at))"
+  },
+  {
+   "name": "library_snapshots_owner_operation_fk",
+   "table": "library_snapshots",
+   "type": "f",
+   "validated": true,
+   "columns": [
+    "user_id",
+    "source_operation_id"
+   ],
+   "references": "biblib.library_operations",
+   "ref_columns": [
+    "user_id",
+    "id"
+   ],
+   "on_delete": "a",
+   "definition": null
+  },
+  {
+   "name": "library_snapshots_pkey",
+   "table": "library_snapshots",
+   "type": "p",
+   "validated": true,
+   "columns": [
+    "id"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": null
+  },
+  {
+   "name": "library_snapshots_ready_check",
+   "table": "library_snapshots",
+   "type": "c",
+   "validated": true,
+   "columns": [
+    "state",
+    "digest"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": "CHECK (((state <> 'ready'::text) OR (digest IS NOT NULL)))"
+  },
+  {
+   "name": "library_snapshots_reason_check",
+   "table": "library_snapshots",
+   "type": "c",
+   "validated": true,
+   "columns": [
+    "reason"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": "CHECK ((reason = ANY (ARRAY['import.replace'::text, 'snapshot.restore'::text])))"
+  },
+  {
+   "name": "library_snapshots_schema_version_check",
+   "table": "library_snapshots",
+   "type": "c",
+   "validated": true,
+   "columns": [
+    "schema_version"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": "CHECK ((schema_version >= 1))"
+  },
+  {
+   "name": "library_snapshots_state_check",
+   "table": "library_snapshots",
+   "type": "c",
+   "validated": true,
+   "columns": [
+    "state"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": "CHECK ((state = ANY (ARRAY['capturing'::text, 'ready'::text])))"
+  },
+  {
+   "name": "library_snapshots_user_id_users_id_fk",
+   "table": "library_snapshots",
+   "type": "f",
+   "validated": true,
+   "columns": [
+    "user_id"
+   ],
+   "references": "auth.users",
+   "ref_columns": [
+    "id"
+   ],
+   "on_delete": "c",
+   "definition": null
+  },
+  {
+   "name": "library_state_pkey",
+   "table": "library_state",
+   "type": "p",
+   "validated": true,
+   "columns": [
+    "user_id"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": null
+  },
+  {
+   "name": "library_state_user_id_users_id_fk",
+   "table": "library_state",
+   "type": "f",
+   "validated": true,
+   "columns": [
+    "user_id"
+   ],
+   "references": "auth.users",
+   "ref_columns": [
+    "id"
+   ],
+   "on_delete": "c",
+   "definition": null
+  },
+  {
+   "name": "shelves_pkey",
+   "table": "shelves",
+   "type": "p",
+   "validated": true,
+   "columns": [
+    "id"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": null
+  },
+  {
+   "name": "shelves_title_check",
+   "table": "shelves",
+   "type": "c",
+   "validated": true,
+   "columns": [
+    "title"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": "CHECK (((length(btrim(title)) >= 1) AND (length(btrim(title)) <= 120)))"
+  },
+  {
+   "name": "shelves_user_fk",
+   "table": "shelves",
+   "type": "f",
+   "validated": true,
+   "columns": [
+    "user_id"
+   ],
+   "references": "auth.users",
+   "ref_columns": [
+    "id"
+   ],
+   "on_delete": "c",
+   "definition": null
+  }
+ ],
+ "indexes": [
+  {
+   "name": "account_lifecycle_pkey",
+   "table": "account_lifecycle",
+   "unique": true,
+   "partial": false,
+   "columns": [
+    "user_id"
+   ]
+  },
+  {
+   "name": "books_pkey",
+   "table": "books",
+   "unique": true,
+   "partial": false,
+   "columns": [
+    "id"
+   ]
+  },
+  {
+   "name": "books_shelf_id_idx",
+   "table": "books",
+   "unique": false,
+   "partial": false,
+   "columns": [
+    "shelf_id"
+   ]
+  },
+  {
+   "name": "books_user_created_idx",
+   "table": "books",
+   "unique": false,
+   "partial": false,
+   "columns": [
+    "user_id",
+    "created_at",
+    "id"
+   ]
+  },
+  {
+   "name": "books_user_id_id_unique",
+   "table": "books",
+   "unique": true,
+   "partial": false,
+   "columns": [
+    "user_id",
+    "id"
+   ]
+  },
+  {
+   "name": "books_user_id_idx",
+   "table": "books",
+   "unique": false,
+   "partial": false,
+   "columns": [
+    "user_id"
+   ]
+  },
+  {
+   "name": "books_user_id_isbn_unique",
+   "table": "books",
+   "unique": true,
+   "partial": false,
+   "columns": [
+    "user_id",
+    "isbn"
+   ]
+  },
+  {
+   "name": "books_user_shelf_title_idx",
+   "table": "books",
+   "unique": false,
+   "partial": false,
+   "columns": [
+    "user_id",
+    "shelf_id",
+    "title",
+    "id"
+   ]
+  },
+  {
+   "name": "books_user_title_idx",
+   "table": "books",
+   "unique": false,
+   "partial": false,
+   "columns": [
+    "user_id",
+    "title",
+    "id"
+   ]
+  },
+  {
+   "name": "catalogue_cache_expires_at_idx",
+   "table": "catalogue_cache",
+   "unique": false,
+   "partial": false,
+   "columns": [
+    "expires_at"
+   ]
+  },
+  {
+   "name": "catalogue_cache_pkey",
+   "table": "catalogue_cache",
+   "unique": true,
+   "partial": false,
+   "columns": [
+    "provider",
+    "policy_version",
+    "credential_scope",
+    "schema_version",
+    "operation",
+    "canonical_key"
+   ]
+  },
+  {
+   "name": "catalogue_inflight_fence_unique",
+   "table": "catalogue_inflight",
+   "unique": true,
+   "partial": false,
+   "columns": [
+    "fence"
+   ]
+  },
+  {
+   "name": "catalogue_inflight_pkey",
+   "table": "catalogue_inflight",
+   "unique": true,
+   "partial": false,
+   "columns": [
+    "provider",
+    "policy_version",
+    "credential_scope",
+    "schema_version",
+    "operation",
+    "canonical_key"
+   ]
+  },
+  {
+   "name": "catalogue_private_cache_expires_at_idx",
+   "table": "catalogue_private_cache",
+   "unique": false,
+   "partial": false,
+   "columns": [
+    "owner_id",
+    "expires_at"
+   ]
+  },
+  {
+   "name": "catalogue_private_cache_pkey",
+   "table": "catalogue_private_cache",
+   "unique": true,
+   "partial": false,
+   "columns": [
+    "owner_id",
+    "provider",
+    "policy_version",
+    "credential_scope",
+    "schema_version",
+    "operation",
+    "key_hmac"
+   ]
+  },
+  {
+   "name": "catalogue_quota_buckets_pkey",
+   "table": "catalogue_quota_buckets",
+   "unique": true,
+   "partial": false,
+   "columns": [
+    "provider",
+    "credential_scope"
+   ]
+  },
+  {
+   "name": "catalogue_quota_reservations_active_idx",
+   "table": "catalogue_quota_reservations",
+   "unique": false,
+   "partial": true,
+   "columns": [
+    "provider",
+    "credential_scope",
+    "owner_id",
+    "purpose"
+   ]
+  },
+  {
+   "name": "catalogue_quota_reservations_expires_at_idx",
+   "table": "catalogue_quota_reservations",
+   "unique": false,
+   "partial": false,
+   "columns": [
+    "provider",
+    "credential_scope",
+    "expires_at"
+   ]
+  },
+  {
+   "name": "catalogue_quota_reservations_fence_unique",
+   "table": "catalogue_quota_reservations",
+   "unique": true,
+   "partial": false,
+   "columns": [
+    "fence"
+   ]
+  },
+  {
+   "name": "catalogue_quota_reservations_pkey",
+   "table": "catalogue_quota_reservations",
+   "unique": true,
+   "partial": false,
+   "columns": [
+    "id"
+   ]
+  },
+  {
+   "name": "import_previews_pkey",
+   "table": "import_previews",
+   "unique": true,
+   "partial": false,
+   "columns": [
+    "id"
+   ]
+  },
+  {
+   "name": "import_previews_snapshot_id_idx",
+   "table": "import_previews",
+   "unique": false,
+   "partial": true,
+   "columns": [
+    "user_id",
+    "snapshot_id"
+   ]
+  },
+  {
+   "name": "import_previews_user_id_expires_at_idx",
+   "table": "import_previews",
+   "unique": false,
+   "partial": false,
+   "columns": [
+    "user_id",
+    "expires_at"
+   ]
+  },
+  {
+   "name": "import_previews_user_id_id_unique",
+   "table": "import_previews",
+   "unique": true,
+   "partial": false,
+   "columns": [
+    "user_id",
+    "id"
+   ]
+  },
+  {
+   "name": "library_job_items_due_idx",
+   "table": "library_job_items",
+   "unique": false,
+   "partial": false,
+   "columns": [
+    "job_id",
+    "state",
+    "next_attempt_at"
+   ]
+  },
+  {
+   "name": "library_job_items_job_item_phase_unique",
+   "table": "library_job_items",
+   "unique": true,
+   "partial": false,
+   "columns": [
+    "job_id",
+    "item_key",
+    "phase"
+   ]
+  },
+  {
+   "name": "library_job_items_pkey",
+   "table": "library_job_items",
+   "unique": true,
+   "partial": false,
+   "columns": [
+    "id"
+   ]
+  },
+  {
+   "name": "library_jobs_due_idx",
+   "table": "library_jobs",
+   "unique": false,
+   "partial": true,
+   "columns": [
+    "next_attempt_at"
+   ]
+  },
+  {
+   "name": "library_jobs_key_unique",
+   "table": "library_jobs",
+   "unique": true,
+   "partial": false,
+   "columns": [
+    "user_id",
+    "kind",
+    "idempotency_key"
+   ]
+  },
+  {
+   "name": "library_jobs_pkey",
+   "table": "library_jobs",
+   "unique": true,
+   "partial": false,
+   "columns": [
+    "id"
+   ]
+  },
+  {
+   "name": "library_jobs_user_id_created_at_idx",
+   "table": "library_jobs",
+   "unique": false,
+   "partial": false,
+   "columns": [
+    "user_id",
+    "created_at"
+   ]
+  },
+  {
+   "name": "library_jobs_user_id_id_unique",
+   "table": "library_jobs",
+   "unique": true,
+   "partial": false,
+   "columns": [
+    "user_id",
+    "id"
+   ]
+  },
+  {
+   "name": "library_operations_key_unique",
+   "table": "library_operations",
+   "unique": true,
+   "partial": false,
+   "columns": [
+    "user_id",
+    "operation",
+    "idempotency_key"
+   ]
+  },
+  {
+   "name": "library_operations_pkey",
+   "table": "library_operations",
+   "unique": true,
+   "partial": false,
+   "columns": [
+    "id"
+   ]
+  },
+  {
+   "name": "library_operations_preview_unique",
+   "table": "library_operations",
+   "unique": true,
+   "partial": true,
+   "columns": [
+    "user_id",
+    "preview_id"
+   ]
+  },
+  {
+   "name": "library_operations_user_id_id_unique",
+   "table": "library_operations",
+   "unique": true,
+   "partial": false,
+   "columns": [
+    "user_id",
+    "id"
+   ]
+  },
+  {
+   "name": "library_snapshot_chunks_pkey",
+   "table": "library_snapshot_chunks",
+   "unique": true,
+   "partial": false,
+   "columns": [
+    "snapshot_id",
+    "seq"
+   ]
+  },
+  {
+   "name": "library_snapshots_expires_at_idx",
+   "table": "library_snapshots",
+   "unique": false,
+   "partial": false,
+   "columns": [
+    "expires_at"
+   ]
+  },
+  {
+   "name": "library_snapshots_operation_unique",
+   "table": "library_snapshots",
+   "unique": true,
+   "partial": false,
+   "columns": [
+    "user_id",
+    "source_operation_id"
+   ]
+  },
+  {
+   "name": "library_snapshots_pkey",
+   "table": "library_snapshots",
+   "unique": true,
+   "partial": false,
+   "columns": [
+    "id"
+   ]
+  },
+  {
+   "name": "library_snapshots_user_id_created_at_idx",
+   "table": "library_snapshots",
+   "unique": false,
+   "partial": false,
+   "columns": [
+    "user_id",
+    "created_at",
+    "id"
+   ]
+  },
+  {
+   "name": "library_snapshots_user_id_id_unique",
+   "table": "library_snapshots",
+   "unique": true,
+   "partial": false,
+   "columns": [
+    "user_id",
+    "id"
+   ]
+  },
+  {
+   "name": "library_state_pkey",
+   "table": "library_state",
+   "unique": true,
+   "partial": false,
+   "columns": [
+    "user_id"
+   ]
+  },
+  {
+   "name": "shelves_pkey",
+   "table": "shelves",
+   "unique": true,
+   "partial": false,
+   "columns": [
+    "id"
+   ]
+  },
+  {
+   "name": "shelves_user_id_default_unique",
+   "table": "shelves",
+   "unique": true,
+   "partial": true,
+   "columns": [
+    "user_id",
+    "is_default"
+   ]
+  },
+  {
+   "name": "shelves_user_id_id_unique",
+   "table": "shelves",
+   "unique": true,
+   "partial": false,
+   "columns": [
+    "user_id",
+    "id"
+   ]
+  },
+  {
+   "name": "shelves_user_id_title_unique",
+   "table": "shelves",
+   "unique": true,
+   "partial": false,
+   "columns": [
+    "user_id",
+    "title"
+   ]
+  }
+ ],
+ "columns": [
+  {
+   "table": "account_lifecycle",
+   "name": "changed_at",
+   "type": "timestamp with time zone",
+   "not_null": true,
+   "default": "now()"
+  },
+  {
+   "table": "account_lifecycle",
+   "name": "state",
+   "type": "text",
+   "not_null": true,
+   "default": "'active'::text"
+  },
+  {
+   "table": "account_lifecycle",
+   "name": "user_id",
+   "type": "uuid",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "books",
+   "name": "authors",
+   "type": "jsonb",
+   "not_null": true,
+   "default": "'[]'::jsonb"
+  },
+  {
+   "table": "books",
+   "name": "catalogue",
+   "type": "jsonb",
+   "not_null": true,
+   "default": "'{\"source\": \"import\", \"isbnVerified\": false}'::jsonb"
+  },
+  {
+   "table": "books",
+   "name": "cover_large",
+   "type": "text",
+   "not_null": true,
+   "default": "'/default-book-cover.webp'::text"
+  },
+  {
+   "table": "books",
+   "name": "cover_medium",
+   "type": "text",
+   "not_null": true,
+   "default": "'/default-book-cover.webp'::text"
+  },
+  {
+   "table": "books",
+   "name": "cover_small",
+   "type": "text",
+   "not_null": true,
+   "default": "'/default-book-cover.webp'::text"
+  },
+  {
+   "table": "books",
+   "name": "created_at",
+   "type": "timestamp with time zone",
+   "not_null": true,
+   "default": "now()"
+  },
+  {
+   "table": "books",
+   "name": "id",
+   "type": "uuid",
+   "not_null": true,
+   "default": "gen_random_uuid()"
+  },
+  {
+   "table": "books",
+   "name": "isbn",
+   "type": "text",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "books",
+   "name": "number_of_pages",
+   "type": "integer",
+   "not_null": true,
+   "default": "0"
+  },
+  {
+   "table": "books",
+   "name": "publish_date",
+   "type": "text",
+   "not_null": true,
+   "default": "''::text"
+  },
+  {
+   "table": "books",
+   "name": "publishers",
+   "type": "jsonb",
+   "not_null": true,
+   "default": "'[]'::jsonb"
+  },
+  {
+   "table": "books",
+   "name": "shelf_id",
+   "type": "uuid",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "books",
+   "name": "status",
+   "type": "text",
+   "not_null": true,
+   "default": "'unread'::text"
+  },
+  {
+   "table": "books",
+   "name": "subtitle",
+   "type": "text",
+   "not_null": false,
+   "default": null
+  },
+  {
+   "table": "books",
+   "name": "title",
+   "type": "text",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "books",
+   "name": "updated_at",
+   "type": "timestamp with time zone",
+   "not_null": true,
+   "default": "now()"
+  },
+  {
+   "table": "books",
+   "name": "user_id",
+   "type": "uuid",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "books",
+   "name": "version",
+   "type": "uuid",
+   "not_null": true,
+   "default": "gen_random_uuid()"
+  },
+  {
+   "table": "catalogue_cache",
+   "name": "canonical_key",
+   "type": "text",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "catalogue_cache",
+   "name": "credential_scope",
+   "type": "text",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "catalogue_cache",
+   "name": "expires_at",
+   "type": "timestamp with time zone",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "catalogue_cache",
+   "name": "fence",
+   "type": "bigint",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "catalogue_cache",
+   "name": "fetched_at",
+   "type": "timestamp with time zone",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "catalogue_cache",
+   "name": "operation",
+   "type": "text",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "catalogue_cache",
+   "name": "payload",
+   "type": "jsonb",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "catalogue_cache",
+   "name": "policy_version",
+   "type": "text",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "catalogue_cache",
+   "name": "provenance",
+   "type": "jsonb",
+   "not_null": true,
+   "default": "'{}'::jsonb"
+  },
+  {
+   "table": "catalogue_cache",
+   "name": "provider",
+   "type": "text",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "catalogue_cache",
+   "name": "schema_version",
+   "type": "integer",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "catalogue_cache",
+   "name": "status",
+   "type": "text",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "catalogue_inflight",
+   "name": "canonical_key",
+   "type": "text",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "catalogue_inflight",
+   "name": "created_at",
+   "type": "timestamp with time zone",
+   "not_null": true,
+   "default": "now()"
+  },
+  {
+   "table": "catalogue_inflight",
+   "name": "credential_scope",
+   "type": "text",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "catalogue_inflight",
+   "name": "fence",
+   "type": "bigint",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "catalogue_inflight",
+   "name": "lease_expires_at",
+   "type": "timestamp with time zone",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "catalogue_inflight",
+   "name": "operation",
+   "type": "text",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "catalogue_inflight",
+   "name": "policy_version",
+   "type": "text",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "catalogue_inflight",
+   "name": "provider",
+   "type": "text",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "catalogue_inflight",
+   "name": "schema_version",
+   "type": "integer",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "catalogue_private_cache",
+   "name": "credential_scope",
+   "type": "text",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "catalogue_private_cache",
+   "name": "expires_at",
+   "type": "timestamp with time zone",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "catalogue_private_cache",
+   "name": "fetched_at",
+   "type": "timestamp with time zone",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "catalogue_private_cache",
+   "name": "key_hmac",
+   "type": "text",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "catalogue_private_cache",
+   "name": "operation",
+   "type": "text",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "catalogue_private_cache",
+   "name": "owner_id",
+   "type": "uuid",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "catalogue_private_cache",
+   "name": "payload",
+   "type": "jsonb",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "catalogue_private_cache",
+   "name": "policy_version",
+   "type": "text",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "catalogue_private_cache",
+   "name": "provider",
+   "type": "text",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "catalogue_private_cache",
+   "name": "schema_version",
+   "type": "integer",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "catalogue_private_cache",
+   "name": "status",
+   "type": "text",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "catalogue_quota_buckets",
+   "name": "cooldown_until",
+   "type": "timestamp with time zone",
+   "not_null": false,
+   "default": null
+  },
+  {
+   "table": "catalogue_quota_buckets",
+   "name": "credential_scope",
+   "type": "text",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "catalogue_quota_buckets",
+   "name": "interval_ms",
+   "type": "integer",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "catalogue_quota_buckets",
+   "name": "next_slot_at",
+   "type": "timestamp with time zone",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "catalogue_quota_buckets",
+   "name": "provider",
+   "type": "text",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "catalogue_quota_buckets",
+   "name": "updated_at",
+   "type": "timestamp with time zone",
+   "not_null": true,
+   "default": "now()"
+  },
+  {
+   "table": "catalogue_quota_reservations",
+   "name": "created_at",
+   "type": "timestamp with time zone",
+   "not_null": true,
+   "default": "now()"
+  },
+  {
+   "table": "catalogue_quota_reservations",
+   "name": "credential_scope",
+   "type": "text",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "catalogue_quota_reservations",
+   "name": "expires_at",
+   "type": "timestamp with time zone",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "catalogue_quota_reservations",
+   "name": "fence",
+   "type": "bigint",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "catalogue_quota_reservations",
+   "name": "id",
+   "type": "uuid",
+   "not_null": true,
+   "default": "gen_random_uuid()"
+  },
+  {
+   "table": "catalogue_quota_reservations",
+   "name": "owner_id",
+   "type": "uuid",
+   "not_null": false,
+   "default": null
+  },
+  {
+   "table": "catalogue_quota_reservations",
+   "name": "provider",
+   "type": "text",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "catalogue_quota_reservations",
+   "name": "purpose",
+   "type": "text",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "catalogue_quota_reservations",
+   "name": "released_at",
+   "type": "timestamp with time zone",
+   "not_null": false,
+   "default": null
+  },
+  {
+   "table": "catalogue_quota_reservations",
+   "name": "slot_at",
+   "type": "timestamp with time zone",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "import_previews",
+   "name": "created_at",
+   "type": "timestamp with time zone",
+   "not_null": true,
+   "default": "now()"
+  },
+  {
+   "table": "import_previews",
+   "name": "expires_at",
+   "type": "timestamp with time zone",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "import_previews",
+   "name": "id",
+   "type": "uuid",
+   "not_null": true,
+   "default": "gen_random_uuid()"
+  },
+  {
+   "table": "import_previews",
+   "name": "input_digest",
+   "type": "text",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "import_previews",
+   "name": "mode",
+   "type": "text",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "import_previews",
+   "name": "payload",
+   "type": "jsonb",
+   "not_null": false,
+   "default": null
+  },
+  {
+   "table": "import_previews",
+   "name": "plan",
+   "type": "jsonb",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "import_previews",
+   "name": "revision",
+   "type": "uuid",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "import_previews",
+   "name": "rules_version",
+   "type": "integer",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "import_previews",
+   "name": "snapshot_id",
+   "type": "uuid",
+   "not_null": false,
+   "default": null
+  },
+  {
+   "table": "import_previews",
+   "name": "user_id",
+   "type": "uuid",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "library_job_items",
+   "name": "attempts",
+   "type": "integer",
+   "not_null": true,
+   "default": "0"
+  },
+  {
+   "table": "library_job_items",
+   "name": "created_at",
+   "type": "timestamp with time zone",
+   "not_null": true,
+   "default": "now()"
+  },
+  {
+   "table": "library_job_items",
+   "name": "error_code",
+   "type": "text",
+   "not_null": false,
+   "default": null
+  },
+  {
+   "table": "library_job_items",
+   "name": "fencing_number",
+   "type": "bigint",
+   "not_null": false,
+   "default": null
+  },
+  {
+   "table": "library_job_items",
+   "name": "id",
+   "type": "uuid",
+   "not_null": true,
+   "default": "gen_random_uuid()"
+  },
+  {
+   "table": "library_job_items",
+   "name": "item_key",
+   "type": "text",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "library_job_items",
+   "name": "job_id",
+   "type": "uuid",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "library_job_items",
+   "name": "next_attempt_at",
+   "type": "timestamp with time zone",
+   "not_null": true,
+   "default": "now()"
+  },
+  {
+   "table": "library_job_items",
+   "name": "phase",
+   "type": "text",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "library_job_items",
+   "name": "result",
+   "type": "jsonb",
+   "not_null": false,
+   "default": null
+  },
+  {
+   "table": "library_job_items",
+   "name": "state",
+   "type": "text",
+   "not_null": true,
+   "default": "'pending'::text"
+  },
+  {
+   "table": "library_job_items",
+   "name": "target_version",
+   "type": "uuid",
+   "not_null": false,
+   "default": null
+  },
+  {
+   "table": "library_job_items",
+   "name": "updated_at",
+   "type": "timestamp with time zone",
+   "not_null": true,
+   "default": "now()"
+  },
+  {
+   "table": "library_job_items",
+   "name": "user_id",
+   "type": "uuid",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "library_jobs",
+   "name": "attempts",
+   "type": "integer",
+   "not_null": true,
+   "default": "0"
+  },
+  {
+   "table": "library_jobs",
+   "name": "contract_version",
+   "type": "integer",
+   "not_null": true,
+   "default": "1"
+  },
+  {
+   "table": "library_jobs",
+   "name": "counts",
+   "type": "jsonb",
+   "not_null": true,
+   "default": "'{}'::jsonb"
+  },
+  {
+   "table": "library_jobs",
+   "name": "created_at",
+   "type": "timestamp with time zone",
+   "not_null": true,
+   "default": "now()"
+  },
+  {
+   "table": "library_jobs",
+   "name": "cursor",
+   "type": "text",
+   "not_null": false,
+   "default": null
+  },
+  {
+   "table": "library_jobs",
+   "name": "error_code",
+   "type": "text",
+   "not_null": false,
+   "default": null
+  },
+  {
+   "table": "library_jobs",
+   "name": "expected_revision",
+   "type": "uuid",
+   "not_null": false,
+   "default": null
+  },
+  {
+   "table": "library_jobs",
+   "name": "expires_at",
+   "type": "timestamp with time zone",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "library_jobs",
+   "name": "fencing_number",
+   "type": "bigint",
+   "not_null": true,
+   "default": "0"
+  },
+  {
+   "table": "library_jobs",
+   "name": "finished_at",
+   "type": "timestamp with time zone",
+   "not_null": false,
+   "default": null
+  },
+  {
+   "table": "library_jobs",
+   "name": "id",
+   "type": "uuid",
+   "not_null": true,
+   "default": "gen_random_uuid()"
+  },
+  {
+   "table": "library_jobs",
+   "name": "idempotency_key",
+   "type": "text",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "library_jobs",
+   "name": "input_digest",
+   "type": "text",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "library_jobs",
+   "name": "kind",
+   "type": "text",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "library_jobs",
+   "name": "lease_token",
+   "type": "uuid",
+   "not_null": false,
+   "default": null
+  },
+  {
+   "table": "library_jobs",
+   "name": "lease_until",
+   "type": "timestamp with time zone",
+   "not_null": false,
+   "default": null
+  },
+  {
+   "table": "library_jobs",
+   "name": "next_attempt_at",
+   "type": "timestamp with time zone",
+   "not_null": true,
+   "default": "now()"
+  },
+  {
+   "table": "library_jobs",
+   "name": "phase",
+   "type": "text",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "library_jobs",
+   "name": "preview_id",
+   "type": "uuid",
+   "not_null": false,
+   "default": null
+  },
+  {
+   "table": "library_jobs",
+   "name": "published_at",
+   "type": "timestamp with time zone",
+   "not_null": false,
+   "default": null
+  },
+  {
+   "table": "library_jobs",
+   "name": "result",
+   "type": "jsonb",
+   "not_null": false,
+   "default": null
+  },
+  {
+   "table": "library_jobs",
+   "name": "state",
+   "type": "text",
+   "not_null": true,
+   "default": "'queued'::text"
+  },
+  {
+   "table": "library_jobs",
+   "name": "updated_at",
+   "type": "timestamp with time zone",
+   "not_null": true,
+   "default": "now()"
+  },
+  {
+   "table": "library_jobs",
+   "name": "user_id",
+   "type": "uuid",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "library_jobs",
+   "name": "version",
+   "type": "uuid",
+   "not_null": true,
+   "default": "gen_random_uuid()"
+  },
+  {
+   "table": "library_operations",
+   "name": "created_at",
+   "type": "timestamp with time zone",
+   "not_null": true,
+   "default": "now()"
+  },
+  {
+   "table": "library_operations",
+   "name": "id",
+   "type": "uuid",
+   "not_null": true,
+   "default": "gen_random_uuid()"
+  },
+  {
+   "table": "library_operations",
+   "name": "idempotency_key",
+   "type": "text",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "library_operations",
+   "name": "input_digest",
+   "type": "text",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "library_operations",
+   "name": "operation",
+   "type": "text",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "library_operations",
+   "name": "preview_id",
+   "type": "uuid",
+   "not_null": false,
+   "default": null
+  },
+  {
+   "table": "library_operations",
+   "name": "result",
+   "type": "jsonb",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "library_operations",
+   "name": "status",
+   "type": "text",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "library_operations",
+   "name": "user_id",
+   "type": "uuid",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "library_snapshot_chunks",
+   "name": "digest",
+   "type": "text",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "library_snapshot_chunks",
+   "name": "item_count",
+   "type": "integer",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "library_snapshot_chunks",
+   "name": "kind",
+   "type": "text",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "library_snapshot_chunks",
+   "name": "payload",
+   "type": "jsonb",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "library_snapshot_chunks",
+   "name": "seq",
+   "type": "integer",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "library_snapshot_chunks",
+   "name": "snapshot_id",
+   "type": "uuid",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "library_snapshot_chunks",
+   "name": "user_id",
+   "type": "uuid",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "library_snapshots",
+   "name": "captured_revision",
+   "type": "uuid",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "library_snapshots",
+   "name": "counts",
+   "type": "jsonb",
+   "not_null": true,
+   "default": "'{\"books\": 0, \"bytes\": 0, \"chunks\": 0, \"shelves\": 0}'::jsonb"
+  },
+  {
+   "table": "library_snapshots",
+   "name": "created_at",
+   "type": "timestamp with time zone",
+   "not_null": true,
+   "default": "now()"
+  },
+  {
+   "table": "library_snapshots",
+   "name": "digest",
+   "type": "text",
+   "not_null": false,
+   "default": null
+  },
+  {
+   "table": "library_snapshots",
+   "name": "expires_at",
+   "type": "timestamp with time zone",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "library_snapshots",
+   "name": "id",
+   "type": "uuid",
+   "not_null": true,
+   "default": "gen_random_uuid()"
+  },
+  {
+   "table": "library_snapshots",
+   "name": "reason",
+   "type": "text",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "library_snapshots",
+   "name": "schema_version",
+   "type": "integer",
+   "not_null": true,
+   "default": "1"
+  },
+  {
+   "table": "library_snapshots",
+   "name": "source_operation_id",
+   "type": "uuid",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "library_snapshots",
+   "name": "state",
+   "type": "text",
+   "not_null": true,
+   "default": "'capturing'::text"
+  },
+  {
+   "table": "library_snapshots",
+   "name": "user_id",
+   "type": "uuid",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "library_snapshots",
+   "name": "version",
+   "type": "uuid",
+   "not_null": true,
+   "default": "gen_random_uuid()"
+  },
+  {
+   "table": "library_state",
+   "name": "revision",
+   "type": "uuid",
+   "not_null": true,
+   "default": "gen_random_uuid()"
+  },
+  {
+   "table": "library_state",
+   "name": "rotated_xact",
+   "type": "xid8",
+   "not_null": false,
+   "default": null
+  },
+  {
+   "table": "library_state",
+   "name": "updated_at",
+   "type": "timestamp with time zone",
+   "not_null": true,
+   "default": "now()"
+  },
+  {
+   "table": "library_state",
+   "name": "user_id",
+   "type": "uuid",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "shelves",
+   "name": "created_at",
+   "type": "timestamp with time zone",
+   "not_null": true,
+   "default": "now()"
+  },
+  {
+   "table": "shelves",
+   "name": "id",
+   "type": "uuid",
+   "not_null": true,
+   "default": "gen_random_uuid()"
+  },
+  {
+   "table": "shelves",
+   "name": "is_default",
+   "type": "boolean",
+   "not_null": true,
+   "default": "false"
+  },
+  {
+   "table": "shelves",
+   "name": "title",
+   "type": "text",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "shelves",
+   "name": "updated_at",
+   "type": "timestamp with time zone",
+   "not_null": true,
+   "default": "now()"
+  },
+  {
+   "table": "shelves",
+   "name": "user_id",
+   "type": "uuid",
+   "not_null": true,
+   "default": null
+  }
+ ],
+ "functions": [
+  {
+   "name": "account_is_active",
+   "language": "plpgsql",
+   "returns": "boolean",
+   "args": 1,
+   "config": [
+    "search_path=pg_catalog"
+   ],
+   "security_definer": true,
+   "body": "\nBEGIN\n  RETURN EXISTS (SELECT 1 FROM auth.users AS account WHERE account.id = p_owner)\n    AND NOT EXISTS (SELECT 1 FROM biblib.account_lifecycle AS lifecycle WHERE lifecycle.user_id = p_owner AND lifecycle.state <> 'active');\nEND;\n",
+   "execute_authenticated": false,
+   "execute_anon": false
+  },
+  {
+   "name": "account_set_state",
+   "language": "plpgsql",
+   "returns": "integer",
+   "args": 2,
+   "config": [
+    "search_path=pg_catalog"
+   ],
+   "security_definer": true,
+   "body": "\nDECLARE\n  now_at timestamptz := clock_timestamp();\n  affected integer := 0;\nBEGIN\n  IF p_state NOT IN ('active', 'blocked') THEN\n    RAISE EXCEPTION 'Estado de cuenta no válido' USING ERRCODE = '22023';\n  END IF;\n  INSERT INTO biblib.account_lifecycle AS lifecycle (user_id, state, changed_at) VALUES (p_owner, p_state, now_at)\n  ON CONFLICT (user_id) DO UPDATE SET state = excluded.state, changed_at = excluded.changed_at;\n  IF p_state = 'blocked' THEN\n    UPDATE biblib.library_jobs AS j\n    SET state = 'expired', error_code = 'ACCOUNT_INACTIVE', lease_token = NULL, lease_until = NULL, version = gen_random_uuid(),\n      finished_at = now_at, expires_at = now_at + interval '30 days', updated_at = now_at\n    WHERE j.user_id = p_owner AND j.state IN ('queued', 'running', 'waiting_retry', 'needs_review', 'paused');\n    GET DIAGNOSTICS affected = ROW_COUNT;\n  END IF;\n  RETURN affected;\nEND;\n",
+   "execute_authenticated": false,
+   "execute_anon": false
+  },
+  {
+   "name": "catalogue_begin",
+   "language": "plpgsql",
+   "returns": "jsonb",
+   "args": 9,
+   "config": [
+    "search_path=pg_catalog"
+   ],
+   "security_definer": true,
+   "body": "\nDECLARE\n  now_at timestamptz := clock_timestamp();\n  entry biblib.catalogue_cache%ROWTYPE;\n  leased bigint;\nBEGIN\n  IF p_lease_ms IS NULL OR p_lease_ms NOT BETWEEN 1 AND 600000 THEN\n    RAISE EXCEPTION 'Concesión no válida' USING ERRCODE = '22023';\n  END IF;\n  -- Una entrada ilegible se retira solo si sigue siendo la misma que se leyó.\n  IF p_discard_fence IS NOT NULL THEN\n    DELETE FROM biblib.catalogue_cache AS c\n    WHERE c.provider = p_provider AND c.policy_version = p_policy_version AND c.credential_scope = p_scope\n      AND c.schema_version = p_schema_version AND c.operation = p_operation AND c.canonical_key = p_key AND c.fence = p_discard_fence;\n  END IF;\n  IF p_use_cache THEN\n    SELECT * INTO entry FROM biblib.catalogue_cache AS c\n    WHERE c.provider = p_provider AND c.policy_version = p_policy_version AND c.credential_scope = p_scope\n      AND c.schema_version = p_schema_version AND c.operation = p_operation AND c.canonical_key = p_key;\n    IF FOUND AND entry.expires_at > now_at THEN\n      RETURN jsonb_build_object('state', 'hit', 'status', entry.status, 'payload', entry.payload, 'fence', entry.fence::text, 'fetchedAt', entry.fetched_at, 'expiresAt', entry.expires_at);\n    END IF;\n  END IF;\n  -- Solo se toma la concesión si no existe o si la anterior caducó (trabajador muerto o tardío).\n  INSERT INTO biblib.catalogue_inflight AS f (provider, policy_version, credential_scope, schema_version, operation, canonical_key, fence, lease_expires_at)\n  VALUES (p_provider, p_policy_version, p_scope, p_schema_version, p_operation, p_key, nextval('biblib.catalogue_fence_seq'), now_at + p_lease_ms * interval '1 millisecond')\n  ON CONFLICT (provider, policy_version, credential_scope, schema_version, operation, canonical_key) DO UPDATE\n    SET fence = excluded.fence, lease_expires_at = excluded.lease_expires_at, created_at = now_at\n    WHERE f.lease_expires_at <= now_at\n  RETURNING f.fence INTO leased;\n  IF leased IS NULL THEN\n    RETURN jsonb_build_object('state', 'pending');\n  END IF;\n  -- Otro trabajador pudo publicar entre la lectura y la concesión.\n  IF p_use_cache THEN\n    SELECT * INTO entry FROM biblib.catalogue_cache AS c\n    WHERE c.provider = p_provider AND c.policy_version = p_policy_version AND c.credential_scope = p_scope\n      AND c.schema_version = p_schema_version AND c.operation = p_operation AND c.canonical_key = p_key;\n    IF FOUND AND entry.expires_at > now_at THEN\n      DELETE FROM biblib.catalogue_inflight AS f\n      WHERE f.provider = p_provider AND f.policy_version = p_policy_version AND f.credential_scope = p_scope\n        AND f.schema_version = p_schema_version AND f.operation = p_operation AND f.canonical_key = p_key AND f.fence = leased;\n      RETURN jsonb_build_object('state', 'hit', 'status', entry.status, 'payload', entry.payload, 'fence', entry.fence::text, 'fetchedAt', entry.fetched_at, 'expiresAt', entry.expires_at);\n    END IF;\n  END IF;\n  RETURN jsonb_build_object('state', 'leased', 'fence', leased::text);\nEND;\n",
+   "execute_authenticated": false,
+   "execute_anon": false
+  },
+  {
+   "name": "catalogue_complete",
+   "language": "plpgsql",
+   "returns": "text",
+   "args": 11,
+   "config": [
+    "search_path=pg_catalog"
+   ],
+   "security_definer": true,
+   "body": "\nDECLARE\n  now_at timestamptz := clock_timestamp();\nBEGIN\n  DELETE FROM biblib.catalogue_inflight AS f\n  WHERE f.provider = p_provider AND f.policy_version = p_policy_version AND f.credential_scope = p_scope\n    AND f.schema_version = p_schema_version AND f.operation = p_operation AND f.canonical_key = p_key\n    AND f.fence = p_fence AND f.lease_expires_at > now_at;\n  IF NOT FOUND THEN\n    DELETE FROM biblib.catalogue_inflight AS f\n    WHERE f.provider = p_provider AND f.policy_version = p_policy_version AND f.credential_scope = p_scope\n      AND f.schema_version = p_schema_version AND f.operation = p_operation AND f.canonical_key = p_key AND f.fence = p_fence;\n    RETURN 'stale';\n  END IF;\n  IF p_status IS NULL OR p_status NOT IN ('found', 'notFound') OR p_ttl_ms IS NULL OR p_ttl_ms <= 0 OR p_payload IS NULL THEN\n    RETURN 'released';\n  END IF;\n  INSERT INTO biblib.catalogue_cache AS c (provider, policy_version, credential_scope, schema_version, operation, canonical_key, status, payload, provenance, fence, fetched_at, expires_at)\n  VALUES (p_provider, p_policy_version, p_scope, p_schema_version, p_operation, p_key, p_status, p_payload, coalesce(p_provenance, '{}'::jsonb), p_fence, now_at, now_at + least(p_ttl_ms, 86400000) * interval '1 millisecond')\n  ON CONFLICT (provider, policy_version, credential_scope, schema_version, operation, canonical_key) DO UPDATE\n    SET status = excluded.status, payload = excluded.payload, provenance = excluded.provenance, fence = excluded.fence,\n      fetched_at = excluded.fetched_at, expires_at = excluded.expires_at\n    WHERE c.fence < excluded.fence;\n  IF FOUND THEN\n    RETURN 'published';\n  END IF;\n  RETURN 'stale';\nEND;\n",
+   "execute_authenticated": false,
+   "execute_anon": false
+  },
+  {
+   "name": "catalogue_invalidate",
+   "language": "plpgsql",
+   "returns": "integer",
+   "args": 3,
+   "config": [
+    "search_path=pg_catalog"
+   ],
+   "security_definer": true,
+   "body": "\nDECLARE\n  now_at timestamptz := clock_timestamp();\n  removed integer;\n  counted integer;\nBEGIN\n  DELETE FROM biblib.catalogue_cache AS c WHERE c.provider = p_provider\n    AND (p_policy_version IS NULL OR c.policy_version <> p_policy_version OR c.schema_version <> p_schema_version OR c.expires_at <= now_at);\n  GET DIAGNOSTICS removed = ROW_COUNT;\n  DELETE FROM biblib.catalogue_private_cache AS c WHERE c.provider = p_provider\n    AND (p_policy_version IS NULL OR c.policy_version <> p_policy_version OR c.schema_version <> p_schema_version OR c.expires_at <= now_at);\n  GET DIAGNOSTICS counted = ROW_COUNT;\n  removed := removed + counted;\n  DELETE FROM biblib.catalogue_inflight AS f WHERE f.provider = p_provider AND f.lease_expires_at <= now_at\n    AND (p_policy_version IS NULL OR f.policy_version <> p_policy_version OR f.schema_version <> p_schema_version);\n  RETURN removed;\nEND;\n",
+   "execute_authenticated": false,
+   "execute_anon": false
+  },
+  {
+   "name": "catalogue_private_get",
+   "language": "plpgsql",
+   "returns": "jsonb",
+   "args": 7,
+   "config": [
+    "search_path=pg_catalog"
+   ],
+   "security_definer": true,
+   "body": "\nDECLARE\n  entry biblib.catalogue_private_cache%ROWTYPE;\nBEGIN\n  SELECT * INTO entry FROM biblib.catalogue_private_cache AS c\n  WHERE c.owner_id = p_owner AND c.provider = p_provider AND c.policy_version = p_policy_version AND c.credential_scope = p_scope\n    AND c.schema_version = p_schema_version AND c.operation = p_operation AND c.key_hmac = p_key_hmac AND c.expires_at > clock_timestamp();\n  IF NOT FOUND THEN\n    RETURN NULL;\n  END IF;\n  RETURN jsonb_build_object('status', entry.status, 'payload', entry.payload, 'fetchedAt', entry.fetched_at, 'expiresAt', entry.expires_at);\nEND;\n",
+   "execute_authenticated": false,
+   "execute_anon": false
+  },
+  {
+   "name": "catalogue_private_put",
+   "language": "plpgsql",
+   "returns": "boolean",
+   "args": 10,
+   "config": [
+    "search_path=pg_catalog"
+   ],
+   "security_definer": true,
+   "body": "\nDECLARE\n  now_at timestamptz := clock_timestamp();\nBEGIN\n  IF p_owner IS NULL OR p_status IS NULL OR p_status NOT IN ('found', 'notFound') OR p_ttl_ms IS NULL OR p_ttl_ms <= 0 OR p_payload IS NULL THEN\n    RETURN false;\n  END IF;\n  DELETE FROM biblib.catalogue_private_cache AS c WHERE c.ctid IN (\n    SELECT old.ctid FROM biblib.catalogue_private_cache AS old WHERE old.owner_id = p_owner AND old.expires_at <= now_at LIMIT 100);\n  INSERT INTO biblib.catalogue_private_cache AS c (owner_id, provider, policy_version, credential_scope, schema_version, operation, key_hmac, status, payload, fetched_at, expires_at)\n  VALUES (p_owner, p_provider, p_policy_version, p_scope, p_schema_version, p_operation, p_key_hmac, p_status, p_payload, now_at, now_at + least(p_ttl_ms, 86400000) * interval '1 millisecond')\n  ON CONFLICT (owner_id, provider, policy_version, credential_scope, schema_version, operation, key_hmac) DO UPDATE\n    SET status = excluded.status, payload = excluded.payload, fetched_at = excluded.fetched_at, expires_at = excluded.expires_at\n    WHERE c.fetched_at <= excluded.fetched_at;\n  RETURN true;\nEND;\n",
+   "execute_authenticated": false,
+   "execute_anon": false
+  },
+  {
+   "name": "catalogue_release",
+   "language": "plpgsql",
+   "returns": "boolean",
+   "args": 3,
+   "config": [
+    "search_path=pg_catalog"
+   ],
+   "security_definer": true,
+   "body": "\nDECLARE\n  now_at timestamptz := clock_timestamp();\n  released biblib.catalogue_quota_reservations%ROWTYPE;\n  cooldown timestamptz;\nBEGIN\n  UPDATE biblib.catalogue_quota_reservations AS r SET released_at = now_at\n  WHERE r.id = p_reservation AND r.fence = p_fence AND r.released_at IS NULL\n  RETURNING * INTO released;\n  IF NOT FOUND THEN\n    RETURN false;\n  END IF;\n  IF p_retry_after_ms > 0 THEN\n    cooldown := now_at + least(p_retry_after_ms, 3600000) * interval '1 millisecond';\n    UPDATE biblib.catalogue_quota_buckets AS b\n    SET cooldown_until = greatest(b.cooldown_until, cooldown), next_slot_at = greatest(b.next_slot_at, cooldown), updated_at = now_at\n    WHERE b.provider = released.provider AND b.credential_scope = released.credential_scope;\n  END IF;\n  RETURN true;\nEND;\n",
+   "execute_authenticated": false,
+   "execute_anon": false
+  },
+  {
+   "name": "catalogue_reserve",
+   "language": "plpgsql",
+   "returns": "jsonb",
+   "args": 8,
+   "config": [
+    "search_path=pg_catalog"
+   ],
+   "security_definer": true,
+   "body": "\nDECLARE\n  now_at timestamptz := clock_timestamp();\n  bucket biblib.catalogue_quota_buckets%ROWTYPE;\n  slot timestamptz;\n  active integer;\n  granted bigint;\n  reservation uuid;\nBEGIN\n  IF p_purpose IS NULL OR p_purpose NOT IN ('interactive', 'batch') OR p_interval_ms NOT BETWEEN 1 AND 3600000\n    OR p_horizon_ms NOT BETWEEN 0 AND 60000 OR p_owner_cap NOT BETWEEN 1 AND 100 OR p_lease_ms NOT BETWEEN 1 AND 600000 THEN\n    RAISE EXCEPTION 'Parámetros de cuota no válidos' USING ERRCODE = '22023';\n  END IF;\n  INSERT INTO biblib.catalogue_quota_buckets (provider, credential_scope, interval_ms, next_slot_at)\n  VALUES (p_provider, p_scope, p_interval_ms, now_at) ON CONFLICT (provider, credential_scope) DO NOTHING;\n  SELECT * INTO bucket FROM biblib.catalogue_quota_buckets AS b\n  WHERE b.provider = p_provider AND b.credential_scope = p_scope FOR UPDATE;\n  -- Limpieza acotada de reservas antiguas; nunca toca las vigentes.\n  DELETE FROM biblib.catalogue_quota_reservations AS r WHERE r.ctid IN (\n    SELECT old.ctid FROM biblib.catalogue_quota_reservations AS old\n    WHERE old.provider = p_provider AND old.credential_scope = p_scope AND old.expires_at < now_at - interval '1 hour' LIMIT 100);\n  IF bucket.cooldown_until > now_at THEN\n    RETURN jsonb_build_object('state', 'cooldown', 'retryMs', ceil(extract(epoch FROM bucket.cooldown_until - now_at) * 1000)::bigint);\n  END IF;\n  SELECT count(*) INTO active FROM biblib.catalogue_quota_reservations AS r\n  WHERE r.provider = p_provider AND r.credential_scope = p_scope AND r.owner_id IS NOT DISTINCT FROM p_owner\n    AND r.purpose = p_purpose AND r.released_at IS NULL AND r.expires_at > now_at;\n  IF active >= p_owner_cap THEN\n    RETURN jsonb_build_object('state', 'busy', 'retryMs', p_interval_ms);\n  END IF;\n  slot := greatest(now_at, bucket.next_slot_at);\n  IF slot > now_at + p_horizon_ms * interval '1 millisecond' THEN\n    RETURN jsonb_build_object('state', 'wait', 'retryMs', greatest(1, ceil(extract(epoch FROM slot - now_at) * 1000) - p_horizon_ms)::bigint);\n  END IF;\n  granted := nextval('biblib.catalogue_fence_seq');\n  UPDATE biblib.catalogue_quota_buckets AS b\n  SET interval_ms = p_interval_ms, next_slot_at = slot + p_interval_ms * interval '1 millisecond', updated_at = now_at\n  WHERE b.provider = p_provider AND b.credential_scope = p_scope;\n  INSERT INTO biblib.catalogue_quota_reservations (provider, credential_scope, owner_id, purpose, fence, slot_at, expires_at)\n  VALUES (p_provider, p_scope, p_owner, p_purpose, granted, slot, slot + p_lease_ms * interval '1 millisecond')\n  RETURNING id INTO reservation;\n  RETURN jsonb_build_object('state', 'reserved', 'reservationId', reservation, 'fence', granted::text, 'waitMs', ceil(extract(epoch FROM slot - now_at) * 1000)::bigint);\nEND;\n",
+   "execute_authenticated": false,
+   "execute_anon": false
+  },
+  {
+   "name": "library_job_claim",
+   "language": "plpgsql",
+   "returns": "jsonb",
+   "args": 3,
+   "config": [
+    "search_path=pg_catalog"
+   ],
+   "security_definer": true,
+   "body": "\nDECLARE\n  now_at timestamptz := clock_timestamp();\n  lease_ms integer := greatest(1000, least(coalesce(p_lease_ms, 60000), 300000));\n  candidate biblib.library_jobs%ROWTYPE;\n  claimed biblib.library_jobs%ROWTYPE;\n  active boolean;\nBEGIN\n  FOR candidate IN\n    SELECT * FROM biblib.library_jobs AS j\n    WHERE (p_job_id IS NULL OR j.id = p_job_id) AND (p_owner IS NULL OR j.user_id = p_owner)\n      AND j.state IN ('queued', 'running', 'waiting_retry') AND j.next_attempt_at <= now_at\n      AND (j.state <> 'running' OR j.lease_until <= now_at)\n    ORDER BY j.next_attempt_at, j.created_at\n    LIMIT 10\n    FOR UPDATE SKIP LOCKED\n  LOOP\n    active := biblib.account_is_active(candidate.user_id);\n    -- Caducado, cuenta no activa o pasos que fallan una y otra vez: se cierra sin ejecutar.\n    IF candidate.expires_at <= now_at OR NOT active OR candidate.attempts >= 10 THEN\n      UPDATE biblib.library_jobs AS j\n      SET state = CASE WHEN candidate.expires_at <= now_at OR NOT active THEN 'expired' ELSE 'failed' END,\n        error_code = CASE WHEN candidate.expires_at <= now_at THEN 'JOB_EXPIRED' WHEN NOT active THEN 'ACCOUNT_INACTIVE' ELSE 'STEP_FAILED' END,\n        lease_token = NULL, lease_until = NULL, version = gen_random_uuid(), finished_at = now_at, expires_at = now_at + interval '30 days', updated_at = now_at\n      WHERE j.id = candidate.id;\n      CONTINUE;\n    END IF;\n    UPDATE biblib.library_jobs AS j\n    SET state = 'running', lease_token = gen_random_uuid(), lease_until = now_at + lease_ms * interval '1 millisecond',\n      fencing_number = nextval('biblib.library_job_fence_seq'), attempts = j.attempts + 1, updated_at = now_at\n    WHERE j.id = candidate.id\n    RETURNING * INTO claimed;\n    RETURN to_jsonb(claimed) || jsonb_build_object('fencing_number', claimed.fencing_number::text);\n  END LOOP;\n  RETURN NULL;\nEND;\n",
+   "execute_authenticated": false,
+   "execute_anon": false
+  },
+  {
+   "name": "library_job_control",
+   "language": "plpgsql",
+   "returns": "jsonb",
+   "args": 3,
+   "config": [
+    "search_path=pg_catalog"
+   ],
+   "security_definer": true,
+   "body": "\nDECLARE\n  owner_id uuid := auth.uid();\n  now_at timestamptz;\n  job biblib.library_jobs%ROWTYPE;\n  target text;\nBEGIN\n  IF owner_id IS NULL THEN\n    RAISE EXCEPTION 'library_job_control requiere una sesión' USING ERRCODE = '42501';\n  END IF;\n  IF p_action NOT IN ('pause', 'resume', 'cancel') THEN\n    RAISE EXCEPTION 'Acción de trabajo no válida' USING ERRCODE = '22023';\n  END IF;\n  SELECT * INTO job FROM biblib.library_jobs AS j WHERE j.id = p_job_id AND j.user_id = owner_id FOR UPDATE;\n  IF NOT FOUND THEN\n    RETURN jsonb_build_object('status', 'not_found');\n  END IF;\n  now_at := clock_timestamp();\n  IF job.state IN ('queued', 'running', 'waiting_retry', 'needs_review', 'paused') AND (job.expires_at <= now_at OR NOT biblib.account_is_active(owner_id)) THEN\n    UPDATE biblib.library_jobs AS j\n    SET state = 'expired', error_code = CASE WHEN job.expires_at <= now_at THEN 'JOB_EXPIRED' ELSE 'ACCOUNT_INACTIVE' END,\n      lease_token = NULL, lease_until = NULL, version = gen_random_uuid(), finished_at = now_at, expires_at = now_at + interval '30 days', updated_at = now_at\n    WHERE j.id = job.id;\n    RETURN jsonb_build_object('status', 'expired', 'published', job.published_at IS NOT NULL);\n  END IF;\n  IF job.state = 'expired' THEN\n    RETURN jsonb_build_object('status', 'expired', 'published', job.published_at IS NOT NULL);\n  END IF;\n  IF job.version <> p_expected_version THEN\n    RETURN jsonb_build_object('status', 'conflict');\n  END IF;\n  target := CASE\n    WHEN p_action = 'pause' AND job.state IN ('queued', 'running', 'waiting_retry') THEN 'paused'\n    WHEN p_action = 'resume' AND job.state = 'paused' THEN 'queued'\n    WHEN p_action = 'cancel' AND job.state IN ('queued', 'running', 'waiting_retry', 'needs_review', 'paused') THEN 'cancelled'\n  END;\n  IF target IS NULL THEN\n    IF (p_action = 'pause' AND job.state = 'paused') OR (p_action = 'resume' AND job.state IN ('queued', 'running', 'waiting_retry')) OR (p_action = 'cancel' AND job.state = 'cancelled') THEN\n      RETURN jsonb_build_object('status', 'ok', 'published', job.published_at IS NOT NULL);\n    END IF;\n    RETURN jsonb_build_object('status', 'conflict');\n  END IF;\n  UPDATE biblib.library_jobs AS j\n  SET state = target, version = gen_random_uuid(), lease_token = NULL, lease_until = NULL,\n    next_attempt_at = CASE WHEN target = 'queued' THEN now_at ELSE j.next_attempt_at END,\n    error_code = CASE WHEN target = 'cancelled' THEN 'CANCELLED' ELSE j.error_code END,\n    finished_at = CASE WHEN target = 'cancelled' THEN now_at ELSE j.finished_at END,\n    expires_at = CASE WHEN target = 'cancelled' THEN now_at + interval '30 days' ELSE j.expires_at END,\n    updated_at = now_at\n  WHERE j.id = job.id;\n  RETURN jsonb_build_object('status', 'ok', 'published', job.published_at IS NOT NULL);\nEND;\n",
+   "execute_authenticated": true,
+   "execute_anon": false
+  },
+  {
+   "name": "library_job_create",
+   "language": "plpgsql",
+   "returns": "jsonb",
+   "args": 5,
+   "config": [
+    "search_path=pg_catalog"
+   ],
+   "security_definer": true,
+   "body": "\nDECLARE\n  owner_id uuid := auth.uid();\n  now_at timestamptz := clock_timestamp();\n  existing biblib.library_jobs%ROWTYPE;\n  active_id uuid;\n  created_id uuid;\nBEGIN\n  IF owner_id IS NULL THEN\n    RAISE EXCEPTION 'library_job_create requiere una sesión' USING ERRCODE = '42501';\n  END IF;\n  IF NOT biblib.account_is_active(owner_id) THEN\n    RETURN jsonb_build_object('status', 'inactive');\n  END IF;\n  -- Serializa las altas del mismo dueño: clave, límite y trabajo de portadas activo.\n  PERFORM pg_advisory_xact_lock(hashtextextended('biblib.library_jobs:' || owner_id::text, 0));\n  SELECT * INTO existing FROM biblib.library_jobs AS j WHERE j.user_id = owner_id AND j.kind = p_kind AND j.idempotency_key = p_idempotency_key;\n  IF FOUND THEN\n    IF existing.input_digest <> p_input_digest THEN\n      RETURN jsonb_build_object('status', 'conflict');\n    END IF;\n    RETURN jsonb_build_object('status', 'existing', 'id', existing.id);\n  END IF;\n  IF p_kind = 'import' AND NOT EXISTS (SELECT 1 FROM biblib.import_previews AS preview WHERE preview.id = p_preview_id AND preview.user_id = owner_id) THEN\n    RETURN jsonb_build_object('status', 'not_found');\n  END IF;\n  -- Resúmenes terminados fuera de su retención.\n  DELETE FROM biblib.library_jobs AS j WHERE j.user_id = owner_id AND j.finished_at IS NOT NULL AND j.expires_at <= now_at;\n  IF p_kind = 'covers' THEN\n    SELECT j.id INTO active_id FROM biblib.library_jobs AS j\n    WHERE j.user_id = owner_id AND j.kind = 'covers' AND j.state IN ('queued', 'running', 'waiting_retry', 'paused') LIMIT 1;\n    IF FOUND THEN\n      RETURN jsonb_build_object('status', 'busy', 'id', active_id);\n    END IF;\n  END IF;\n  IF (SELECT count(*) FROM biblib.library_jobs AS j WHERE j.user_id = owner_id AND j.state IN ('queued', 'running', 'waiting_retry', 'paused')) >= 5 THEN\n    RETURN jsonb_build_object('status', 'limit');\n  END IF;\n  INSERT INTO biblib.library_jobs (user_id, kind, contract_version, idempotency_key, input_digest, preview_id, expected_revision, phase, next_attempt_at, expires_at)\n  VALUES (owner_id, p_kind, 1, p_idempotency_key, p_input_digest, p_preview_id, p_expected_revision,\n    CASE WHEN p_kind = 'import' THEN 'publish' ELSE 'covers' END, now_at, now_at + interval '7 days')\n  RETURNING id INTO created_id;\n  RETURN jsonb_build_object('status', 'created', 'id', created_id);\nEND;\n",
+   "execute_authenticated": true,
+   "execute_anon": false
+  },
+  {
+   "name": "library_job_fence",
+   "language": "plpgsql",
+   "returns": "uuid",
+   "args": 3,
+   "config": [
+    "search_path=pg_catalog"
+   ],
+   "security_definer": true,
+   "body": "\nDECLARE\n  job record;\nBEGIN\n  SELECT j.user_id, j.state, j.lease_token, j.fencing_number, j.lease_until INTO job\n  FROM biblib.library_jobs AS j WHERE j.id = p_job_id FOR UPDATE;\n  IF NOT FOUND OR job.state <> 'running' OR job.lease_token IS DISTINCT FROM p_lease_token OR job.fencing_number <> p_fencing OR job.lease_until <= clock_timestamp() THEN\n    RAISE EXCEPTION 'El lease del trabajo ya no es válido' USING ERRCODE = 'BJ001';\n  END IF;\n  IF NOT biblib.account_is_active(job.user_id) THEN\n    RAISE EXCEPTION 'La cuenta del trabajo no está activa' USING ERRCODE = 'BJ002';\n  END IF;\n  RETURN job.user_id;\nEND;\n",
+   "execute_authenticated": false,
+   "execute_anon": false
+  },
+  {
+   "name": "library_job_renew",
+   "language": "plpgsql",
+   "returns": "boolean",
+   "args": 4,
+   "config": [
+    "search_path=pg_catalog"
+   ],
+   "security_definer": true,
+   "body": "\nDECLARE\n  now_at timestamptz := clock_timestamp();\nBEGIN\n  UPDATE biblib.library_jobs AS j\n  SET lease_until = now_at + greatest(1000, least(coalesce(p_lease_ms, 60000), 300000)) * interval '1 millisecond', updated_at = now_at\n  WHERE j.id = p_job_id AND j.state = 'running' AND j.lease_token = p_lease_token AND j.fencing_number = p_fencing\n    AND j.lease_until > now_at AND biblib.account_is_active(j.user_id);\n  RETURN FOUND;\nEND;\n",
+   "execute_authenticated": false,
+   "execute_anon": false
+  },
+  {
+   "name": "library_snapshot_capture",
+   "language": "plpgsql",
+   "returns": "jsonb",
+   "args": 2,
+   "config": [
+    "search_path=pg_catalog"
+   ],
+   "security_definer": true,
+   "body": "\nDECLARE\n  owner_id uuid := auth.uid();\n  now_at timestamptz := clock_timestamp();\n  captured uuid;\n  new_id uuid;\n  book_total integer;\n  shelf_total integer;\n  shelf_chunks integer;\n  chunk_total integer;\n  byte_total bigint;\n  final_digest text;\nBEGIN\n  IF owner_id IS NULL THEN\n    RAISE EXCEPTION 'library_snapshot_capture requiere una sesión' USING ERRCODE = '42501';\n  END IF;\n  IF p_reason NOT IN ('import.replace', 'snapshot.restore') THEN\n    RAISE EXCEPTION 'Motivo de captura no válido' USING ERRCODE = '22023';\n  END IF;\n  IF NOT EXISTS (SELECT 1 FROM biblib.library_operations AS o WHERE o.id = p_operation_id AND o.user_id = owner_id AND o.created_at = now()) THEN\n    RAISE EXCEPTION 'La captura exige la operación de esta misma transacción' USING ERRCODE = '42501';\n  END IF;\n  IF NOT biblib.account_is_active(owner_id) THEN\n    RAISE EXCEPTION 'La cuenta no admite versiones nuevas' USING ERRCODE = 'BS002';\n  END IF;\n  -- Bajo el bloqueo de colección: la revisión capturada es la que la operación va a sustituir.\n  captured := biblib.lock_library();\n  -- Las versiones vencidas ya no se muestran ni se restauran: se retiran al capturar.\n  DELETE FROM biblib.library_snapshots AS s WHERE s.user_id = owner_id AND s.expires_at <= now_at;\n  IF (SELECT count(*) FROM biblib.library_snapshots AS s WHERE s.user_id = owner_id) >= 10 THEN\n    RAISE EXCEPTION 'Cuota de versiones anteriores agotada' USING ERRCODE = 'BS001';\n  END IF;\n  SELECT count(*) INTO book_total FROM biblib.books AS b WHERE b.user_id = owner_id;\n  SELECT count(*) INTO shelf_total FROM biblib.shelves AS sh WHERE sh.user_id = owner_id;\n  IF book_total > 10000 OR shelf_total > 1000 THEN\n    RAISE EXCEPTION 'Colección demasiado grande para guardar una versión anterior' USING ERRCODE = 'BS003';\n  END IF;\n  INSERT INTO biblib.library_snapshots AS s (user_id, source_operation_id, reason, captured_revision, schema_version, state, expires_at, created_at)\n  VALUES (owner_id, p_operation_id, p_reason, captured, 1, 'capturing', now_at + interval '30 days', now_at)\n  RETURNING s.id INTO new_id;\n  shelf_chunks := (shelf_total + 199) / 200;\n  INSERT INTO biblib.library_snapshot_chunks (snapshot_id, user_id, seq, kind, item_count, payload, digest)\n  SELECT new_id, owner_id, grouped.seq, grouped.kind, grouped.n, grouped.payload, encode(sha256(convert_to(grouped.payload::text, 'UTF8')), 'hex')\n  FROM (\n    SELECT (ranked.rn / 200)::integer AS seq, 'shelves'::text AS kind, count(*)::integer AS n, jsonb_agg(ranked.item ORDER BY ranked.rn) AS payload\n    FROM (\n      SELECT row_number() OVER (ORDER BY sh.created_at, sh.id) - 1 AS rn,\n        jsonb_build_object('id', sh.id, 'title', sh.title, 'is_default', sh.is_default, 'created_at', sh.created_at) AS item\n      FROM biblib.shelves AS sh WHERE sh.user_id = owner_id\n    ) AS ranked\n    GROUP BY ranked.rn / 200\n    UNION ALL\n    SELECT shelf_chunks + (ranked.rn / 200)::integer, 'books', count(*)::integer, jsonb_agg(ranked.item ORDER BY ranked.rn)\n    FROM (\n      SELECT row_number() OVER (ORDER BY b.id) - 1 AS rn,\n        jsonb_build_object('id', b.id, 'isbn', b.isbn, 'title', b.title, 'subtitle', b.subtitle, 'authors', b.authors, 'publishers', b.publishers,\n          'catalogue', b.catalogue, 'number_of_pages', b.number_of_pages, 'publish_date', b.publish_date, 'cover_small', b.cover_small,\n          'cover_medium', b.cover_medium, 'cover_large', b.cover_large, 'status', b.status, 'shelf_id', b.shelf_id, 'created_at', b.created_at) AS item\n      FROM biblib.books AS b WHERE b.user_id = owner_id\n    ) AS ranked\n    GROUP BY ranked.rn / 200\n  ) AS grouped;\n  SELECT count(*)::integer, coalesce(sum(octet_length(c.payload::text)), 0),\n    encode(sha256(convert_to(concat_ws('|', 'biblib.snapshot.v1', book_total, shelf_total, coalesce(string_agg(c.digest, '' ORDER BY c.seq), '')), 'UTF8')), 'hex')\n  INTO chunk_total, byte_total, final_digest\n  FROM biblib.library_snapshot_chunks AS c WHERE c.snapshot_id = new_id;\n  UPDATE biblib.library_snapshots AS s\n  SET state = 'ready', digest = final_digest,\n    counts = jsonb_build_object('books', book_total, 'shelves', shelf_total, 'chunks', chunk_total, 'bytes', byte_total)\n  WHERE s.id = new_id;\n  RETURN jsonb_build_object('id', new_id, 'digest', final_digest, 'books', book_total, 'shelves', shelf_total, 'chunks', chunk_total);\nEND;\n",
+   "execute_authenticated": true,
+   "execute_anon": false
+  },
+  {
+   "name": "library_snapshot_delete",
+   "language": "plpgsql",
+   "returns": "text",
+   "args": 2,
+   "config": [
+    "search_path=pg_catalog"
+   ],
+   "security_definer": true,
+   "body": "\nDECLARE\n  owner_id uuid := auth.uid();\n  current_version uuid;\nBEGIN\n  IF owner_id IS NULL THEN\n    RAISE EXCEPTION 'library_snapshot_delete requiere una sesión' USING ERRCODE = '42501';\n  END IF;\n  PERFORM biblib.lock_library();\n  SELECT s.version INTO current_version FROM biblib.library_snapshots AS s WHERE s.id = p_snapshot_id AND s.user_id = owner_id FOR UPDATE;\n  IF NOT FOUND THEN\n    RETURN 'not_found';\n  END IF;\n  IF current_version <> p_expected_version THEN\n    RETURN 'conflict';\n  END IF;\n  DELETE FROM biblib.library_snapshots AS s WHERE s.id = p_snapshot_id AND s.user_id = owner_id;\n  RETURN 'deleted';\nEND;\n",
+   "execute_authenticated": true,
+   "execute_anon": false
+  },
+  {
+   "name": "library_snapshot_foreign_ids",
+   "language": "plpgsql",
+   "returns": "uuid[]",
+   "args": 1,
+   "config": [
+    "search_path=pg_catalog"
+   ],
+   "security_definer": true,
+   "body": "\nDECLARE\n  owner_id uuid := auth.uid();\n  found uuid[];\nBEGIN\n  IF owner_id IS NULL THEN\n    RAISE EXCEPTION 'library_snapshot_foreign_ids requiere una sesión' USING ERRCODE = '42501';\n  END IF;\n  SELECT coalesce(array_agg(DISTINCT entry.id ORDER BY entry.id), '{}'::uuid[]) INTO found\n  FROM (\n    SELECT c.kind, (item->>'id')::uuid AS id\n    FROM biblib.library_snapshot_chunks AS c CROSS JOIN LATERAL jsonb_array_elements(c.payload) AS item\n    WHERE c.snapshot_id = p_snapshot_id AND c.user_id = owner_id\n  ) AS entry\n  WHERE (entry.kind = 'books' AND EXISTS (SELECT 1 FROM biblib.books AS b WHERE b.id = entry.id AND b.user_id <> owner_id))\n    OR (entry.kind = 'shelves' AND EXISTS (SELECT 1 FROM biblib.shelves AS sh WHERE sh.id = entry.id AND sh.user_id <> owner_id));\n  RETURN found;\nEND;\n",
+   "execute_authenticated": true,
+   "execute_anon": false
+  },
+  {
+   "name": "library_snapshot_purge_expired",
+   "language": "plpgsql",
+   "returns": "integer",
+   "args": 1,
+   "config": [
+    "search_path=pg_catalog"
+   ],
+   "security_definer": true,
+   "body": "\nDECLARE\n  removed integer;\nBEGIN\n  DELETE FROM biblib.library_snapshots AS s\n  WHERE s.id IN (SELECT e.id FROM biblib.library_snapshots AS e WHERE e.expires_at <= clock_timestamp() ORDER BY e.expires_at LIMIT greatest(1, least(coalesce(p_limit, 100), 1000)));\n  GET DIAGNOSTICS removed = ROW_COUNT;\n  RETURN removed;\nEND;\n",
+   "execute_authenticated": false,
+   "execute_anon": false
+  },
+  {
+   "name": "lock_library",
+   "language": "plpgsql",
+   "returns": "uuid",
+   "args": 0,
+   "config": [
+    "search_path=pg_catalog"
+   ],
+   "security_definer": true,
+   "body": "\nDECLARE\n  owner_id uuid := auth.uid();\n  current_revision uuid;\nBEGIN\n  IF owner_id IS NULL THEN\n    RAISE EXCEPTION 'lock_library requiere una sesión' USING ERRCODE = '42501';\n  END IF;\n  INSERT INTO biblib.library_state (user_id) VALUES (owner_id) ON CONFLICT (user_id) DO NOTHING;\n  SELECT state.revision INTO current_revision FROM biblib.library_state AS state WHERE state.user_id = owner_id FOR UPDATE;\n  RETURN current_revision;\nEND;\n",
+   "execute_authenticated": true,
+   "execute_anon": false
+  },
+  {
+   "name": "rotate_book_version",
+   "language": "plpgsql",
+   "returns": "trigger",
+   "args": 0,
+   "config": [
+    "search_path=pg_catalog"
+   ],
+   "security_definer": false,
+   "body": "\nBEGIN\n  NEW.version := gen_random_uuid();\n  RETURN NEW;\nEND;\n",
+   "execute_authenticated": true,
+   "execute_anon": true
+  },
+  {
+   "name": "rotate_library_revision",
+   "language": "plpgsql",
+   "returns": "trigger",
+   "args": 0,
+   "config": [
+    "search_path=pg_catalog"
+   ],
+   "security_definer": true,
+   "body": "\nDECLARE\n  owners uuid[];\nBEGIN\n  IF TG_OP = 'INSERT' THEN\n    owners := ARRAY[NEW.user_id];\n  ELSIF TG_OP = 'DELETE' THEN\n    owners := ARRAY[OLD.user_id];\n  ELSE\n    owners := ARRAY[NEW.user_id, OLD.user_id];\n  END IF;\n  INSERT INTO biblib.library_state AS state (user_id, rotated_xact)\n  SELECT DISTINCT owner_id, pg_current_xact_id() FROM unnest(owners) AS owner_id\n  WHERE EXISTS (SELECT 1 FROM auth.users AS account WHERE account.id = owner_id)\n  ON CONFLICT (user_id) DO UPDATE\n    SET revision = gen_random_uuid(), rotated_xact = excluded.rotated_xact, updated_at = now()\n    WHERE state.rotated_xact IS DISTINCT FROM excluded.rotated_xact;\n  RETURN NULL;\nEND;\n",
+   "execute_authenticated": false,
+   "execute_anon": false
+  }
+ ],
+ "triggers": [
+  {
+   "name": "books_rotate_library_revision",
+   "table": "books",
+   "function": "biblib.rotate_library_revision",
+   "tgtype": 29,
+   "enabled": "O",
+   "columns": "",
+   "conditional": false
+  },
+  {
+   "name": "books_rotate_version",
+   "table": "books",
+   "function": "biblib.rotate_book_version",
+   "tgtype": 23,
+   "enabled": "O",
+   "columns": "",
+   "conditional": false
+  },
+  {
+   "name": "shelves_rotate_library_revision",
+   "table": "shelves",
+   "function": "biblib.rotate_library_revision",
+   "tgtype": 29,
+   "enabled": "O",
+   "columns": "",
+   "conditional": false
+  }
+ ]
+}

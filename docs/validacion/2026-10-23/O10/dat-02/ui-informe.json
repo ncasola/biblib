@@ -1,0 +1,22 @@
+{
+ "pasos": [
+  {
+   "reemplazo": true,
+   "libros": 2
+  },
+  {
+   "escritorio": {
+    "desbordamiento": false
+   }
+  },
+  {
+   "movil": {
+    "desbordamiento": false
+   }
+  },
+  {
+   "deshacerDevuelveIds": true,
+   "libros": 4
+  }
+ ]
+}
