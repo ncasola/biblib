@@ -1044,6 +1044,25 @@
         "FE-02"
       ],
       "status": "planned"
+    },
+    {
+      "id": "U-LOC-01",
+      "title": "Login local con correo y contraseña (solo local/test)",
+      "phase": "F1",
+      "wave": "O07",
+      "dependsOn": [
+        "U-INF-02",
+        "U-INF-05"
+      ],
+      "size": "S",
+      "priority": "P2",
+      "document": "orquestacion-f1.md",
+      "auditRefs": [
+        "SEC-02",
+        "SEC-05"
+      ],
+      "status": "in-progress",
+      "note": "Petición de Néstor del 23-10-2026. Doble puerta: constante de build solo en local/test y guarda de servidor con loopback."
     }
   ]
 }

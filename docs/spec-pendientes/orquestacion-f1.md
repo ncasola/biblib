@@ -20,6 +20,7 @@ Plan operativo de la fase F1 (O07–O10): integridad de colección, proveedores 
 | O07 | U-OPS-02 Backup administrativo y restore | Claude (Opus) | `scratch` | No |
 | O07 | U-BIB-01 Contrato y orquestador bibliográfico | Codex | No | No |
 | O07 | U-EXP-01 Navegación, títulos y retorno | Claude (Sonnet): OpenCode sin cuota y Codex al 13 % de su límite de 5 h | No | No |
+| O07 | U-LOC-01 Login local con correo y contraseña (petición de Néstor) | Claude (Sonnet) | No | No |
 | O07 | U-QA-02 E2E y navegadores (tras U-DAT-01) | Claude (Opus) | `test` | No (Playwright en lockfile) |
 | O08 | U-BIB-02 Adaptadores OL y BNE | Codex | No | No |
 | O08 | U-DAT-05 Cuota y caché compartidas | Claude (Opus) | `test` | Sí |
