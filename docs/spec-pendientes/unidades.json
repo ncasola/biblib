@@ -94,7 +94,12 @@
         "OPS-01",
         "OPS-02"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O03 · merge 9ee6884; ensayo scratch con HolaERP intacto (docs/validacion/2026-10-23/O03/u-inf-03-informe.md)",
+      "pending": [
+        "bootstrap migrate/seed/verify en U-INF-06",
+        "Bindings no loopback: aviso de doctor hasta decisión A/B."
+      ]
     },
     {
       "id": "U-INF-04",

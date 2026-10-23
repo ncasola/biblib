@@ -267,4 +267,4 @@ El orden es **preflight → stack → env → migrate → seed → verify**. Cad
 
 `migrate`, `seed` y `verify` permanecen **pending**, con mensaje de no disponibilidad hasta U-INF-06. El recibo y la respuesta muestran estado global **pending**, próxima fase **migrate**. La salida **0** significa exclusivamente que las fases disponibles terminaron correctamente; **no acredita bootstrap completo, esquema ni fixtures**. Una fase ejecutada que falle devuelve su código distinto de cero y queda `failed`/`interrupted`, con las siguientes pendientes. U-INF-06 conectará U-INF-04/U-INF-05 en estos mismos puntos, sin segundo runner ni historial SQL paralelo.
 
-Las pruebas de procesos/CLI/Docker simulados se ejecutan con `pnpm test:scripts`. El [informe U-INF-03](u-inf-03-informe.md) registra el ensayo real de scratch, la conservación de datos y la comparación de recursos HolaERP.
+Las pruebas de procesos/CLI/Docker simulados se ejecutan con `pnpm test:scripts`. El [informe U-INF-03](validacion/2026-10-23/O03/u-inf-03-informe.md) registra el ensayo real de scratch, la conservación de datos y la comparación de recursos HolaERP.
