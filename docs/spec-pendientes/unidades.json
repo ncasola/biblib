@@ -489,7 +489,11 @@
         "UI-03",
         "FE-02"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O08 · merge 557e3e6 (OpenCode glm-5.3 → Codex por cuota); docs/validacion/2026-10-23/O08/exp-04.md",
+      "pending": [
+        "Recorrido 3D táctil y de teclado en navegador: U-QA-02/U-EXP-03."
+      ]
     },
     {
       "id": "U-EXP-05",
