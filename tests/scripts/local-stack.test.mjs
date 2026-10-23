@@ -238,13 +238,15 @@ test("status publica el head aplicado solo con Postgres propio en marcha", async
   assert.equal((await runLocalStack(["doctor", "--profile", "scratch", "--json"], f.options)).result.head, null)
 })
 
-test("worktree rechaza main/test y bloqueo concurrente devuelve 7", async () => {
+test("worktree rechaza main, admite scratch/test y bloqueo concurrente devuelve 7", async () => {
   const f = fixture()
   writeFileSync(path.join(f.root, ".git"), "gitdir: /example")
-  for (const profile of ["main", "test"]) await assert.rejects(runLocalStack(["up", "--profile", profile], f.options), { code: EXIT.IDENTITY_MISMATCH })
+  for (const command of ["up", "bootstrap"]) await assert.rejects(runLocalStack([command, "--profile", "main"], f.options), { code: EXIT.IDENTITY_MISMATCH })
   const dir = path.join(f.root, ".biblib/state"); mkdirSync(dir, { recursive: true })
-  writeFileSync(path.join(dir, "scratch-lock.json"), "{}")
-  await assert.rejects(runLocalStack(["up", "--profile", "scratch"], f.options), { code: EXIT.LOCK_BUSY })
+  for (const profile of ["scratch", "test"]) {
+    writeFileSync(path.join(dir, `${profile}-lock.json`), "{}")
+    await assert.rejects(runLocalStack(["up", "--profile", profile], f.options), { code: EXIT.LOCK_BUSY })
+  }
 })
 
 test("ejecutor sanea captura, usa argv con espacios y devuelve timeout/interrupción", async () => {
