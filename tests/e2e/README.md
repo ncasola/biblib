@@ -50,11 +50,11 @@ pnpm db:local:down --profile test
 | Catálogo | `flujos/catalogo.spec.ts` | Alta manual con corte de red (borrador conservado) y respuesta retenida (sin éxito antes de persistir); ISBN-10 con guiones ya catalogado; edición completa con conflicto de versión, borrador conservado y recarga explícita; eliminación confirmada. |
 | Organización | `flujos/organizacion.spec.ts` | Predeterminada protegida; movimiento individual y estado; lote; ficha borrada en otra pestaña; estantería borrada en otra pestaña; selección conservada tras un error de lote. |
 | Consulta | `flujos/consulta.spec.ts` | Tildes y mayúsculas; ISBN-10/13 con y sin guiones; cero resultados; filtros de la URL; página que deja de existir; retorno contextual de U-EXP-01 (filtros, página, vista, fila visible y enfocada, Atrás/Adelante, título «<título> · BibLib», ficha sin contexto y ficha inexistente). |
-| Importación | `flujos/importacion.spec.ts` | Exportación v1 (con verificación de ISBN); la revisión no escribe; colección cambiada en otra pestaña → conflicto sin borrar y archivo/modo conservados; fusión; confirmación repetida tras perder la respuesta sin duplicar; reemplazo real con restauración. |
+| Importación | `flujos/importacion.spec.ts` | Exportación v1 (con verificación de ISBN); la revisión no escribe; colección cambiada en otra pestaña → conflicto sin borrar y archivo/modo conservados; fusión; confirmación repetida tras perder la respuesta sin duplicar; reemplazo real con restauración; importar libros con ISBN: la revisión no consulta catálogos y el trabajo resuelve las portadas después (U-BIB-05). |
 | Privacidad | `flujos/privacidad.spec.ts`, `cierre/…` | B no ve fichas de A en listado, búsqueda, filtro por estantería de A, ficha directa, título ni exportación. |
-| Proveedores | `flujos/proveedores.spec.ts` | Fixture «encontrado» con revisión antes de guardar; «no encontrado» con alta manual y el ISBN conservado; fallo del proveedor simulado en el servidor fixture que conserva el alta manual. |
+| Proveedores | `flujos/proveedores.spec.ts` | Fixture «encontrado» con revisión antes de guardar; «no encontrado» con alta manual y el ISBN conservado; fallo del proveedor simulado en el servidor fixture que conserva el alta manual. U-BIB-05: un proveedor vacío (Open Library) y otro disponible (BNE ficticio); 429, plazo agotado, 5xx y ausencia distinguidos por código HTTP y pantalla; cuota global agotada sin reintentos automáticos. Los ISBN reservados están en `lib/bibliographic-catalog/providers/fixture.ts`. |
 | Presentación | `flujos/presentacion.spec.ts` | Acceso móvil con tema oscuro, inicio sin botones anidados, colección móvil sin desbordamiento. |
-| Ajustes | `flujos/ajustes.spec.ts` | Exportación en dos partes (2001 fichas); nombre de perfil guardado en GoTrue. |
+| Ajustes | `flujos/ajustes.spec.ts` | Recuperación de portadas en fixture sin red ni cambios en las fichas (U-BIB-05); exportación en dos partes (2001 fichas); nombre de perfil guardado en GoTrue. |
 
 ### Pendientes (`test.fixme`, se activan con su unidad)
 
@@ -64,14 +64,13 @@ pnpm db:local:down --profile test
 | Fallo de publicación sin datos parciales; copias v1 + formato nuevo; partes fuera de orden, repetidas, ausentes o alteradas; restauración sin pérdida de IDs | U-DAT-04 |
 | Deshacer con conflictos | U-DAT-02 |
 | Trabajos: cerrar/reabrir, worker interrumpido, lease vencido, pausa, cancelación, reintento | U-DAT-03 |
-| Proveedores BNE/Google: uno vacío y otro disponible, 429/timeout/5xx, edición discrepante, clave ausente, presupuesto agotado | U-BIB-02, U-BIB-04, U-BIB-03, U-DAT-05 |
-| Recuperación de portadas en modo fixture sin red | U-BIB-05 (ver hallazgos) |
+| Proveedores: edición discrepante entre fuentes; clave de Google Books ausente (en fixture Google está siempre «configurado»: lo cubren las pruebas unitarias) | U-BIB-04, U-BIB-03 |
 | Objetos privados por propietario; borrado de cuenta; copia offline bloqueada | U-DAT-10, U-OPS-03, U-EXP-08 |
 | Producto: notas, lectura, préstamos, ubicación, series | U-PRO-01…05 |
 
 ### Hallazgos abiertos (no se corrigen en U-QA-02)
 
-1. **Llamadas a Open Library fuera del catálogo en modo `fixture`.** La recuperación de portadas, «Buscar portada» y el enriquecimiento de la importación usan `fetch` directo a `https://openlibrary.org/api/books` (`lib/library-import.ts`), sin pasar por `BIBLIB_CATALOGUE_MODE`. En el primer ensayo (antes de corregir el guard) el servidor salió a Internet y guardó portadas reales en dos fichas del censo de A, que se restauraron por SQL. Ahora el guard lo bloquea y el run fallaría: el recorrido queda `fixme` hasta U-BIB-05.
+1. **Llamadas a Open Library fuera del catálogo en modo `fixture`.** La recuperación de portadas, «Buscar portada» y el enriquecimiento de la importación usan `fetch` directo a `https://openlibrary.org/api/books` (`lib/library-import.ts`), sin pasar por `BIBLIB_CATALOGUE_MODE`. En el primer ensayo (antes de corregir el guard) el servidor salió a Internet y guardó portadas reales en dos fichas del censo de A, que se restauraron por SQL. **Resuelto en U-BIB-05 (23-10-2026):** los cuatro flujos pasan por el orquestador, la revisión de la importación ya no consulta catálogos y el recorrido de Ajustes está activo; una prueba estática impide reabrir un camino directo.
 2. **Id de ficha inválido.** `/book/no-es-un-uuid` titula «Libro no encontrado · BibLib», pero la acción responde 500 y la pantalla dice «No se pudo cargar el libro. Comprueba la conexión…». Prueba marcada `test.fail` (fallo conocido): avisará cuando se corrija.
 3. **404 RSC al cerrar sesión.** `Header` hace `router.replace("/login")` + `router.refresh()`; el refresco pasa por el proxy, que lo redirige a `/login?redirect=…`, y esa petición RSC responde 404 (la pantalla acaba bien en `/login`). Se admite solo en las pruebas que cierran sesión (`SIGN_OUT_RSC_404`).
 
@@ -93,7 +92,7 @@ El smoke se conserva (rápido, Auth simulado, Postgres efímero) hasta que todos
 | Exportación de 2001 libros en dos partes importables | `ajustes › una colección de más de 2000 fichas…` |
 | Perfil guarda nombre en Auth y muestra confirmación real | `ajustes › el perfil guarda el nombre en GoTrue…` |
 | Colección móvil sin desbordamiento; sin excepciones JS | `presentacion › …`; guard de cada recorrido |
-| **Recuperación de portadas omite manuales sin ISBN y no realiza HTTP externo** | **Solo en el smoke.** En el stack real A tiene ISBN fixture y el flujo llama a Open Library (hallazgo 1); se activa con U-BIB-05. |
+| Recuperación de portadas omite manuales sin ISBN y no realiza HTTP externo | `ajustes › la recuperación de portadas termina en modo fixture sin salir a la red ni modificar fichas` (U-BIB-05). El smoke conserva su propia comprobación. |
 
 ## Límites conocidos
 

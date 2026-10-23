@@ -76,7 +76,7 @@ Si ya tienes un respaldo antiguo demasiado grande, conserva el original intacto 
 
 Ensaya las partes en una cuenta de prueba. Si necesitas sustituir la colección, importa la primera parte con **reemplazar** y las restantes con **fusionar**, comprobando el resultado de cada una. Fusionar todas las partes sobre una colección existente conserva también libros que no estén en el respaldo. Las estanterías compartidas se unen por nombre normalizado; revisa sus nombres antes de dividir. No descartes registros para hacer caber el archivo ni repitas reemplazar en cada parte, porque eliminarías lo importado anteriormente. Conserva los archivos y el registro de lo importado hasta verificar la colección resultante.
 
-La consulta de portadas durante una importación tiene un presupuesto total de 20 segundos y no es una cola persistente. Si cierras la página durante una importación, consulta la colección antes de repetir; fusionar omite identificadores ya presentes, pero no deshace un reemplazo anterior.
+Preparar la revisión no consulta ningún catálogo y no espera portadas. Las portadas pendientes de los libros importados se buscan después, como una fase del trabajo persistente de importación (U-DAT-03, [U-BIB-05](#todos-los-flujos-por-el-orquestador-pruebas-medición-y-activación--u-bib-05)): pasos acotados, con el límite de cada catálogo, que sobreviven a recargar y cuyo fallo no revierte la importación. Si cierras la página durante una importación, consulta la colección antes de repetir; fusionar omite identificadores ya presentes, pero no deshace un reemplazo anterior.
 
 Para recuperar portadas pendientes, usa **Ajustes → Portadas pendientes**. El recorrido procesa hasta 20 candidatos por petición, guarda las portadas encontradas y muestra revisados, recuperados, sin resultado y omitidos. Puedes pausar después del lote actual y continuar desde el siguiente mientras permanezcas en la página. Si sales, los cambios guardados permanecen; una nueva búsqueda revisa otra vez los candidatos sin portada. Se omiten ISBN inválidos y fichas modificadas o eliminadas durante la consulta. Un fallo del proveedor puede dejar resultados pendientes para otro intento; no significa que se haya confirmado la ausencia de portada. Una URL real en cualquiera de los tamaños excluye el libro de este recorrido, que no diagnostica enlaces de imágenes rotos. Para cambiar una portada existente usa el detalle o una URL HTTPS. El proveedor puede dejar de servir una imagen externa en el futuro.
 
@@ -786,3 +786,65 @@ La migración crea las tres tablas con RLS, la secuencia de fencing, las funcion
 - `pnpm test:scripts`: `tests/scripts/jobs-runner.test.mjs` y las comprobaciones de drift de `0005` en `migrations.test.mjs`.
 
 Evidencia: [validacion/2026-10-23/O09/dat-03](validacion/2026-10-23/O09/dat-03/informe.md).
+
+## Todos los flujos por el orquestador: pruebas, medición y activación · U-BIB-05
+
+Los cuatro flujos bibliográficos consumen **solo** el orquestador de `lib/bibliographic-catalog` (con el gateway de U-DAT-05 en `live`). Ninguno hace `fetch` propio ni conoce un host de proveedor.
+
+| Flujo | Entrada | Ruta |
+| --- | --- | --- |
+| Alta por ISBN | `/api/books/search`, `lookupIsbnAction`, `getCoverAction` | `bibliographicCatalog.lookupISBN` / `getCover` con el `userId` de la sesión. |
+| Búsqueda por título y autor | acciones de U-DAT-08 | `bibliographicCatalog.searchTitleAuthor` (caché privada por dueño con HMAC). |
+| Importación | `prepareImportAction` + `confirmImportAction` | La revisión **no consulta catálogos**. La publicación crea los elementos de portada de los libros insertados y el trabajo de portadas los resuelve después. |
+| Recuperación de portadas | `recoverMissingCoversAction` y «Buscar portada» de la ficha | Trabajo persistente (`purpose: "batch"`) o, para una ficha, `getCover` interactivo fuera de cualquier transacción. |
+
+- **Prueba estática** (`tests/bibliographic-catalog-egress.test.ts`): falla si `openlibrary.org` o `catalogo.bne.es` aparecen fuera de `lib/bibliographic-catalog/providers/` (los nombres de host viven en `providers/endpoints.ts`; `next.config.mjs` y `proxy.ts` pueden nombrar solo `covers.openlibrary.org` como host de imágenes) o si hay un `fetch` hacia un destino que no sea una ruta propia (`/api/…`) fuera del adaptador y del gateway. Comprueba además que la revisión de la importación no importa el catálogo.
+- **Importación acotada y reanudable.** Pasos de hasta 20 libros o 20 s, una petición a la vez (nunca una por fila en paralelo), `Retry-After` respetado, pausa, reanudación y cancelación, y contadores confirmados (recuperadas, sin resultado, omitidas, reintentos). La fuente de cada portada consta en el resultado del elemento (`result.provider`), en la telemetría por proveedor (`cover.recovery`, `operation: cover.source`) y, con `BIBLIB_BIBLIOGRAPHY_REVIEW_ENABLED=true`, en la procedencia del campo `cover` (selección «sin verificar»). Una portada pendiente no bloquea la importación ni la revisión. Las consultas de lote no se agrupan en una petición multi-ISBN: cada ISBN pasa por el orquestador y su plaza de cuota, que es lo que acota el tráfico a Open Library.
+- **Retención** (`lib/bibliographic-catalog/retention.ts`, derivada de `rights.ts`; desconocido = denegado). Open Library: fichas y portadas (la URL) pueden guardarse y exportarse con su atribución. BNE: solo metadatos CC0 con URL del registro y hora; sus imágenes nunca. Google: nada permanente, solo vista previa temporal; ninguna ficha ni portada suya llega a `Book`, a la exportación ni a la caché. La exportación contiene únicamente la biblioteca de la cuenta (con `catalogue` y procedencia por campo): nunca la caché sin seleccionar ni diagnósticos de proveedores. Un trabajo o una ficha **nunca** guardan una imagen que la política no permita, aunque sea la primera candidata. Las ediciones manuales no se borran.
+
+### Fixtures de proveedor para pruebas y E2E
+
+En `fixture` no hay red. `lib/bibliographic-catalog/providers/fixture.ts` reserva ISBN válidos fuera del censo A/B para ensayar cada resultado de una fuente:
+
+| ISBN | Resultado |
+| --- | --- |
+| `9780000000040` | Open Library «no disponible» (5xx simulado). |
+| `9780000000064` | Open Library 429 con `Retry-After`. |
+| `9780000000071` | Open Library no responde hasta agotar su plazo (≈3,5 s). |
+| `9780000000088` | Todas las fuentes con la cuota compartida agotada (espera de 1 h). |
+| `9780000000095` | Open Library sin ficha y BNE con ficha («un proveedor vacío y otro disponible»). |
+
+En `fixture`, BNE participa por defecto con su adaptador ficticio (`BIBLIB_BNE_ENABLED=false` lo apaga); en `live` sigue apagada salvo bandera. Una ficha solo-BNE lleva procedencia v2 y solo puede guardarse con `BIBLIB_BIBLIOGRAPHY_REVIEW_ENABLED=true`: activar BNE y la revisión juntos forma parte de la activación de F2.
+
+### Benchmark con red simulada
+
+```powershell
+pnpm perf:catalogue [--build] [--out .biblib/performance/catalogue-bench.json] [--check]
+```
+
+Compila las pruebas si hace falta y ejecuta, en tiempo virtual (×10) y sin red, el orquestador, el adaptador de Open Library y el gateway reales con un simulador de proveedor. Para 1, 10 y 100 consultas concurrentes (cada una de una cuenta distinta) mide en cuatro fases —fría, caliente, con fallos (15 % de cuelgues y 10 % de 429) y sin respuesta— p50/p95, peticiones al proveedor, consultas atendidas sin salir (duplicados y aciertos de caché), claves deduplicadas en vuelo, limitadas, plazos agotados, cola máxima y entradas y bytes de caché. **No mide el rendimiento de ningún proveedor real ni de Internet**: las latencias son inventadas y deterministas. Con `--check` sale con 1 si alguna fase supera el límite de peticiones por segundo del proveedor, repite un ISBN ya resuelto, supera el plazo común o cuenta un fallo como «no encontrado». También lo ejecuta `pnpm test:scripts` (`tests/scripts/catalogue-bench.test.mjs`).
+
+### Telemetría agregada por proveedor (operador)
+
+```powershell
+docker logs <app> 2>&1 | node scripts/catalogue-telemetry.mjs [--json]
+node scripts/catalogue-telemetry.mjs --file registros.jsonl --json
+```
+
+Suma, desde los registros JSON de `lib/observability` (que ya no llevan ISBN, consultas, claves ni cuentas), por `open-library`, `bne` y `google-books`: consultas y resultado por fuente, latencia p50/p95, errores clasificados (`rate_limited`, `timeout`…), aciertos de caché, esperas de cuota omitidas, caídas de la coordinación y portadas recuperadas por fuente, más reintentos y fallos de trabajos. Solo muestra cantidades; las líneas no válidas se cuentan y no se reproducen. No abre red ni lee variables o archivos de configuración. Como los registros salen de cada instancia, el resumen de un despliegue con varias instancias exige reunir sus registros.
+
+### Probe real opcional
+
+`pnpm test:e2e:external` (`tests/e2e/externo/open-library.spec.ts`) consulta **un** ISBN público en Open Library y BNE reales (como mucho tres peticiones, Google apagado). No forma parte de la suite ni de CI y **solo debe ejecutarse con autorización de quien opera el despliegue**. Comprueba que cada fuente responde con ficha o sin ella y que el ISBN de la ficha es el consultado; una ausencia se anota («sin ficha») y no falla por un recuento esperado; una caída o un límite sí fallan, porque no son una ausencia.
+
+### Pruebas
+
+- `pnpm test`: `bibliographic-catalog-flows.test.ts` (recuperación acotada y reanudable sobre red simulada, cola y caché compartidas entre instancias, Google apagado con cero salidas, ni clave ni consulta privada en logs, resultados ni claves de caché, contrato por operación y estado), `bibliographic-catalog-retention.test.ts`, `bibliographic-catalog-egress.test.ts` y los existentes de contrato, adaptadores, Google y gateway.
+- `pnpm test:scripts`: benchmark con `--check` y resumen de telemetría.
+- `pnpm test:e2e:local`: `flujos/proveedores.spec.ts` (BNE disponible con Open Library vacía; 429, plazo agotado, 5xx y ausencia distinguidos por código HTTP y pantalla; cuota global agotada sin reintentos automáticos), `flujos/ajustes.spec.ts` (recuperación de portadas en fixture) y `flujos/importacion.spec.ts` (la revisión no consulta catálogos y las portadas se resuelven después).
+
+### Activación y recuperación
+
+1. **F1**: `fixture` para revisar contrato y UI. `live` con Open Library (limitador y gateway) y BNE con `BIBLIB_BNE_ENABLED=true` junto con `BIBLIB_BIBLIOGRAPHY_REVIEW_ENABLED=true`.
+2. **F2**: Google solo con `BIBLIB_GOOGLE_BOOKS_ENABLED=true` y clave de servidor tras revisar cuota, coste y términos; su vista previa nunca se conserva.
+3. **Recuperar**: volver a `fixture`, apagar un proveedor con su bandera o desactivar la revisión. Los datos de libros y los metadatos ya elegidos no se tocan; la entrada manual sigue disponible.
