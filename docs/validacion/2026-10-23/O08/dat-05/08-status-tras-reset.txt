@@ -1,0 +1,3 @@
+Estado de migraciones · biblib-scratch · up-to-date
+Head aplicado: 0004_catalogue_coordination · esperado: 0004_catalogue_coordination · pendientes: ninguna
+142 comprobaciones correctas.

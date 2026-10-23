@@ -29,6 +29,13 @@
       "when": 1792765666340,
       "tag": "0003_library_revision",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792770443198,
+      "tag": "0004_catalogue_coordination",
+      "breakpoints": true
     }
   ]
 }

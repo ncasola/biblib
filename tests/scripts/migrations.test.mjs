@@ -15,9 +15,10 @@ import { classify, closeConnection, connect, inspectDatabase, readLedger, resolv
 
 const repo = fileURLToPath(new URL("../../", import.meta.url))
 const drizzleDir = path.join(repo, "drizzle")
-// Metadatos reales capturados de Supabase local: tras 0002 (U-INF-04) y tras 0003 (U-DAT-01, head actual).
+// Metadatos reales capturados de Supabase local: tras 0002 (U-INF-04), tras 0003 (U-DAT-01) y tras 0004 (U-DAT-05, head actual).
 const facts0002 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0002.json"), "utf8"))
-const facts = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0003.json"), "utf8"))
+const facts0003 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0003.json"), "utf8"))
+const facts = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0004.json"), "utf8"))
 const named = (list, name) => list.find((item) => item.name === name)
 const temporary = []
 after(() => { for (const dir of temporary) rmSync(dir, { recursive: true, force: true }) })
@@ -102,8 +103,8 @@ describe("ledger", () => {
     assert.deepEqual(compareLedger(entries, rowsFor(entries)).pending, [])
     const partial = compareLedger(entries, rowsFor(entries, 1))
     assert.equal(partial.appliedHead.tag, "0000_biblib_init")
-    assert.deepEqual(partial.pending, ["0001_library_integrity", "0002_book_versions", "0003_library_revision"])
-    assert.equal(compareLedger(entries, []).pending.length, 4)
+    assert.deepEqual(partial.pending, ["0001_library_integrity", "0002_book_versions", "0003_library_revision", "0004_catalogue_coordination"])
+    assert.equal(compareLedger(entries, []).pending.length, 5)
   })
 
   test("hash legacy CRLF exige conciliación y no se reescribe", () => {
@@ -151,14 +152,49 @@ describe("manifest de objetos", () => {
     assert.ok(checks.length >= 35)
   })
 
-  test("los metadatos reales tras 0003 cumplen el manifest completo", () => {
-    const checks = verifyManifest(facts, MANIFEST_MIGRATIONS)
+  test("los metadatos reales tras 0003 cumplen el manifest de 0000→0003", () => {
+    const checks = verifyManifest(facts0003, MANIFEST_MIGRATIONS.slice(0, 4))
     assert.deepEqual(failing(checks), [])
     assert.ok(checks.length >= 75)
+  })
+
+  test("los metadatos reales tras 0004 cumplen el manifest completo", () => {
+    const checks = verifyManifest(facts, MANIFEST_MIGRATIONS)
+    assert.deepEqual(failing(checks), [])
+    assert.ok(checks.length >= 135)
     assert.equal(expectedObjects().triggers[0], "books_rotate_version:BEFORE INSERT OR UPDATE ROW")
     assert.deepEqual(expectedObjects().triggers.slice(1), ["books_rotate_library_revision:AFTER INSERT OR UPDATE OR DELETE ROW", "shelves_rotate_library_revision:AFTER INSERT OR UPDATE OR DELETE ROW"])
     // Las tablas de 0003 con RLS y un head anterior que aún no las conoce marcan drift.
     assert.ok(failing(verifyManifest(facts, MANIFEST_MIGRATIONS.slice(0, 3))).includes("policy.library_state_select_own"))
+    assert.ok(failing(verifyManifest(facts, MANIFEST_MIGRATIONS.slice(0, 4))).includes("policy.catalogue_private_cache_select_own"))
+  })
+
+  test("drift de la coordinación del catálogo (0004): acceso de cliente, seguridad y fencing", () => {
+    for (const table of ["catalogue_cache", "catalogue_inflight", "catalogue_quota_buckets", "catalogue_quota_reservations"]) {
+      const exposed = clone(facts); exposed.grants.push({ grantee: "authenticated", table, privilege: "SELECT" })
+      assert.deepEqual(failing(verifyManifest(exposed, MANIFEST_MIGRATIONS)), [`grant.authenticated.${table}`])
+    }
+    const writable = clone(facts); writable.grants.push({ grantee: "authenticated", table: "catalogue_private_cache", privilege: "INSERT" })
+    assert.deepEqual(failing(verifyManifest(writable, MANIFEST_MIGRATIONS)), ["grant.authenticated.catalogue_private_cache"])
+    const callable = clone(facts); named(callable.functions, "catalogue_begin").execute_authenticated = true
+    assert.deepEqual(failing(verifyManifest(callable, MANIFEST_MIGRATIONS)), ["function.catalogue_begin"])
+    const anon = clone(facts); named(anon.functions, "catalogue_reserve").execute_anon = true
+    assert.deepEqual(failing(verifyManifest(anon, MANIFEST_MIGRATIONS)), ["function.catalogue_reserve"])
+    const invoker = clone(facts); named(invoker.functions, "catalogue_complete").security_definer = false
+    assert.deepEqual(failing(verifyManifest(invoker, MANIFEST_MIGRATIONS)), ["function.catalogue_complete"])
+    const path = clone(facts); named(path.functions, "catalogue_release").config = ["search_path=public"]
+    assert.deepEqual(failing(verifyManifest(path, MANIFEST_MIGRATIONS)), ["function.catalogue_release"])
+    // Una publicación sin comprobar el testigo deja de ser la función declarada.
+    const unfenced = clone(facts); named(unfenced.functions, "catalogue_complete").body = named(unfenced.functions, "catalogue_complete").body.replace("AND f.fence = p_fence AND f.lease_expires_at > now_at", "")
+    assert.deepEqual(failing(verifyManifest(unfenced, MANIFEST_MIGRATIONS)), ["function.catalogue_complete"])
+    const outage = clone(facts); named(outage.constraints, "catalogue_cache_status_check").definition = "CHECK ((status = ANY (ARRAY['found'::text, 'unavailable'::text])))"
+    assert.deepEqual(failing(verifyManifest(outage, MANIFEST_MIGRATIONS)), ["constraint.catalogue_cache_status_check"])
+    const open = clone(facts); named(open.policies, "catalogue_private_cache_select_own").using = "true"
+    assert.deepEqual(failing(verifyManifest(open, MANIFEST_MIGRATIONS)), ["policy.catalogue_private_cache_select_own"])
+    const noRls = clone(facts); named(noRls.tables, "catalogue_quota_reservations").rls = false
+    assert.deepEqual(failing(verifyManifest(noRls, MANIFEST_MIGRATIONS)), ["rls.catalogue_quota_reservations"])
+    const extra = clone(facts); extra.policies.push({ ...named(extra.policies, "catalogue_private_cache_select_own"), name: "catalogue_cache_read_all", table: "catalogue_cache", using: "true" })
+    assert.deepEqual(failing(verifyManifest(extra, MANIFEST_MIGRATIONS)), ["policy.catalogue_cache_read_all"])
   })
 
   test("drift de los objetos de 0003: escritura directa, permisos, seguridad y triggers", () => {
@@ -376,19 +412,19 @@ describe("stack scratch real [stack]", { skip: stack.reason ?? false }, () => {
   test("un error intermedio revierte el conjunto y no adelanta el ledger (9)", async (t) => {
     const dir = migrationsCopy()
     // El segundo paso falla siempre (columna duplicada, 42701), haya o no filas en la base.
-    writeFileSync(path.join(dir, "0004_u_inf_04_fallo.sql"), "CREATE TABLE biblib.u_inf_04_probe (id integer);\n--> statement-breakpoint\nALTER TABLE biblib.u_inf_04_probe ADD COLUMN id integer;\n")
-    editJournal(dir, (j) => { j.entries.push({ idx: 4, version: "7", when: 1792800000000, tag: "0004_u_inf_04_fallo", breakpoints: true }) })
+    writeFileSync(path.join(dir, "0005_u_inf_04_fallo.sql"), "CREATE TABLE biblib.u_inf_04_probe (id integer);\n--> statement-breakpoint\nALTER TABLE biblib.u_inf_04_probe ADD COLUMN id integer;\n")
+    editJournal(dir, (j) => { j.entries.push({ idx: 5, version: "7", when: 1792900000000, tag: "0005_u_inf_04_fallo", breakpoints: true }) })
     const journal = loadJournal(dir)
     const sql = connect(stack.resolved, { applicationName: "biblib-test" })
     try {
       const inspection = await inspectDatabase(sql, journal)
-      if (inspection.state !== "pending" || inspection.pending.join() !== "0004_u_inf_04_fallo") { t.skip(`scratch no está en 0003 (${inspection.state})`); return }
+      if (inspection.state !== "pending" || inspection.pending.join() !== "0005_u_inf_04_fallo") { t.skip(`scratch no está en 0004 (${inspection.state})`); return }
       const ledgerBefore = await readLedger(sql)
       const plan = buildPlan({ resolved: stack.resolved, journal, inspection, commit: { sha: "0".repeat(40), drizzleClean: true }, drizzle: "0.45.2" })
       const failure = await applyPlan(sql, { plan, journal, migrationsDir: dir, waitMs: 2000 }).then(() => null, (error) => error)
       assert.equal(failure?.code, EXIT.MIGRATION_FAILED)
-      assert.equal(failure.report.previousHead.tag, "0003_library_revision")
-      assert.equal(failure.report.failedChange, "0004_u_inf_04_fallo")
+      assert.equal(failure.report.previousHead.tag, "0004_catalogue_coordination")
+      assert.equal(failure.report.failedChange, "0005_u_inf_04_fallo")
       assert.match(failure.report.result, /revertido/)
       assert.deepEqual((await readLedger(sql)).rows, ledgerBefore.rows)
       const [{ probe }] = await sql`select to_regclass('biblib.u_inf_04_probe') is not null as probe`

@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto"
 import { DomainError } from "../domain-errors"
 import { normalizeIsbn } from "../isbn"
 import { emitSafely, noopTelemetry, type TelemetryEmitter } from "../observability/emitter"
+import type { CatalogGateway } from "./gateway"
 import { httpsUrl, normalizeCandidate } from "./normalize"
 import { hasProviderRight, providerRightsPolicy } from "./rights"
 import type { BibliographicCandidate, BibliographicCatalogService, CatalogLookupResult, CatalogProvider, CoverCandidate, LookupOptions, ProviderCapability, ProviderContext, ProviderId, ProviderOutcome, ProviderRecordRef, ProviderRegistration, ProviderResult, TitleAuthorQuery } from "./types"
@@ -16,6 +17,8 @@ interface ServiceOptions {
   providers: ProviderRegistration[]
   order?: readonly ProviderId[]
   telemetry?: TelemetryEmitter
+  /** U-DAT-05: caché, consultas en vuelo y cuota compartidas entre instancias. */
+  gateway?: CatalogGateway
 }
 
 function canonicalIsbn(value: string): string {
@@ -34,7 +37,7 @@ export function createBibliographicCatalogService(settings: ServiceOptions): Bib
   const order = [...new Set([...(settings.order ?? DEFAULT_PROVIDER_ORDER), ...DEFAULT_PROVIDER_ORDER])].slice(0, 3)
   const telemetry = settings.telemetry ?? noopTelemetry
 
-  async function run<T>(operation: keyof ProviderCapability, options: LookupOptions, call: (adapter: CatalogProvider, context: ProviderContext) => Promise<ProviderResult<T[]>>, onlyProvider?: ProviderId): Promise<CatalogLookupResult<T>> {
+  async function run<T>(operation: keyof ProviderCapability, key: string, options: LookupOptions, call: (adapter: CatalogProvider, context: ProviderContext) => Promise<ProviderResult<T[]>>, onlyProvider?: ProviderId): Promise<CatalogLookupResult<T>> {
     const deadline = performance.now() + budget(options.timeoutMs, operation === "getCover" ? COVER_DEADLINE_MS : CATALOG_DEADLINE_MS)
     const providerBudget = budget(options.providerTimeoutMs, PROVIDER_DEADLINE_MS)
     const candidates: T[] = []
@@ -74,7 +77,11 @@ export function createBibliographicCatalogService(settings: ServiceOptions): Bib
             controller.signal.addEventListener("abort", () => reject(new DOMException("Consulta cancelada", "AbortError")), { once: true })
             timer = setTimeout(() => { timedOut = true; controller.abort() }, Math.min(remaining, providerBudget))
           })
-          const result = await Promise.race([call(registration.adapter, { signal: controller.signal, requestId }), aborted])
+          const adapter = registration.adapter
+          const context = { signal: controller.signal, requestId }
+          // Toda consulta a un proveedor pasa por el gateway cuando está configurado.
+          const pending = settings.gateway ? settings.gateway.execute({ provider: id, operation, key, owner: options.userId }, () => call(adapter, context), context) : call(adapter, context)
+          const result = await Promise.race([pending, aborted])
           if (performance.now() >= deadline || performance.now() - started >= providerBudget) {
             timedOut = true
             controller.abort()
@@ -118,19 +125,20 @@ export function createBibliographicCatalogService(settings: ServiceOptions): Bib
     capabilities: () => Object.fromEntries(order.map((id) => [id, { ...(registrations.get(id)?.enabled ? registrations.get(id)?.adapter?.capabilities ?? noCapabilities : noCapabilities) }])),
     async lookupISBN(value, options = {}) {
       const isbn = canonicalIsbn(value)
-      return run("lookupISBN", options, metadataCall("lookupISBN", isbn, isbn))
+      return run("lookupISBN", isbn, options, metadataCall("lookupISBN", isbn, isbn))
     },
     async searchTitleAuthor(query, options = {}) {
       if (!query || [query.title, query.author].some((value) => value !== undefined && (typeof value !== "string" || value.length > 500)) || (!query.title?.trim() && !query.author?.trim())) throw new DomainError("INVALID_INPUT", "Introduce un título o autor para buscar.")
-      return run("searchTitleAuthor", options, metadataCall("searchTitleAuthor", { title: query.title?.trim(), author: query.author?.trim() }))
+      const normalized = { title: query.title?.trim(), author: query.author?.trim() }
+      return run("searchTitleAuthor", JSON.stringify([normalized.title?.toLowerCase() ?? "", normalized.author?.toLowerCase() ?? ""]), options, metadataCall("searchTitleAuthor", normalized))
     },
     async resolveEditions(work, options = {}) {
       if (!work || !DEFAULT_PROVIDER_ORDER.includes(work.provider) || !["work", "edition"].includes(work.recordKind) || typeof work.recordId !== "string" || !/^[A-Za-z0-9_-]{1,200}$/.test(work.recordId)) throw new DomainError("INVALID_INPUT", "La referencia bibliográfica no es válida.")
-      return run("resolveEditions", options, metadataCall("resolveEditions", work), work.provider)
+      return run("resolveEditions", `${work.recordKind}:${work.recordId}`, options, metadataCall("resolveEditions", work), work.provider)
     },
     async getCover(value, options = {}) {
       const isbn = canonicalIsbn(value)
-      return run<CoverCandidate>("getCover", options, async (adapter, context) => {
+      return run<CoverCandidate>("getCover", isbn, options, async (adapter, context) => {
         const policy = providerRightsPolicy(adapter.id)
         if (!hasProviderRight(policy, "previewCover")) return { provider: adapter.id, requestId: context.requestId, status: "disabled" }
         const result = await adapter.getCover!(isbn, context)
