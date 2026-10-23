@@ -17,7 +17,8 @@ import {
   parseLibraryImport, type LibraryImportOptions, type LibraryExport,
 } from "@/lib/library-import"
 import type { ImportOperationResult } from "@/lib/import-plan"
-import { fragmentLibraryExport } from "@/lib/library-export"
+import { backupPartCounts, exportLibraryBackup } from "@/lib/library-export"
+import type { PortableBackupV2 } from "@/lib/backup-v2"
 import type { LibraryData } from "@/lib/types"
 import type { ActionError } from "@/lib/action-result"
 
@@ -32,7 +33,8 @@ export default function SettingsPage() {
   const [data, setData] = useState<LibraryData | null>(null)
   const [loading, setLoading] = useState(true)
   const [isExporting, setIsExporting] = useState(false)
-  const [exportParts, setExportParts] = useState<LibraryExport[]>([])
+  const [exportParts, setExportParts] = useState<(LibraryExport | PortableBackupV2)[]>([])
+  const [exportFormat, setExportFormat] = useState<1 | 2 | null>(null)
   const [isValidating, setIsValidating] = useState(false)
   const [isPreparing, setIsPreparing] = useState(false)
   const [isImporting, setIsImporting] = useState(false)
@@ -62,12 +64,12 @@ export default function SettingsPage() {
 
   useEffect(() => { void refresh() }, [refresh])
 
-  const downloadPart = (part: LibraryExport, index: number, total: number) => {
+  const downloadPart = (part: LibraryExport | PortableBackupV2, index: number, total: number) => {
     const url = URL.createObjectURL(new Blob([JSON.stringify(part)], { type: "application/json" }))
     const link = document.createElement("a")
     link.href = url
     const suffix = total > 1 ? `-parte-${String(index + 1).padStart(String(total).length, "0")}-de-${total}` : ""
-    link.download = `biblib-backup-${part.exportedAt.replace(/[:.]/g, "-")}${suffix}.json`
+    link.download = `biblib-backup-${part.formatVersion === 2 ? "v2-" : ""}${part.exportedAt.replace(/[:.]/g, "-")}${suffix}.json`
     document.body.appendChild(link); link.click(); link.remove()
     setTimeout(() => URL.revokeObjectURL(url), 1000)
   }
@@ -79,12 +81,18 @@ export default function SettingsPage() {
       const current = await getLibraryDataAction()
       setData(current)
       setExportParts([])
-      const parts = fragmentLibraryExport(current)
+      // U-BIB-04: formato 1 solo si no pierde datos; con procedencia BNE o por campo, formato 2.
+      const backup = exportLibraryBackup(current)
+      const parts: (LibraryExport | PortableBackupV2)[] = backup.parts
       setExportParts(parts)
+      setExportFormat(backup.formatVersion)
       if (parts.length === 1) downloadPart(parts[0], 0, 1)
-      setMessage({ type: "success", text: parts.length === 1
+      const format = backup.formatVersion === 2
+        ? " Se usa el formato 2 porque tu biblioteca tiene procedencia por campo o de la BNE que el formato 1 no conserva."
+        : " Se usa el formato 1, compatible con versiones anteriores, porque conserva todos tus datos."
+      setMessage({ type: "success", text: (parts.length === 1
         ? `Copia preparada con ${current.books.length} libros y ${current.shelves.length} estanterías. Conserva el archivo descargado para restaurar la colección.`
-        : `Copia dividida en ${parts.length} archivos importables. Descarga y conserva todas las partes que aparecen debajo.` })
+        : `Copia dividida en ${parts.length} archivos importables. Descarga y conserva todas las partes que aparecen debajo.`) + format })
     } catch {
       setMessage({ type: "error", text: "No se pudo preparar la copia. No se han modificado tus datos; vuelve a intentarlo." })
     } finally {
@@ -219,7 +227,8 @@ export default function SettingsPage() {
             <p className="text-muted-foreground mb-4">Descarga un JSON con libros, estanterías, estado de lectura, versión del formato y fecha de exportación. Se consultarán los datos actuales antes de descargar. Las colecciones grandes se dividen automáticamente en archivos que respetan los límites de importación.</p>
             {loading ? <p role="status" className="text-sm mb-4">Cargando biblioteca…</p> : data && <p className="text-sm mb-4">Biblioteca actual: {data.books.length} libros en {data.shelves.length} estanterías.</p>}
             <Button onClick={() => void handleExport()} disabled={!data || busy || loading} className="rounded-xl">{isExporting ? <LoaderCircle aria-hidden="true" className="animate-spin" /> : <Download aria-hidden="true" />}{isExporting ? "Preparando copia…" : "Descargar copia de seguridad"}</Button>
-            {exportParts.length > 1 && <div className="mt-5 space-y-3"><p className="text-sm font-medium">Descarga las {exportParts.length} partes. Para restaurar sustituyendo la colección, usa «Reemplazar» solo con la primera y «Fusionar» con todas las demás. Comprueba el resultado de cada importación.</p><ol className="space-y-2 list-decimal pl-5">{exportParts.map((part, index) => <li key={index}><Button type="button" variant="outline" disabled={busy} onClick={() => downloadPart(part, index, exportParts.length)} className="h-auto whitespace-normal text-left">Descargar parte {index + 1} de {exportParts.length} · {part.books.length} libros · {part.shelves.length} estanterías</Button></li>)}</ol><p className="text-xs text-muted-foreground">Las partes comparten fecha e identificadores. Las estanterías con libros en varias partes se unen al fusionar.</p></div>}
+            {exportParts.length > 1 && <div className="mt-5 space-y-3"><p className="text-sm font-medium">Descarga las {exportParts.length} partes. Para restaurar sustituyendo la colección, usa «Reemplazar» solo con la primera y «Fusionar» con todas las demás. Comprueba el resultado de cada importación.</p><ol className="space-y-2 list-decimal pl-5">{exportParts.map((part, index) => <li key={index}><Button type="button" variant="outline" disabled={busy} onClick={() => downloadPart(part, index, exportParts.length)} className="h-auto whitespace-normal text-left">Descargar parte {index + 1} de {exportParts.length} · {backupPartCounts(part).books} libros · {backupPartCounts(part).shelves} estanterías</Button></li>)}</ol><p className="text-xs text-muted-foreground">Las partes comparten fecha e identificadores. Las estanterías con libros en varias partes se unen al fusionar.</p></div>}
+            {exportFormat && <p className="mt-3 text-xs text-muted-foreground">Formato de la última copia: {exportFormat === 2 ? "versión 2 (conserva la procedencia por campo; solo la importan versiones de BibLib que leen el formato 2)" : "versión 1 (sin pérdida de datos)"}.</p>}
           </section>
 
           <section aria-labelledby="import-title" aria-busy={isImporting || isValidating || isPreparing} className="rounded-2xl border border-border bg-card/80 backdrop-blur-xl p-5 md:p-8 shadow-xl">
