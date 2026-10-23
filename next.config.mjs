@@ -6,6 +6,9 @@ if (target !== undefined) validateTarget(target)
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   distDir: target ? `.next-${target}` : ".next",
+  // Primera puerta del acceso local: debe estar definida siempre ("" fuera de local/test), porque Next
+  // solo sustituye las variables NEXT_PUBLIC_ definidas y solo así el compilador elimina el formulario.
+  env: { NEXT_PUBLIC_BIBLIB_LOCAL_LOGIN: ["local", "test"].includes(target) ? "1" : "" },
   experimental: { serverActions: { bodySizeLimit: "10mb" } },
   images: {
     unoptimized: true,

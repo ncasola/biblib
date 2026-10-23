@@ -4,12 +4,19 @@ import type React from "react"
 
 import { Suspense, useState } from "react"
 import { useSearchParams } from "next/navigation"
+import dynamic from "next/dynamic"
 import Link from "next/link"
 import Image from "next/image"
 import { useAuth } from "@/lib/auth-context"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Loader2, Chrome } from "lucide-react"
+
+// Primera puerta del acceso local: la variable la fija childEnv solo para local/test. En cualquier otro
+// build se sustituye por un literal distinto de "1" y el compilador elimina el import y todo el formulario.
+const LocalPasswordForm = process.env.NEXT_PUBLIC_BIBLIB_LOCAL_LOGIN === "1"
+  ? dynamic(() => import("./local-password-form"), { loading: () => null })
+  : null
 
 function LoginFallback() {
   return (
@@ -86,6 +93,8 @@ function LoginContent() {
             )}
           </Button>
         </div>
+
+        {LocalPasswordForm && <LocalPasswordForm redirectPath={searchParams.get("redirect") ?? undefined} />}
 
         <div className="mt-6 text-center">
           <p className="text-muted-foreground">
