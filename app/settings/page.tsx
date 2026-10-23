@@ -124,9 +124,10 @@ function SnapshotHistory({ refreshKey, disabled, onNotice, onRestored }: {
       }
       const { result, replayed } = response.value
       setPreview(null)
-      onNotice({ type: "success", text: `${replayed ? "Esta restauración ya se había aplicado. " : "Versión restaurada. "}Tu biblioteca tiene ahora ${result.imported} libros en ${result.shelves} estanterías. La colección que había antes se ha guardado como otra versión anterior.` })
       onRestored()
+      // El aviso llega con el historial ya actualizado (incluye la versión del estado sustituido).
       await load()
+      onNotice({ type: "success", text: `${replayed ? "Esta restauración ya se había aplicado. " : "Versión restaurada. "}Tu biblioteca tiene ahora ${result.imported} libros en ${result.shelves} estanterías. La colección que había antes se ha guardado como otra versión anterior.` })
     } catch {
       // Respuesta perdida: la misma clave permite reintentar sin restaurar dos veces.
       onNotice({ type: "error", text: "No se recibió la respuesta de la restauración. Puedes volver a confirmarla: si ya se aplicó, verás el mismo resultado sin repetirla." })
