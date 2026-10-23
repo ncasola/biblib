@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
-import { Header } from "@/components/header"
 import { SearchBookForm } from "@/components/search-book-form"
 import { ManualBookForm } from "@/components/manual-book-form"
 import { BookSearchResult } from "@/components/book-search-result"
@@ -61,9 +60,7 @@ export default function AddBookPage() {
     } finally { clearTimeout(timeout); searchController.current = null; setIsSearching(false) }
   }
 
-  return <div className="min-h-screen bg-background">
-    <Header />
-    <main id="main-content" tabIndex={-1} className="max-w-6xl mx-auto px-4 py-8">
+  return <div className="mx-auto max-w-6xl">
       <Button asChild variant="outline" className="mb-5"><Link href="/books"><ArrowLeft aria-hidden="true" className="w-4 h-4 mr-2" />Volver a libros</Link></Button>
       <h1 className="text-3xl sm:text-4xl font-bold heading-vintage mb-2">Agregar nuevo libro</h1>
       <p className="text-muted-foreground mb-8">Busca una edición por ISBN o completa su ficha manualmente.</p>
@@ -86,6 +83,5 @@ export default function AddBookPage() {
           </TabsContent>
         </Tabs>
       )}
-    </main>
   </div>
 }

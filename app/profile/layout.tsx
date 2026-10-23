@@ -1,5 +1,7 @@
 import type { Metadata } from "next"
 import type { ReactNode } from "react"
+import { AppShell } from "@/components/app-shell"
+import { privateMetadata } from "@/lib/route-metadata"
 
-export const metadata: Metadata = { title: "Perfil" }
-export default function ProfileLayout({ children }: { children: ReactNode }) { return children }
+export const metadata: Metadata = privateMetadata("Perfil")
+export default function ProfileLayout({ children }: { children: ReactNode }) { return <AppShell>{children}</AppShell> }
