@@ -15,10 +15,11 @@ import { classify, closeConnection, connect, inspectDatabase, readLedger, resolv
 
 const repo = fileURLToPath(new URL("../../", import.meta.url))
 const drizzleDir = path.join(repo, "drizzle")
-// Metadatos reales capturados de Supabase local: tras 0002 (U-INF-04), tras 0003 (U-DAT-01) y tras 0004 (U-DAT-05, head actual).
+// Metadatos reales capturados de Supabase local: tras 0002 (U-INF-04), tras 0003 (U-DAT-01), tras 0004 (U-DAT-05) y tras 0005 (U-DAT-03, head actual).
 const facts0002 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0002.json"), "utf8"))
 const facts0003 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0003.json"), "utf8"))
-const facts = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0004.json"), "utf8"))
+const facts0004 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0004.json"), "utf8"))
+const facts = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0005.json"), "utf8"))
 const named = (list, name) => list.find((item) => item.name === name)
 const temporary = []
 after(() => { for (const dir of temporary) rmSync(dir, { recursive: true, force: true }) })
@@ -103,8 +104,8 @@ describe("ledger", () => {
     assert.deepEqual(compareLedger(entries, rowsFor(entries)).pending, [])
     const partial = compareLedger(entries, rowsFor(entries, 1))
     assert.equal(partial.appliedHead.tag, "0000_biblib_init")
-    assert.deepEqual(partial.pending, ["0001_library_integrity", "0002_book_versions", "0003_library_revision", "0004_catalogue_coordination"])
-    assert.equal(compareLedger(entries, []).pending.length, 5)
+    assert.deepEqual(partial.pending, ["0001_library_integrity", "0002_book_versions", "0003_library_revision", "0004_catalogue_coordination", "0005_library_jobs"])
+    assert.equal(compareLedger(entries, []).pending.length, 6)
   })
 
   test("hash legacy CRLF exige conciliación y no se reescribe", () => {
@@ -158,10 +159,18 @@ describe("manifest de objetos", () => {
     assert.ok(checks.length >= 75)
   })
 
-  test("los metadatos reales tras 0004 cumplen el manifest completo", () => {
-    const checks = verifyManifest(facts, MANIFEST_MIGRATIONS)
+  test("los metadatos reales tras 0004 cumplen el manifest de 0000→0004", () => {
+    const checks = verifyManifest(facts0004, MANIFEST_MIGRATIONS.slice(0, 5))
     assert.deepEqual(failing(checks), [])
     assert.ok(checks.length >= 135)
+  })
+
+  test("los metadatos reales tras 0005 cumplen el manifest completo", () => {
+    const checks = verifyManifest(facts, MANIFEST_MIGRATIONS)
+    assert.deepEqual(failing(checks), [])
+    assert.ok(checks.length >= 190)
+    // Un head anterior que aún no conoce los trabajos marca sus políticas como no declaradas.
+    assert.ok(failing(verifyManifest(facts, MANIFEST_MIGRATIONS.slice(0, 5))).includes("policy.library_jobs_select_own"))
     assert.equal(expectedObjects().triggers[0], "books_rotate_version:BEFORE INSERT OR UPDATE ROW")
     assert.deepEqual(expectedObjects().triggers.slice(1), ["books_rotate_library_revision:AFTER INSERT OR UPDATE OR DELETE ROW", "shelves_rotate_library_revision:AFTER INSERT OR UPDATE OR DELETE ROW"])
     // Las tablas de 0003 con RLS y un head anterior que aún no las conoce marcan drift.
@@ -195,6 +204,32 @@ describe("manifest de objetos", () => {
     assert.deepEqual(failing(verifyManifest(noRls, MANIFEST_MIGRATIONS)), ["rls.catalogue_quota_reservations"])
     const extra = clone(facts); extra.policies.push({ ...named(extra.policies, "catalogue_private_cache_select_own"), name: "catalogue_cache_read_all", table: "catalogue_cache", using: "true" })
     assert.deepEqual(failing(verifyManifest(extra, MANIFEST_MIGRATIONS)), ["policy.catalogue_cache_read_all"])
+  })
+
+  test("drift de los trabajos (0005): escritura de cliente, ejecutor, fencing y lease", () => {
+    for (const table of ["library_jobs", "library_job_items", "account_lifecycle"]) {
+      const writable = clone(facts); writable.grants.push({ grantee: "authenticated", table, privilege: "UPDATE" })
+      assert.deepEqual(failing(verifyManifest(writable, MANIFEST_MIGRATIONS)), [`grant.authenticated.${table}`])
+    }
+    for (const name of ["library_job_claim", "library_job_renew", "library_job_fence", "account_set_state", "account_is_active"]) {
+      const callable = clone(facts); named(callable.functions, name).execute_authenticated = true
+      assert.deepEqual(failing(verifyManifest(callable, MANIFEST_MIGRATIONS)), [`function.${name}`], `${name} no puede ser ejecutable por authenticated`)
+    }
+    const anon = clone(facts); named(anon.functions, "library_job_create").execute_anon = true
+    assert.deepEqual(failing(verifyManifest(anon, MANIFEST_MIGRATIONS)), ["function.library_job_create"])
+    const invoker = clone(facts); named(invoker.functions, "library_job_control").security_definer = false
+    assert.deepEqual(failing(verifyManifest(invoker, MANIFEST_MIGRATIONS)), ["function.library_job_control"])
+    // Un fencing que no compara el número de la reclamación deja de ser la función declarada.
+    const unfenced = clone(facts); named(unfenced.functions, "library_job_fence").body = named(unfenced.functions, "library_job_fence").body.replace("OR job.fencing_number <> p_fencing", "")
+    assert.deepEqual(failing(verifyManifest(unfenced, MANIFEST_MIGRATIONS)), ["function.library_job_fence"])
+    const noSkip = clone(facts); named(noSkip.functions, "library_job_claim").body = named(noSkip.functions, "library_job_claim").body.replace("FOR UPDATE SKIP LOCKED", "")
+    assert.deepEqual(failing(verifyManifest(noSkip, MANIFEST_MIGRATIONS)), ["function.library_job_claim"])
+    const lease = clone(facts); named(lease.constraints, "library_jobs_lease_check").definition = "CHECK ((attempts >= 0))"
+    assert.deepEqual(failing(verifyManifest(lease, MANIFEST_MIGRATIONS)), ["constraint.library_jobs_lease_check"])
+    const open = clone(facts); named(open.policies, "library_jobs_select_own").using = "true"
+    assert.deepEqual(failing(verifyManifest(open, MANIFEST_MIGRATIONS)), ["policy.library_jobs_select_own"])
+    const ownerless = clone(facts); ownerless.constraints = ownerless.constraints.filter((c) => c.name !== "library_job_items_owner_job_fk")
+    assert.deepEqual(failing(verifyManifest(ownerless, MANIFEST_MIGRATIONS)), ["constraint.library_job_items_owner_job_fk"])
   })
 
   test("drift de los objetos de 0003: escritura directa, permisos, seguridad y triggers", () => {
@@ -413,20 +448,24 @@ describe("stack scratch real [stack]", { skip: stack.reason ?? false }, () => {
 
   test("un error intermedio revierte el conjunto y no adelanta el ledger (9)", async (t) => {
     const dir = migrationsCopy()
+    // Migración de fallo tras el head del repositorio, sea cual sea su número.
+    const { entries: current } = loadJournal(dir)
+    const head = current.at(-1).tag
+    const tag = `${String(current.length).padStart(4, "0")}_u_inf_04_fallo`
     // El segundo paso falla siempre (columna duplicada, 42701), haya o no filas en la base.
-    writeFileSync(path.join(dir, "0005_u_inf_04_fallo.sql"), "CREATE TABLE biblib.u_inf_04_probe (id integer);\n--> statement-breakpoint\nALTER TABLE biblib.u_inf_04_probe ADD COLUMN id integer;\n")
-    editJournal(dir, (j) => { j.entries.push({ idx: 5, version: "7", when: 1792900000000, tag: "0005_u_inf_04_fallo", breakpoints: true }) })
+    writeFileSync(path.join(dir, `${tag}.sql`), "CREATE TABLE biblib.u_inf_04_probe (id integer);\n--> statement-breakpoint\nALTER TABLE biblib.u_inf_04_probe ADD COLUMN id integer;\n")
+    editJournal(dir, (j) => { j.entries.push({ idx: current.length, version: "7", when: 1792900000000, tag, breakpoints: true }) })
     const journal = loadJournal(dir)
     const sql = connect(stack.resolved, { applicationName: "biblib-test" })
     try {
       const inspection = await inspectDatabase(sql, journal)
-      if (inspection.state !== "pending" || inspection.pending.join() !== "0005_u_inf_04_fallo") { t.skip(`scratch no está en 0004 (${inspection.state})`); return }
+      if (inspection.state !== "pending" || inspection.pending.join() !== tag) { t.skip(`scratch no está en ${head} (${inspection.state})`); return }
       const ledgerBefore = await readLedger(sql)
       const plan = buildPlan({ resolved: stack.resolved, journal, inspection, commit: { sha: "0".repeat(40), drizzleClean: true }, drizzle: "0.45.2" })
       const failure = await applyPlan(sql, { plan, journal, migrationsDir: dir, waitMs: 2000 }).then(() => null, (error) => error)
       assert.equal(failure?.code, EXIT.MIGRATION_FAILED)
-      assert.equal(failure.report.previousHead.tag, "0004_catalogue_coordination")
-      assert.equal(failure.report.failedChange, "0005_u_inf_04_fallo")
+      assert.equal(failure.report.previousHead.tag, head)
+      assert.equal(failure.report.failedChange, tag)
       assert.match(failure.report.result, /revertido/)
       assert.deepEqual((await readLedger(sql)).rows, ledgerBefore.rows)
       const [{ probe }] = await sql`select to_regclass('biblib.u_inf_04_probe') is not null as probe`

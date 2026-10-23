@@ -1,8 +1,15 @@
 import { sql } from "drizzle-orm"
-import { authenticatedRole, authUsers } from "drizzle-orm/supabase"
+import { authenticatedRole } from "drizzle-orm/supabase"
 import { pgSchema, uuid, text, timestamp, boolean, integer, bigint, jsonb, uniqueIndex, index, check, pgPolicy, foreignKey, primaryKey, customType, type AnyPgColumn } from "drizzle-orm/pg-core"
 import type { Author, Publisher, Book, CatalogueMetadata, LibraryData } from "@/lib/types"
 import type { ImportPlan, ImportOperationResult } from "@/lib/import-plan"
+
+/**
+ * `auth.users` de Supabase, solo como destino de las FK (no se exporta: Drizzle Kit no la genera).
+ * Equivale a `authUsers` de `drizzle-orm/supabase`; se declara aquí para que las pruebas compiladas
+ * con NodeNext (trabajos, U-DAT-03) no mezclen los tipos CJS y ESM de ese submódulo.
+ */
+const authUsers = pgSchema("auth").table("users", { id: uuid("id").primaryKey().notNull() })
 
 export const biblibSchema = pgSchema("biblib")
 const ownRow = (userIdColumn: AnyPgColumn) => sql`(select auth.uid() = ${userIdColumn})`

@@ -288,13 +288,15 @@ describe("promoción contra un remoto simulado [stack]", { skip }, () => {
     const dir = mkdtempSync(path.join(tmpdir(), "biblib inf07 migraciones "))
     try {
       cpSync(path.join(repo, "drizzle"), dir, { recursive: true })
-      writeFileSync(path.join(dir, "0005_u_inf_07_fallo.sql"), "CREATE TABLE biblib.u_inf_07_probe (id integer);\n--> statement-breakpoint\nALTER TABLE biblib.u_inf_07_probe ADD COLUMN id integer;\n")
       const journalFile = path.join(dir, "meta", "_journal.json")
       const edited = JSON.parse(readFileSync(journalFile, "utf8"))
-      edited.entries.push({ idx: 5, version: "7", when: 1792900000000, tag: "0005_u_inf_07_fallo", breakpoints: true })
+      // Migración de fallo tras el head del repositorio, sea cual sea su número.
+      const tag = `${String(edited.entries.length).padStart(4, "0")}_u_inf_07_fallo`
+      writeFileSync(path.join(dir, `${tag}.sql`), "CREATE TABLE biblib.u_inf_07_probe (id integer);\n--> statement-breakpoint\nALTER TABLE biblib.u_inf_07_probe ADD COLUMN id integer;\n")
+      edited.entries.push({ idx: edited.entries.length, version: "7", when: 1792900000000, tag, breakpoints: true })
       writeFileSync(journalFile, `${JSON.stringify(edited, null, 2)}\n`)
       const planned = await plan("fallo", { migrationsDir: dir })
-      assert.deepEqual(planned.plan.pending, ["0005_u_inf_07_fallo"])
+      assert.deepEqual(planned.plan.pending, [tag])
       const backupFile = await receipt()
       const before = await ledger()
       const failure = await rejection(promote(planned, backupFile, { migrationsDir: dir }))
