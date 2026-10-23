@@ -1,0 +1,2421 @@
+{
+  "schemaVersion": 1,
+  "profile": "test",
+  "scales": [
+    {
+      "scale": 100,
+      "results": [
+        {
+          "scenario": "dashboard",
+          "p50": 140,
+          "p95": 197.4,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "sql:dashboard",
+          "p50": 3.77,
+          "p95": 6.52,
+          "budget": 500,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "dashboard@5",
+          "p50": 214.3,
+          "p95": 338,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 5
+        },
+        {
+          "scenario": "dashboard@10",
+          "p50": 407.1,
+          "p95": 570.2,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 10
+        },
+        {
+          "scenario": "listado-inicial",
+          "p50": 222.7,
+          "p95": 473.8,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "sql:listado-inicial",
+          "p50": 0.35,
+          "p95": 0.44,
+          "budget": 500,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "listado-inicial@5",
+          "p50": 193.1,
+          "p95": 374.2,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 5
+        },
+        {
+          "scenario": "listado-inicial@10",
+          "p50": 274.8,
+          "p95": 340.6,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 10
+        },
+        {
+          "scenario": "listado-100-filas",
+          "p50": 123.4,
+          "p95": 142.2,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "sql:listado-100-filas",
+          "p50": 0.83,
+          "p95": 1.02,
+          "budget": 500,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "listado-100-filas@5",
+          "p50": 180.6,
+          "p95": 252.2,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 5
+        },
+        {
+          "scenario": "listado-100-filas@10",
+          "p50": 317.8,
+          "p95": 506.5,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 10
+        },
+        {
+          "scenario": "listado-ultima-pagina",
+          "p50": 144.3,
+          "p95": 277.8,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "sql:listado-ultima-pagina",
+          "p50": 0.44,
+          "p95": 0.65,
+          "budget": 500,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "listado-ultima-pagina@5",
+          "p50": 170.6,
+          "p95": 227.7,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 5
+        },
+        {
+          "scenario": "listado-ultima-pagina@10",
+          "p50": 346,
+          "p95": 444.1,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 10
+        },
+        {
+          "scenario": "filtrado-estado-estanteria",
+          "p50": 179.1,
+          "p95": 235.5,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "sql:filtrado-estado-estanteria",
+          "p50": 0.2,
+          "p95": 0.25,
+          "budget": 500,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "filtrado-estado-estanteria@5",
+          "p50": 218.2,
+          "p95": 323.2,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 5
+        },
+        {
+          "scenario": "filtrado-estado-estanteria@10",
+          "p50": 389.6,
+          "p95": 686,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 10
+        },
+        {
+          "scenario": "ordenado-autor",
+          "p50": 117.8,
+          "p95": 173.3,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "sql:ordenado-autor",
+          "p50": 0.36,
+          "p95": 0.46,
+          "budget": 500,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "ordenado-autor@5",
+          "p50": 165.9,
+          "p95": 227.3,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 5
+        },
+        {
+          "scenario": "ordenado-autor@10",
+          "p50": 283.8,
+          "p95": 404.9,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 10
+        },
+        {
+          "scenario": "ordenado-fecha",
+          "p50": 112.2,
+          "p95": 180.4,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "sql:ordenado-fecha",
+          "p50": 0.41,
+          "p95": 0.5,
+          "budget": 500,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "ordenado-fecha@5",
+          "p50": 151.3,
+          "p95": 235.1,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 5
+        },
+        {
+          "scenario": "ordenado-fecha@10",
+          "p50": 331.8,
+          "p95": 413.6,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 10
+        },
+        {
+          "scenario": "busqueda-local-texto",
+          "p50": 188.1,
+          "p95": 273,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "sql:busqueda-local-texto",
+          "p50": 1.11,
+          "p95": 1.47,
+          "budget": 500,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "busqueda-local-texto@5",
+          "p50": 205.5,
+          "p95": 271.7,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 5
+        },
+        {
+          "scenario": "busqueda-local-texto@10",
+          "p50": 277.6,
+          "p95": 492.3,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 10
+        },
+        {
+          "scenario": "busqueda-local-isbn",
+          "p50": 132.4,
+          "p95": 182.5,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "sql:busqueda-local-isbn",
+          "p50": 1.22,
+          "p95": 1.46,
+          "budget": 500,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "busqueda-local-isbn@5",
+          "p50": 222.6,
+          "p95": 333.4,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 5
+        },
+        {
+          "scenario": "busqueda-local-isbn@10",
+          "p50": 294.6,
+          "p95": 426.3,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 10
+        },
+        {
+          "scenario": "detalle",
+          "p50": 113.6,
+          "p95": 233.7,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "sql:detalle",
+          "p50": 0.08,
+          "p95": 0.12,
+          "budget": null,
+          "status": "no-budget",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "detalle@5",
+          "p50": 166.6,
+          "p95": 250.4,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 5
+        },
+        {
+          "scenario": "detalle@10",
+          "p50": 1095.6,
+          "p95": 3169.3,
+          "budget": 1000,
+          "status": "over-budget",
+          "unit": "ms",
+          "concurrency": 10
+        },
+        {
+          "scenario": "estanterias",
+          "p50": 171.3,
+          "p95": 277.8,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "sql:estanterias",
+          "p50": 0.22,
+          "p95": 0.28,
+          "budget": null,
+          "status": "no-budget",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "estanterias@5",
+          "p50": 228.3,
+          "p95": 636.5,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 5
+        },
+        {
+          "scenario": "estanterias@10",
+          "p50": 366.8,
+          "p95": 987.4,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 10
+        },
+        {
+          "scenario": "estanteria-3d-pagina-48",
+          "p50": 140.1,
+          "p95": 282.6,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "sql:estanteria-3d-pagina-48",
+          "p50": 0.5,
+          "p95": 0.73,
+          "budget": 500,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "estanteria-3d-pagina-48@5",
+          "p50": 203.8,
+          "p95": 283.7,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 5
+        },
+        {
+          "scenario": "estanteria-3d-pagina-48@10",
+          "p50": 324,
+          "p95": 514.3,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 10
+        },
+        {
+          "scenario": "exportacion-lectura-completa",
+          "p50": 120.5,
+          "p95": 147.7,
+          "budget": null,
+          "status": "no-budget",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "sql:exportacion-lectura-completa",
+          "p50": 0.78,
+          "p95": 1.06,
+          "budget": null,
+          "status": "no-budget",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "exportacion-lectura-completa@5",
+          "p50": 150.8,
+          "p95": 219.6,
+          "budget": null,
+          "status": "no-budget",
+          "unit": "ms",
+          "concurrency": 5
+        },
+        {
+          "scenario": "exportacion-lectura-completa@10",
+          "p50": 257.7,
+          "p95": 401.5,
+          "budget": null,
+          "status": "no-budget",
+          "unit": "ms",
+          "concurrency": 10
+        },
+        {
+          "scenario": "preview-importacion-conservar",
+          "p50": 209.6,
+          "p95": 217.6,
+          "budget": null,
+          "status": "no-budget",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "sql:preview-importacion-conservar",
+          "p50": 1.7,
+          "p95": 1.9,
+          "budget": null,
+          "status": "no-budget",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "preview-importacion-conservar@5",
+          "p50": 228.2,
+          "p95": 345.9,
+          "budget": null,
+          "status": "no-budget",
+          "unit": "ms",
+          "concurrency": 5
+        },
+        {
+          "scenario": "preview-importacion-conservar@10",
+          "p50": 469.1,
+          "p95": 553.4,
+          "budget": null,
+          "status": "no-budget",
+          "unit": "ms",
+          "concurrency": 10
+        },
+        {
+          "scenario": "preview-importacion-nuevos",
+          "p50": 158.8,
+          "p95": 228.4,
+          "budget": null,
+          "status": "no-budget",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "sql:preview-importacion-nuevos",
+          "p50": 2.26,
+          "p95": 2.92,
+          "budget": null,
+          "status": "no-budget",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "preview-importacion-nuevos@5",
+          "p50": 313.1,
+          "p95": 477.4,
+          "budget": null,
+          "status": "no-budget",
+          "unit": "ms",
+          "concurrency": 5
+        },
+        {
+          "scenario": "preview-importacion-nuevos@10",
+          "p50": 675.5,
+          "p95": 812.5,
+          "budget": null,
+          "status": "no-budget",
+          "unit": "ms",
+          "concurrency": 10
+        },
+        {
+          "scenario": "preview-importacion-reemplazo",
+          "p50": 141.1,
+          "p95": 164.5,
+          "budget": null,
+          "status": "no-budget",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "sql:preview-importacion-reemplazo",
+          "p50": 1.84,
+          "p95": 2.23,
+          "budget": null,
+          "status": "no-budget",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "preview-importacion-reemplazo@5",
+          "p50": 307.4,
+          "p95": 413.9,
+          "budget": null,
+          "status": "no-budget",
+          "unit": "ms",
+          "concurrency": 5
+        },
+        {
+          "scenario": "preview-importacion-reemplazo@10",
+          "p50": 530.7,
+          "p95": 659.7,
+          "budget": null,
+          "status": "no-budget",
+          "unit": "ms",
+          "concurrency": 10
+        },
+        {
+          "scenario": "web:escritorio:inicio:lcp",
+          "p50": 450,
+          "p95": 602,
+          "budget": 2500,
+          "status": "ok",
+          "unit": "ms"
+        },
+        {
+          "scenario": "web:escritorio:inicio:inp",
+          "p50": 28,
+          "p95": 32,
+          "budget": 200,
+          "status": "ok",
+          "unit": "ms"
+        },
+        {
+          "scenario": "web:escritorio:inicio:cls",
+          "p50": 0.001,
+          "p95": 0.001,
+          "budget": 0.1,
+          "status": "ok",
+          "unit": "score"
+        },
+        {
+          "scenario": "web:escritorio:coleccion:lcp",
+          "p50": 136,
+          "p95": 234,
+          "budget": 2500,
+          "status": "ok",
+          "unit": "ms"
+        },
+        {
+          "scenario": "web:escritorio:coleccion:inp",
+          "p50": 44,
+          "p95": 48,
+          "budget": 200,
+          "status": "ok",
+          "unit": "ms"
+        },
+        {
+          "scenario": "web:escritorio:coleccion:cls",
+          "p50": 0.001,
+          "p95": 0.001,
+          "budget": 0.1,
+          "status": "ok",
+          "unit": "score"
+        },
+        {
+          "scenario": "web:escritorio:busqueda-avanzada:lcp",
+          "p50": 698,
+          "p95": 698,
+          "budget": 2500,
+          "status": "ok",
+          "unit": "ms"
+        },
+        {
+          "scenario": "web:escritorio:busqueda-avanzada:inp",
+          "p50": 48,
+          "p95": 48,
+          "budget": 200,
+          "status": "ok",
+          "unit": "ms"
+        },
+        {
+          "scenario": "web:escritorio:busqueda-avanzada:cls",
+          "p50": 0.001,
+          "p95": 0.001,
+          "budget": 0.1,
+          "status": "ok",
+          "unit": "score"
+        },
+        {
+          "scenario": "web:escritorio:ficha:lcp",
+          "p50": 468,
+          "p95": 632,
+          "budget": 2500,
+          "status": "ok",
+          "unit": "ms"
+        },
+        {
+          "scenario": "web:escritorio:ficha:inp",
+          "p50": 32,
+          "p95": 32,
+          "budget": 200,
+          "status": "ok",
+          "unit": "ms"
+        },
+        {
+          "scenario": "web:escritorio:ficha:cls",
+          "p50": 0.001,
+          "p95": 0.001,
+          "budget": 0.1,
+          "status": "ok",
+          "unit": "score"
+        },
+        {
+          "scenario": "web:escritorio:estanterias:lcp",
+          "p50": 370,
+          "p95": 454,
+          "budget": 2500,
+          "status": "ok",
+          "unit": "ms"
+        },
+        {
+          "scenario": "web:escritorio:estanterias:inp",
+          "p50": 36,
+          "p95": 40,
+          "budget": 200,
+          "status": "ok",
+          "unit": "ms"
+        },
+        {
+          "scenario": "web:escritorio:estanterias:cls",
+          "p50": 0.001,
+          "p95": 0.001,
+          "budget": 0.1,
+          "status": "ok",
+          "unit": "score"
+        },
+        {
+          "scenario": "web:escritorio:estanteria-3d:lcp",
+          "p50": 588,
+          "p95": 588,
+          "budget": 2500,
+          "status": "ok",
+          "unit": "ms"
+        },
+        {
+          "scenario": "web:escritorio:estanteria-3d:inp",
+          "p50": null,
+          "p95": 0,
+          "budget": 200,
+          "status": "ok",
+          "unit": "ms"
+        },
+        {
+          "scenario": "web:escritorio:estanteria-3d:cls",
+          "p50": 0.001,
+          "p95": 0.001,
+          "budget": 0.1,
+          "status": "ok",
+          "unit": "score"
+        },
+        {
+          "scenario": "web:escritorio:ajustes:lcp",
+          "p50": 110,
+          "p95": 170,
+          "budget": 2500,
+          "status": "ok",
+          "unit": "ms"
+        },
+        {
+          "scenario": "web:escritorio:ajustes:inp",
+          "p50": 16,
+          "p95": 16,
+          "budget": 200,
+          "status": "ok",
+          "unit": "ms"
+        },
+        {
+          "scenario": "web:escritorio:ajustes:cls",
+          "p50": 0.001,
+          "p95": 0.001,
+          "budget": 0.1,
+          "status": "ok",
+          "unit": "score"
+        }
+      ]
+    },
+    {
+      "scale": 1000,
+      "results": [
+        {
+          "scenario": "dashboard",
+          "p50": 127.7,
+          "p95": 147.6,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "sql:dashboard",
+          "p50": 2.59,
+          "p95": 3.72,
+          "budget": 500,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "dashboard@5",
+          "p50": 197.6,
+          "p95": 424.6,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 5
+        },
+        {
+          "scenario": "dashboard@10",
+          "p50": 498.3,
+          "p95": 836.3,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 10
+        },
+        {
+          "scenario": "listado-inicial",
+          "p50": 190.7,
+          "p95": 232.4,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "sql:listado-inicial",
+          "p50": 1.66,
+          "p95": 2.08,
+          "budget": 500,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "listado-inicial@5",
+          "p50": 225.4,
+          "p95": 348,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 5
+        },
+        {
+          "scenario": "listado-inicial@10",
+          "p50": 272.9,
+          "p95": 421.4,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 10
+        },
+        {
+          "scenario": "listado-100-filas",
+          "p50": 108.3,
+          "p95": 120.6,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "sql:listado-100-filas",
+          "p50": 2.24,
+          "p95": 2.57,
+          "budget": 500,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "listado-100-filas@5",
+          "p50": 191.9,
+          "p95": 253.3,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 5
+        },
+        {
+          "scenario": "listado-100-filas@10",
+          "p50": 312.8,
+          "p95": 423.2,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 10
+        },
+        {
+          "scenario": "listado-ultima-pagina",
+          "p50": 118.4,
+          "p95": 136.2,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "sql:listado-ultima-pagina",
+          "p50": 2.62,
+          "p95": 3.36,
+          "budget": 500,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "listado-ultima-pagina@5",
+          "p50": 176.6,
+          "p95": 214.4,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 5
+        },
+        {
+          "scenario": "listado-ultima-pagina@10",
+          "p50": 317.4,
+          "p95": 495.9,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 10
+        },
+        {
+          "scenario": "filtrado-estado-estanteria",
+          "p50": 202.2,
+          "p95": 238.4,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "sql:filtrado-estado-estanteria",
+          "p50": 0.47,
+          "p95": 0.69,
+          "budget": 500,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "filtrado-estado-estanteria@5",
+          "p50": 264,
+          "p95": 496.5,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 5
+        },
+        {
+          "scenario": "filtrado-estado-estanteria@10",
+          "p50": 340.7,
+          "p95": 480.2,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 10
+        },
+        {
+          "scenario": "ordenado-autor",
+          "p50": 119.8,
+          "p95": 293,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "sql:ordenado-autor",
+          "p50": 1.97,
+          "p95": 2.58,
+          "budget": 500,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "ordenado-autor@5",
+          "p50": 180.5,
+          "p95": 219.4,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 5
+        },
+        {
+          "scenario": "ordenado-autor@10",
+          "p50": 274.9,
+          "p95": 363.8,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 10
+        },
+        {
+          "scenario": "ordenado-fecha",
+          "p50": 120.1,
+          "p95": 146.9,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "sql:ordenado-fecha",
+          "p50": 2.82,
+          "p95": 3.82,
+          "budget": 500,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "ordenado-fecha@5",
+          "p50": 169.3,
+          "p95": 241.2,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 5
+        },
+        {
+          "scenario": "ordenado-fecha@10",
+          "p50": 312.1,
+          "p95": 397.6,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 10
+        },
+        {
+          "scenario": "busqueda-local-texto",
+          "p50": 197.5,
+          "p95": 248.2,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "sql:busqueda-local-texto",
+          "p50": 10.49,
+          "p95": 12.88,
+          "budget": 500,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "busqueda-local-texto@5",
+          "p50": 222.5,
+          "p95": 260.8,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 5
+        },
+        {
+          "scenario": "busqueda-local-texto@10",
+          "p50": 319.6,
+          "p95": 444.8,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 10
+        },
+        {
+          "scenario": "busqueda-local-isbn",
+          "p50": 117.5,
+          "p95": 131.6,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "sql:busqueda-local-isbn",
+          "p50": 9.97,
+          "p95": 11.97,
+          "budget": 500,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "busqueda-local-isbn@5",
+          "p50": 219.4,
+          "p95": 289.4,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 5
+        },
+        {
+          "scenario": "busqueda-local-isbn@10",
+          "p50": 314.1,
+          "p95": 394.2,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 10
+        },
+        {
+          "scenario": "detalle",
+          "p50": 104.6,
+          "p95": 118.8,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "sql:detalle",
+          "p50": 0.06,
+          "p95": 0.11,
+          "budget": null,
+          "status": "no-budget",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "detalle@5",
+          "p50": 139,
+          "p95": 162.5,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 5
+        },
+        {
+          "scenario": "detalle@10",
+          "p50": 241.7,
+          "p95": 624.4,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 10
+        },
+        {
+          "scenario": "estanterias",
+          "p50": 149.3,
+          "p95": 226.4,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "sql:estanterias",
+          "p50": 0.89,
+          "p95": 1.09,
+          "budget": null,
+          "status": "no-budget",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "estanterias@5",
+          "p50": 224.8,
+          "p95": 349.4,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 5
+        },
+        {
+          "scenario": "estanterias@10",
+          "p50": 315.1,
+          "p95": 392.7,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 10
+        },
+        {
+          "scenario": "estanteria-3d-pagina-48",
+          "p50": 108.6,
+          "p95": 120.9,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "sql:estanteria-3d-pagina-48",
+          "p50": 0.82,
+          "p95": 1.01,
+          "budget": 500,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "estanteria-3d-pagina-48@5",
+          "p50": 147.4,
+          "p95": 226.4,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 5
+        },
+        {
+          "scenario": "estanteria-3d-pagina-48@10",
+          "p50": 311.8,
+          "p95": 412.2,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 10
+        },
+        {
+          "scenario": "exportacion-lectura-completa",
+          "p50": 243.1,
+          "p95": 290.5,
+          "budget": null,
+          "status": "no-budget",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "sql:exportacion-lectura-completa",
+          "p50": 8.8,
+          "p95": 16.12,
+          "budget": null,
+          "status": "no-budget",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "exportacion-lectura-completa@5",
+          "p50": 432.7,
+          "p95": 522.5,
+          "budget": null,
+          "status": "no-budget",
+          "unit": "ms",
+          "concurrency": 5
+        },
+        {
+          "scenario": "exportacion-lectura-completa@10",
+          "p50": 623.5,
+          "p95": 828,
+          "budget": null,
+          "status": "no-budget",
+          "unit": "ms",
+          "concurrency": 10
+        },
+        {
+          "scenario": "preview-importacion-conservar",
+          "p50": 217.9,
+          "p95": 265.7,
+          "budget": null,
+          "status": "no-budget",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "sql:preview-importacion-conservar",
+          "p50": 13.79,
+          "p95": 15.82,
+          "budget": null,
+          "status": "no-budget",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "preview-importacion-conservar@5",
+          "p50": 584.9,
+          "p95": 849.1,
+          "budget": null,
+          "status": "no-budget",
+          "unit": "ms",
+          "concurrency": 5
+        },
+        {
+          "scenario": "preview-importacion-conservar@10",
+          "p50": 1064.7,
+          "p95": 1326.4,
+          "budget": null,
+          "status": "no-budget",
+          "unit": "ms",
+          "concurrency": 10
+        },
+        {
+          "scenario": "preview-importacion-nuevos",
+          "p50": 231,
+          "p95": 265.7,
+          "budget": null,
+          "status": "no-budget",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "sql:preview-importacion-nuevos",
+          "p50": 17.06,
+          "p95": 19.37,
+          "budget": null,
+          "status": "no-budget",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "preview-importacion-nuevos@5",
+          "p50": 493.2,
+          "p95": 741.3,
+          "budget": null,
+          "status": "no-budget",
+          "unit": "ms",
+          "concurrency": 5
+        },
+        {
+          "scenario": "preview-importacion-nuevos@10",
+          "p50": 1004.9,
+          "p95": 1291.6,
+          "budget": null,
+          "status": "no-budget",
+          "unit": "ms",
+          "concurrency": 10
+        },
+        {
+          "scenario": "preview-importacion-reemplazo",
+          "p50": 207.2,
+          "p95": 220.3,
+          "budget": null,
+          "status": "no-budget",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "sql:preview-importacion-reemplazo",
+          "p50": 13.9,
+          "p95": 14.45,
+          "budget": null,
+          "status": "no-budget",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "preview-importacion-reemplazo@5",
+          "p50": 493.8,
+          "p95": 743.3,
+          "budget": null,
+          "status": "no-budget",
+          "unit": "ms",
+          "concurrency": 5
+        },
+        {
+          "scenario": "preview-importacion-reemplazo@10",
+          "p50": 980.3,
+          "p95": 1254,
+          "budget": null,
+          "status": "no-budget",
+          "unit": "ms",
+          "concurrency": 10
+        },
+        {
+          "scenario": "web:escritorio:inicio:lcp",
+          "p50": 356,
+          "p95": 522,
+          "budget": 2500,
+          "status": "ok",
+          "unit": "ms"
+        },
+        {
+          "scenario": "web:escritorio:inicio:inp",
+          "p50": 24,
+          "p95": 24,
+          "budget": 200,
+          "status": "ok",
+          "unit": "ms"
+        },
+        {
+          "scenario": "web:escritorio:inicio:cls",
+          "p50": 0.001,
+          "p95": 0.001,
+          "budget": 0.1,
+          "status": "ok",
+          "unit": "score"
+        },
+        {
+          "scenario": "web:escritorio:coleccion:lcp",
+          "p50": 136,
+          "p95": 186,
+          "budget": 2500,
+          "status": "ok",
+          "unit": "ms"
+        },
+        {
+          "scenario": "web:escritorio:coleccion:inp",
+          "p50": 60,
+          "p95": 80,
+          "budget": 200,
+          "status": "ok",
+          "unit": "ms"
+        },
+        {
+          "scenario": "web:escritorio:coleccion:cls",
+          "p50": 0.001,
+          "p95": 0.005,
+          "budget": 0.1,
+          "status": "ok",
+          "unit": "score"
+        },
+        {
+          "scenario": "web:escritorio:busqueda-avanzada:lcp",
+          "p50": 808,
+          "p95": 1014,
+          "budget": 2500,
+          "status": "ok",
+          "unit": "ms"
+        },
+        {
+          "scenario": "web:escritorio:busqueda-avanzada:inp",
+          "p50": 40,
+          "p95": 40,
+          "budget": 200,
+          "status": "ok",
+          "unit": "ms"
+        },
+        {
+          "scenario": "web:escritorio:busqueda-avanzada:cls",
+          "p50": 0.001,
+          "p95": 0.001,
+          "budget": 0.1,
+          "status": "ok",
+          "unit": "score"
+        },
+        {
+          "scenario": "web:escritorio:ficha:lcp",
+          "p50": 548,
+          "p95": 896,
+          "budget": 2500,
+          "status": "ok",
+          "unit": "ms"
+        },
+        {
+          "scenario": "web:escritorio:ficha:inp",
+          "p50": 32,
+          "p95": 32,
+          "budget": 200,
+          "status": "ok",
+          "unit": "ms"
+        },
+        {
+          "scenario": "web:escritorio:ficha:cls",
+          "p50": 0.001,
+          "p95": 0.001,
+          "budget": 0.1,
+          "status": "ok",
+          "unit": "score"
+        },
+        {
+          "scenario": "web:escritorio:estanterias:lcp",
+          "p50": 318,
+          "p95": 514,
+          "budget": 2500,
+          "status": "ok",
+          "unit": "ms"
+        },
+        {
+          "scenario": "web:escritorio:estanterias:inp",
+          "p50": 40,
+          "p95": 48,
+          "budget": 200,
+          "status": "ok",
+          "unit": "ms"
+        },
+        {
+          "scenario": "web:escritorio:estanterias:cls",
+          "p50": 0.001,
+          "p95": 0.001,
+          "budget": 0.1,
+          "status": "ok",
+          "unit": "score"
+        },
+        {
+          "scenario": "web:escritorio:estanteria-3d:lcp",
+          "p50": 462,
+          "p95": 552,
+          "budget": 2500,
+          "status": "ok",
+          "unit": "ms"
+        },
+        {
+          "scenario": "web:escritorio:estanteria-3d:inp",
+          "p50": 32,
+          "p95": 32,
+          "budget": 200,
+          "status": "ok",
+          "unit": "ms"
+        },
+        {
+          "scenario": "web:escritorio:estanteria-3d:cls",
+          "p50": 0.001,
+          "p95": 0.001,
+          "budget": 0.1,
+          "status": "ok",
+          "unit": "score"
+        },
+        {
+          "scenario": "web:escritorio:ajustes:lcp",
+          "p50": 134,
+          "p95": 168,
+          "budget": 2500,
+          "status": "ok",
+          "unit": "ms"
+        },
+        {
+          "scenario": "web:escritorio:ajustes:inp",
+          "p50": 20,
+          "p95": 24,
+          "budget": 200,
+          "status": "ok",
+          "unit": "ms"
+        },
+        {
+          "scenario": "web:escritorio:ajustes:cls",
+          "p50": 0.001,
+          "p95": 0.001,
+          "budget": 0.1,
+          "status": "ok",
+          "unit": "score"
+        }
+      ]
+    },
+    {
+      "scale": 10000,
+      "results": [
+        {
+          "scenario": "dashboard",
+          "p50": 142.4,
+          "p95": 167.3,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "sql:dashboard",
+          "p50": 18.84,
+          "p95": 21.52,
+          "budget": 500,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "dashboard@5",
+          "p50": 270,
+          "p95": 312.3,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 5
+        },
+        {
+          "scenario": "dashboard@10",
+          "p50": 543.8,
+          "p95": 1265.1,
+          "budget": 1000,
+          "status": "over-budget",
+          "unit": "ms",
+          "concurrency": 10
+        },
+        {
+          "scenario": "listado-inicial",
+          "p50": 134.7,
+          "p95": 228.8,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "sql:listado-inicial",
+          "p50": 12.53,
+          "p95": 21.04,
+          "budget": 500,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "listado-inicial@5",
+          "p50": 166.3,
+          "p95": 184.9,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 5
+        },
+        {
+          "scenario": "listado-inicial@10",
+          "p50": 338.4,
+          "p95": 372.3,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 10
+        },
+        {
+          "scenario": "listado-100-filas",
+          "p50": 138.9,
+          "p95": 166.6,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "sql:listado-100-filas",
+          "p50": 14.1,
+          "p95": 18.77,
+          "budget": 500,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "listado-100-filas@5",
+          "p50": 305,
+          "p95": 621.6,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 5
+        },
+        {
+          "scenario": "listado-100-filas@10",
+          "p50": 469,
+          "p95": 1479,
+          "budget": 1000,
+          "status": "over-budget",
+          "unit": "ms",
+          "concurrency": 10
+        },
+        {
+          "scenario": "listado-ultima-pagina",
+          "p50": 146.8,
+          "p95": 163.9,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "sql:listado-ultima-pagina",
+          "p50": 32.59,
+          "p95": 38.53,
+          "budget": 500,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "listado-ultima-pagina@5",
+          "p50": 285.3,
+          "p95": 352,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 5
+        },
+        {
+          "scenario": "listado-ultima-pagina@10",
+          "p50": 666.8,
+          "p95": 880.6,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 10
+        },
+        {
+          "scenario": "filtrado-estado-estanteria",
+          "p50": 109.9,
+          "p95": 118.4,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "sql:filtrado-estado-estanteria",
+          "p50": 2.15,
+          "p95": 2.54,
+          "budget": 500,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "filtrado-estado-estanteria@5",
+          "p50": 165.2,
+          "p95": 212.2,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 5
+        },
+        {
+          "scenario": "filtrado-estado-estanteria@10",
+          "p50": 287,
+          "p95": 379.2,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 10
+        },
+        {
+          "scenario": "ordenado-autor",
+          "p50": 174.9,
+          "p95": 241.6,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "sql:ordenado-autor",
+          "p50": 14.77,
+          "p95": 18.49,
+          "budget": 500,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "ordenado-autor@5",
+          "p50": 184.5,
+          "p95": 280.8,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 5
+        },
+        {
+          "scenario": "ordenado-autor@10",
+          "p50": 438.4,
+          "p95": 576.9,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 10
+        },
+        {
+          "scenario": "ordenado-fecha",
+          "p50": 142.4,
+          "p95": 176.6,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "sql:ordenado-fecha",
+          "p50": 23.7,
+          "p95": 30.25,
+          "budget": 500,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "ordenado-fecha@5",
+          "p50": 246.4,
+          "p95": 278.8,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 5
+        },
+        {
+          "scenario": "ordenado-fecha@10",
+          "p50": 470.3,
+          "p95": 567.6,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 10
+        },
+        {
+          "scenario": "busqueda-local-texto",
+          "p50": 220.7,
+          "p95": 311.6,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "sql:busqueda-local-texto",
+          "p50": 105.27,
+          "p95": 160.4,
+          "budget": 500,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "busqueda-local-texto@5",
+          "p50": 648.3,
+          "p95": 1055.2,
+          "budget": 1000,
+          "status": "over-budget",
+          "unit": "ms",
+          "concurrency": 5
+        },
+        {
+          "scenario": "busqueda-local-texto@10",
+          "p50": 1197.5,
+          "p95": 1277.6,
+          "budget": 1000,
+          "status": "over-budget",
+          "unit": "ms",
+          "concurrency": 10
+        },
+        {
+          "scenario": "busqueda-local-isbn",
+          "p50": 214.9,
+          "p95": 256.4,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "sql:busqueda-local-isbn",
+          "p50": 101.78,
+          "p95": 123.85,
+          "budget": 500,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "busqueda-local-isbn@5",
+          "p50": 575.3,
+          "p95": 659.1,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 5
+        },
+        {
+          "scenario": "busqueda-local-isbn@10",
+          "p50": 1148.4,
+          "p95": 1221.7,
+          "budget": 1000,
+          "status": "over-budget",
+          "unit": "ms",
+          "concurrency": 10
+        },
+        {
+          "scenario": "detalle",
+          "p50": 107.3,
+          "p95": 128.7,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "sql:detalle",
+          "p50": 0.07,
+          "p95": 0.12,
+          "budget": null,
+          "status": "no-budget",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "detalle@5",
+          "p50": 138.8,
+          "p95": 162.7,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 5
+        },
+        {
+          "scenario": "detalle@10",
+          "p50": 225.7,
+          "p95": 298.1,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 10
+        },
+        {
+          "scenario": "estanterias",
+          "p50": 123.8,
+          "p95": 146.8,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "sql:estanterias",
+          "p50": 6.51,
+          "p95": 8.72,
+          "budget": null,
+          "status": "no-budget",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "estanterias@5",
+          "p50": 238.8,
+          "p95": 304.2,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 5
+        },
+        {
+          "scenario": "estanterias@10",
+          "p50": 370.8,
+          "p95": 463,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 10
+        },
+        {
+          "scenario": "estanteria-3d-pagina-48",
+          "p50": 116.6,
+          "p95": 200.6,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "sql:estanteria-3d-pagina-48",
+          "p50": 4.17,
+          "p95": 5.37,
+          "budget": 500,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "estanteria-3d-pagina-48@5",
+          "p50": 183.8,
+          "p95": 279.2,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 5
+        },
+        {
+          "scenario": "estanteria-3d-pagina-48@10",
+          "p50": 352.3,
+          "p95": 449.8,
+          "budget": 1000,
+          "status": "ok",
+          "unit": "ms",
+          "concurrency": 10
+        },
+        {
+          "scenario": "exportacion-lectura-completa",
+          "p50": 523.9,
+          "p95": 576.4,
+          "budget": null,
+          "status": "no-budget",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "sql:exportacion-lectura-completa",
+          "p50": 105.24,
+          "p95": 122.9,
+          "budget": null,
+          "status": "no-budget",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "exportacion-lectura-completa@5",
+          "p50": 2398.6,
+          "p95": 3156.6,
+          "budget": null,
+          "status": "no-budget",
+          "unit": "ms",
+          "concurrency": 5
+        },
+        {
+          "scenario": "exportacion-lectura-completa@10",
+          "p50": 3112.4,
+          "p95": 3627.9,
+          "budget": null,
+          "status": "no-budget",
+          "unit": "ms",
+          "concurrency": 10
+        },
+        {
+          "scenario": "preview-importacion-conservar",
+          "p50": 303.6,
+          "p95": 344.7,
+          "budget": null,
+          "status": "no-budget",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "sql:preview-importacion-conservar",
+          "p50": 35.84,
+          "p95": 39.87,
+          "budget": null,
+          "status": "no-budget",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "preview-importacion-conservar@5",
+          "p50": 1091.4,
+          "p95": 1474.2,
+          "budget": null,
+          "status": "no-budget",
+          "unit": "ms",
+          "concurrency": 5
+        },
+        {
+          "scenario": "preview-importacion-conservar@10",
+          "p50": 2195.3,
+          "p95": 2586.2,
+          "budget": null,
+          "status": "no-budget",
+          "unit": "ms",
+          "concurrency": 10
+        },
+        {
+          "scenario": "preview-importacion-nuevos",
+          "p50": 363.3,
+          "p95": 403.4,
+          "budget": null,
+          "status": "no-budget",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "sql:preview-importacion-nuevos",
+          "p50": 47.83,
+          "p95": 57.09,
+          "budget": null,
+          "status": "no-budget",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "preview-importacion-nuevos@5",
+          "p50": 1233.8,
+          "p95": 1671,
+          "budget": null,
+          "status": "no-budget",
+          "unit": "ms",
+          "concurrency": 5
+        },
+        {
+          "scenario": "preview-importacion-nuevos@10",
+          "p50": 2390.1,
+          "p95": 2965.8,
+          "budget": null,
+          "status": "no-budget",
+          "unit": "ms",
+          "concurrency": 10
+        },
+        {
+          "scenario": "preview-importacion-reemplazo",
+          "p50": 371,
+          "p95": 461.8,
+          "budget": null,
+          "status": "no-budget",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "sql:preview-importacion-reemplazo",
+          "p50": 49.04,
+          "p95": 52.3,
+          "budget": null,
+          "status": "no-budget",
+          "unit": "ms",
+          "concurrency": 1
+        },
+        {
+          "scenario": "preview-importacion-reemplazo@5",
+          "p50": 1866.4,
+          "p95": 2934.8,
+          "budget": null,
+          "status": "no-budget",
+          "unit": "ms",
+          "concurrency": 5
+        },
+        {
+          "scenario": "preview-importacion-reemplazo@10",
+          "p50": 2218.8,
+          "p95": 2837.6,
+          "budget": null,
+          "status": "no-budget",
+          "unit": "ms",
+          "concurrency": 10
+        },
+        {
+          "scenario": "web:escritorio:inicio:lcp",
+          "p50": 488,
+          "p95": 624,
+          "budget": 2500,
+          "status": "ok",
+          "unit": "ms"
+        },
+        {
+          "scenario": "web:escritorio:inicio:inp",
+          "p50": 32,
+          "p95": 32,
+          "budget": 200,
+          "status": "ok",
+          "unit": "ms"
+        },
+        {
+          "scenario": "web:escritorio:inicio:cls",
+          "p50": 0.001,
+          "p95": 0.001,
+          "budget": 0.1,
+          "status": "ok",
+          "unit": "score"
+        },
+        {
+          "scenario": "web:escritorio:coleccion:lcp",
+          "p50": 124,
+          "p95": 168,
+          "budget": 2500,
+          "status": "ok",
+          "unit": "ms"
+        },
+        {
+          "scenario": "web:escritorio:coleccion:inp",
+          "p50": 48,
+          "p95": 48,
+          "budget": 200,
+          "status": "ok",
+          "unit": "ms"
+        },
+        {
+          "scenario": "web:escritorio:coleccion:cls",
+          "p50": 0.001,
+          "p95": 0.001,
+          "budget": 0.1,
+          "status": "ok",
+          "unit": "score"
+        },
+        {
+          "scenario": "web:escritorio:busqueda-avanzada:lcp",
+          "p50": 572,
+          "p95": 628,
+          "budget": 2500,
+          "status": "ok",
+          "unit": "ms"
+        },
+        {
+          "scenario": "web:escritorio:busqueda-avanzada:inp",
+          "p50": 40,
+          "p95": 40,
+          "budget": 200,
+          "status": "ok",
+          "unit": "ms"
+        },
+        {
+          "scenario": "web:escritorio:busqueda-avanzada:cls",
+          "p50": 0.001,
+          "p95": 0.001,
+          "budget": 0.1,
+          "status": "ok",
+          "unit": "score"
+        },
+        {
+          "scenario": "web:escritorio:ficha:lcp",
+          "p50": 532,
+          "p95": 588,
+          "budget": 2500,
+          "status": "ok",
+          "unit": "ms"
+        },
+        {
+          "scenario": "web:escritorio:ficha:inp",
+          "p50": 32,
+          "p95": 40,
+          "budget": 200,
+          "status": "ok",
+          "unit": "ms"
+        },
+        {
+          "scenario": "web:escritorio:ficha:cls",
+          "p50": 0.001,
+          "p95": 0.001,
+          "budget": 0.1,
+          "status": "ok",
+          "unit": "score"
+        },
+        {
+          "scenario": "web:escritorio:estanterias:lcp",
+          "p50": 368,
+          "p95": 508,
+          "budget": 2500,
+          "status": "ok",
+          "unit": "ms"
+        },
+        {
+          "scenario": "web:escritorio:estanterias:inp",
+          "p50": 48,
+          "p95": 56,
+          "budget": 200,
+          "status": "ok",
+          "unit": "ms"
+        },
+        {
+          "scenario": "web:escritorio:estanterias:cls",
+          "p50": 0.001,
+          "p95": 0.001,
+          "budget": 0.1,
+          "status": "ok",
+          "unit": "score"
+        },
+        {
+          "scenario": "web:escritorio:estanteria-3d:lcp",
+          "p50": 368,
+          "p95": 464,
+          "budget": 2500,
+          "status": "ok",
+          "unit": "ms"
+        },
+        {
+          "scenario": "web:escritorio:estanteria-3d:inp",
+          "p50": 24,
+          "p95": 24,
+          "budget": 200,
+          "status": "ok",
+          "unit": "ms"
+        },
+        {
+          "scenario": "web:escritorio:estanteria-3d:cls",
+          "p50": 0.001,
+          "p95": 0.001,
+          "budget": 0.1,
+          "status": "ok",
+          "unit": "score"
+        },
+        {
+          "scenario": "web:escritorio:ajustes:lcp",
+          "p50": 96,
+          "p95": 160,
+          "budget": 2500,
+          "status": "ok",
+          "unit": "ms"
+        },
+        {
+          "scenario": "web:escritorio:ajustes:inp",
+          "p50": 16,
+          "p95": 16,
+          "budget": 200,
+          "status": "ok",
+          "unit": "ms"
+        },
+        {
+          "scenario": "web:escritorio:ajustes:cls",
+          "p50": 0.001,
+          "p95": 0.169,
+          "budget": 0.1,
+          "status": "over-budget",
+          "unit": "score"
+        },
+        {
+          "scenario": "web:movil:inicio:lcp",
+          "p50": 500,
+          "p95": 1286,
+          "budget": 2500,
+          "status": "ok",
+          "unit": "ms"
+        },
+        {
+          "scenario": "web:movil:inicio:inp",
+          "p50": 80,
+          "p95": 80,
+          "budget": 200,
+          "status": "ok",
+          "unit": "ms"
+        },
+        {
+          "scenario": "web:movil:inicio:cls",
+          "p50": 0,
+          "p95": 0,
+          "budget": 0.1,
+          "status": "ok",
+          "unit": "score"
+        },
+        {
+          "scenario": "web:movil:coleccion:lcp",
+          "p50": 192,
+          "p95": 436,
+          "budget": 2500,
+          "status": "ok",
+          "unit": "ms"
+        },
+        {
+          "scenario": "web:movil:coleccion:inp",
+          "p50": 120,
+          "p95": 120,
+          "budget": 200,
+          "status": "ok",
+          "unit": "ms"
+        },
+        {
+          "scenario": "web:movil:coleccion:cls",
+          "p50": 0,
+          "p95": 0,
+          "budget": 0.1,
+          "status": "ok",
+          "unit": "score"
+        },
+        {
+          "scenario": "web:movil:busqueda-avanzada:lcp",
+          "p50": 890,
+          "p95": 1404,
+          "budget": 2500,
+          "status": "ok",
+          "unit": "ms"
+        },
+        {
+          "scenario": "web:movil:busqueda-avanzada:inp",
+          "p50": 144,
+          "p95": 168,
+          "budget": 200,
+          "status": "ok",
+          "unit": "ms"
+        },
+        {
+          "scenario": "web:movil:busqueda-avanzada:cls",
+          "p50": 0,
+          "p95": 0,
+          "budget": 0.1,
+          "status": "ok",
+          "unit": "score"
+        },
+        {
+          "scenario": "web:movil:ficha:lcp",
+          "p50": 1190,
+          "p95": 2336,
+          "budget": 2500,
+          "status": "ok",
+          "unit": "ms"
+        },
+        {
+          "scenario": "web:movil:ficha:inp",
+          "p50": 136,
+          "p95": 216,
+          "budget": 200,
+          "status": "over-budget",
+          "unit": "ms"
+        },
+        {
+          "scenario": "web:movil:ficha:cls",
+          "p50": 0,
+          "p95": 0,
+          "budget": 0.1,
+          "status": "ok",
+          "unit": "score"
+        },
+        {
+          "scenario": "web:movil:estanterias:lcp",
+          "p50": 838,
+          "p95": 1600,
+          "budget": 2500,
+          "status": "ok",
+          "unit": "ms"
+        },
+        {
+          "scenario": "web:movil:estanterias:inp",
+          "p50": 448,
+          "p95": 496,
+          "budget": 200,
+          "status": "over-budget",
+          "unit": "ms"
+        },
+        {
+          "scenario": "web:movil:estanterias:cls",
+          "p50": 0,
+          "p95": 0,
+          "budget": 0.1,
+          "status": "ok",
+          "unit": "score"
+        },
+        {
+          "scenario": "web:movil:estanteria-3d:lcp",
+          "p50": 680,
+          "p95": 1356,
+          "budget": 2500,
+          "status": "ok",
+          "unit": "ms"
+        },
+        {
+          "scenario": "web:movil:estanteria-3d:inp",
+          "p50": 112,
+          "p95": 120,
+          "budget": 200,
+          "status": "ok",
+          "unit": "ms"
+        },
+        {
+          "scenario": "web:movil:estanteria-3d:cls",
+          "p50": 0,
+          "p95": 0,
+          "budget": 0.1,
+          "status": "ok",
+          "unit": "score"
+        },
+        {
+          "scenario": "web:movil:ajustes:lcp",
+          "p50": 228,
+          "p95": 426,
+          "budget": 2500,
+          "status": "ok",
+          "unit": "ms"
+        },
+        {
+          "scenario": "web:movil:ajustes:inp",
+          "p50": 72,
+          "p95": 80,
+          "budget": 200,
+          "status": "ok",
+          "unit": "ms"
+        },
+        {
+          "scenario": "web:movil:ajustes:cls",
+          "p50": 0,
+          "p95": 0.579,
+          "budget": 0.1,
+          "status": "over-budget",
+          "unit": "score"
+        }
+      ]
+    }
+  ]
+}

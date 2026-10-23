@@ -786,3 +786,32 @@ La migración crea las tres tablas con RLS, la secuencia de fencing, las funcion
 - `pnpm test:scripts`: `tests/scripts/jobs-runner.test.mjs` y las comprobaciones de drift de `0005` en `migrations.test.mjs`.
 
 Evidencia: [validacion/2026-10-23/O09/dat-03](validacion/2026-10-23/O09/dat-03/informe.md).
+
+## Rendimiento y capacidad · U-QA-03
+
+`pnpm perf:local` mide la aplicación con datos de escala contra el stack real de un perfil (`test` o `scratch`) y la app compilada para ese perfil, con catálogo en fixture y sin llamadas externas (el proceso de la app lleva el guard de red de U-QA-02: cualquier salida fuera de loopback se bloquea y hace fallar la medición con **11**). La primera medición, previa a U-DAT-04, está en [validacion/rendimiento/2026-10-23](validacion/rendimiento/2026-10-23/informe.md). Se repite al cambiar el modelo de ejemplares (U-DAT-06) y al cerrar el producto.
+
+```powershell
+pnpm db:local:bootstrap --profile test                    # el stack y las cuentas A/B; perf:local no arranca ni para el stack
+pnpm db:seed:local --profile test --scale 10000           # opcional: 100 | 1000 | 10000 libros en escala@biblib.test
+pnpm perf:local --profile test --scale 1000               # contrato del coordinador; --scale 1000 y --profile test por defecto
+pnpm perf:local --scale 100 --scale 1000 --scale 10000    # extensión: los tres tamaños en un proceso (reutiliza las sesiones)
+pnpm perf:local --scenarios dashboard,listado-inicial,web --json
+pnpm perf:local:cleanup --profile test                    # elimina escala@biblib.test y su biblioteca
+pnpm db:local:down --profile test
+```
+
+**Contrato.** `perf:local [--profile test|scratch] [--scale 100|1000|10000] [--scenarios <lista>] [--out <dir>] [--json]`. `--out` es `docs/validacion/rendimiento/<fecha>/` por defecto. Con `--json` imprime en stdout `{ schemaVersion: 1, profile, scale, results: [{ scenario, p50, p95, budget, status }] }` (con varios `--scale`, `{ schemaVersion, profile, scales: [{ scale, results }] }`) y envía el progreso a stderr. `status` es `ok`, `over-budget` o `no-budget`; `unit` indica `ms` o `score` (CLS). Un presupuesto incumplido **no** cambia la salida: `0` si mide, `2` argumentos, `3` perfil sin registro o ajeno, `8` stack o puerto de la app no disponibles, `11` tráfico externo detectado o escenario de preparación fallido, `130` interrupción. `--scenarios` acepta nombres de acción (`dashboard`, `listado-inicial`, `listado-100-filas`, `listado-ultima-pagina`, `filtrado-estado-estanteria`, `ordenado-autor`, `ordenado-fecha`, `busqueda-local-texto`, `busqueda-local-isbn`, `detalle`, `estanterias`, `estanteria-3d-pagina-48`, `exportacion-lectura-completa`, `preview-importacion-conservar|nuevos|reemplazo`) y pasos (`explain`, `indexes`, `isolation`, `web`, `quota`, `auth`); sin la opción se ejecuta todo. Extensiones: `--skip`, `--reuse-build`, `--web-runs 1-5` y `--cleanup`. Las entradas del contrato son las acciones (`listado-inicial`, con `@5` o `@10` para esas sesiones concurrentes), el SQL real de cada acción (`sql:<escenario>`) y los Web Vitals (`web:<perfil>:<pantalla>:lcp|inp|cls`).
+
+**Datos.** `db:seed:local --scale N` crea la cuenta fixture `escala@biblib.test` (contraseña aleatoria en `.biblib/fixtures/<perfil>-escala.json`, mismo registro privado y ACL que A/B) y deja en ella exactamente N libros ficticios, de forma idempotente y acotada a ese propietario. No toca el censo A/B. El dataset es determinista (`scripts/performance/lib/dataset.mjs`): ISBN-13 válidos del rango 979-0, 15 % de fichas manuales, tildes y eñes, reparto de estados 40/30/22/8 % y estanterías de tamaño desigual (6, 13 y 41). Si la cuenta ya contiene el dataset, `perf:local` no lo vuelve a sembrar. La cuenta usa el metadato del censo, así que `test:integration:local` la acepta; `perf:local:cleanup` la elimina igualmente.
+
+**Cómo se mide.**
+
+- **Acción:** POST real de la Server Action con cookies SSR de sesiones reales de GoTrue (10 de escala, A y B; se abren una vez y se reutilizan; un registro de marcas de tiempo en `.biblib/performance/signins.json` respeta el límite de 30 accesos cada 5 minutos). Latencia de extremo a extremo, p50/p95.
+- **SQL:** tiempo de ejecución real de las sentencias de la acción, por diferencia de `pg_stat_statements` antes y después de cada llamada (solo con 1 sesión), y `EXPLAIN (ANALYZE, BUFFERS)` de las consultas principales como `authenticated` con RLS real.
+- **Auth:** duración de cada `GET /user` en el registro de GoTrue del perfil y número de llamadas por acción (el proxy y la acción llaman a `getUser()`), más el viaje de ida y vuelta cliente → Kong → GoTrue.
+- **Pool:** conexiones `postgres.js` de la aplicación muestreadas cada 100 ms en `pg_stat_activity`.
+- **Web Vitals:** Playwright con el Chrome del sistema en dos perfiles declarados: `escritorio-local` (1280×800, sin limitación) y `movil-cpu-x4` (390×844, táctil, CPU ×4 más lenta; solo con 10000). Frío = contexto nuevo con caché vacía; caliente = navegaciones posteriores. INP con gestos de solo lectura.
+- **Cuota distribuida:** dos procesos Node independientes con el orquestador y el gateway compilados (el mismo código que la app) contra el Postgres del perfil, con un proveedor simulado. No son dos instancias de Next: una segunda necesitaría un puerto fuera de los reservados.
+
+**Limitaciones.** Es un Postgres local de Docker con la configuración por defecto del stack (`shared_buffers` 128 MB) y con otros contenedores (HolaERP) en la misma máquina; las cifras comparan tamaños y versiones del propio producto, no son un SLA. El frío es el de la aplicación (proceso y conexión nuevos): no se vacía la caché de Postgres. La publicación atómica de staging y los workers de portadas no existen aún (U-DAT-04, U-DAT-03) y se miden en la repetición posterior. Los índices candidatos se miden en transacciones que se revierten; no hay migración.

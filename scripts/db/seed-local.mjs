@@ -11,6 +11,7 @@ import { loadJournal } from "./journal-guard.mjs"
 import { acquireMigrationLock, releaseMigrationLock } from "./migrate.mjs"
 import { closeConnection, connect, inspectDatabase, resolveLocal } from "./target.mjs"
 import { fixtureId, readFixtureStore, writeFixtureStore } from "./fixture-store.mjs"
+import { parseScale, runScaleSeed } from "../performance/scale-seed.mjs"
 
 export const BUCKET = "biblib-test-assets"
 export const ASSET = "fixtures/portada.webp"
@@ -29,7 +30,8 @@ export function parseSeedArgs(argv) {
     seen.add(flag)
     if (flag === "--json") parsed.json = true
     else if (flag === "--profile" && ["main", "test", "scratch"].includes(argv[i + 1])) parsed.profile = argv[++i]
-    else fail(EXIT.INVALID_ARGS, "argumentos", "Uso: db:seed:local [--profile main|test|scratch] [--json]. No se admiten URLs ni flags reenviados.")
+    else if (flag === "--scale") parsed.scale = parseScale(argv[++i])
+    else fail(EXIT.INVALID_ARGS, "argumentos", "Uso: db:seed:local [--profile main|test|scratch] [--scale 100|1000|10000] [--json]. No se admiten URLs ni flags reenviados.")
   }
   return parsed
 }
@@ -215,8 +217,12 @@ export async function main(argv = process.argv.slice(2)) {
   process.on("SIGINT", abort)
   try {
     const options = parseSeedArgs(argv)
-    const result = await runSeed({ ...options, signal: controller.signal })
+    // U-QA-03: la cuenta de escala (escala@biblib.test) es independiente del censo A/B y de este seed.
+    const result = options.scale
+      ? await runScaleSeed({ profile: options.profile, scale: options.scale, signal: controller.signal }, { resolveSeedTarget, seedAccounts, loadCensus })
+      : await runSeed({ ...options, signal: controller.signal })
     if (options.json) console.log(JSON.stringify({ code: EXIT.OK, ...result }))
+    else if (options.scale) console.log(`Escala ${result.datasetId} · ${result.profile}: ${result.books} libros y ${result.shelves} estanterías en ${result.email}.`)
     else console.log(`Fixtures ${result.censusId} · ${result.profile}: A/B, bibliotecas, Storage privado y correo completados.`)
     return EXIT.OK
   } catch (error) {

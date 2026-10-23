@@ -60,7 +60,9 @@
     "ci:collect": "node scripts/ci/collect.mjs",
     "ci:test": "node --test scripts/ci/*.test.mjs",
     "test:integration:jobs": "node tests/integration/jobs/run.mjs",
-    "jobs:run:local": "node scripts/jobs/run-local.mjs"
+    "jobs:run:local": "node scripts/jobs/run-local.mjs",
+    "perf:local": "node scripts/performance/run.mjs",
+    "perf:local:cleanup": "node scripts/performance/run.mjs cleanup"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "1.1.15",

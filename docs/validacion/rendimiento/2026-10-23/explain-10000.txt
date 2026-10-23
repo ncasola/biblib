@@ -1,0 +1,498 @@
+EXPLAIN (ANALYZE, BUFFERS) de las consultas principales · 10000 ejemplares · PostgreSQL PostgreSQL 17.6
+Rol authenticated con RLS real; cuenta sintética de escala; UUID sustituidos.
+
+-- resumen.totales · getLibrarySummaryAction · Inicio · SIN LIMIT en la aplicación
+Aggregate  (cost=1050.12..1050.14 rows=1 width=24) (actual time=8.625..8.627 rows=1 loops=1)
+  Buffers: shared hit=700
+  ->  Result  (cost=0.02..825.12 rows=10000 width=6) (actual time=0.022..4.838 rows=10000 loops=1)
+        One-Time Filter: ((COALESCE(NULLIF(current_setting('request.jwt.claim.sub'::text, true), ''::text), ((NULLIF(current_setting('request.jwt.claims'::text, true), ''::text))::jsonb ->> 'sub'::text)))::uuid = '<uuid>'::uuid)
+        Buffers: shared hit=700
+        ->  Seq Scan on books  (cost=0.02..825.12 rows=10000 width=6) (actual time=0.012..2.703 rows=10000 loops=1)
+              Filter: (user_id = '<uuid>'::uuid)
+              Rows Removed by Filter: 8
+              Buffers: shared hit=700
+Settings: effective_cache_size = '128MB', search_path = '"\$user", public, extensions'
+Planning Time: 0.184 ms
+Execution Time: 8.688 ms
+
+-- resumen.recientes · getLibrarySummaryAction · Inicio
+Limit  (cost=1022.94..1022.95 rows=5 width=497) (actual time=17.985..17.988 rows=5 loops=1)
+  Buffers: shared hit=702
+  ->  Sort  (cost=1022.94..1047.94 rows=10000 width=497) (actual time=17.982..17.985 rows=5 loops=1)
+        Sort Key: books.created_at DESC, books.id DESC
+        Sort Method: top-N heapsort  Memory: 32kB
+        Buffers: shared hit=702
+        ->  Result  (cost=3.12..856.84 rows=10000 width=497) (actual time=0.051..11.541 rows=10000 loops=1)
+              One-Time Filter: ((COALESCE(NULLIF(current_setting('request.jwt.claim.sub'::text, true), ''::text), ((NULLIF(current_setting('request.jwt.claims'::text, true), ''::text))::jsonb ->> 'sub'::text)))::uuid = '<uuid>'::uuid)
+              Buffers: shared hit=702
+              ->  Hash Join  (cost=3.12..856.84 rows=10000 width=497) (actual time=0.043..9.675 rows=10000 loops=1)
+                    Hash Cond: (books.shelf_id = shelves.id)
+                    Buffers: shared hit=702
+                    ->  Seq Scan on books  (cost=0.00..825.10 rows=10000 width=477) (actual time=0.014..4.018 rows=10000 loops=1)
+                          Filter: (user_id = '<uuid>'::uuid)
+                          Rows Removed by Filter: 8
+                          Buffers: shared hit=700
+                    ->  Hash  (cost=2.59..2.59 rows=41 width=36) (actual time=0.022..0.023 rows=41 loops=1)
+                          Buckets: 1024  Batches: 1  Memory Usage: 11kB
+                          Buffers: shared hit=2
+                          ->  Seq Scan on shelves  (cost=0.00..2.59 rows=41 width=36) (actual time=0.007..0.014 rows=41 loops=1)
+                                Filter: (user_id = '<uuid>'::uuid)
+                                Rows Removed by Filter: 6
+                                Buffers: shared hit=2
+Settings: effective_cache_size = '128MB', search_path = '"\$user", public, extensions'
+Planning:
+  Buffers: shared hit=12
+Planning Time: 0.463 ms
+Execution Time: 18.060 ms
+
+-- resumen.leyendo · getLibrarySummaryAction · Inicio
+Limit  (cost=868.80..868.82 rows=5 width=497) (actual time=4.441..4.444 rows=5 loops=1)
+  Buffers: shared hit=702
+  ->  Sort  (cost=868.80..870.80 rows=799 width=497) (actual time=4.439..4.442 rows=5 loops=1)
+        Sort Key: books.updated_at DESC, books.id
+        Sort Method: top-N heapsort  Memory: 31kB
+        Buffers: shared hit=702
+        ->  Result  (cost=3.12..855.53 rows=799 width=497) (actual time=0.040..3.966 rows=798 loops=1)
+              One-Time Filter: ((COALESCE(NULLIF(current_setting('request.jwt.claim.sub'::text, true), ''::text), ((NULLIF(current_setting('request.jwt.claims'::text, true), ''::text))::jsonb ->> 'sub'::text)))::uuid = '<uuid>'::uuid)
+              Buffers: shared hit=702
+              ->  Hash Join  (cost=3.12..855.53 rows=799 width=497) (actual time=0.036..3.840 rows=798 loops=1)
+                    Hash Cond: (books.shelf_id = shelves.id)
+                    Buffers: shared hit=702
+                    ->  Seq Scan on books  (cost=0.00..850.12 rows=799 width=477) (actual time=0.016..3.594 rows=798 loops=1)
+                          Filter: ((user_id = '<uuid>'::uuid) AND (status = 'reading'::text))
+                          Rows Removed by Filter: 9210
+                          Buffers: shared hit=700
+                    ->  Hash  (cost=2.59..2.59 rows=41 width=36) (actual time=0.016..0.017 rows=41 loops=1)
+                          Buckets: 1024  Batches: 1  Memory Usage: 11kB
+                          Buffers: shared hit=2
+                          ->  Seq Scan on shelves  (cost=0.00..2.59 rows=41 width=36) (actual time=0.004..0.010 rows=41 loops=1)
+                                Filter: (user_id = '<uuid>'::uuid)
+                                Rows Removed by Filter: 6
+                                Buffers: shared hit=2
+Settings: effective_cache_size = '128MB', search_path = '"\$user", public, extensions'
+Planning:
+  Buffers: shared hit=12
+Planning Time: 0.299 ms
+Execution Time: 4.493 ms
+
+-- listado.recuento · listBooksAction · Colección · SIN LIMIT en la aplicación
+Aggregate  (cost=392.29..392.30 rows=1 width=8) (actual time=2.038..2.041 rows=1 loops=1)
+  Buffers: shared hit=19
+  ->  Result  (cost=0.29..367.29 rows=10000 width=0) (actual time=0.014..1.561 rows=10000 loops=1)
+        One-Time Filter: ((COALESCE(NULLIF(current_setting('request.jwt.claim.sub'::text, true), ''::text), ((NULLIF(current_setting('request.jwt.claims'::text, true), ''::text))::jsonb ->> 'sub'::text)))::uuid = '<uuid>'::uuid)
+        Buffers: shared hit=19
+        ->  Index Only Scan using books_user_id_idx on books  (cost=0.29..367.29 rows=10000 width=0) (actual time=0.009..0.848 rows=10000 loops=1)
+              Index Cond: (user_id = '<uuid>'::uuid)
+              Heap Fetches: 0
+              Buffers: shared hit=19
+Settings: effective_cache_size = '128MB', search_path = '"\$user", public, extensions'
+Planning Time: 0.103 ms
+Execution Time: 2.079 ms
+
+-- listado.pagina-1 · listBooksAction · Colección
+Limit  (cost=1072.94..1072.97 rows=10 width=497) (actual time=13.193..13.197 rows=10 loops=1)
+  Buffers: shared hit=702
+  ->  Sort  (cost=1072.94..1097.94 rows=10000 width=497) (actual time=13.192..13.195 rows=10 loops=1)
+        Sort Key: books.title, books.id
+        Sort Method: top-N heapsort  Memory: 36kB
+        Buffers: shared hit=702
+        ->  Result  (cost=3.12..856.84 rows=10000 width=497) (actual time=0.040..8.081 rows=10000 loops=1)
+              One-Time Filter: ((COALESCE(NULLIF(current_setting('request.jwt.claim.sub'::text, true), ''::text), ((NULLIF(current_setting('request.jwt.claims'::text, true), ''::text))::jsonb ->> 'sub'::text)))::uuid = '<uuid>'::uuid)
+              Buffers: shared hit=702
+              ->  Hash Join  (cost=3.12..856.84 rows=10000 width=497) (actual time=0.035..6.470 rows=10000 loops=1)
+                    Hash Cond: (books.shelf_id = shelves.id)
+                    Buffers: shared hit=702
+                    ->  Seq Scan on books  (cost=0.00..825.10 rows=10000 width=477) (actual time=0.011..2.332 rows=10000 loops=1)
+                          Filter: (user_id = '<uuid>'::uuid)
+                          Rows Removed by Filter: 8
+                          Buffers: shared hit=700
+                    ->  Hash  (cost=2.59..2.59 rows=41 width=36) (actual time=0.016..0.017 rows=41 loops=1)
+                          Buckets: 1024  Batches: 1  Memory Usage: 11kB
+                          Buffers: shared hit=2
+                          ->  Seq Scan on shelves  (cost=0.00..2.59 rows=41 width=36) (actual time=0.004..0.010 rows=41 loops=1)
+                                Filter: (user_id = '<uuid>'::uuid)
+                                Rows Removed by Filter: 6
+                                Buffers: shared hit=2
+Settings: effective_cache_size = '128MB', search_path = '"\$user", public, extensions'
+Planning:
+  Buffers: shared hit=12
+Planning Time: 0.311 ms
+Execution Time: 13.283 ms
+
+-- listado.ultima-pagina · listBooksAction · Colección
+Limit  (cost=3803.71..3803.73 rows=10 width=497) (actual time=30.094..30.101 rows=10 loops=1)
+  Buffers: shared hit=702, temp read=622 written=623
+  ->  Sort  (cost=3778.73..3803.73 rows=10000 width=497) (actual time=27.800..29.805 rows=10000 loops=1)
+        Sort Key: books.title, books.id
+        Sort Method: external merge  Disk: 4976kB
+        Buffers: shared hit=702, temp read=622 written=623
+        ->  Result  (cost=3.12..856.84 rows=10000 width=497) (actual time=0.032..7.330 rows=10000 loops=1)
+              One-Time Filter: ((COALESCE(NULLIF(current_setting('request.jwt.claim.sub'::text, true), ''::text), ((NULLIF(current_setting('request.jwt.claims'::text, true), ''::text))::jsonb ->> 'sub'::text)))::uuid = '<uuid>'::uuid)
+              Buffers: shared hit=702
+              ->  Hash Join  (cost=3.12..856.84 rows=10000 width=497) (actual time=0.028..5.812 rows=10000 loops=1)
+                    Hash Cond: (books.shelf_id = shelves.id)
+                    Buffers: shared hit=702
+                    ->  Seq Scan on books  (cost=0.00..825.10 rows=10000 width=477) (actual time=0.008..2.073 rows=10000 loops=1)
+                          Filter: (user_id = '<uuid>'::uuid)
+                          Rows Removed by Filter: 8
+                          Buffers: shared hit=700
+                    ->  Hash  (cost=2.59..2.59 rows=41 width=36) (actual time=0.016..0.017 rows=41 loops=1)
+                          Buckets: 1024  Batches: 1  Memory Usage: 11kB
+                          Buffers: shared hit=2
+                          ->  Seq Scan on shelves  (cost=0.00..2.59 rows=41 width=36) (actual time=0.004..0.009 rows=41 loops=1)
+                                Filter: (user_id = '<uuid>'::uuid)
+                                Rows Removed by Filter: 6
+                                Buffers: shared hit=2
+Settings: effective_cache_size = '128MB', search_path = '"\$user", public, extensions'
+Planning:
+  Buffers: shared hit=12
+Planning Time: 0.279 ms
+Execution Time: 31.203 ms
+
+-- filtrado.recuento · listBooksAction · Colección filtrada · SIN LIMIT en la aplicación
+Aggregate  (cost=772.33..772.34 rows=1 width=8) (actual time=0.743..0.743 rows=1 loops=1)
+  Buffers: shared hit=610
+  ->  Result  (cost=43.97..770.81 rows=607 width=0) (actual time=0.126..0.716 rows=602 loops=1)
+        One-Time Filter: ((COALESCE(NULLIF(current_setting('request.jwt.claim.sub'::text, true), ''::text), ((NULLIF(current_setting('request.jwt.claims'::text, true), ''::text))::jsonb ->> 'sub'::text)))::uuid = '<uuid>'::uuid)
+        Buffers: shared hit=610
+        ->  Bitmap Heap Scan on books  (cost=43.97..770.81 rows=607 width=0) (actual time=0.122..0.674 rows=602 loops=1)
+              Recheck Cond: (shelf_id = '<uuid>'::uuid)
+              Filter: ((user_id = '<uuid>'::uuid) AND (status = 'read'::text))
+              Rows Removed by Filter: 932
+              Heap Blocks: exact=605
+              Buffers: shared hit=610
+              ->  Bitmap Index Scan on books_shelf_id_idx  (cost=0.00..43.79 rows=1534 width=0) (actual time=0.063..0.063 rows=1534 loops=1)
+                    Index Cond: (shelf_id = '<uuid>'::uuid)
+                    Buffers: shared hit=5
+Settings: effective_cache_size = '128MB', search_path = '"\$user", public, extensions'
+Planning Time: 0.088 ms
+Execution Time: 0.765 ms
+
+-- filtrado.pagina · listBooksAction · Colección filtrada
+Limit  (cost=792.70..792.73 rows=10 width=497) (actual time=1.252..1.254 rows=10 loops=1)
+  Buffers: shared hit=612
+  ->  Sort  (cost=792.70..794.22 rows=607 width=497) (actual time=1.252..1.253 rows=10 loops=1)
+        Sort Key: books.number_of_pages DESC, books.id
+        Sort Method: top-N heapsort  Memory: 34kB
+        Buffers: shared hit=612
+        ->  Result  (cost=43.97..779.59 rows=607 width=497) (actual time=0.125..1.008 rows=602 loops=1)
+              One-Time Filter: ((COALESCE(NULLIF(current_setting('request.jwt.claim.sub'::text, true), ''::text), ((NULLIF(current_setting('request.jwt.claims'::text, true), ''::text))::jsonb ->> 'sub'::text)))::uuid = '<uuid>'::uuid)
+              Buffers: shared hit=612
+              ->  Nested Loop  (cost=43.97..779.59 rows=607 width=497) (actual time=0.122..0.912 rows=602 loops=1)
+                    Buffers: shared hit=612
+                    ->  Seq Scan on shelves  (cost=0.00..2.71 rows=1 width=36) (actual time=0.005..0.009 rows=1 loops=1)
+                          Filter: ((user_id = '<uuid>'::uuid) AND (id = '<uuid>'::uuid))
+                          Rows Removed by Filter: 46
+                          Buffers: shared hit=2
+                    ->  Bitmap Heap Scan on books  (cost=43.94..770.79 rows=607 width=477) (actual time=0.115..0.788 rows=602 loops=1)
+                          Recheck Cond: (shelf_id = '<uuid>'::uuid)
+                          Filter: ((user_id = '<uuid>'::uuid) AND (status = 'read'::text))
+                          Rows Removed by Filter: 932
+                          Heap Blocks: exact=605
+                          Buffers: shared hit=610
+                          ->  Bitmap Index Scan on books_shelf_id_idx  (cost=0.00..43.79 rows=1534 width=0) (actual time=0.062..0.062 rows=1534 loops=1)
+                                Index Cond: (shelf_id = '<uuid>'::uuid)
+                                Buffers: shared hit=5
+Settings: effective_cache_size = '128MB', search_path = '"\$user", public, extensions'
+Planning Time: 0.168 ms
+Execution Time: 1.281 ms
+
+-- orden.autor · listBooksAction · Colección ordenada
+Limit  (cost=1122.94..1122.97 rows=10 width=529) (actual time=19.380..19.384 rows=10 loops=1)
+  Buffers: shared hit=702
+  ->  Sort  (cost=1122.94..1147.94 rows=10000 width=529) (actual time=19.378..19.381 rows=10 loops=1)
+        Sort Key: (((books.authors -> 0) ->> 'name'::text)), books.id
+        Sort Method: top-N heapsort  Memory: 39kB
+        Buffers: shared hit=702
+        ->  Result  (cost=3.12..906.84 rows=10000 width=529) (actual time=0.052..11.856 rows=10000 loops=1)
+              One-Time Filter: ((COALESCE(NULLIF(current_setting('request.jwt.claim.sub'::text, true), ''::text), ((NULLIF(current_setting('request.jwt.claims'::text, true), ''::text))::jsonb ->> 'sub'::text)))::uuid = '<uuid>'::uuid)
+              Buffers: shared hit=702
+              ->  Hash Join  (cost=3.12..856.84 rows=10000 width=497) (actual time=0.037..8.255 rows=10000 loops=1)
+                    Hash Cond: (books.shelf_id = shelves.id)
+                    Buffers: shared hit=702
+                    ->  Seq Scan on books  (cost=0.00..825.10 rows=10000 width=477) (actual time=0.009..3.280 rows=10000 loops=1)
+                          Filter: (user_id = '<uuid>'::uuid)
+                          Rows Removed by Filter: 8
+                          Buffers: shared hit=700
+                    ->  Hash  (cost=2.59..2.59 rows=41 width=36) (actual time=0.021..0.023 rows=41 loops=1)
+                          Buckets: 1024  Batches: 1  Memory Usage: 11kB
+                          Buffers: shared hit=2
+                          ->  Seq Scan on shelves  (cost=0.00..2.59 rows=41 width=36) (actual time=0.006..0.013 rows=41 loops=1)
+                                Filter: (user_id = '<uuid>'::uuid)
+                                Rows Removed by Filter: 6
+                                Buffers: shared hit=2
+Settings: effective_cache_size = '128MB', search_path = '"\$user", public, extensions'
+Planning:
+  Buffers: shared hit=12
+Planning Time: 0.512 ms
+Execution Time: 19.444 ms
+
+-- orden.fecha · listBooksAction · Colección ordenada
+Limit  (cost=1097.94..1097.97 rows=10 width=529) (actual time=24.885..24.890 rows=10 loops=1)
+  Buffers: shared hit=702
+  ->  Sort  (cost=1097.94..1122.94 rows=10000 width=529) (actual time=24.884..24.887 rows=10 loops=1)
+        Sort Key: (COALESCE("substring"(books.publish_date, '[0-9]{4}'::text), '0000'::text)) DESC, books.id
+        Sort Method: top-N heapsort  Memory: 39kB
+        Buffers: shared hit=702
+        ->  Result  (cost=3.12..881.84 rows=10000 width=529) (actual time=0.043..18.410 rows=10000 loops=1)
+              One-Time Filter: ((COALESCE(NULLIF(current_setting('request.jwt.claim.sub'::text, true), ''::text), ((NULLIF(current_setting('request.jwt.claims'::text, true), ''::text))::jsonb ->> 'sub'::text)))::uuid = '<uuid>'::uuid)
+              Buffers: shared hit=702
+              ->  Hash Join  (cost=3.12..856.84 rows=10000 width=497) (actual time=0.034..6.434 rows=10000 loops=1)
+                    Hash Cond: (books.shelf_id = shelves.id)
+                    Buffers: shared hit=702
+                    ->  Seq Scan on books  (cost=0.00..825.10 rows=10000 width=477) (actual time=0.008..2.266 rows=10000 loops=1)
+                          Filter: (user_id = '<uuid>'::uuid)
+                          Rows Removed by Filter: 8
+                          Buffers: shared hit=700
+                    ->  Hash  (cost=2.59..2.59 rows=41 width=36) (actual time=0.020..0.022 rows=41 loops=1)
+                          Buckets: 1024  Batches: 1  Memory Usage: 11kB
+                          Buffers: shared hit=2
+                          ->  Seq Scan on shelves  (cost=0.00..2.59 rows=41 width=36) (actual time=0.004..0.012 rows=41 loops=1)
+                                Filter: (user_id = '<uuid>'::uuid)
+                                Rows Removed by Filter: 6
+                                Buffers: shared hit=2
+Settings: effective_cache_size = '128MB', search_path = '"\$user", public, extensions'
+Planning:
+  Buffers: shared hit=12
+Planning Time: 0.285 ms
+Execution Time: 24.943 ms
+
+-- busqueda.recuento · listBooksAction · Búsqueda local · SIN LIMIT en la aplicación
+Aggregate  (cost=1100.54..1100.55 rows=1 width=8) (actual time=48.447..48.448 rows=1 loops=1)
+  Buffers: shared hit=700
+  ->  Result  (cost=0.02..1100.34 rows=80 width=0) (actual time=0.107..48.406 rows=417 loops=1)
+        One-Time Filter: ((COALESCE(NULLIF(current_setting('request.jwt.claim.sub'::text, true), ''::text), ((NULLIF(current_setting('request.jwt.claims'::text, true), ''::text))::jsonb ->> 'sub'::text)))::uuid = '<uuid>'::uuid)
+        Buffers: shared hit=700
+        ->  Seq Scan on books  (cost=0.02..1100.34 rows=80 width=0) (actual time=0.103..48.358 rows=417 loops=1)
+              Filter: ((user_id = '<uuid>'::uuid) AND (translate(lower(((((((title || ' '::text) || COALESCE(subtitle, ''::text)) || ' '::text) || (authors)::text) || ' '::text) || isbn)), 'áéíóúüñ'::text, 'aeiouun'::text) ~~ '%faro%'::text))
+              Rows Removed by Filter: 9591
+              Buffers: shared hit=700
+Settings: effective_cache_size = '128MB', search_path = '"\$user", public, extensions'
+Planning Time: 0.168 ms
+Execution Time: 48.487 ms
+
+-- busqueda.pagina · listBooksAction · Búsqueda local
+Limit  (cost=1105.41..1105.43 rows=10 width=497) (actual time=46.834..46.837 rows=10 loops=1)
+  Buffers: shared hit=702
+  ->  Sort  (cost=1105.41..1105.61 rows=80 width=497) (actual time=46.833..46.835 rows=10 loops=1)
+        Sort Key: books.title, books.id
+        Sort Method: top-N heapsort  Memory: 36kB
+        Buffers: shared hit=702
+        ->  Result  (cost=3.12..1103.68 rows=80 width=497) (actual time=0.130..46.490 rows=417 loops=1)
+              One-Time Filter: ((COALESCE(NULLIF(current_setting('request.jwt.claim.sub'::text, true), ''::text), ((NULLIF(current_setting('request.jwt.claims'::text, true), ''::text))::jsonb ->> 'sub'::text)))::uuid = '<uuid>'::uuid)
+              Buffers: shared hit=702
+              ->  Hash Join  (cost=3.12..1103.68 rows=80 width=497) (actual time=0.126..46.411 rows=417 loops=1)
+                    Hash Cond: (books.shelf_id = shelves.id)
+                    Buffers: shared hit=702
+                    ->  Seq Scan on books  (cost=0.00..1100.32 rows=80 width=477) (actual time=0.105..46.166 rows=417 loops=1)
+                          Filter: ((user_id = '<uuid>'::uuid) AND (translate(lower(((((((title || ' '::text) || COALESCE(subtitle, ''::text)) || ' '::text) || (authors)::text) || ' '::text) || isbn)), 'áéíóúüñ'::text, 'aeiouun'::text) ~~ '%faro%'::text))
+                          Rows Removed by Filter: 9591
+                          Buffers: shared hit=700
+                    ->  Hash  (cost=2.59..2.59 rows=41 width=36) (actual time=0.016..0.017 rows=41 loops=1)
+                          Buckets: 1024  Batches: 1  Memory Usage: 11kB
+                          Buffers: shared hit=2
+                          ->  Seq Scan on shelves  (cost=0.00..2.59 rows=41 width=36) (actual time=0.004..0.010 rows=41 loops=1)
+                                Filter: (user_id = '<uuid>'::uuid)
+                                Rows Removed by Filter: 6
+                                Buffers: shared hit=2
+Settings: effective_cache_size = '128MB', search_path = '"\$user", public, extensions'
+Planning:
+  Buffers: shared hit=12
+Planning Time: 0.276 ms
+Execution Time: 46.886 ms
+
+-- busqueda.isbn · listBooksAction · Búsqueda local
+Limit  (cost=1103.46..1103.46 rows=1 width=497) (actual time=81.895..81.899 rows=10 loops=1)
+  Buffers: shared hit=17860
+  ->  Sort  (cost=1103.46..1103.46 rows=1 width=497) (actual time=81.893..81.896 rows=10 loops=1)
+        Sort Key: books.title, books.id
+        Sort Method: top-N heapsort  Memory: 36kB
+        Buffers: shared hit=17860
+        ->  Result  (cost=0.02..1103.45 rows=1 width=497) (actual time=0.027..76.865 rows=8580 loops=1)
+              One-Time Filter: ((COALESCE(NULLIF(current_setting('request.jwt.claim.sub'::text, true), ''::text), ((NULLIF(current_setting('request.jwt.claims'::text, true), ''::text))::jsonb ->> 'sub'::text)))::uuid = '<uuid>'::uuid)
+              Buffers: shared hit=17860
+              ->  Nested Loop  (cost=0.02..1103.45 rows=1 width=497) (actual time=0.024..75.337 rows=8580 loops=1)
+                    Join Filter: (books.shelf_id = shelves.id)
+                    Rows Removed by Join Filter: 91881
+                    Buffers: shared hit=17860
+                    ->  Seq Scan on books  (cost=0.00..1100.32 rows=1 width=477) (actual time=0.019..48.516 rows=8580 loops=1)
+                          Filter: ((user_id = '<uuid>'::uuid) AND (translate(lower(((((((title || ' '::text) || COALESCE(subtitle, ''::text)) || ' '::text) || (authors)::text) || ' '::text) || isbn)), 'áéíóúüñ'::text, 'aeiouun'::text) ~~ '%9790000%'::text))
+                          Rows Removed by Filter: 1428
+                          Buffers: shared hit=700
+                    ->  Seq Scan on shelves  (cost=0.00..2.59 rows=41 width=36) (actual time=0.001..0.002 rows=12 loops=8580)
+                          Filter: (user_id = '<uuid>'::uuid)
+                          Buffers: shared hit=17160
+Settings: effective_cache_size = '128MB', search_path = '"\$user", public, extensions'
+Planning:
+  Buffers: shared hit=12
+Planning Time: 0.264 ms
+Execution Time: 81.951 ms
+
+-- busqueda.isbn-exacto · listBooksAction · Búsqueda local
+Limit  (cost=1103.46..1103.46 rows=1 width=497) (actual time=48.812..48.814 rows=0 loops=1)
+  Buffers: shared hit=700
+  ->  Sort  (cost=1103.46..1103.46 rows=1 width=497) (actual time=48.811..48.812 rows=0 loops=1)
+        Sort Key: books.title, books.id
+        Sort Method: quicksort  Memory: 25kB
+        Buffers: shared hit=700
+        ->  Result  (cost=0.02..1103.45 rows=1 width=497) (actual time=48.804..48.805 rows=0 loops=1)
+              One-Time Filter: ((COALESCE(NULLIF(current_setting('request.jwt.claim.sub'::text, true), ''::text), ((NULLIF(current_setting('request.jwt.claims'::text, true), ''::text))::jsonb ->> 'sub'::text)))::uuid = '<uuid>'::uuid)
+              Buffers: shared hit=700
+              ->  Nested Loop  (cost=0.02..1103.45 rows=1 width=497) (actual time=48.800..48.801 rows=0 loops=1)
+                    Join Filter: (books.shelf_id = shelves.id)
+                    Buffers: shared hit=700
+                    ->  Seq Scan on books  (cost=0.00..1100.32 rows=1 width=477) (actual time=48.798..48.799 rows=0 loops=1)
+                          Filter: ((user_id = '<uuid>'::uuid) AND (translate(lower(((((((title || ' '::text) || COALESCE(subtitle, ''::text)) || ' '::text) || (authors)::text) || ' '::text) || isbn)), 'áéíóúüñ'::text, 'aeiouun'::text) ~~ '%9790000000070%'::text))
+                          Rows Removed by Filter: 10008
+                          Buffers: shared hit=700
+                    ->  Seq Scan on shelves  (cost=0.00..2.59 rows=41 width=36) (never executed)
+                          Filter: (user_id = '<uuid>'::uuid)
+Settings: effective_cache_size = '128MB', search_path = '"\$user", public, extensions'
+Planning:
+  Buffers: shared hit=12
+Planning Time: 0.271 ms
+Execution Time: 48.858 ms
+
+-- detalle · getBookDetailAction · Ficha
+Limit  (cost=8.34..11.05 rows=1 width=497) (actual time=0.019..0.020 rows=1 loops=1)
+  Buffers: shared hit=5
+  ->  Result  (cost=8.34..11.05 rows=1 width=497) (actual time=0.019..0.019 rows=1 loops=1)
+        One-Time Filter: ((COALESCE(NULLIF(current_setting('request.jwt.claim.sub'::text, true), ''::text), ((NULLIF(current_setting('request.jwt.claims'::text, true), ''::text))::jsonb ->> 'sub'::text)))::uuid = '<uuid>'::uuid)
+        Buffers: shared hit=5
+        ->  Hash Join  (cost=8.34..11.05 rows=1 width=497) (actual time=0.015..0.016 rows=1 loops=1)
+              Hash Cond: (shelves.id = books.shelf_id)
+              Buffers: shared hit=5
+              ->  Seq Scan on shelves  (cost=0.00..2.59 rows=41 width=36) (actual time=0.004..0.005 rows=14 loops=1)
+                    Filter: (user_id = '<uuid>'::uuid)
+                    Buffers: shared hit=2
+              ->  Hash  (cost=8.30..8.30 rows=1 width=477) (actual time=0.006..0.006 rows=1 loops=1)
+                    Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                    Buffers: shared hit=3
+                    ->  Index Scan using books_pkey on books  (cost=0.29..8.30 rows=1 width=477) (actual time=0.004..0.004 rows=1 loops=1)
+                          Index Cond: (id = '<uuid>'::uuid)
+                          Filter: (user_id = '<uuid>'::uuid)
+                          Buffers: shared hit=3
+Settings: effective_cache_size = '128MB', search_path = '"\$user", public, extensions'
+Planning:
+  Buffers: shared hit=12
+Planning Time: 0.261 ms
+Execution Time: 0.045 ms
+
+-- estanterias · getShelvesAction · Estanterías / filtros / 3D · SIN LIMIT en la aplicación
+Sort  (cost=902.10..902.20 rows=41 width=49) (actual time=7.792..7.795 rows=41 loops=1)
+  Sort Key: shelves.created_at, shelves.id
+  Sort Method: quicksort  Memory: 27kB
+  Buffers: shared hit=702
+  ->  HashAggregate  (cost=900.48..901.00 rows=41 width=49) (actual time=7.769..7.777 rows=41 loops=1)
+        Group Key: shelves.id
+        Batches: 1  Memory Usage: 24kB
+        Buffers: shared hit=702
+        ->  Result  (cost=3.15..856.87 rows=8723 width=61) (actual time=0.033..6.310 rows=10000 loops=1)
+              One-Time Filter: ((COALESCE(NULLIF(current_setting('request.jwt.claim.sub'::text, true), ''::text), ((NULLIF(current_setting('request.jwt.claims'::text, true), ''::text))::jsonb ->> 'sub'::text)))::uuid = '<uuid>'::uuid)
+              Buffers: shared hit=702
+              ->  Hash Right Join  (cost=3.15..856.87 rows=8723 width=61) (actual time=0.028..5.448 rows=10000 loops=1)
+                    Hash Cond: (books.shelf_id = shelves.id)
+                    Buffers: shared hit=702
+                    ->  Result  (cost=0.02..825.12 rows=10000 width=32) (actual time=0.005..3.541 rows=10000 loops=1)
+                          One-Time Filter: ((COALESCE(NULLIF(current_setting('request.jwt.claim.sub'::text, true), ''::text), ((NULLIF(current_setting('request.jwt.claims'::text, true), ''::text))::jsonb ->> 'sub'::text)))::uuid = '<uuid>'::uuid)
+                          Buffers: shared hit=700
+                          ->  Seq Scan on books  (cost=0.02..825.12 rows=10000 width=32) (actual time=0.003..2.006 rows=10000 loops=1)
+                                Filter: (user_id = '<uuid>'::uuid)
+                                Rows Removed by Filter: 8
+                                Buffers: shared hit=700
+                    ->  Hash  (cost=2.59..2.59 rows=41 width=45) (actual time=0.021..0.021 rows=41 loops=1)
+                          Buckets: 1024  Batches: 1  Memory Usage: 12kB
+                          Buffers: shared hit=2
+                          ->  Seq Scan on shelves  (cost=0.00..2.59 rows=41 width=45) (actual time=0.008..0.013 rows=41 loops=1)
+                                Filter: (user_id = '<uuid>'::uuid)
+                                Rows Removed by Filter: 6
+                                Buffers: shared hit=2
+Settings: effective_cache_size = '128MB', search_path = '"\$user", public, extensions'
+Planning:
+  Buffers: shared hit=12
+Planning Time: 0.266 ms
+Execution Time: 7.840 ms
+
+-- 3d.pagina · listBooksAction · Estantería 3D (48)
+Limit  (cost=843.50..843.62 rows=48 width=497) (actual time=2.895..2.904 rows=48 loops=1)
+  Buffers: shared hit=612
+  ->  Sort  (cost=843.38..847.21 rows=1533 width=497) (actual time=2.888..2.896 rows=96 loops=1)
+        Sort Key: books.title, books.id
+        Sort Method: top-N heapsort  Memory: 139kB
+        Buffers: shared hit=612
+        ->  Result  (cost=44.20..785.24 rows=1533 width=497) (actual time=0.128..1.707 rows=1534 loops=1)
+              One-Time Filter: ((COALESCE(NULLIF(current_setting('request.jwt.claim.sub'::text, true), ''::text), ((NULLIF(current_setting('request.jwt.claims'::text, true), ''::text))::jsonb ->> 'sub'::text)))::uuid = '<uuid>'::uuid)
+              Buffers: shared hit=612
+              ->  Nested Loop  (cost=44.20..785.24 rows=1533 width=497) (actual time=0.124..1.441 rows=1534 loops=1)
+                    Buffers: shared hit=612
+                    ->  Seq Scan on shelves  (cost=0.00..2.71 rows=1 width=36) (actual time=0.006..0.015 rows=1 loops=1)
+                          Filter: ((user_id = '<uuid>'::uuid) AND (id = '<uuid>'::uuid))
+                          Rows Removed by Filter: 46
+                          Buffers: shared hit=2
+                    ->  Bitmap Heap Scan on books  (cost=44.17..767.18 rows=1533 width=477) (actual time=0.117..0.935 rows=1534 loops=1)
+                          Recheck Cond: (shelf_id = '<uuid>'::uuid)
+                          Filter: (user_id = '<uuid>'::uuid)
+                          Heap Blocks: exact=605
+                          Buffers: shared hit=610
+                          ->  Bitmap Index Scan on books_shelf_id_idx  (cost=0.00..43.79 rows=1534 width=0) (actual time=0.065..0.065 rows=1534 loops=1)
+                                Index Cond: (shelf_id = '<uuid>'::uuid)
+                                Buffers: shared hit=5
+Settings: effective_cache_size = '128MB', search_path = '"\$user", public, extensions'
+Planning Time: 0.175 ms
+Execution Time: 2.945 ms
+
+-- exportacion.todo · getLibraryDataAction · Ajustes (carga y exportación) · SIN LIMIT en la aplicación
+Sort  (cost=3778.73..3803.73 rows=10000 width=497) (actual time=33.431..35.900 rows=10000 loops=1)
+  Sort Key: books.title, books.id
+  Sort Method: external merge  Disk: 4976kB
+  Buffers: shared hit=702, temp read=622 written=623
+  ->  Result  (cost=3.12..856.84 rows=10000 width=497) (actual time=0.074..9.416 rows=10000 loops=1)
+        One-Time Filter: ((COALESCE(NULLIF(current_setting('request.jwt.claim.sub'::text, true), ''::text), ((NULLIF(current_setting('request.jwt.claims'::text, true), ''::text))::jsonb ->> 'sub'::text)))::uuid = '<uuid>'::uuid)
+        Buffers: shared hit=702
+        ->  Hash Join  (cost=3.12..856.84 rows=10000 width=497) (actual time=0.062..7.645 rows=10000 loops=1)
+              Hash Cond: (books.shelf_id = shelves.id)
+              Buffers: shared hit=702
+              ->  Seq Scan on books  (cost=0.00..825.10 rows=10000 width=477) (actual time=0.021..2.932 rows=10000 loops=1)
+                    Filter: (user_id = '<uuid>'::uuid)
+                    Rows Removed by Filter: 8
+                    Buffers: shared hit=700
+              ->  Hash  (cost=2.59..2.59 rows=41 width=36) (actual time=0.028..0.072 rows=41 loops=1)
+                    Buckets: 1024  Batches: 1  Memory Usage: 11kB
+                    Buffers: shared hit=2
+                    ->  Seq Scan on shelves  (cost=0.00..2.59 rows=41 width=36) (actual time=0.011..0.019 rows=41 loops=1)
+                          Filter: (user_id = '<uuid>'::uuid)
+                          Rows Removed by Filter: 6
+                          Buffers: shared hit=2
+Settings: effective_cache_size = '128MB', search_path = '"\$user", public, extensions'
+Planning:
+  Buffers: shared hit=12
+Planning Time: 0.266 ms
+Execution Time: 37.478 ms
+
+-- isbn.escaneo · getBookByIsbnAction / alta / edición · Añadir libro · SIN LIMIT en la aplicación
+Result  (cost=0.02..825.12 rows=10000 width=14) (actual time=0.007..1.988 rows=10000 loops=1)
+  One-Time Filter: ((COALESCE(NULLIF(current_setting('request.jwt.claim.sub'::text, true), ''::text), ((NULLIF(current_setting('request.jwt.claims'::text, true), ''::text))::jsonb ->> 'sub'::text)))::uuid = '<uuid>'::uuid)
+  Buffers: shared hit=700
+  ->  Seq Scan on books  (cost=0.02..825.12 rows=10000 width=14) (actual time=0.004..1.210 rows=10000 loops=1)
+        Filter: (user_id = '<uuid>'::uuid)
+        Rows Removed by Filter: 8
+        Buffers: shared hit=700
+Settings: effective_cache_size = '128MB', search_path = '"\$user", public, extensions'
+Planning Time: 0.068 ms
+Execution Time: 2.289 ms
+
+-- importacion.instantanea · prepareImportAction / confirmImportAction · Ajustes (importación) · SIN LIMIT en la aplicación
+Sort  (cost=1489.51..1514.51 rows=10000 width=30) (actual time=4.711..5.179 rows=10000 loops=1)
+  Sort Key: id
+  Sort Method: quicksort  Memory: 864kB
+  Buffers: shared hit=700
+  ->  Result  (cost=0.02..825.12 rows=10000 width=30) (actual time=0.014..2.935 rows=10000 loops=1)
+        One-Time Filter: ((COALESCE(NULLIF(current_setting('request.jwt.claim.sub'::text, true), ''::text), ((NULLIF(current_setting('request.jwt.claims'::text, true), ''::text))::jsonb ->> 'sub'::text)))::uuid = '<uuid>'::uuid)
+        Buffers: shared hit=700
+        ->  Seq Scan on books  (cost=0.02..825.12 rows=10000 width=30) (actual time=0.008..2.063 rows=10000 loops=1)
+              Filter: (user_id = '<uuid>'::uuid)
+              Rows Removed by Filter: 8
+              Buffers: shared hit=700
+Settings: effective_cache_size = '128MB', search_path = '"\$user", public, extensions'
+Planning Time: 0.130 ms
+Execution Time: 5.507 ms
