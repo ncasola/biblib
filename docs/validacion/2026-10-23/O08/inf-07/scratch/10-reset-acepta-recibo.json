@@ -1,0 +1,47 @@
+{
+  "plan": {
+    "file": ".biblib/plans/inf07-reset-p5.json",
+    "planHash": "1e2a4bbe831f85162809b662ce0b34a74ae197f2619c24844b664be831f6c86b",
+    "createdAt": "2026-10-23T17:05:42.568Z",
+    "discardedHash": "46e4daca374150d3991badac099a15e15af50930dfb97e26da15b04daf543ac7"
+  },
+  "receipt": {
+    "file": ".biblib/backups/20261023T170545Z-scratch-554a07/receipt.json",
+    "backupId": "20261023T170545Z-scratch-554a07",
+    "createdAt": "2026-10-23T17:05:45.792Z",
+    "discardedStateHash": "46e4daca374150d3991badac099a15e15af50930dfb97e26da15b04daf543ac7",
+    "scope": [
+      "schema",
+      "data",
+      "history",
+      "auth",
+      "storage",
+      "mailpit",
+      "domain",
+      "ledger"
+    ],
+    "restoreVerification": true,
+    "files": 4
+  },
+  "resetAcepta": {
+    "ok": true,
+    "value": {
+      "backupId": "20261023T170545Z-scratch-554a07",
+      "receiptHash": "ae079199cc81e6409f3ee1b616585c07a09c25058361ce2b809281eb8655d529"
+    }
+  },
+  "resetRechazaOtroEstado": {
+    "ok": false,
+    "code": 6,
+    "message": "El respaldo no acredita este estado, todos los scopes y su restauración; usa U-OPS-02 o la renuncia local explícita."
+  },
+  "promocionAceptaContrato": {
+    "ok": true,
+    "value": "20261023T170545Z-scratch-554a07"
+  },
+  "promocionRechazaOtroDestino": {
+    "ok": false,
+    "code": 3,
+    "message": "El recibo corresponde a otro destino (objetivo, proyecto o huella distintos)."
+  }
+}

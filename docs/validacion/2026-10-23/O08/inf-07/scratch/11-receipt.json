@@ -1,0 +1,100 @@
+{
+  "schemaVersion": 1,
+  "kind": "biblib-backup-receipt",
+  "backupId": "20261023T170545Z-scratch-554a07",
+  "createdAt": "2026-10-23T17:05:45.792Z",
+  "completedAt": "2026-10-23T17:05:47.785Z",
+  "target": {
+    "target": "local",
+    "profile": "scratch",
+    "project": "biblib-scratch"
+  },
+  "fingerprint": "ea260283d87954c1c405cb5ee4875867dd8b103c86084460f3a74244e06b13fa",
+  "commit": "d19cee47daefd5baa3fa59bc0b6addd87877b311",
+  "migrations": {
+    "head": "0004_catalogue_coordination",
+    "applied": [
+      "0000_biblib_init",
+      "0001_library_integrity",
+      "0002_book_versions",
+      "0003_library_revision",
+      "0004_catalogue_coordination"
+    ],
+    "ledgerHash": "f42bfacfe8dde280513065307e18e0fdc2b644e381840744160d19b89f52d318",
+    "journalHash": "22e3c6a2b1fb3d08d05b91f0c9c62a6843a2e6ea1fcae2c4f3fa7c0867bdd69f"
+  },
+  "scope": [
+    "schema",
+    "data",
+    "history",
+    "auth",
+    "storage",
+    "mailpit",
+    "domain",
+    "ledger"
+  ],
+  "strategy": {
+    "auth": "supabase db dump --local --data-only --schema auth: identidades; sesiones, tokens y flujos excluidos.",
+    "storage": "API Storage del perfil (clave local service_role, solo en memoria): bytes con sha256 e inventario de buckets.",
+    "configuration": "Configuración de Auth/OAuth/SMTP/JWT y claves fuera del respaldo: se reconfigura desde el gestor de secretos del destino.",
+    "mailpit": "API de Mailpit del perfil (mensajes RAW, sin marcarlos como leídos); no se reinyecta al restaurar."
+  },
+  "objects": {
+    "hash": "3259863164a173c19db187d8d81c0cf8d8e144233c0b5d1cebfc1d3dd04efba4",
+    "coverage": [
+      "rls",
+      "policies",
+      "grants",
+      "constraints",
+      "indexes",
+      "functions",
+      "triggers"
+    ]
+  },
+  "files": [
+    {
+      "path": ".biblib/backups/20261023T170545Z-scratch-554a07/db/biblib-drizzle.sql",
+      "role": "domain-dump",
+      "bytes": 59007,
+      "sha256": "8b54a58ff484cfad34f62be5ebd7e1ed1398c3cac4978ca4d8eb79e9b8be2849"
+    },
+    {
+      "path": ".biblib/backups/20261023T170545Z-scratch-554a07/db/auth-data.sql",
+      "role": "auth-data",
+      "bytes": 4042,
+      "sha256": "ea2be11189eb4173a9151bddeda78f220081b83f00812369d043261ddc2eccba"
+    },
+    {
+      "path": ".biblib/backups/20261023T170545Z-scratch-554a07/storage/3f3140421a207dbc3363170f0bfb43a9dd70a0cd.bin",
+      "role": "storage-object",
+      "bytes": 81490,
+      "sha256": "9f7e43ae6fd9e421853625bdc043cbcc0a11b9934196c1352961d077b4fcba76"
+    },
+    {
+      "path": ".biblib/backups/20261023T170545Z-scratch-554a07/mailpit/c9d5fdd2c8fb2532d8269c410eeeb8fc1ad09afc.eml",
+      "role": "mailpit-message",
+      "bytes": 891,
+      "sha256": "79c3af057c9879aeb83a6b312654b9fac548cca7ca52fa7f2e71b7f212dc4d9c"
+    }
+  ],
+  "manifest": {
+    "path": ".biblib/backups/20261023T170545Z-scratch-554a07/backup.json",
+    "contentHash": "caa40d221425244cb8a8ca9721fd237739ed2ed9d3b3dd51fe30b1bdc5808f30"
+  },
+  "discardedStateHash": "46e4daca374150d3991badac099a15e15af50930dfb97e26da15b04daf543ac7",
+  "restoreVerification": {
+    "passed": true,
+    "reportId": "97c71579-2f44-40cf-a160-c2df1fba9bb6",
+    "report": ".biblib/backups/20261023T170545Z-scratch-554a07/rehearsals/20261023T170726Z-scratch.json",
+    "reportSha256": "ec64d70d61b8006ef825b4452968f6f47cad061650ce3d21c50715b032aa9d72",
+    "target": {
+      "target": "local",
+      "profile": "scratch",
+      "project": "biblib-scratch",
+      "fingerprint": "ea260283d87954c1c405cb5ee4875867dd8b103c86084460f3a74244e06b13fa"
+    },
+    "recoveryMs": 11628,
+    "at": "2026-10-23T17:07:26.637Z"
+  },
+  "receiptHash": "ca535ca75bf3d91e59cb2faaa7d27a0359550ac87a2e469764399bc3be5ea1e8"
+}

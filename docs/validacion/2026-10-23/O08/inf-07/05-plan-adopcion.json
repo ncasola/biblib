@@ -1,0 +1,392 @@
+{
+  "schemaVersion": 1,
+  "kind": "adopt-ledger",
+  "target": {
+    "target": "preprod",
+    "profile": null,
+    "project": "inf07ensayoremoto001"
+  },
+  "fingerprint": "1e9b3dc4e9d78ecd14b26d46d602db476601e8a1ec18a2f71e771b53e62be04f",
+  "commit": {
+    "sha": "0cb90064dd365e5ff9b256e534444099094fd620",
+    "drizzleClean": true
+  },
+  "drizzle": {
+    "version": "0.45.2",
+    "journalHash": "c1d9f09d9a6867e6eb8f1e94c0d5b765dbfc0c8c48971705e670df69d7e069fb",
+    "migrationsSchema": "drizzle",
+    "migrationsTable": "__drizzle_migrations"
+  },
+  "state": "adoption-required",
+  "appliedHead": null,
+  "expectedHead": {
+    "tag": "0004_catalogue_coordination",
+    "when": 1792770443198,
+    "hash": "d10085aa91488d41078ced9905b986b56d2ac8dfdccb62a712ef384a064038e3"
+  },
+  "migrations": [
+    {
+      "tag": "0000_biblib_init",
+      "when": 1760000000000,
+      "hash": "b2f6e7bcc8e8c8b85fe2fb5f21506237d10f8aae0d7d895d83b214ab53cb6ab2",
+      "status": "unknown"
+    },
+    {
+      "tag": "0001_library_integrity",
+      "when": 1792627200000,
+      "hash": "585b45c948a69091695708a43771658522e89a8778814a8c3e145d095e9685ca",
+      "status": "unknown"
+    },
+    {
+      "tag": "0002_book_versions",
+      "when": 1792678059187,
+      "hash": "eb1e44f5d2a96cea8db8c39d1e4055758c0a0d0c0a8c220bd03b2b1be3a94a09",
+      "status": "unknown"
+    },
+    {
+      "tag": "0003_library_revision",
+      "when": 1792765666340,
+      "hash": "ebdb1774d4f3d698a39cd85015e6fb464544ce9e0702ef41056c038ee63731b6",
+      "status": "unknown"
+    },
+    {
+      "tag": "0004_catalogue_coordination",
+      "when": 1792770443198,
+      "hash": "d10085aa91488d41078ced9905b986b56d2ac8dfdccb62a712ef384a064038e3",
+      "status": "unknown"
+    }
+  ],
+  "pending": [],
+  "ddlSummary": [],
+  "expectedObjects": {
+    "rls": [
+      "biblib.shelves",
+      "biblib.books",
+      "biblib.library_state",
+      "biblib.import_previews",
+      "biblib.library_operations",
+      "biblib.catalogue_cache",
+      "biblib.catalogue_inflight",
+      "biblib.catalogue_quota_buckets",
+      "biblib.catalogue_quota_reservations",
+      "biblib.catalogue_private_cache"
+    ],
+    "policies": [
+      "shelves.shelves_select_own:SELECT:authenticated",
+      "shelves.shelves_insert_own:INSERT:authenticated",
+      "shelves.shelves_update_own:UPDATE:authenticated",
+      "shelves.shelves_delete_own:DELETE:authenticated",
+      "books.books_select_own:SELECT:authenticated",
+      "books.books_insert_own:INSERT:authenticated",
+      "books.books_update_own:UPDATE:authenticated",
+      "books.books_delete_own:DELETE:authenticated",
+      "library_state.library_state_select_own:SELECT:authenticated",
+      "import_previews.import_previews_select_own:SELECT:authenticated",
+      "import_previews.import_previews_insert_own:INSERT:authenticated",
+      "import_previews.import_previews_delete_own:DELETE:authenticated",
+      "library_operations.library_operations_select_own:SELECT:authenticated",
+      "library_operations.library_operations_insert_own:INSERT:authenticated",
+      "catalogue_private_cache.catalogue_private_cache_select_own:SELECT:authenticated",
+      "catalogue_private_cache.catalogue_private_cache_delete_own:DELETE:authenticated"
+    ],
+    "grants": [
+      "authenticated:shelves=DELETE|INSERT|SELECT|UPDATE;books=DELETE|INSERT|SELECT|UPDATE;library_state=SELECT;import_previews=DELETE|INSERT|SELECT;library_operations=INSERT|SELECT;catalogue_cache=-;catalogue_inflight=-;catalogue_quota_buckets=-;catalogue_quota_reservations=-;catalogue_private_cache=DELETE|SELECT",
+      "anon:shelves=-;books=-;library_state=-;import_previews=-;library_operations=-;catalogue_cache=-;catalogue_inflight=-;catalogue_quota_buckets=-;catalogue_quota_reservations=-;catalogue_private_cache=-"
+    ],
+    "constraints": [
+      "shelves_pkey",
+      "books_pkey",
+      "shelves_user_fk",
+      "books_user_fk",
+      "books_owner_shelf_fk",
+      "books_status_check",
+      "books_pages_check",
+      "books_title_check",
+      "shelves_title_check",
+      "library_state_pkey",
+      "library_state_user_id_users_id_fk",
+      "import_previews_pkey",
+      "import_previews_user_id_users_id_fk",
+      "import_previews_mode_check",
+      "import_previews_digest_check",
+      "library_operations_pkey",
+      "library_operations_user_id_users_id_fk",
+      "library_operations_operation_check",
+      "library_operations_status_check",
+      "library_operations_key_check",
+      "library_operations_digest_check",
+      "catalogue_cache_pkey",
+      "catalogue_cache_provider_check",
+      "catalogue_cache_operation_check",
+      "catalogue_cache_status_check",
+      "catalogue_cache_key_check",
+      "catalogue_cache_payload_check",
+      "catalogue_cache_expiry_check",
+      "catalogue_inflight_pkey",
+      "catalogue_inflight_provider_check",
+      "catalogue_quota_buckets_pkey",
+      "catalogue_quota_buckets_provider_check",
+      "catalogue_quota_buckets_interval_check",
+      "catalogue_quota_reservations_pkey",
+      "catalogue_quota_reservations_owner_id_users_id_fk",
+      "catalogue_quota_reservations_bucket_fk",
+      "catalogue_quota_reservations_purpose_check",
+      "catalogue_quota_reservations_expiry_check",
+      "catalogue_private_cache_pkey",
+      "catalogue_private_cache_owner_id_users_id_fk",
+      "catalogue_private_cache_provider_check",
+      "catalogue_private_cache_operation_check",
+      "catalogue_private_cache_status_check",
+      "catalogue_private_cache_key_check",
+      "catalogue_private_cache_payload_check",
+      "catalogue_private_cache_expiry_check"
+    ],
+    "indexes": [
+      "shelves_user_id_title_unique",
+      "shelves_user_id_default_unique",
+      "books_user_id_isbn_unique",
+      "books_user_id_idx",
+      "books_shelf_id_idx",
+      "shelves_user_id_id_unique",
+      "books_user_id_id_unique",
+      "import_previews_user_id_id_unique",
+      "import_previews_user_id_expires_at_idx",
+      "library_operations_key_unique",
+      "library_operations_preview_unique",
+      "catalogue_cache_expires_at_idx",
+      "catalogue_inflight_fence_unique",
+      "catalogue_quota_reservations_fence_unique",
+      "catalogue_quota_reservations_active_idx",
+      "catalogue_quota_reservations_expires_at_idx",
+      "catalogue_private_cache_expires_at_idx"
+    ],
+    "columns": [
+      "books.catalogue",
+      "books.version",
+      "library_state.revision",
+      "library_state.rotated_xact",
+      "import_previews.revision",
+      "import_previews.expires_at",
+      "catalogue_cache.fence",
+      "catalogue_cache.expires_at",
+      "catalogue_inflight.lease_expires_at",
+      "catalogue_quota_buckets.cooldown_until",
+      "catalogue_quota_reservations.owner_id",
+      "catalogue_quota_reservations.expires_at",
+      "catalogue_private_cache.owner_id"
+    ],
+    "functions": [
+      "biblib.rotate_book_version",
+      "biblib.rotate_library_revision",
+      "biblib.lock_library",
+      "biblib.catalogue_reserve",
+      "biblib.catalogue_release",
+      "biblib.catalogue_begin",
+      "biblib.catalogue_complete",
+      "biblib.catalogue_private_get",
+      "biblib.catalogue_private_put",
+      "biblib.catalogue_invalidate"
+    ],
+    "triggers": [
+      "books_rotate_version:BEFORE INSERT OR UPDATE ROW",
+      "books_rotate_library_revision:AFTER INSERT OR UPDATE OR DELETE ROW",
+      "shelves_rotate_library_revision:AFTER INSERT OR UPDATE OR DELETE ROW"
+    ]
+  },
+  "risks": [
+    "Adopción excepcional: solo crea el ledger drizzle.__drizzle_migrations si falta y escribe sus filas; no ejecuta DDL de negocio ya presente.",
+    "Tras adoptar, el head cambia: genera un plan migrate nuevo y un respaldo de ese head antes de aplicar los pendientes."
+  ],
+  "prerequisites": [
+    {
+      "id": "prerequisite.auth.users",
+      "status": "ok",
+      "message": "auth.users lo proporciona la plataforma."
+    },
+    {
+      "id": "prerequisite.auth.uid()",
+      "status": "ok",
+      "message": "auth.uid() lo proporciona la plataforma."
+    },
+    {
+      "id": "prerequisite.role:authenticated",
+      "status": "ok",
+      "message": "role:authenticated lo proporciona la plataforma."
+    },
+    {
+      "id": "prerequisite.role:anon",
+      "status": "ok",
+      "message": "role:anon lo proporciona la plataforma."
+    },
+    {
+      "id": "lock",
+      "status": "ok",
+      "message": "El runner adquiere el bloqueo consultivo común antes de releer el ledger."
+    },
+    {
+      "id": "remote.tls",
+      "status": "ok",
+      "message": "Sesión TLS verificada (TLSv1.3)."
+    },
+    {
+      "id": "remote.role",
+      "status": "ok",
+      "message": "Conectado con el rol administrativo postgres."
+    },
+    {
+      "id": "remote.primary",
+      "status": "ok",
+      "message": "El destino es el primario (no una réplica de lectura)."
+    },
+    {
+      "id": "remote.privilege.create",
+      "status": "ok",
+      "message": "El rol puede crear esquemas (ledger drizzle)."
+    },
+    {
+      "id": "remote.privilege.owner",
+      "status": "ok",
+      "message": "El rol pertenece a los propietarios de biblib/drizzle (1)."
+    },
+    {
+      "id": "remote.privilege.auth",
+      "status": "ok",
+      "message": "El rol puede referenciar auth.users desde las FK de propietario."
+    },
+    {
+      "id": "remote.platform",
+      "status": "ok",
+      "message": "Esquemas de plataforma auth y storage presentes."
+    },
+    {
+      "id": "remote.version",
+      "status": "ok",
+      "message": "Postgres 17, el mismo major que el stack local."
+    },
+    {
+      "id": "backup-receipt",
+      "status": "pending",
+      "message": "Requiere --backup-receipt de un respaldo de este destino y head con ensayo de restauración superado (U-OPS-02)."
+    }
+  ],
+  "descriptor": {
+    "host": "db.inf07ensayoremoto001.supabase.co",
+    "port": 5432,
+    "database": "postgres",
+    "user": "postgres",
+    "connection": "direct",
+    "tls": {
+      "mode": "verify-full",
+      "rootCert": "ca-explicita"
+    }
+  },
+  "remote": {
+    "version": "17.11",
+    "major": 17,
+    "role": "postgres",
+    "tls": "TLSv1.3",
+    "owners": [
+      "postgres"
+    ]
+  },
+  "dataPreflight": {
+    "required": false,
+    "checks": []
+  },
+  "adoption": {
+    "head": {
+      "tag": "0002_book_versions",
+      "when": 1792678059187,
+      "hash": "eb1e44f5d2a96cea8db8c39d1e4055758c0a0d0c0a8c220bd03b2b1be3a94a09"
+    },
+    "rows": [
+      {
+        "tag": "0000_biblib_init",
+        "hash": "b2f6e7bcc8e8c8b85fe2fb5f21506237d10f8aae0d7d895d83b214ab53cb6ab2",
+        "created_at": 1760000000000
+      },
+      {
+        "tag": "0001_library_integrity",
+        "hash": "585b45c948a69091695708a43771658522e89a8778814a8c3e145d095e9685ca",
+        "created_at": 1792627200000
+      },
+      {
+        "tag": "0002_book_versions",
+        "hash": "eb1e44f5d2a96cea8db8c39d1e4055758c0a0d0c0a8c220bd03b2b1be3a94a09",
+        "created_at": 1792678059187
+      }
+    ],
+    "factsHash": "977c16d5e359c98dff0d475b79dfc3f04a05120550c9a590e4421bb3401a292b",
+    "evidenceHash": "3104ad0e51350210900f2b9fcd2e3df85a965f4efc213411aa5d61b2e93c7587",
+    "evidence": [
+      {
+        "tag": "0000_biblib_init",
+        "hash": "b2f6e7bcc8e8c8b85fe2fb5f21506237d10f8aae0d7d895d83b214ab53cb6ab2",
+        "created_at": 1760000000000,
+        "checks": [
+          "constraint.books_pkey",
+          "constraint.books_status_check",
+          "constraint.books_user_fk",
+          "constraint.shelves_pkey",
+          "constraint.shelves_user_fk",
+          "grant.anon.books",
+          "grant.anon.schema",
+          "grant.anon.shelves",
+          "grant.authenticated.books",
+          "grant.authenticated.schema",
+          "grant.authenticated.shelves",
+          "index.books_shelf_id_idx",
+          "index.books_user_id_idx",
+          "index.books_user_id_isbn_unique",
+          "index.shelves_user_id_default_unique",
+          "index.shelves_user_id_title_unique",
+          "policy.books_delete_own",
+          "policy.books_insert_own",
+          "policy.books_select_own",
+          "policy.books_update_own",
+          "policy.shelves_delete_own",
+          "policy.shelves_insert_own",
+          "policy.shelves_select_own",
+          "policy.shelves_update_own",
+          "rls.books",
+          "rls.shelves"
+        ]
+      },
+      {
+        "tag": "0001_library_integrity",
+        "hash": "585b45c948a69091695708a43771658522e89a8778814a8c3e145d095e9685ca",
+        "created_at": 1792627200000,
+        "checks": [
+          "column.books.catalogue",
+          "constraint.books_owner_shelf_fk",
+          "constraint.books_pages_check",
+          "constraint.books_shelf_fk",
+          "constraint.books_title_check",
+          "constraint.shelves_title_check",
+          "index.books_user_id_id_unique",
+          "index.shelves_user_id_id_unique"
+        ]
+      },
+      {
+        "tag": "0002_book_versions",
+        "hash": "eb1e44f5d2a96cea8db8c39d1e4055758c0a0d0c0a8c220bd03b2b1be3a94a09",
+        "created_at": 1792678059187,
+        "checks": [
+          "column.books.version",
+          "function.rotate_book_version",
+          "table.books",
+          "table.shelves",
+          "trigger.books_rotate_version"
+        ]
+      }
+    ],
+    "checks": 39,
+    "pendingAfter": [
+      "0003_library_revision",
+      "0004_catalogue_coordination"
+    ]
+  },
+  "createdAt": "2026-10-23T16:54:52.185Z",
+  "expiresAt": "2026-10-23T17:24:52.185Z",
+  "planHash": "53446d0c0ce740e332c32efe3c2cc86ba6efde89e202a638d1a83cbe0fbdee24"
+}

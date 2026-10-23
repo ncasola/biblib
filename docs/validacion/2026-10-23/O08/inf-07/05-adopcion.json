@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "code": 0,
+  "kind": "adopt-ledger",
+  "target": {
+    "target": "preprod",
+    "project": "inf07ensayoremoto001",
+    "fingerprint": "1e9b3dc4e9d78ecd14b26d46d602db476601e8a1ec18a2f71e771b53e62be04f",
+    "host": "db.inf07ensayoremoto001.supabase.co",
+    "port": 5432,
+    "database": "postgres",
+    "user": "postgres",
+    "connection": "direct",
+    "tls": "verify-full"
+  },
+  "planHash": "53446d0c0ce740e332c32efe3c2cc86ba6efde89e202a638d1a83cbe0fbdee24",
+  "previousHead": null,
+  "head": {
+    "tag": "0002_book_versions",
+    "when": 1792678059187,
+    "hash": "eb1e44f5d2a96cea8db8c39d1e4055758c0a0d0c0a8c220bd03b2b1be3a94a09"
+  },
+  "result": "ledger adoptado hasta 0002_book_versions: 3 fila(s), sin DDL de negocio",
+  "checks": {
+    "ok": 37,
+    "other": []
+  },
+  "pendingAfter": [
+    "0003_library_revision",
+    "0004_catalogue_coordination"
+  ],
+  "backupId": "20261023T165452Z-ensayo-3ac189",
+  "record": ".biblib/promotions/20261023T165456Z-preprod-53446d0c0ce7-751edd.json",
+  "soloLedger": true,
+  "objetosBiblibSinCambios": true,
+  "repetir": {
+    "code": 6,
+    "phase": "adopción",
+    "message": "El destino ya no requiere adopción (estado pending); ¿otro runner? No se ha escrito nada. Genera un plan nuevo.",
+    "record": ".biblib/promotions/20261023T165456Z-preprod-53446d0c0ce7-c0f29d.json"
+  }
+}

@@ -332,11 +332,13 @@ describe("plan", () => {
 })
 
 describe("argumentos y despachador", () => {
-  test("preprod/prod se rechazan con mensaje claro hasta U-INF-07", () => {
+  test("preprod/prod (U-INF-07) exigen --expect-project y no admiten --profile ni --force", () => {
     for (const target of ["preprod", "prod"]) {
-      assert.throws(() => parsePlanArgs([target, "--out", "p.json"]), (error) => error.code === EXIT.INVALID_ARGS && /U-INF-07/.test(error.message))
-      assert.throws(() => parseArgs(["apply", target, "--plan", "p.json", "--expect-project", "x", "--expect-plan", "y"]), (error) => error.code === EXIT.INVALID_ARGS && /U-INF-07/.test(error.message))
+      assert.throws(() => parsePlanArgs([target, "--out", "p.json"]), (error) => error.code === EXIT.INVALID_ARGS && /--expect-project/.test(error.message))
+      assert.throws(() => parsePlanArgs([target, "--out", "p.json", "--expect-project", "abcdefghij", "--profile", "scratch"]), { code: EXIT.INVALID_ARGS })
       assert.throws(() => parseArgs(["status", target]), { code: EXIT.INVALID_ARGS })
+      assert.throws(() => parseArgs(["apply", target, "--plan", "p.json", "--expect-project", "x", "--expect-plan", "y", "--force"]), { code: EXIT.INVALID_ARGS })
+      assert.equal(parseArgs(["apply", target, "--plan", "p.json", "--expect-project", "x", "--expect-plan", "y"]).backupReceipt, undefined)
     }
   })
 

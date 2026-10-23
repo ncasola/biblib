@@ -10,6 +10,7 @@ import { classifyDestination, loadBackup, parseRestoreArgs, runRestore } from ".
 import { compareRestored, parseVerifyArgs, recordRehearsal } from "../../scripts/db/restore-verify.mjs"
 import { loadCensus } from "../../scripts/db/seed-local.mjs"
 import { authExclusions, BACKUP_KIND, checkBackupFiles, compareMigrations, decrypt, encrypt, keyFingerprint, MANIFEST_FILE, newBackupId, objectFile, parseKey, readKeyFile, readManifest, resolveBackupsRoot, sealManifest, sha256 } from "../../scripts/lib/backup-files.mjs"
+import { ROTATING_COLUMNS, TABLE_KEYS } from "../../scripts/lib/backup-db.mjs"
 import { streamCommand } from "../../scripts/lib/backup-process.mjs"
 import { EXIT } from "../../scripts/lib/exit-codes.mjs"
 
@@ -191,10 +192,14 @@ test("destino recién reseteado: solo el censo de fixtures; cualquier otro dato 
   const fresh = { users, books: [{ user_id: "u0", census: census.censusId, fixture: true }], shelves: [{ user_id: "u1" }], otherRows: [], buckets: [{ id: "biblib-test-assets" }], objects: [{ bucket: "biblib-test-assets", name: "fixtures/portada.webp" }] }
   assert.equal(classifyDestination(fresh, census).fresh, true)
   assert.equal(classifyDestination({ users: [], books: [], shelves: [], otherRows: [], buckets: [], objects: [] }, census).fresh, true)
+  // Tras reset+seed en 0003+, el trigger crea library_state de A/B: estado derivado, no datos ajenos.
+  const derived = ["library_state", "import_previews", "catalogue_cache", "catalogue_inflight", "catalogue_quota_buckets", "catalogue_quota_reservations", "catalogue_private_cache"]
+  assert.equal(classifyDestination({ ...fresh, otherRows: derived.map((table) => ({ table, rows: 2 })) }, census).fresh, true)
   const cases = [
     { ...fresh, users: [...users, { id: "x", email: "persona@example.com", census: null }] },
     { ...fresh, books: [...fresh.books, { user_id: "u0", census: null, fixture: false }] },
-    { ...fresh, otherRows: [{ table: "library_state", rows: 1 }] },
+    { ...fresh, otherRows: [{ table: "library_operations", rows: 1 }] },
+    { ...fresh, otherRows: [{ table: "tabla_futura", rows: 1 }] },
     { ...fresh, objects: [...fresh.objects, { bucket: "biblib-test-assets", name: "otra.webp" }] },
   ]
   for (const destination of cases) assert.equal(classifyDestination(destination, census).fresh, false)
@@ -246,4 +251,11 @@ test("streamCommand captura bytes y entrega la entrada por stdin, no por argv", 
   assert.deepEqual(result.stdout, Buffer.concat([Buffer.from([0, 255]), Buffer.from("secreto-por-stdin")]))
   await assert.rejects(streamCommand(process.execPath, ["-e", "process.stdout.write(Buffer.alloc(2048))"], { maxBytes: 1024, timeoutMs: 10000 }), { code: EXIT.SERVICE_UNAVAILABLE })
   assert.equal(readFileSync(path.join(repo, "package.json"), "utf8").includes("\"db:backup:prod\": \"node scripts/db/backup-local.mjs prod\""), true)
+})
+
+test("verify excluye lo que la rotación renueva en library_state (trigger de 0003)", () => {
+  assert.deepEqual([...ROTATING_COLUMNS["biblib.library_state"]].sort(), ["revision", "rotated_xact", "updated_at"])
+  assert.deepEqual(ROTATING_COLUMNS["biblib.books"], ["version"])
+  // Sin columna id, la clave sería toda la fila, incluidos los tokens rotados.
+  assert.deepEqual(TABLE_KEYS["biblib.library_state"], ["user_id"])
 })

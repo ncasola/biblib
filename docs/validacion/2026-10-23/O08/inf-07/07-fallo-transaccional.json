@@ -1,0 +1,27 @@
+{
+  "code": 9,
+  "phase": "migración",
+  "message": "La migración 0005_u_inf_07_fallo falló (SQLSTATE 42701); revertido: el ledger no avanzó. Head anterior: 0004_catalogue_coordination.",
+  "report": {
+    "previousHead": {
+      "tag": "0004_catalogue_coordination",
+      "when": 1792770443198,
+      "hash": "d10085aa91488d41078ced9905b986b56d2ac8dfdccb62a712ef384a064038e3"
+    },
+    "attempted": [
+      "0005_u_inf_07_fallo"
+    ],
+    "failedChange": "0005_u_inf_07_fallo",
+    "result": "revertido: el ledger no avanzó",
+    "head": {
+      "tag": "0004_catalogue_coordination",
+      "when": 1792770443198,
+      "hash": "d10085aa91488d41078ced9905b986b56d2ac8dfdccb62a712ef384a064038e3"
+    },
+    "waitedForLock": false,
+    "sqlstate": "42701"
+  },
+  "record": ".biblib/promotions/20261023T165518Z-preprod-f2b1eb6a3400-9c1b85.json",
+  "ledgerSinAvance": true,
+  "objetoDePruebaAusente": true
+}

@@ -61,9 +61,17 @@ export function loadBackup(root, options) {
   return { dir, manifest, domain, auth, objects }
 }
 
+// Tablas derivadas o regenerables que el reset+seed puebla por sí solo (library_state lo crea el
+// trigger de 0003 para cada propietario) o que no guardan datos del usuario: revisión de colección
+// (la restauración la rota), previews (se invalidan) y caché/cuotas del catálogo (vaciables). El
+// restore las sustituye al recrear el esquema. library_operations sí cuenta: registra importaciones
+// confirmadas, es decir, actividad real.
+export const DERIVED_TABLES = Object.freeze(["library_state", "import_previews", "catalogue_cache", "catalogue_inflight", "catalogue_quota_buckets", "catalogue_quota_reservations", "catalogue_private_cache"])
+
 /**
  * Destino vacío o recién reseteado: solo puede contener las cuentas, bibliotecas y el objeto
- * del censo de fixtures que vuelve a crear `db:reset:local`. Cualquier otro dato aborta.
+ * del censo de fixtures que vuelve a crear `db:reset:local`, más filas de tablas derivadas.
+ * Cualquier otro dato aborta.
  */
 export function classifyDestination({ users, books, shelves, otherRows, buckets, objects }, census) {
   const emails = new Set(census.accounts.map((a) => a.email))
@@ -72,7 +80,7 @@ export function classifyDestination({ users, books, shelves, otherRows, buckets,
   if (users.some((u) => !fixtureUsers.has(u.id))) foreign.push("cuentas fuera del censo de fixtures")
   if (books.some((b) => b.census !== census.censusId || !b.fixture || !fixtureUsers.has(b.user_id))) foreign.push("libros que no son fixtures")
   if (shelves.some((s) => !fixtureUsers.has(s.user_id))) foreign.push("estanterías de otras cuentas")
-  if (otherRows.some((r) => r.rows > 0)) foreign.push("filas en otras tablas de biblib")
+  if (otherRows.some((r) => r.rows > 0 && !DERIVED_TABLES.includes(r.table))) foreign.push("filas en otras tablas de biblib")
   if (buckets.some((b) => b.id !== BUCKET) || objects.some((o) => o.bucket !== BUCKET || o.name !== ASSET)) foreign.push("objetos Storage fuera del fixture")
   return { fresh: foreign.length === 0, foreign, fixtureUsers: [...fixtureUsers] }
 }

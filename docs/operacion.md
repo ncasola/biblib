@@ -671,3 +671,22 @@ Los grupos de unidades futuras (Trabajos, Copias multipart, Proveedores BNE/Goog
 - Hallazgos abiertos que no corrige esta unidad (detalle en el README): la recuperación de portadas, «Buscar portada» y el enriquecimiento de la importación llaman a Open Library con `fetch` directo aunque el modo sea `fixture` (pendiente de U-BIB-05); un id de ficha que no es UUID responde 500 y muestra un error de conexión; cerrar sesión produce una petición RSC 404 inocua en `/login`.
 
 Evidencia del ensayo: [validacion/2026-10-23/O07/qa-02](validacion/2026-10-23/O07/qa-02/informe.md).
+
+## Promoción a preproducción y producción · U-INF-07
+
+U-INF-07 habilita `status`, `plan` y `migrate` para `preprod`/`prod` y añade `db:adopt:<target>`. Esta sección sustituye la indicación de «Migraciones» según la cual esos objetivos salen con **2**. **No hay destino remoto autorizado:** los comandos están preparados y ensayados solo contra Postgres efímeros que simulan el remoto y contra `scratch`; la primera ejecución real requiere la autorización de Néstor. Procedimiento completo, condiciones abiertas y aceptación: [Promoción de migraciones](promocion.md).
+
+```powershell
+pnpm db:status:preprod --expect-project <ref> [--json]
+pnpm db:plan:preprod --out preprod.json --expect-project <ref> [--json]
+pnpm db:migrate:preprod --plan .biblib/plans/preprod.json --expect-project <ref> --expect-plan <sha256> --backup-receipt <recibo.json>
+pnpm db:adopt:preprod --plan .biblib/plans/preprod.json --expect-project <ref> --expect-plan <sha256> --backup-receipt <recibo.json>
+```
+
+- Solo variables inyectadas (`BIBLIB_EXPECT_PROJECT_REF`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_DB_URL`, `SUPABASE_DB_SSLMODE=verify-full`, opcionalmente `SUPABASE_DB_SSLROOTCERT`). Sin `.env`, `supabase link`, `db push` ni `config push`.
+- Identidad antes de conectar: URL pública y conexión administrativa del mismo proyecto (`db.<ref>.supabase.co` con rol `postgres`, o `postgres.<ref>` en el pooler de sesión), base `postgres` y TLS verificado contra ese host. Sin TLS, **3**.
+- `status` y `plan` usan una transacción `read only`: comprueban rol, permisos, versión, ledger y manifest, derivan la adopción y revisan los datos antes de `0001`/`0002` (listado restringido de correcciones, **5**).
+- `migrate` exige plan `migrate` vigente y recibo de respaldo de ese destino y head con ensayo superado; aplica bajo el bloqueo consultivo común, verifica el manifest y que `auth`/`storage` no cambian, y deja un registro en `.biblib/promotions/`. `adopt` exige plan `adopt-ledger` y solo escribe el ledger; nunca acepta `--force`.
+- `db:backup:local` escribe ahora `receipt.json` junto a `backup.json`, con alcance Mailpit (copia RAW de los mensajes, sin reinyectarlos), rutas relativas a la raíz y `discardedStateHash`. `db:backup:local --receipt-of <carpeta>` lo reemite tras `db:restore:verify`. Ese recibo es el que aceptan `db:reset:local --backup-receipt` y la promoción.
+
+`pnpm test:scripts` incluye `tests/scripts/promotion.test.mjs` (sin Docker) y `tests/scripts/promotion-stack.test.mjs` (`[stack]`: Postgres efímero propio con TLS autofirmado; se omite con `BIBLIB_SKIP_STACK_TESTS=1`). Evidencia: [O08/inf-07](validacion/2026-10-23/O08/inf-07/informe.md).
