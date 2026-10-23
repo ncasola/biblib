@@ -827,3 +827,17 @@ Inventario completo, matriz y pendientes en [seguridad.md](seguridad.md). Resume
 - **Recuperación:** ante una incompatibilidad de la CSP, se mantiene o vuelve a Report-Only. Nunca se desactiva RLS, la protección de rutas ni la validación del callback.
 
 Evidencia: [validacion/2026-10-23/O09/ops-04](validacion/2026-10-23/O09/ops-04/informe.md).
+
+## Búsqueda por título y autor · U-DAT-08
+
+`BIBLIB_BIBLIOGRAPHY_REVIEW_ENABLED=true` muestra la sección «Buscar por título y autor» en Añadir libro. Con la bandera apagada también se rechazan las tres acciones nuevas; las fichas guardadas permanecen y sigue disponible la entrada manual. No hay migración ni dependencia nueva.
+
+En `live`, configurar en el gestor de secretos del servidor `BIBLIB_CATALOGUE_CACHE_SECRET` (al menos 32 caracteres), la misma clave que usa la caché privada HMAC de U-DAT-05. Sin ella la búsqueda falla cerrada con un mensaje de configuración y sin consultar proveedores. Las claves de selección van cifradas y autenticadas por cuenta, caducan a los 15 minutos y funcionan entre instancias que compartan ese secreto. Rotarlo invalida las selecciones pendientes, sin cambiar libros guardados. El modo `fixture` emplea exclusivamente datos sintéticos offline y no requiere secretos reales.
+
+`BIBLIB_BIBLIOGRAPHY_MAX_PAGE` limita las páginas de búsqueda y de ediciones: 20 por defecto y valores enteros de 1 a 100. Se admiten 10 o 20 resultados por fuente y página. Al no disponer de un total común fiable, una página llena ofrece la siguiente; una página vacía confirma el final. El texto solo se envía al pulsar Buscar. La caché privada incluye página, tamaño e idioma en su HMAC por dueño; ninguna respuesta incluye dueño, colección o información de aciertos de caché.
+
+Open Library devuelve obras y permite consultar sus ediciones por un ID validado. La búsqueda solicita campos mínimos, nunca `fields=*`; un código de idioma de tres letras filtra con `language:...`, y uno de dos letras expresa preferencia mediante `lang`, según la [Search API](https://openlibrary.org/dev/docs/api/search). BNE conserva su CQL de título/autor y pagina por `startRecord`; veinte resultados requieren como máximo dos respuestas de diez bajo los mismos plazos y cuota. No se añade una capacidad de idioma a BNE. Google permanece apagado salvo su opt-in existente; sus metadatos continúan solo para consulta y no se pueden preparar para guardar.
+
+Al elegir «No sé la edición» se revisa una ficha provisional sin ISBN: al guardarla recibe el identificador compatible `manual-<uuid>`. No se toma ningún ISBN de una obra ni se marca la verificación física por similitud. Las ediciones con varios ISBN distintos tampoco eligen el primero. `prepareCandidateLinkAction` solo prepara la revisión; si lleva una ficha destino exige UUID y versión actual, comprobados con sesión/RLS, y la escritura posterior debe usar el CAS de `updateBookAction`. El montaje de Añadir libro solo ofrece altas; no añade enlaces masivos.
+
+Validación sin stack y limitaciones de la puerta integrada: [O10/dat-08](validacion/2026-10-23/O10/dat-08.md).

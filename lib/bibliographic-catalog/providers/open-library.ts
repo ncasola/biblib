@@ -40,8 +40,9 @@ class ProviderFailure extends DomainError {
 }
 
 const searchDocSchema = z.object({
-  key: z.string().regex(/^\/works\/OL\d+W$/), title: z.string().min(1).max(500),
+  key: z.string().regex(/^(?:\/works\/)?OL\d+W$/), title: z.string().min(1).max(500).optional(),
   author_name: z.array(z.string().min(1).max(200)).max(30).optional(),
+  language: z.array(z.string().max(100)).optional(), first_publish_year: z.number().int().min(0).max(3000).optional(),
 })
 const editionSchema = z.object({
   key: z.string().regex(/^\/books\/OL\d+M$/), title: z.string().min(1).max(500).optional(), subtitle: z.string().max(1000).optional(),
@@ -61,9 +62,9 @@ export function createOpenLibraryProvider(options: OpenLibraryOptions = {}) {
   let nextRequestAt = 0
   let cooldownUntil = 0
 
-  async function load(url: URL, signal?: AbortSignal): Promise<{ payload: unknown; retrievedAt: string }> {
+  async function load(url: URL, signal?: AbortSignal, useCache = true): Promise<{ payload: unknown; retrievedAt: string }> {
     signal?.throwIfAborted()
-    const cached = cache.get(url.href)
+    const cached = useCache ? cache.get(url.href) : undefined
     if (cached && cached.expires > now()) return structuredClone(cached)
     cache.delete(url.href)
     const start = Math.max(now(), nextRequestAt, cooldownUntil)
@@ -162,11 +163,13 @@ export function createOpenLibraryProvider(options: OpenLibraryOptions = {}) {
       return run(context, async () => {
         if ((!query.title?.trim() && !query.author?.trim()) || (query.title?.length ?? 0) > 500 || (query.author?.length ?? 0) > 500) throw new DomainError("INVALID_INPUT", "Introduce un título o autor válido.")
         const url = new URL("https://openlibrary.org/search.json")
-        url.search = new URLSearchParams({ fields: "key,title,author_name", limit: "10", ...(query.title?.trim() ? { title: query.title.trim() } : {}), ...(query.author?.trim() ? { author: query.author.trim() } : {}) }).toString()
-        const result = await load(url, context.signal)
-        const payload = z.object({ docs: z.array(searchDocSchema).max(10) }).parse(result.payload)
-        const candidates = payload.docs.map((doc) => normalizeCandidate({ provider: "open-library", level: "work", recordId: doc.key.split("/").at(-1), sourceUrl: `https://openlibrary.org${doc.key}`, title: doc.title, isbns: [], authors: (doc.author_name ?? []).map((name) => ({ name })), publishers: [], evidence: { isbnExact: false }, retrievedAt: result.retrievedAt }))
-        remember(url, { ...result, payload }, !candidates.length)
+        const limit = query.limit ?? 10
+        url.search = new URLSearchParams({ fields: query.page === undefined ? "key,title,author_name" : "key,title,author_name,language,first_publish_year", limit: String(limit), page: String(query.page ?? 1), ...(query.language ? query.language.length === 2 ? { lang: query.language } : { q: `language:${query.language}` } : {}), ...(query.title?.trim() ? { title: query.title.trim() } : {}), ...(query.author?.trim() ? { author: query.author.trim() } : {}) }).toString()
+        const result = await load(url, context.signal, query.page === undefined)
+        const payload = z.object({ docs: z.array(searchDocSchema).max(limit) }).parse(result.payload)
+        const candidates = payload.docs.map((doc) => normalizeCandidate({ provider: "open-library", level: "work", recordId: doc.key.split("/").at(-1), sourceUrl: `https://openlibrary.org/works/${doc.key.split("/").at(-1)}`, title: doc.title, isbns: [], authors: (doc.author_name ?? []).map((name) => ({ name })), publishers: [], language: doc.language?.length === 1 ? doc.language[0] : undefined, publishDate: doc.first_publish_year === undefined ? undefined : String(doc.first_publish_year), evidence: { isbnExact: false }, retrievedAt: result.retrievedAt }))
+        // El texto privado solo se cachea por dueño/HMAC en el gateway, nunca por URL en el adaptador.
+        if (query.page === undefined) remember(url, { ...result, payload }, !candidates.length)
         return candidates
       })
     },
@@ -174,9 +177,10 @@ export function createOpenLibraryProvider(options: OpenLibraryOptions = {}) {
       return run(context, async () => {
         const isWork = work.recordKind === "work"
         if (work.provider !== "open-library" || !new RegExp(isWork ? "^OL[0-9]+W$" : "^OL[0-9]+M$").test(work.recordId)) throw new DomainError("INVALID_INPUT", "La referencia bibliográfica no es válida.")
-        const url = new URL(isWork ? `https://openlibrary.org/works/${work.recordId}/editions.json?limit=10` : `https://openlibrary.org/books/${work.recordId}.json`)
+        const limit = work.limit ?? 10
+        const url = new URL(isWork ? `https://openlibrary.org/works/${work.recordId}/editions.json?limit=${limit}${work.page === undefined ? "" : `&offset=${(work.page - 1) * limit}`}` : `https://openlibrary.org/books/${work.recordId}.json`)
         const result = await load(url, context.signal)
-        const records = isWork ? z.object({ entries: z.array(editionSchema).max(10) }).parse(result.payload).entries : [editionSchema.parse(result.payload)]
+        const records = isWork ? z.object({ entries: z.array(editionSchema).max(limit) }).parse(result.payload).entries : [editionSchema.parse(result.payload)]
         if (!isWork && records[0].key !== `/books/${work.recordId}`) throw new ProviderFailure("PROVIDER_UNAVAILABLE")
         const candidates = records.map((record) => normalizeCandidate({
           provider: "open-library", level: "edition", recordId: record.key.split("/").at(-1), sourceUrl: `https://openlibrary.org${record.key}`,
