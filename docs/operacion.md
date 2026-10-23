@@ -172,3 +172,13 @@ Compruébala desde otro equipo de la red con `Test-NetConnection <IP-del-equipo>
 - No hay selección de objetivo `BIBLIB_TARGET` ni `.env.local` generado para el stack (U-INF-02). La aplicación no se conecta todavía a este stack.
 - No se aplican migraciones Drizzle (U-INF-04) ni seed/fixtures de GoTrue y Storage (U-INF-05). `db:migrate` y `drizzle.config.ts` no cambian.
 - No hay reset (U-INF-06). Para descartar los datos de `scratch` hará falta ese flujo; no borres volúmenes a mano por patrón.
+
+## Observabilidad sin datos privados · U-OPS-01 (F0)
+
+El servidor emite JSON por stdout/stderr para fallos de sesión, validación/commit/conflicto de importación, peticiones reales de Open Library y recuperación de portadas. [Alertas y contrato de privacidad](alertas.md) detalla eventos, lista blanca, límites, métricas propuestas y pruebas. La validación del archivo en el servidor produce `import.preview`; la revisión visual actual sigue siendo local al navegador y no genera una petición nueva.
+
+`x-correlation-id` se valida (8–64 caracteres, formato acotado) y se mantiene con `AsyncLocalStorage`. La búsqueda `/api/books/search` devuelve esa cabecera también en errores, para localizar los eventos del servidor sin copiar consultas, ISBN ni títulos. Los logs no son un respaldo ni el estado de una operación.
+
+Para apagar la emisión, establece `BIBLIB_TELEMETRY=off` en el proceso de servidor; el catálogo conserva sus resultados. `createLogger({ enabled: false })` permite desactivar un adaptador concreto. El saneado descarta campos privados y valores inválidos, y expone únicamente un contador local de descartes. Los fallos del sink no deben interrumpir la operación. `BIBLIB_TELEMETRY_SALT` es una sal secreta exclusiva de servidor para la primitiva HMAC `accountRef`; sin ella se omite el campo, nunca se sustituye por el ID original. Los puntos instrumentados en F0 no necesitan registrar cuentas.
+
+No hay exportador, panel remoto ni alertas automáticas en F0. Se proponen 14 días de logs restringidos y 90 días de agregados sin cuentas/correlaciones; el alojamiento deberá configurar y verificar esa retención. Jobs, nuevos proveedores y fuentes métricas de DB/Storage se integrarán en las unidades siguientes. `pnpm test` ejecuta las pruebas de observabilidad con fallos simulados y sin red/base; también se comprueba el catálogo existente con `BIBLIB_TELEMETRY=off`.

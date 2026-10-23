@@ -7,6 +7,8 @@ import { books, shelves } from "@/lib/db/schema"
 import { ensureDefaultShelf, lockLibrary, mapRowToBook } from "@/lib/db/library"
 import { getRequiredUserId } from "@/lib/server-user"
 import { DomainError, translateDatabaseError } from "@/lib/domain-errors"
+import { telemetry, withActionCorrelation } from "@/lib/observability/server"
+import { observeOperation } from "@/lib/observability/operations"
 import { normalizedBookIdentifier, normalizeIsbn } from "@/lib/isbn"
 import { DEFAULT_BOOK_COVER } from "@/lib/book-covers"
 import { enrichImportedBookCovers, parseLibraryImport, type LibraryImportOptions, type LibraryImportResult } from "@/lib/library-import"
@@ -88,12 +90,12 @@ async function importLibraryData(input: unknown, options: LibraryImportOptions):
   const userId = await getRequiredUserId()
   if (!options || (options.mode !== "merge" && options.mode !== "replace")) throw new DomainError("INVALID_INPUT", "Selecciona cómo importar la biblioteca.")
   let importedData: LibraryData
-  try { importedData = parseLibraryImport(input) }
+  try { importedData = parseLibraryImport(input, telemetry) }
   catch (error) { throw new DomainError("INVALID_INPUT", error instanceof Error ? error.message : "El archivo no es válido.") }
   const existingIdentifiers = options.mode === "merge" ? await withRlsContext(userId, async (tx) =>
     new Set((await tx.select({ isbn: books.isbn }).from(books).where(eq(books.userId, userId))).map((book) => normalizedBookIdentifier(book.isbn)))) : new Set<string>()
   const probableNewBooks = importedData.books.filter((book) => !existingIdentifiers.has(normalizedBookIdentifier(book.isbn)))
-  const enriched = new Map((await enrichImportedBookCovers(probableNewBooks)).map((book) => [book.isbn, book]))
+  const enriched = new Map((await enrichImportedBookCovers(probableNewBooks, telemetry)).map((book) => [book.isbn, book]))
   const importedBooks = importedData.books.map((book) => enriched.get(book.isbn) ?? book)
   try {
     return await withRlsContext(userId, async (tx) => {
@@ -144,5 +146,6 @@ async function importLibraryData(input: unknown, options: LibraryImportOptions):
 }
 
 export async function importLibraryDataAction(input: unknown, options: LibraryImportOptions = { mode: "merge" }) {
-  return mutationResult(() => importLibraryData(input, options))
+  return withActionCorrelation(() => mutationResult(() =>
+    observeOperation("import.commit", "import.commit", () => importLibraryData(input, options), telemetry)))
 }

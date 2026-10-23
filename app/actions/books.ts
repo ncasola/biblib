@@ -12,6 +12,8 @@ import { enrichImportedBookCovers } from "@/lib/library-import"
 import type { Book } from "@/lib/types"
 import { mutationResult } from "@/lib/action-result"
 import { assertBookVersion, bookVersionConflict } from "@/lib/book-version"
+import { telemetry, withActionCorrelation } from "@/lib/observability/server"
+import { observeOperation } from "@/lib/observability/operations"
 
 async function getShelf(tx: DatabaseTransaction, userId: string, requested: string): Promise<string> {
   if (!requested || requested === "shelf-1") return ensureDefaultShelf(tx, userId)
@@ -142,7 +144,7 @@ async function refreshBookCover(bookId: string, version: unknown): Promise<Book>
   if (!current) throw new DomainError("NOT_FOUND", "El libro ya no está disponible.")
   assertBookVersion(current, version)
   if (!normalizeIsbn(current.isbn)) throw new DomainError("INVALID_INPUT", "Añade un ISBN válido para buscar la portada.")
-  const [enriched] = await enrichImportedBookCovers([{ ...current, cover: { small: "", medium: "", large: "" } }])
+  const [enriched] = await enrichImportedBookCovers([{ ...current, cover: { small: "", medium: "", large: "" } }], telemetry)
   if (enriched.cover.large === "/default-book-cover.webp") throw new DomainError("NOT_FOUND", "No se ha podido recuperar una portada. Puedes indicar su URL manualmente.")
   const userId = await getRequiredUserId()
   return withRlsContext(userId, async (tx) => {
@@ -191,6 +193,9 @@ export async function addBookAction(input: unknown) { return mutationResult(() =
 export async function updateBookAction(id: string, input: unknown) { return mutationResult(() => updateBook(id, input)) }
 export async function updateBookStatusAction(id: string, status: Book["status"], version: unknown) { return mutationResult(() => updateBookStatus(id, status, version)) }
 export async function deleteBookAction(id: string, version: unknown) { return mutationResult(() => deleteBook(id, version)) }
-export async function refreshBookCoverAction(id: string, version: unknown) { return mutationResult(() => refreshBookCover(id, version)) }
+export async function refreshBookCoverAction(id: string, version: unknown) {
+  return withActionCorrelation(() => mutationResult(() =>
+    observeOperation("cover.recovery", "cover.refresh", () => refreshBookCover(id, version), telemetry)))
+}
 export async function moveBookShelfAction(id: string, shelfId: string, version: unknown) { return mutationResult(() => moveBookShelf(id, shelfId, version)) }
 export async function moveBooksShelfAction(ids: string[], shelfId: string) { return mutationResult(() => moveBooksShelf(ids, shelfId)) }

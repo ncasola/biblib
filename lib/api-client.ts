@@ -1,5 +1,9 @@
+import "server-only"
 import { createOpenLibraryClient } from "./open-library"
+import { telemetry, withActionCorrelation } from "./observability/server"
 
-const client = createOpenLibraryClient()
+const client = createOpenLibraryClient({ telemetry })
 
-export const searchBookByISBN = client.searchBookByISBN
+export async function searchBookByISBN(isbn: string) {
+  return withActionCorrelation(() => client.searchBookByISBN(isbn))
+}
