@@ -1,0 +1,31 @@
+b4e9b186eabc supabase_studio_holaerp Up 6 hours (healthy)
+f13ae72c84a8 supabase_pg_meta_holaerp Up 6 hours (healthy)
+607df66c4564 supabase_edge_runtime_holaerp Exited (255) 6 hours ago
+120d997b9f56 supabase_storage_holaerp Up 6 hours (healthy)
+332384a83b1f supabase_rest_holaerp Up 6 hours
+635d94610787 supabase_realtime_holaerp Up 6 hours (healthy)
+082bb27f1ad5 supabase_inbucket_holaerp Up 6 hours (healthy)
+7937bb8bda37 supabase_auth_holaerp Up 6 hours (healthy)
+08cec5edb3ab supabase_kong_holaerp Up 6 hours (healthy)
+95dd8a99145e supabase_db_holaerp Up 6 hours (healthy)
+2fd62432d826 holaerp-local-redis Up 6 hours (healthy)
+/supabase_studio_holaerp 2026-10-23T11:44:51.34646201Z restarts=0
+/supabase_pg_meta_holaerp 2026-10-23T11:44:51.342126683Z restarts=0
+/supabase_storage_holaerp 2026-10-23T11:44:51.35153148Z restarts=0
+/supabase_rest_holaerp 2026-10-23T11:44:51.320538507Z restarts=0
+/supabase_realtime_holaerp 2026-10-23T11:44:51.333542081Z restarts=0
+/supabase_inbucket_holaerp 2026-10-23T11:44:51.316089813Z restarts=0
+/supabase_auth_holaerp 2026-10-23T11:44:58.981935089Z restarts=5
+/supabase_kong_holaerp 2026-10-23T11:44:51.290405575Z restarts=0
+/supabase_db_holaerp 2026-10-23T11:44:51.355723282Z restarts=0
+/holaerp-local-redis 2026-10-23T11:44:51.288438023Z restarts=0
+bc44cf05fa25 holaerp-web_holaerp-local-network
+f65d1a0bc4e0 holaerp-woo_default
+1aaaac8132fe supabase_network_holaerp
+holaerp-ps_db-data
+holaerp-ps_ps-data
+holaerp-woo_db-data
+holaerp-woo_wp-data
+supabase_db_holaerp
+supabase_edge_runtime_holaerp
+supabase_storage_holaerp

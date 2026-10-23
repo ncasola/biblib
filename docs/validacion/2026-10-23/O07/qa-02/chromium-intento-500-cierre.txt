@@ -1,0 +1,105 @@
+E2E · perfil test · biblib-test · huella b831ef825c09 · run 620cdce8d117 · chromium
+Compilando la app para el perfil test…
+Bundle de cliente sin credenciales administrativas ni URLs privadas.
+
+Running 57 tests using 1 worker
+
+  ok  1 [chromium-sesion] › tests\e2e\sesion.setup.ts:11:3 › acceso local: A entra por el formulario y conserva la sesión (1.4s)
+  ok  2 [chromium-sesion] › tests\e2e\sesion.setup.ts:11:3 › acceso local: B entra por el formulario y conserva la sesión (1.2s)
+  ok  3 [chromium-flujos] › tests\e2e\flujos\acceso.spec.ts:10:3 › anónimo › una ruta privada directa lleva al acceso conservando el destino interno (1.2s)
+  ok  4 [chromium-flujos] › tests\e2e\flujos\acceso.spec.ts:26:3 › anónimo › un callback OAuth inválido vuelve al acceso con error y sin destino externo (624ms)
+  ok  5 [chromium-flujos] › tests\e2e\flujos\acceso.spec.ts:43:3 › con sesión de A › /login con destino interno lleva a él; los destinos externos caen en el inicio (2.4s)
+  -   6 [chromium-flujos] › tests\e2e\flujos\ajustes.spec.ts:11:6 › la recuperación de portadas termina en modo fixture sin salir a la red · se activa con U-BIB-05
+  ok  7 [chromium-flujos] › tests\e2e\flujos\ajustes.spec.ts:19:1 › una colección de más de 2000 fichas se exporta en dos partes importables (1.9s)
+  ok  8 [chromium-flujos] › tests\e2e\flujos\ajustes.spec.ts:51:1 › el perfil guarda el nombre en GoTrue y muestra la confirmación real (936ms)
+  ok  9 [chromium-flujos] › tests\e2e\flujos\catalogo.spec.ts:11:1 › alta manual: un fallo de red conserva el borrador y no hay éxito antes de persistir (2.1s)
+  ok 10 [chromium-flujos] › tests\e2e\flujos\catalogo.spec.ts:59:1 › un ISBN-10 con guiones equivalente detecta la ficha ya catalogada (1.2s)
+  ok 11 [chromium-flujos] › tests\e2e\flujos\catalogo.spec.ts:67:1 › edición: el conflicto de versión conserva el borrador y la recarga es explícita (2.0s)
+  ok 12 [chromium-flujos] › tests\e2e\flujos\catalogo.spec.ts:105:1 › eliminar exige confirmación y no afecta a otras fichas (1.9s)
+  ok 13 [chromium-flujos] › tests\e2e\flujos\consulta.spec.ts:23:1 › búsqueda sin tildes ni mayúsculas, ISBN-10/13 y cero resultados (4.3s)
+  ok 14 [chromium-flujos] › tests\e2e\flujos\consulta.spec.ts:46:1 › los filtros de la URL se aplican al cargar y la página inexistente se ajusta (4.9s)
+  ok 15 [chromium-flujos] › tests\e2e\flujos\consulta.spec.ts:70:1 › retorno contextual: la ficha vuelve a filtros, página, vista y fila; atrás y adelante (4.1s)
+  x  16 [chromium-flujos] › tests\e2e\flujos\consulta.spec.ts:113:1 › un identificador inválido muestra «Libro no encontrado» sin error de servidor (5.5s)
+  ok 17 [chromium-flujos] › tests\e2e\flujos\importacion.spec.ts:48:1 › la exportación descarga un JSON v1 con la colección actual de A y la verificación del ISBN (987ms)
+  ok 18 [chromium-flujos] › tests\e2e\flujos\importacion.spec.ts:64:1 › la revisión no escribe; si la colección cambia en otra pestaña, confirmar da conflicto sin borrar (4.5s)
+  ok 19 [chromium-flujos] › tests\e2e\flujos\importacion.spec.ts:101:1 › fusionar añade los libros nuevos y conserva los actuales (1.9s)
+  ok 20 [chromium-flujos] › tests\e2e\flujos\importacion.spec.ts:116:1 › confirmar otra vez tras perder la respuesta no duplica la importación (2.3s)
+  ok 21 [chromium-flujos] › tests\e2e\flujos\importacion.spec.ts:147:1 › reemplazar sustituye la colección (la biblioteca ficticia de A se restaura después) (4.3s)
+  ok 22 [chromium-flujos] › tests\e2e\flujos\organizacion.spec.ts:11:1 › la estantería predeterminada no se puede renombrar ni eliminar (915ms)
+  ok 23 [chromium-flujos] › tests\e2e\flujos\organizacion.spec.ts:20:1 › movimiento individual y cambio de estado desde la ficha (1.9s)
+  ok 24 [chromium-flujos] › tests\e2e\flujos\organizacion.spec.ts:37:1 › movimiento en lote de la página seleccionada (2.0s)
+  ok 25 [chromium-flujos] › tests\e2e\flujos\organizacion.spec.ts:54:1 › una ficha borrada en otra pestaña muestra el error y no rompe la pantalla (3.4s)
+  ok 26 [chromium-flujos] › tests\e2e\flujos\organizacion.spec.ts:77:1 › una estantería borrada en otra pestaña: renombrarla avisa sin recrearla (2.4s)
+  ok 27 [chromium-flujos] › tests\e2e\flujos\organizacion.spec.ts:98:1 › tras un error al mover en lote se conserva la selección (2.1s)
+  -  28 [chromium-flujos] › tests\e2e\flujos\pendientes.spec.ts:7:55 › Catálogo · modelo nuevo › dos copias de la misma edición y libro sin ISBN como ejemplares · se activa con U-DAT-06
+  -  29 [chromium-flujos] › tests\e2e\flujos\pendientes.spec.ts:7:55 › Importación · pendientes › fallo durante la publicación sin datos parciales · se activa con U-DAT-04
+  -  30 [chromium-flujos] › tests\e2e\flujos\pendientes.spec.ts:7:55 › Importación · pendientes › deshacer una importación con conflictos posteriores · se activa con U-DAT-02
+  -  31 [chromium-flujos] › tests\e2e\flujos\pendientes.spec.ts:7:55 › Trabajos › cerrar y reabrir el navegador con un trabajo en curso · se activa con U-DAT-03
+  -  32 [chromium-flujos] › tests\e2e\flujos\pendientes.spec.ts:7:55 › Trabajos › worker interrumpido y lease vencido · se activa con U-DAT-03
+  -  33 [chromium-flujos] › tests\e2e\flujos\pendientes.spec.ts:7:55 › Trabajos › pausa, cancelación y reintento idempotente · se activa con U-DAT-03
+  -  34 [chromium-flujos] › tests\e2e\flujos\pendientes.spec.ts:7:55 › Copias multipart › archivo v1 y formato nuevo en la misma restauración · se activa con U-DAT-04
+  -  35 [chromium-flujos] › tests\e2e\flujos\pendientes.spec.ts:7:55 › Copias multipart › partes fuera de orden, repetida, ausente o alterada · se activa con U-DAT-04
+  -  36 [chromium-flujos] › tests\e2e\flujos\pendientes.spec.ts:7:55 › Copias multipart › restauración sin pérdida de IDs definidos · se activa con U-DAT-04
+  -  37 [chromium-flujos] › tests\e2e\flujos\pendientes.spec.ts:7:55 › Proveedores · BNE y Google Books › un proveedor vacío y otro disponible (Open Library + BNE) · se activa con U-BIB-02
+  -  38 [chromium-flujos] › tests\e2e\flujos\pendientes.spec.ts:7:55 › Proveedores · BNE y Google Books › 429, timeout y 5xx distinguidos de «no encontrado» · se activa con U-BIB-02
+  -  39 [chromium-flujos] › tests\e2e\flujos\pendientes.spec.ts:7:55 › Proveedores · BNE y Google Books › edición discrepante entre proveedores · se activa con U-BIB-04
+  -  40 [chromium-flujos] › tests\e2e\flujos\pendientes.spec.ts:7:55 › Proveedores · BNE y Google Books › clave de Google Books ausente · se activa con U-BIB-03
+  -  41 [chromium-flujos] › tests\e2e\flujos\pendientes.spec.ts:7:55 › Proveedores · BNE y Google Books › presupuesto global agotado · se activa con U-DAT-05
+  -  42 [chromium-flujos] › tests\e2e\flujos\pendientes.spec.ts:7:55 › Privacidad · pendientes › objetos privados por propietario · se activa con U-DAT-10
+  -  43 [chromium-flujos] › tests\e2e\flujos\pendientes.spec.ts:7:55 › Privacidad · pendientes › borrado de cuenta · se activa con U-OPS-03
+  -  44 [chromium-flujos] › tests\e2e\flujos\pendientes.spec.ts:7:55 › Privacidad · pendientes › copia offline bloqueada para otra cuenta · se activa con U-EXP-08
+  -  45 [chromium-flujos] › tests\e2e\flujos\pendientes.spec.ts:7:55 › Producto › notas, etiquetas y valoración · se activa con U-PRO-01
+  -  46 [chromium-flujos] › tests\e2e\flujos\pendientes.spec.ts:7:55 › Producto › ciclos y progreso de lectura · se activa con U-PRO-02
+  -  47 [chromium-flujos] › tests\e2e\flujos\pendientes.spec.ts:7:55 › Producto › préstamos · se activa con U-PRO-04
+  -  48 [chromium-flujos] › tests\e2e\flujos\pendientes.spec.ts:7:55 › Producto › ubicación física · se activa con U-PRO-03
+  -  49 [chromium-flujos] › tests\e2e\flujos\pendientes.spec.ts:7:55 › Producto › series y volúmenes · se activa con U-PRO-05
+  ok 50 [chromium-flujos] › tests\e2e\flujos\presentacion.spec.ts:9:3 › anónimo › acceso en móvil con tema oscuro, sin desbordamiento y con el error OAuth visible (548ms)
+  ok 51 [chromium-flujos] › tests\e2e\flujos\presentacion.spec.ts:20:3 › con sesión de A › inicio y colección sin botones anidados ni desbordamiento en móvil (1.4s)
+  ok 52 [chromium-flujos] › tests\e2e\flujos\privacidad.spec.ts:9:1 › los datos de A son invisibles para B (4.9s)
+  ok 53 [chromium-flujos] › tests\e2e\flujos\proveedores.spec.ts:11:1 › encontrado: la ficha del fixture se revisa y corrige antes de guardarla (1.6s)
+  ok 54 [chromium-flujos] › tests\e2e\flujos\proveedores.spec.ts:29:1 › no encontrado: el aviso ofrece el alta manual con el ISBN conservado (1.5s)
+  ok 55 [chromium-flujos] › tests\e2e\flujos\proveedores.spec.ts:44:1 › fallo del proveedor: no se confunde con «no encontrado» y conserva el alta manual (1.7s)
+  x  56 [chromium] › tests\e2e\cierre\acceso-sesion.spec.ts:14:1 › sesión: destino interno, renovación, cierre y cambio de cuenta A→B sin restos (9.2s)
+  -  57 [chromium] › tests\e2e\cierre\acceso-sesion.spec.ts:79:1 › acceso local: errores genéricos y limitador de intentos fallidos
+
+
+  1) [chromium] › tests\e2e\cierre\acceso-sesion.spec.ts:14:1 › sesión: destino interno, renovación, cierre y cambio de cuenta A→B sin restos 
+
+    Error: Sin excepciones JS, errores de hidratación ni errores de consola (respuestas ≥400: 404 GET /login; 404 GET /login; 404 GET /login; 404 GET /login; 500 POST /books; 404 GET /login; 404 GET /login; 404 GET /login)
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 3
+
+    - Array []
+    + Array [
+    +   "Failed to load resource: the server responded with a status of 500 (Internal Server Error) [/books]",
+    + ]
+
+       at lib\fixtures.ts:237
+
+      235 |     for (const entry of tolerated) testInfo.annotations.push({ type: "cancelación al navegar", description: entry.text })
+      236 |     expect(blocked, "Sin tráfico externo desde el navegador").toEqual([])
+    > 237 |     expect(observed.filter((entry) => !tolerated.includes(entry)).map((entry) => entry.text), `Sin excepciones JS, errores de hidratación ni errores de consola (respuestas ≥400: ${failedResponses.join("; ") || "ninguna"})`).toEqual([])
+          |                                                                                                                                                                                                                                 ^
+      238 |   }, { auto: true }],
+      239 |
+      240 |   // Al terminar cada prueba se borra lo marcado con sus fragmentos: así un ISBN real dado de alta en
+        at Object.base.extend.guard.auto (C:\Users\ncaso\orca\workspaces\biblib\u-qa-01\tests\e2e\lib\fixtures.ts:237:225)
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    .biblib\e2e\artefactos\cierre-acceso-sesion-sesió-3371a-io-de-cuenta-A→B-sin-restos-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: .biblib\e2e\artefactos\cierre-acceso-sesion-sesió-3371a-io-de-cuenta-A→B-sin-restos-chromium\error-context.md
+
+  1 failed
+    [chromium] › tests\e2e\cierre\acceso-sesion.spec.ts:14:1 › sesión: destino interno, renovación, cierre y cambio de cuenta A→B sin restos 
+  23 skipped
+  1 did not run
+  32 passed (2.1m)
+Servidor sin salidas de red externas durante el run.
+Cuentas de Auth sin cambios (2, todas @biblib.test). Datos del run limpiados y biblioteca de A restaurada si hizo falta.
+Fallo conocido (test.fail, documentado): [chromium-flujos] un identificador inválido muestra «Libro no encontrado» sin error de servidor
+Error [pruebas] (11): Recorridos fallidos o repetidos (1 fallidos, 0 con repetición); revisa los nombres marcados arriba y .biblib/e2e/report.
