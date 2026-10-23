@@ -1185,8 +1185,13 @@
         "BE-03",
         "SEC-05"
       ],
-      "status": "in-progress",
-      "note": "Tareas T3/T4 de U-QA-03."
+      "status": "implemented",
+      "note": "Tareas T3/T4 de U-QA-03.",
+      "evidence": "O10 · merge 2a604c1; 1,01–1,05 llamadas a GoTrue por acción; navegación @10 sesiones < 1 s (docs/validacion/rendimiento/2026-10-23-fix-02/informe.md)",
+      "pending": [
+        "Proxy en proceso distinto (p. ej. Vercel) vuelve a 2 llamadas: documentado.",
+        "Ajustes y previews >1 s con 5–10 sesiones: T1/U-DAT-04."
+      ]
     }
   ]
 }
