@@ -5,6 +5,7 @@ import { searchBibliographyAction, loadEditionCandidatesAction, prepareCandidate
 import { addBookAction } from "@/app/actions/books"
 import { getShelvesAction } from "@/app/actions/shelves"
 import { unwrapAction } from "@/lib/action-result"
+import { DomainError } from "@/lib/domain-errors"
 import type { Book, Shelf } from "@/lib/types"
 import type { PreparedCandidate } from "@/lib/title-author-search"
 import { createLatestBibliographyRequest, manualTitleAuthorDraft } from "@/lib/title-author-search-request"
@@ -41,7 +42,7 @@ export function TitleAuthorSearch() {
     setBusy(true); setError("")
     const timer = setTimeout(() => { if (!controller.signal.aborted) { controller.abort(); setBusy(false); setError("La consulta ha tardado demasiado. Puedes reintentar o completar la ficha manualmente.") } }, 15000)
     try { await operation(controller.signal) }
-    catch (caught) { if (!controller.signal.aborted) setError(caught instanceof Error ? caught.message : "No se pudo completar la consulta. Vuelve a intentarlo.") }
+    catch (caught) { if (!controller.signal.aborted) setError(caught instanceof DomainError ? caught.message : "No se pudo completar la consulta. Vuelve a intentarlo.") }
     finally { clearTimeout(timer); if (!controller.signal.aborted) setBusy(false) }
   }
   const search = (page: number, submitted = query) => {
