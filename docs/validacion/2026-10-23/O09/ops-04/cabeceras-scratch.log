@@ -1,0 +1,37 @@
+Cabeceras efectivas · perfil scratch · biblib-scratch
+[ok]   GET  a    /                                                        200 html-autenticado
+[ok]   GET  a    /books                                                   200 html-autenticado
+[ok]   GET  a    /books/add                                               200 html-autenticado
+[ok]   GET  a    /books/search                                            200 html-autenticado
+[ok]   GET  a    /book/:libroA                                            200 html-autenticado
+[ok]   GET  a    /shelves                                                 200 html-autenticado
+[ok]   GET  a    /shelves/3d                                              200 html-autenticado
+[ok]   GET  a    /settings                                                200 html-autenticado
+[ok]   GET  a    /profile                                                 200 html-autenticado
+[ok]   GET  anon /                                                        307 redireccion-sesion
+[ok]   GET  anon /books                                                   307 redireccion-sesion
+[ok]   GET  anon /books/add                                               307 redireccion-sesion
+[ok]   GET  anon /books/search                                            307 redireccion-sesion
+[ok]   GET  anon /book/:libroA                                            307 redireccion-sesion
+[ok]   GET  anon /shelves                                                 307 redireccion-sesion
+[ok]   GET  anon /shelves/3d                                              307 redireccion-sesion
+[ok]   GET  anon /settings                                                307 redireccion-sesion
+[ok]   GET  anon /profile                                                 307 redireccion-sesion
+[ok]   GET  anon /books/search?q=prueba                                   307 redireccion-sesion
+[ok]   GET  anon /login                                                   200 html-publico
+[ok]   GET  a    /login?redirect=%2Fbooks                                 307 redireccion-sesion
+[ok]   GET  a    /login?redirect=https%3A%2F%2Fexterno.invalid%2F         307 redireccion-sesion
+[ok]   GET  anon /auth/callback?next=%2Fbooks                             303 callback
+[ok]   GET  anon /auth/callback?next=https%3A%2F%2Fexterno.invalid%2F     303 callback
+[ok]   GET  anon /auth/callback?next=%2F%2Fexterno.invalid                303 callback
+[ok]   GET  anon /auth/callback?next=%2F%5Cexterno.invalid                303 callback
+[ok]   GET  anon /ruta-inexistente                                        404 html-404
+[ok]   POST a    /                                                        200 accion
+[ok]   GET  anon /api/books/search?isbn=9780000000002                     401 api
+[ok]   POST anon /api/books/add                                           401 api
+[ok]   POST anon /api/internal/jobs/run                                   401 api
+[ok]   GET  anon /logo.png                                                200 estatico-public
+[ok]   GET  anon /default-book-cover.webp                                 200 estatico-public
+[ok]   GET  anon /manifest.webmanifest                                    200 estatico-public
+[ok]   GET  anon :chunk                                                   200 estatico-hash
+35/35 respuestas coinciden con la matriz · informe docs\validacion\2026-10-23\O09\ops-04\cabeceras-scratch.json

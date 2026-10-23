@@ -786,3 +786,15 @@ La migración crea las tres tablas con RLS, la secuencia de fencing, las funcion
 - `pnpm test:scripts`: `tests/scripts/jobs-runner.test.mjs` y las comprobaciones de drift de `0005` en `migrations.test.mjs`.
 
 Evidencia: [validacion/2026-10-23/O09/dat-03](validacion/2026-10-23/O09/dat-03/informe.md).
+
+## Sesión, exposición y cabeceras · U-OPS-04
+
+Inventario completo, matriz y pendientes en [seguridad.md](seguridad.md). Resumen operativo:
+
+- **Cabeceras:** `next.config.mjs` fija `nosniff`, `Referrer-Policy`, `X-Frame-Options: DENY`, `Cross-Origin-Opener-Policy: same-origin` y `Permissions-Policy` con `camera=()` en todo el sitio, y `Cache-Control: private, no-store` + `Vary: Cookie` fuera de los estáticos. `proxy.ts` publica la CSP en **Report-Only** con un nonce por petición. Para aplicar el nonce, todas las páginas se renderizan dinámicamente (`connection()` en `app/layout.tsx`).
+- **`service_role` fuera de Next:** `scripts/next-target.mjs` usa `appEnv(ctx)` y entrega `SUPABASE_SERVICE_ROLE_KEY` vacía a `dev`, `build` y `start` (tampoco se carga desde `.env.local`). Seed, fixtures, copias y runners la obtienen de su propio `loadTarget`. `jobs:run:local` no la necesita. `pnpm dev` y `pnpm start` sin wrapper no aplican este filtro.
+- `pnpm security:headers:local --profile scratch|test [--reuse-build] [--out archivo.json]`: compila con `build:local`, arranca `start:local` en el puerto del perfil, pide las rutas del inventario como anónimo y como A y compara las cabeceras efectivas con `scripts/security/headers-matrix.mjs`. Sale con 11 si alguna no coincide. El informe por defecto está en `.biblib/security/headers-<perfil>.json`, sin cookies, tokens ni cuerpos. No usa red externa.
+- `pnpm test:integration:security --profile scratch|test [--reuse-build]`: grupo `tests/integration/security` (formulario local, renovación, cierre, callback PKCE real vía Mailpit, misma URL como A/B/anónimo, Data API, grants, `SECURITY DEFINER` y CSP en Chrome con el canal `chrome` de Playwright). Toma el bloqueo del perfil, exige ledger al día y fixtures A/B, y no termina a un ocupante del puerto. No forma parte de `test:integration:local`.
+- **Recuperación:** ante una incompatibilidad de la CSP, se mantiene o vuelve a Report-Only. Nunca se desactiva RLS, la protección de rutas ni la validación del callback.
+
+Evidencia: [validacion/2026-10-23/O09/ops-04](validacion/2026-10-23/O09/ops-04/informe.md).
