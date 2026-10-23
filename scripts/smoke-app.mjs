@@ -155,8 +155,10 @@ async function prepareDatabase() {
 
 async function prepareApp(dbUrl) {
   workspace = await mkdtemp(path.join(tmpdir(), "biblib-smoke-"))
-  for (const directory of ["app", "components", "hooks", "lib", "public", "node_modules"]) {
+  // `scripts` (next.config.mjs) y `tests/fixtures` (lib/catalogue-fixtures.ts) son importados por la app.
+  for (const directory of ["app", "components", "hooks", "lib", "public", "scripts", "tests/fixtures", "node_modules"]) {
     const target = path.join(workspace, directory)
+    await mkdir(path.dirname(target), { recursive: true })
     await symlink(path.join(repo, directory), target, process.platform === "win32" ? "junction" : "dir")
     junctions.push(target)
   }
