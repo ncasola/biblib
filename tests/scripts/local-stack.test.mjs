@@ -58,7 +58,9 @@ function fixture(platform = "linux", profile = "scratch") {
   }
   return {
     root, data, calls, clone, container,
-    options: { root, run, platform, nodeVersion: "24.11.1", portListening: async () => occupied, health: async (_ctx, resources) => healthy && resources.containers.length >= 7, healthTimeoutMs: 0 },
+    options: { root, run, platform, nodeVersion: "24.11.1", portListening: async () => occupied, health: async (_ctx, resources) => healthy && resources.containers.length >= 7, healthTimeoutMs: 0,
+      // Runner U-INF-04 simulado: estas pruebas no abren conexiones Postgres.
+      readHead: async () => null, migrateLocal: async () => ({ head: { tag: "0002_book_versions", applied: 3, expected: 3, state: "up-to-date" }, result: "aplicado: 0000_biblib_init → 0001_library_integrity → 0002_book_versions" }) },
     setHealthy: (value) => { healthy = value }, setFailStart: () => { failStart = true }, setOnStart: (fn) => { onStart = fn }, setDockerMissing: (value = true) => { dockerMissing = value }, setExcluded: (value) => { excluded = value }, setOccupied: () => { occupied = true }, starts: () => starts,
   }
 }
@@ -175,20 +177,53 @@ test("SIGINT registra fase, elimina solo contenedores/red creados y conserva vol
   assert.ok(f.calls.filter((c) => c.args.includes("rm")).every((c) => !c.args.includes("holaerp-id")))
 })
 
-test("bootstrap registra fases pendientes, exit 0 y solo main escribe entorno", async () => {
+test("bootstrap migra con el runner U-INF-04, deja seed/verify pendientes y solo main escribe entorno", async () => {
   const f = fixture()
-  let wrote = false
+  let wrote = false, migrations = 0
   f.options.writeLocalEnvFile = () => { wrote = true }
+  const migrateLocal = f.options.migrateLocal
+  f.options.migrateLocal = async (ctx, options) => { migrations++; assert.equal(ctx.profile.name, "scratch"); assert.match(options.runId, /^[0-9a-f-]{36}$/); return migrateLocal(ctx, options) }
   const response = await runLocalStack(["bootstrap", "--profile", "scratch"], f.options)
   assert.equal(response.code, 0)
+  assert.equal(migrations, 1)
   assert.equal(response.result.bootstrap.status, "pending")
+  assert.equal(response.result.bootstrap.phase, "seed")
+  assert.equal(response.result.head.tag, "0002_book_versions")
   assert.equal(wrote, false)
   const receipt = readState(createContext("scratch", f.options), "-bootstrap")
-  assert.equal(receipt.phase, "migrate")
+  assert.equal(receipt.phase, "seed")
   assert.match(receipt.phases.env.message, /Sin archivo/)
-  for (const name of ["preflight", "env"]) assert.equal(receipt.phases[name].status, "passed")
+  for (const name of ["preflight", "env", "migrate"]) assert.equal(receipt.phases[name].status, "passed")
+  assert.equal(receipt.phases.migrate.head.tag, "0002_book_versions")
   assert.equal(receipt.phases.stack.status, "healthy")
-  for (const name of ["migrate", "seed", "verify"]) assert.equal(receipt.phases[name].status, "pending")
+  for (const name of ["seed", "verify"]) assert.equal(receipt.phases[name].status, "pending")
+})
+
+test("bootstrap propaga el código del runner y marca migrate como fallida", async () => {
+  const f = fixture()
+  f.options.migrateLocal = async () => { throw new BiblibError(EXIT.HISTORY_DIVERGED, "historial", "Adopción de historial necesaria.") }
+  await assert.rejects(runLocalStack(["bootstrap", "--profile", "scratch"], f.options), { code: EXIT.HISTORY_DIVERGED })
+  const receipt = readState(createContext("scratch", f.options), "-bootstrap")
+  assert.equal(receipt.status, "failed")
+  assert.equal(receipt.phases.migrate.status, "failed")
+  assert.equal(receipt.phases.env.status, "passed")
+  for (const name of ["seed", "verify"]) assert.equal(receipt.phases[name].status, "pending")
+})
+
+test("status publica el head aplicado solo con Postgres propio en marcha", async () => {
+  const f = fixture()
+  let reads = 0
+  f.options.readHead = async () => { reads++; return { tag: "0001_library_integrity", applied: 2, expected: 3, state: "pending" } }
+  assert.equal((await runLocalStack(["status", "--profile", "scratch", "--json"], f.options)).result.head, null)
+  assert.equal(reads, 0)
+  await runLocalStack(["up", "--profile", "scratch"], f.options)
+  const { result } = await runLocalStack(["status", "--profile", "scratch", "--json"], f.options)
+  assert.deepEqual(result.head, { tag: "0001_library_integrity", applied: 2, expected: 3, state: "pending" })
+  f.options.readHead = async () => { throw new Error("conexión rechazada") }
+  const degraded = (await runLocalStack(["status", "--profile", "scratch", "--json"], f.options)).result
+  assert.equal(degraded.head, null)
+  assert.ok(degraded.checks.some((c) => c.id === "head" && c.status === "warn"))
+  assert.equal((await runLocalStack(["doctor", "--profile", "scratch", "--json"], f.options)).result.head, null)
 })
 
 test("worktree rechaza main/test y bloqueo concurrente devuelve 7", async () => {

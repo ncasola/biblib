@@ -39,6 +39,9 @@ export function createContext(profile, options = {}) {
     health: options.health ?? health, fetch: options.fetch ?? fetch, loadTarget: options.loadTarget ?? loadTarget, writeLocalEnvFile: options.writeLocalEnvFile ?? writeLocalEnvFile,
     processOptions: { cwd: root, env, signal: options.signal },
     healthTimeoutMs: options.healthTimeoutMs ?? 60000,
+    // Runner U-INF-04 cargado bajo demanda: doctor/up/down no lo necesitan.
+    readHead: options.readHead ?? (async (stack) => (await import("./db/migrate.mjs")).readAppliedHead(stack)),
+    migrateLocal: options.migrateLocal ?? (async (stack, opts) => (await import("./db/migrate.mjs")).runLocalMigration(stack, opts)),
   }
 }
 
@@ -86,11 +89,11 @@ async function versions(ctx) {
   return checks
 }
 
-function publicResult(ctx, resources, checks) {
+function publicResult(ctx, resources, checks, head = null) {
   return {
     schemaVersion: 1, target: "local", profile: ctx.profile.name, fingerprint: ctx.fingerprint,
     endpoints: { api: `http://127.0.0.1:${ctx.profile.ports.api}`, postgres: { host: "127.0.0.1", port: ctx.profile.ports.db, database: "postgres" }, studio: `http://127.0.0.1:${ctx.profile.ports.studio}`, mailpit: `http://127.0.0.1:${ctx.profile.ports.mailpit}` },
-    services: serviceStates(resources), head: null,
+    services: serviceStates(resources), head,
     checks: checks.map(({ id, status, message }) => ({ id, status, message })),
   }
 }
@@ -228,6 +231,14 @@ export async function runLocalStack(argv, options = {}) {
   const ctx = createContext(parsed.profile, options)
   if (["doctor", "status"].includes(parsed.command)) {
     const diagnostic = await diagnose(ctx)
+    // status consulta el head aplicado (solo lectura) si Postgres propio está en marcha y acreditado.
+    const postgresUp = diagnostic.result.services.some((s) => s.name === "postgres" && ["healthy", "running"].includes(s.status))
+    if (parsed.command === "status" && postgresUp && diagnostic.code === EXIT.OK) {
+      try { diagnostic.result.head = await ctx.readHead(ctx) } catch (error) {
+        if (error?.code === EXIT.INTERRUPTED) throw error
+        diagnostic.result.checks.push({ id: "head", status: "warn", message: "No se pudo leer el head aplicado; consulta pnpm db:status:local." })
+      }
+    }
     return { code: diagnostic.code, result: diagnostic.result }
   }
   // Un checkout hijo nunca puede iniciar main/test por accidente.
@@ -290,17 +301,22 @@ export async function runLocalStack(argv, options = {}) {
         } else message = "Sin archivo: scratch/test consumen contexto explícito; solo main genera .env.local."
         interrupted(ctx)
         savePhase("env", "passed", resources, { message })
-        receipt.phase = "migrate"
+        interrupted(ctx)
+        savePhase("migrate", "running", resources)
+        const migrated = await ctx.migrateLocal(ctx, { runId: receipt.runId, signal: ctx.signal })
+        interrupted(ctx)
+        savePhase("migrate", "passed", resources, { head: migrated.head, message: `Plan + migrate locales (U-INF-04): ${migrated.result}.` })
+        receipt.phase = "seed"
         receipt.status = "pending"
-        for (const name of ["migrate", "seed", "verify"]) receipt.phases[name] = { status: "pending", message: "Fase todavía no disponible; integración en U-INF-06." }
+        for (const name of ["seed", "verify"]) receipt.phases[name] = { status: "pending", message: "Fase todavía no disponible; integración en U-INF-05/06." }
         writeState(ctx, receipt, "-bootstrap")
       }
     }
     const checks = [{ id: parsed.command, status: "ok", message: parsed.command === "down" ? "Perfil parado; volúmenes conservados." : "Stack propio sano." }]
     const bindings = checkPublishedBindings(ctx.profile.name, resources.containers, { root: ctx.root })
     if (bindings.exposed.length) checks.push({ id: "bindings.loopback", status: "warn", message: "Bindings fuera de loopback; consulta alternativas A/B en docs/operacion.md." })
-    if (receipt) checks.push({ id: "bootstrap.pending", status: "pending", message: "preflight, stack y env completados; migrate, seed y verify pendientes de U-INF-06." })
-    return { code: EXIT.OK, result: { ...publicResult(ctx, resources, checks), ...(receipt ? { bootstrap: { status: "pending", phase: "migrate", phases: receipt.phases } } : {}) } }
+    if (receipt) checks.push({ id: "bootstrap.pending", status: "pending", message: "preflight, stack, env y migrate completados; seed y verify pendientes de U-INF-05/06." })
+    return { code: EXIT.OK, result: { ...publicResult(ctx, resources, checks, receipt ? receipt.phases.migrate.head ?? null : null), ...(receipt ? { bootstrap: { status: "pending", phase: "seed", phases: receipt.phases } } : {}) } }
   } catch (error) {
     if (!recorded && ctx.signal?.aborted) {
       // También registra una interrupción temprana, siempre que la identidad sea válida.
