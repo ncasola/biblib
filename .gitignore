@@ -42,3 +42,8 @@ docs/validacion/**/privado/
 # Objetivos y builds aislados (U-INF-02)
 !/.env.local.example
 /.next-*/
+
+# E2E Playwright (U-QA-02): informes y artefactos van a .biblib/e2e; por si se lanza Playwright a mano
+/test-results/
+/playwright-report/
+/playwright/.cache/

@@ -12,6 +12,8 @@ const eslintConfig = [
       "out/**",
       "build/**",
       "next-env.d.ts",
+      // Estado local de perfiles y artefactos de pruebas (informe HTML de Playwright, U-QA-02).
+      ".biblib/**",
     ],
   },
 ];

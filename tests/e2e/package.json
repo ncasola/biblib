@@ -1,0 +1,5 @@
+{
+  "//": "Los recorridos E2E (U-QA-02) importan los módulos ESM .mjs de tests/integration y scripts.",
+  "type": "module",
+  "private": true
+}

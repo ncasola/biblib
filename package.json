@@ -41,7 +41,10 @@
     "db:backup:prod": "node scripts/db/backup-local.mjs prod",
     "db:restore:local": "node scripts/db/restore-local.mjs",
     "db:restore:verify": "node scripts/db/restore-verify.mjs",
-    "db:local:credentials": "node scripts/db/local-credentials.mjs"
+    "db:local:credentials": "node scripts/db/local-credentials.mjs",
+    "test:e2e:local": "node tests/e2e/run.mjs",
+    "test:e2e:local:ui": "node tests/e2e/run.mjs --ui",
+    "test:e2e:external": "node tests/e2e/run.mjs --external"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "1.1.15",
