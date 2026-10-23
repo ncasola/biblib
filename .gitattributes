@@ -1,0 +1,5 @@
+# Migraciones Drizzle (U-INF-04): mismos bytes LF en Windows y Linux.
+# El migrador calcula sha256 del fichero tal como está en disco; un CRLF
+# cambiaría el hash registrado en drizzle.__drizzle_migrations.
+drizzle/**/*.sql text eol=lf
+drizzle/meta/*.json text eol=lf
