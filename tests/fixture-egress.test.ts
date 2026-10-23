@@ -9,7 +9,6 @@ import { normalizeBookCover } from "../lib/book-covers"
 import { readCatalogConfig } from "../lib/bibliographic-catalog/config"
 import { createConfiguredCatalog } from "../lib/bibliographic-catalog/registry"
 import type { BibliographicCatalogService, CoverCandidate } from "../lib/bibliographic-catalog/types"
-import { enrichImportedBookCovers } from "../lib/library-import"
 import type { Book } from "../lib/types"
 
 // Como las pruebas de componentes existentes: ejecuta el módulo real, sustituyendo solo sus
@@ -34,7 +33,7 @@ const book: Book = {
   publish_date: "", status: "unread", shelf_id: "shelf-1", shelf_name: "Predeterminada", cover: normalizeBookCover(),
 }
 
-test("fixture: importación, recuperación y búsqueda legacy terminan sin ninguna llamada fetch", async (t) => {
+test("fixture: recuperación y búsqueda legacy terminan sin ninguna llamada fetch", async (t) => {
   const previous = { ...process.env }
   t.after(() => { process.env = previous })
   process.env.BIBLIB_TARGET = "test"
@@ -42,7 +41,6 @@ test("fixture: importación, recuperación y búsqueda legacy terminan sin ningu
   process.env.BIBLIB_GOOGLE_BOOKS_ENABLED = "false"
   const fetch = t.mock.method(globalThis, "fetch", () => { throw new Error("Salida de red prohibida en fixture") })
   const original = structuredClone(book)
-  assert.deepEqual(await enrichImportedBookCovers([book]), [book])
 
   const catalog = createConfiguredCatalog(readCatalogConfig())
   const client = loadSource<{ searchBookByISBN: (isbn: string) => Promise<Book | null> }>("lib/api-client.ts", {

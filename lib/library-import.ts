@@ -3,9 +3,6 @@ import { DEFAULT_BOOK_COVER, normalizeBookCover } from "./book-covers"
 import { normalizeIsbn, normalizedBookIdentifier } from "./isbn"
 import { libraryRequiresV2, readBackupV2 } from "./backup-v2"
 import { catalogueProblem, catalogueSchema, normalizeCatalogue, toCatalogueV1 } from "./catalogue-provenance"
-import { openLibraryHeaders } from "./open-library"
-import { readCatalogConfig } from "./bibliographic-catalog/config"
-import { classifyProviderFailure } from "./observability/events"
 import { emitSafely, noopTelemetry, type TelemetryEmitter } from "./observability/emitter"
 import type { Book, LibraryData } from "./types"
 
@@ -176,80 +173,4 @@ export function summarizeLibraryImport(imported: LibraryData, current: LibraryDa
     missingCovers: imported.books.filter((book) => normalizeBookCover(book.cover).large === DEFAULT_BOOK_COVER).length,
     withoutIsbn: imported.books.filter((book) => !normalizeIsbn(book.isbn)).length,
   }
-}
-
-// La API admite varios ISBN en una petición y devuelve las URL de las portadas disponibles.
-// https://openlibrary.org/dev/docs/api/books
-const BATCH_SIZE = 20
-const REQUEST_TIMEOUT_MS = 8_000
-const MIN_REQUEST_INTERVAL_MS = 1_000
-const TOTAL_LOOKUP_BUDGET_MS = 20_000
-const responseCoverSchema = z.object({
-  cover: z.object({
-    small: z.string().optional(),
-    medium: z.string().optional(),
-    large: z.string().optional(),
-  }).optional(),
-})
-
-export async function enrichImportedBookCovers(books: Book[], telemetry: TelemetryEmitter = noopTelemetry): Promise<Book[]> {
-  const prepared = books.map((book) => ({ ...book, cover: normalizeBookCover(book.cover) }))
-  // Este módulo también contiene lectores usados en cliente: no importa el servicio server-only.
-  // Los fixtures actuales no aportan portadas fuente; «sin resultado» conserva el fallback local.
-  // El lote live mantiene sus límites hasta el enrutado completo de U-BIB-05.
-  if (readCatalogConfig().mode === "fixture") return prepared
-  const isbns = [...new Set(prepared
-    .filter((book) => book.cover.large === DEFAULT_BOOK_COVER)
-    .map((book) => normalizeIsbn(book.isbn))
-    .filter((isbn): isbn is string => isbn !== null))]
-  const covers = new Map<string, Book["cover"]>()
-  let previousRequest = 0
-  const deadline = Date.now() + TOTAL_LOOKUP_BUDGET_MS
-
-  for (let offset = 0; offset < isbns.length; offset += BATCH_SIZE) {
-    const remaining = MIN_REQUEST_INTERVAL_MS - (Date.now() - previousRequest)
-    if (Date.now() + Math.max(remaining, 0) >= deadline) break
-    if (remaining > 0) await new Promise((resolve) => setTimeout(resolve, remaining))
-
-    const batch = isbns.slice(offset, offset + BATCH_SIZE)
-    const url = new URL("https://openlibrary.org/api/books")
-    url.searchParams.set("bibkeys", batch.map((isbn) => `ISBN:${isbn}`).join(","))
-    url.searchParams.set("format", "json")
-    url.searchParams.set("jscmd", "data")
-
-    const startedAt = Date.now()
-    let httpStatus: number | undefined
-    try {
-      previousRequest = Date.now()
-      const response = await fetch(url, { headers: openLibraryHeaders(), signal: AbortSignal.timeout(Math.max(1, Math.min(REQUEST_TIMEOUT_MS, deadline - Date.now()))) })
-      httpStatus = response.status
-      // Ante una caída o límite del servicio, el resto se importa con su portada genérica.
-      if (!response.ok) {
-        emitSafely(telemetry, "provider.request", { operation: "open-library.covers", provider: "open-library", result: "error", durationMs: Math.max(0, Date.now() - startedAt), httpStatus, batch: batch.length, errorCode: classifyProviderFailure(response.status) })
-        break
-      }
-      const payload: unknown = await response.json()
-      if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
-        emitSafely(telemetry, "provider.request", { operation: "open-library.covers", provider: "open-library", result: "error", durationMs: Math.max(0, Date.now() - startedAt), httpStatus, batch: batch.length, errorCode: classifyProviderFailure(httpStatus) })
-        break
-      }
-
-      for (const isbn of batch) {
-        const entry = responseCoverSchema.safeParse((payload as Record<string, unknown>)[`ISBN:${isbn}`])
-        if (!entry.success) continue
-        const cover = normalizeBookCover(entry.data.cover)
-        if (cover.large !== DEFAULT_BOOK_COVER) covers.set(isbn, cover)
-      }
-      emitSafely(telemetry, "provider.request", { operation: "open-library.covers", provider: "open-library", result: "ok", durationMs: Math.max(0, Date.now() - startedAt), httpStatus, batch: batch.length })
-    } catch (error) {
-      emitSafely(telemetry, "provider.request", { operation: "open-library.covers", provider: "open-library", result: "error", durationMs: Math.max(0, Date.now() - startedAt), httpStatus, batch: batch.length, errorCode: classifyProviderFailure(httpStatus && httpStatus >= 400 ? httpStatus : error) })
-      break
-    }
-  }
-
-  return prepared.map((book) => {
-    if (book.cover.large !== DEFAULT_BOOK_COVER) return book
-    const isbn = normalizeIsbn(book.isbn)
-    return { ...book, cover: (isbn && covers.get(isbn)) || book.cover }
-  })
 }

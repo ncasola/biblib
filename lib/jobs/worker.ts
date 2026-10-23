@@ -8,7 +8,7 @@ import {
   classifyCoverLookup, JOB_LIMITS, retryDelayMs, stateAfterCovers,
   type CoverOutcome, type JobPhase, type JobState,
 } from "./contracts"
-import { applyRecoveredCovers, LeaseLostError, type ClaimedJob, type ItemUpdate, type JobRepository } from "./repository"
+import { applyRecoveredCovers, LeaseLostError, type ClaimedJob, type ItemUpdate, type JobRepository, type RecoveredCover } from "./repository"
 
 // Ejecutor acotado de trabajos (U-DAT-03). Cada paso reclama un trabajo con lease, hace como mucho
 // 20 elementos o 20 s de trabajo, consulta la red fuera de cualquier transacción y confirma en una
@@ -32,6 +32,8 @@ export interface WorkerDeps {
   random?: () => number
   now?: () => number
   limits?: Partial<WorkerLimits>
+  /** U-BIB-04: con la revisión activa la fuente de la portada se guarda en la procedencia del campo. */
+  reviewEnabled?: () => boolean
   hooks?: WorkerHooks
 }
 
@@ -80,7 +82,7 @@ async function publishStep(deps: Required<Pick<WorkerDeps, "repo" | "random">> &
   return { ...report, state: published.state }
 }
 
-interface CoverDecision { update: ItemUpdate; recovered?: { id: string; version: string; cover: { small: string; medium: string; large: string } } }
+interface CoverDecision { update: ItemUpdate; recovered?: RecoveredCover }
 
 function retryUpdate(itemKey: string, attempts: number, outcome: Extract<CoverOutcome, { kind: "retry" }>, random: () => number, maxAttempts: number): ItemUpdate {
   // Esperar cuota no consume intentos ni es «no encontrado»: solo una caída cuenta para el límite.
@@ -137,7 +139,9 @@ async function coversStep(deps: Required<Pick<WorkerDeps, "repo" | "random" | "n
       outcome = { kind: "retry", code: "PROVIDER_UNAVAILABLE" }
     }
     if (outcome.kind === "found") {
-      decisions.push({ update: { itemKey: item.itemKey, state: "succeeded", attempt: true, delayMs: 0, result: { cover: outcome.cover } }, recovered: { id: book.id, version: book.version, cover: outcome.cover } })
+      // La fuente de cada portada consta en el resultado del elemento (proveedor, nunca la URL de consulta).
+      decisions.push({ update: { itemKey: item.itemKey, state: "succeeded", attempt: true, delayMs: 0, result: { cover: outcome.cover, provider: outcome.provider } },
+        recovered: { id: book.id, version: book.version, cover: outcome.cover, provider: outcome.provider, ...(outcome.sourceUrl ? { sourceUrl: outcome.sourceUrl } : {}) } })
     } else if (outcome.kind === "notFound") {
       decisions.push({ update: { itemKey: item.itemKey, state: "not_found", attempt: true, delayMs: 0 } })
     } else if (outcome.kind === "failed") {
@@ -157,7 +161,7 @@ async function coversStep(deps: Required<Pick<WorkerDeps, "repo" | "random" | "n
     // Solo escribe si el libro conserva versión y preimagen; si no, el elemento queda omitido.
     const applied = recovered.length ? await context.asOwner(async (tx) => {
       await lockCollection(tx)
-      return applyRecoveredCovers(tx, context.owner, recovered)
+      return applyRecoveredCovers(tx, context.owner, recovered, { reviewEnabled: deps.reviewEnabled?.() === true, now: () => new Date(deps.now()) })
     }) : new Set<string>()
     await context.updateItems(decisions.map(({ update, recovered: entry }) => entry && !applied.has(entry.id)
       ? { ...update, state: "skipped" as const, result: null, errorCode: "CHANGED" } : update))
@@ -169,6 +173,12 @@ async function coversStep(deps: Required<Pick<WorkerDeps, "repo" | "random" | "n
     await deps.hooks?.beforeCommit?.(job, "covers")
   })
   await deps.hooks?.afterCommit?.(job, "covers")
+  // Contadores por fuente para el operador: cuántas portadas aportó cada proveedor en este paso.
+  const bySource = new Map<string, number>()
+  for (const { update, recovered } of decisions) {
+    if (recovered?.provider && update.state === "succeeded") bySource.set(recovered.provider, (bySource.get(recovered.provider) ?? 0) + 1)
+  }
+  for (const [provider, batch] of bySource) emitSafely(deps.telemetry ?? noopTelemetry, "cover.recovery", { operation: "cover.source", provider, result: "recovered", batch })
   const retried = decisions.filter((decision) => decision.update.state === "waiting_retry").length
   if (retried) emitSafely(deps.telemetry ?? noopTelemetry, "job.retried", { operation: operation(job), result: "error", batch: retried, errorCode: rateLimited ? "RATE_LIMITED" : "PROVIDER_UNAVAILABLE" })
   return { ...report, state }

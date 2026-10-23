@@ -107,7 +107,7 @@ describe("reintentos", () => {
 describe("clasificación de portadas", () => {
   test("imagen encontrada en Open Library con sus tamaños", () => {
     const outcome = classifyCoverLookup(lookup({ status: "found", candidates: [cover("https://covers.openlibrary.org/b/id/123-L.jpg")] }))
-    assert.deepEqual(outcome, { kind: "found", cover: { small: "https://covers.openlibrary.org/b/id/123-S.jpg", medium: "https://covers.openlibrary.org/b/id/123-M.jpg", large: "https://covers.openlibrary.org/b/id/123-L.jpg" } })
+    assert.deepEqual(outcome, { kind: "found", cover: { small: "https://covers.openlibrary.org/b/id/123-S.jpg", medium: "https://covers.openlibrary.org/b/id/123-M.jpg", large: "https://covers.openlibrary.org/b/id/123-L.jpg" }, provider: "open-library" })
     assert.deepEqual(coverFromImage("https://books.example/portada.jpg"), { small: "https://books.example/portada.jpg", medium: "https://books.example/portada.jpg", large: "https://books.example/portada.jpg" })
     assert.equal(coverFromImage(DEFAULT_BOOK_COVER).large, DEFAULT_BOOK_COVER)
   })

@@ -8,7 +8,8 @@ import { getRequiredUserId } from "@/lib/server-user"
 import { parseBookInput, parseUuid, statusSchema } from "@/lib/book-validation"
 import { DomainError, translateDatabaseError } from "@/lib/domain-errors"
 import { normalizedBookIdentifier, normalizeIsbn } from "@/lib/isbn"
-import { enrichImportedBookCovers } from "@/lib/library-import"
+import { bibliographicCatalog } from "@/lib/bibliographic-catalog/server"
+import { classifyCoverLookup } from "@/lib/jobs/contracts"
 import type { Book } from "@/lib/types"
 import { domainMutation } from "@/lib/server-action"
 import { assertBookVersion, bookVersionConflict } from "@/lib/book-version"
@@ -155,18 +156,23 @@ async function refreshBookCover(bookId: string, version: unknown): Promise<Book>
   if (!current) throw new DomainError("NOT_FOUND", "El libro ya no está disponible.")
   assertBookVersion(current, version)
   if (!normalizeIsbn(current.isbn)) throw new DomainError("INVALID_INPUT", "Añade un ISBN válido para buscar la portada.")
-  const [enriched] = await enrichImportedBookCovers([{ ...current, cover: { small: "", medium: "", large: "" } }], telemetry)
-  if (enriched.cover.large === "/default-book-cover.webp") throw new DomainError("NOT_FOUND", "No se ha podido recuperar una portada. Puedes indicar su URL manualmente.")
   const userId = await getRequiredUserId()
+  // Misma frontera que el alta y los trabajos: el orquestador. La consulta termina antes de abrir la transacción.
+  const outcome = classifyCoverLookup(await bibliographicCatalog.getCover(normalizeIsbn(current.isbn)!, { userId }))
+  if (outcome.kind === "retry") throw outcome.code === "RATE_LIMITED"
+    ? new DomainError("RATE_LIMITED", "El catálogo ha limitado las consultas. Vuelve a intentarlo más tarde.")
+    : new DomainError("PROVIDER_UNAVAILABLE", "No se pudo consultar el catálogo de portadas. Puedes reintentar o indicar su URL manualmente.")
+  if (outcome.kind === "failed") throw new DomainError("PROVIDER_UNAVAILABLE", "No hay ninguna fuente de portadas disponible ahora. Puedes indicar su URL manualmente.")
+  if (outcome.kind === "notFound") throw new DomainError("NOT_FOUND", "No se ha podido recuperar una portada. Puedes indicar su URL manualmente.")
   return withRlsContext(userId, async (tx) => {
     await lockLibrary(tx)
     const latest = await findBook(tx, userId, current.id)
     if (!latest) throw new DomainError("NOT_FOUND", "El libro ya no está disponible.")
     assertBookVersion(latest, current.version)
     if (normalizedBookIdentifier(latest.isbn) !== normalizedBookIdentifier(current.isbn)) throw new DomainError("CONFLICT", "El ISBN ha cambiado mientras se buscaba la portada. Vuelve a intentarlo.")
-    const catalogue = catalogueWithField(latest.catalogue, "cover", { provider: "open-library", retrievedAt: new Date().toISOString(), selection: "user-selected" }, bibliographyReviewEnabled())
-    const changed = await tx.update(books).set({ coverSmall: enriched.cover.small, coverMedium: enriched.cover.medium,
-      coverLarge: enriched.cover.large, catalogue, updatedAt: new Date() }).where(and(eq(books.id, current.id), eq(books.userId, userId), eq(books.version, latest.version!))).returning({ id: books.id })
+    const catalogue = catalogueWithField(latest.catalogue, "cover", { provider: outcome.provider, ...(outcome.sourceUrl ? { sourceUrl: outcome.sourceUrl } : {}), retrievedAt: new Date().toISOString(), selection: "user-selected" }, bibliographyReviewEnabled())
+    const changed = await tx.update(books).set({ coverSmall: outcome.cover.small, coverMedium: outcome.cover.medium,
+      coverLarge: outcome.cover.large, catalogue, updatedAt: new Date() }).where(and(eq(books.id, current.id), eq(books.userId, userId), eq(books.version, latest.version!))).returning({ id: books.id })
     if (!changed.length) throw bookVersionConflict()
     return (await findBook(tx, userId, current.id))!
   })
