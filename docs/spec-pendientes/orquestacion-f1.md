@@ -1,6 +1,6 @@
 # Orquestación de F1 con Orca
 
-**Versión:** 1.0 · **Fecha:** 23 de octubre de 2026 · **Estado:** en ejecución: O07 integrada salvo U-QA-02; O08 adelantada en paralelo (se fusiona tras G07).
+**Versión:** 1.0 · **Fecha:** 23 de octubre de 2026 · **Estado:** en ejecución: O07 y O08 cerradas (G07/G08); O09 en curso.
 
 Plan operativo de la fase F1 (O07–O10): integridad de colección, proveedores bibliográficos, cuotas, trabajos y recuperación. Las reglas comunes (§0) y el contrato de F0 (§1) de [orquestación de F0](orquestacion-f0.md) siguen vigentes; este documento solo añade lo propio de F1. Unidades y aceptación: [02](02-datos-importacion-y-catalogacion.md), [03](03-experiencia-y-funciones.md), [04](04-calidad-seguridad-y-operacion.md), [01](01-entorno-y-migraciones.md) y [06](06-proveedores-bibliograficos.md).
 
@@ -28,7 +28,11 @@ Plan operativo de la fase F1 (O07–O10): integridad de colección, proveedores 
 | O08 | U-INF-07 Adopción y promoción remota (tras U-DAT-05) | Claude (Opus) | `scratch` | No (sin destino remoto autorizado: queda preparada) |
 | O09 | U-BIB-04 Procedencia y candidatos | Claude (Opus) | No | No (pregunta antes) |
 | O09 | U-BIB-03 Google Books opcional | Codex | No | No |
-| O09 | U-DAT-03, U-QA-03, U-QA-04, U-OPS-04 | Tras U-QA-02/U-INF-07 (stack) | — | U-DAT-03 |
+| O09 | U-DAT-03 Trabajos persistentes y leases | Claude (Opus) | `scratch` | Sí (`0005`) |
+| O09 | U-QA-03 Rendimiento (primera medición) | Claude (Sonnet) | `test` | No (índices propuestos) |
+| O09 | U-FIX-01 Cero tráfico en fixture y 404 de ficha | Codex | No | No |
+| O09 | U-QA-04 CI y artefactos (ejecución real pendiente de push) | Codex | No | No |
+| O09 | U-OPS-04 Sesión, exposición y cabeceras | Tras liberar un stack | — | No |
 | O10 | U-DAT-02, U-DAT-08, U-BIB-05, U-EXP-02 | Se fija al cerrar O09 | — | U-DAT-02 / U-EXP-02 en orden |
 
 ## Puertas

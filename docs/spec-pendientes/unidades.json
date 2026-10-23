@@ -258,7 +258,7 @@
         "BE-06",
         "UX-04"
       ],
-      "status": "planned"
+      "status": "in-progress"
     },
     {
       "id": "U-DAT-04",
@@ -756,7 +756,7 @@
         "BE-04",
         "FE-02"
       ],
-      "status": "planned"
+      "status": "in-progress"
     },
     {
       "id": "U-QA-04",
@@ -777,7 +777,7 @@
         "QA-01",
         "QA-02"
       ],
-      "status": "planned"
+      "status": "in-progress"
     },
     {
       "id": "U-QA-05",
@@ -1117,6 +1117,25 @@
       "pending": [
         "Ensayo contra GoTrue real: U-QA-02 (en curso)."
       ]
+    },
+    {
+      "id": "U-FIX-01",
+      "title": "Cero tráfico externo en modo fixture y 404 de ficha",
+      "phase": "F1",
+      "wave": "O09",
+      "dependsOn": [
+        "U-BIB-01",
+        "U-QA-02"
+      ],
+      "size": "S",
+      "priority": "P1",
+      "document": "orquestacion-f1.md",
+      "auditRefs": [
+        "BE-04",
+        "SEC-03"
+      ],
+      "status": "in-progress",
+      "note": "Hallazgo de U-QA-02: en fixture la app salía a openlibrary.org."
     }
   ]
 }
