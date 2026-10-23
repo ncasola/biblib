@@ -1,6 +1,6 @@
 # Orquestación de F1 con Orca
 
-**Versión:** 1.0 · **Fecha:** 23 de octubre de 2026 · **Estado:** en ejecución (O07).
+**Versión:** 1.0 · **Fecha:** 23 de octubre de 2026 · **Estado:** en ejecución: O07 integrada salvo U-QA-02; O08 adelantada en paralelo (se fusiona tras G07).
 
 Plan operativo de la fase F1 (O07–O10): integridad de colección, proveedores bibliográficos, cuotas, trabajos y recuperación. Las reglas comunes (§0) y el contrato de F0 (§1) de [orquestación de F0](orquestacion-f0.md) siguen vigentes; este documento solo añade lo propio de F1. Unidades y aceptación: [02](02-datos-importacion-y-catalogacion.md), [03](03-experiencia-y-funciones.md), [04](04-calidad-seguridad-y-operacion.md), [01](01-entorno-y-migraciones.md) y [06](06-proveedores-bibliograficos.md).
 
@@ -23,9 +23,9 @@ Plan operativo de la fase F1 (O07–O10): integridad de colección, proveedores 
 | O07 | U-LOC-01 Login local con correo y contraseña (petición de Néstor) | Claude (Sonnet) | No | No |
 | O07 | U-QA-02 E2E y navegadores (tras U-DAT-01) | Claude (Opus) | `test` | No (Playwright en lockfile) |
 | O08 | U-BIB-02 Adaptadores OL y BNE | Codex | No | No |
-| O08 | U-DAT-05 Cuota y caché compartidas | Claude (Opus) | `test` | Sí |
-| O08 | U-EXP-04 3D táctil/teclado y alternativa 2D | Codex u OpenCode | No | No |
-| O08 | U-INF-07 Adopción y promoción remota | Claude (Opus) | `scratch` | No (sin destino remoto autorizado: queda preparada) |
+| O08 | U-DAT-05 Cuota y caché compartidas | Claude (Opus) | `scratch` | Sí (`0004`) |
+| O08 | U-EXP-04 3D táctil/teclado y alternativa 2D | OpenCode · `glm-5.3` (cuota recuperada) | No | No |
+| O08 | U-INF-07 Adopción y promoción remota (tras U-DAT-05) | Claude (Opus) | `scratch` | No (sin destino remoto autorizado: queda preparada) |
 | O09 | U-DAT-03, U-BIB-03, U-BIB-04, U-QA-03, U-QA-04, U-OPS-04 | Se fija al cerrar O08 | — | U-DAT-03 |
 | O10 | U-DAT-02, U-DAT-08, U-BIB-05, U-EXP-02 | Se fija al cerrar O09 | — | U-DAT-02 / U-EXP-02 en orden |
 
