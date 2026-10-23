@@ -268,3 +268,71 @@ El orden es **preflight → stack → env → migrate → seed → verify**. Cad
 `migrate`, `seed` y `verify` permanecen **pending**, con mensaje de no disponibilidad hasta U-INF-06. El recibo y la respuesta muestran estado global **pending**, próxima fase **migrate**. La salida **0** significa exclusivamente que las fases disponibles terminaron correctamente; **no acredita bootstrap completo, esquema ni fixtures**. Una fase ejecutada que falle devuelve su código distinto de cero y queda `failed`/`interrupted`, con las siguientes pendientes. U-INF-06 conectará U-INF-04/U-INF-05 en estos mismos puntos, sin segundo runner ni historial SQL paralelo.
 
 Las pruebas de procesos/CLI/Docker simulados se ejecutan con `pnpm test:scripts`. El [informe U-INF-03](validacion/2026-10-23/O03/u-inf-03-informe.md) registra el ensayo real de scratch, la conservación de datos y la comparación de recursos HolaERP.
+
+## Migraciones
+
+U-INF-04 convierte a Drizzle en el único aplicador del esquema de negocio, con plan previo, guardas del historial y verificación de los objetos que el snapshot no representa. Esta sección sustituye, para el flujo local, las indicaciones anteriores de esta guía que mencionan `pnpm db:migrate` como comando que modifica la base, la carga de `.env.local`/`.env` desde `drizzle.config.ts` y el `head: null` o la fase `migrate` pendiente del lifecycle. Preproducción y producción **no están implementadas**: `plan`, `migrate` y `status` con `preprod`/`prod` salen con **2** y remiten a U-INF-07. No se usa `supabase db push`, `migration up` ni SQL en `supabase/migrations/`.
+
+```powershell
+pnpm db:local:up --profile scratch
+pnpm db:status:local --profile scratch [--json]
+pnpm db:plan:local --profile scratch --out scratch.json [--json]
+pnpm db:migrate:local --plan .biblib/plans/scratch.json --expect-project biblib-scratch --expect-plan <sha256>
+```
+
+`pnpm db:migrate` es ahora un despachador: no aplica nada, no lee archivos de entorno y sale con **2** listando estos comandos. Drizzle Kit queda solo para operaciones offline (`generate`, `check`, `up`); `drizzle-kit migrate`, `push`, `pull` o `studio` fallan con un mensaje que remite a los wrappers. `drizzle.config.ts` declara el mismo ledger que el runner: `drizzle.__drizzle_migrations`.
+
+### Journal, hashes y finales de línea
+
+`scripts/db/journal-guard.mjs` valida, sin conectar, que el journal es de PostgreSQL con `idx` consecutivos desde 0, tags `NNNN_nombre`, `when` estrictamente creciente, `breakpoints`, ficheros presentes y ningún `.sql` fuera del journal. El hash se calcula **igual que `readMigrationFiles` de drizzle-orm 0.45.2**: sha256 del texto del fichero tal como está en disco, sin normalizar. Las pruebas comparan ambos cálculos.
+
+Drizzle registra ese hash y decide los pendientes solo por el último `created_at`. Por eso la guarda también compara cada fila del ledger con su entrada, por `created_at = when`: hash distinto, fila desconocida o duplicada, y entradas **retroactivas** (sin aplicar pero anteriores al último `when` aplicado) devuelven **5** antes de escribir nada.
+
+`.gitattributes` fija `eol=lf` para `drizzle/**/*.sql` y `drizzle/meta/*.json`, también para las migraciones nuevas. El índice ya estaba en LF y sus bytes no cambian; con `core.autocrlf=true`, la copia de trabajo de Windows estaba en **CRLF** antes de esta regla, y Drizzle habría registrado otro hash. Tras actualizar a esta versión, comprueba `git ls-files --eol drizzle` (`i/lf w/lf attr/text eol=lf`). Si la copia sigue en CRLF, vuelve a extraer solo esos ficheros con Git; no edites el SQL. Un SQL con CRLF en disco se rechaza con **5**.
+
+Un ledger con un hash calculado sobre CRLF (base migrada desde un checkout Windows antiguo) se reconoce como `reconciliation-required` y **5**. El runner no reescribe el ledger. La conciliación es una adopción explícita de U-INF-07 que documenta la equivalencia de bytes.
+
+### Plan
+
+`db:plan:local` es de solo lectura: valida el journal, prueba la propiedad del perfil (registro de U-INF-03, contenedor Postgres registrado y en marcha, misma huella que `loadTarget`) y consulta el destino dentro de una transacción `read only`. Escribe un JSON en `.biblib/plans/` (ignorado por Git; `--out` no admite otra carpeta) con `schemaVersion`, `kind: "migrate"`, objetivo/perfil/proyecto, `fingerprint`, commit, versión de Drizzle, hash del journal, ledger, `appliedHead`, `expectedHead`, `migrations[{tag, when, hash, status}]`, `pending`, `ddlSummary` (operaciones derivadas del texto, sin ejecutarlo), `expectedObjects`, `risks`, `prerequisites`, `createdAt`, `expiresAt` (**30 minutos**) y `planHash`. Ese hash es el sha256 del JSON canónico del plan. El comando imprime la orden exacta de aplicación.
+
+| Estado del destino | Plan |
+| --- | --- |
+| Sin `biblib` ni ledger | `empty`: todas pendientes. |
+| `biblib` sin ledger o con ledger vacío | `adoption-required`, **5**: «adopción de historial necesaria». No se trata como base vacía. |
+| Ledger coherente | `pending` o `up-to-date` (plan sin pendientes). |
+| Hash/fila/entrada divergente | `diverged` o `reconciliation-required`, **5**. |
+| Objetos aplicados distintos del manifest | `drift`, **5**. |
+| Sin `auth.users`, `auth.uid()` o roles de Supabase | **8**: el runner no fabrica sustitutos. |
+
+### Aplicación
+
+`db:migrate:local` exige `--plan`, `--expect-project` y `--expect-plan`. No admite URLs, `--force` ni flags reenviados. Antes de conectar revalida el `planHash`, el tipo, la caducidad, el proyecto, el perfil, la huella, el commit, la versión de Drizzle y los bytes, tags y `when` de todas las migraciones (**3** si es otra identidad, **6** si el plan no corresponde).
+
+Abre una conexión administrativa dedicada (`postgres`, una sola conexión, `connect_timeout` 10 s, `statement_timeout` 120 s, `lock_timeout` 15 s), con cierre garantizado. Adquiere el **bloqueo consultivo común** `pg_try_advisory_lock(7316290410462004)` (`MIGRATION_LOCK_KEY` en `scripts/db/migrate.mjs`), con espera acotada de 30 s. Si sigue ocupado sale con **7** sin aplicar nada; `BIBLIB_MIGRATE_LOCK_WAIT_MS` ajusta la espera. Ya bajo bloqueo relee ledger y manifest. Si el head o los pendientes no son los del plan (por ejemplo, otro runner terminó antes), sale con **6**. Ante drift sale con **5**.
+
+Aplica con `drizzle-orm/postgres-js/migrator` y `migrationsSchema: "drizzle"`, `migrationsTable: "__drizzle_migrations"`. Todas las pendientes van en **una transacción**. Un error revierte el conjunto y el ledger no avanza: sale con **9** e informa head anterior, migración fallida, SQLSTATE y resultado, sin SQL ni datos. Después comprueba que el ledger llega al head esperado y verifica el manifest completo; si falla, sale con **11** y no se debe reaplicar. Cada ejecución deja un recibo junto al plan (`<plan>.receipt.json`). SIGINT cierra la conexión, con lo que la transacción se revierte, y devuelve **130**.
+
+### Manifest de objetos deliberados
+
+`scripts/db/objects-manifest.mjs` comprueba, con `pg_catalog`/`information_schema` y según el head aplicado, los objetos de `0000`→`0002`. Las expresiones se normalizan quitando espacios, paréntesis y casts; no se compara el pretty-print.
+
+- RLS en `biblib.shelves` y `biblib.books`.
+- Las 8 políticas `*_own`: comando, roles (`authenticated`), permisivas y expresión. En `0001` se exige `NOT is_default` en update/delete de estanterías. Una política no declarada es drift.
+- Grants: `USAGE` en `biblib` y `SELECT/INSERT/UPDATE/DELETE` exactos para `authenticated`; ninguno para `anon`.
+- PK, FK a `auth.users` con `ON DELETE CASCADE`, `books_owner_shelf_fk` compuesta con `RESTRICT` (y `books_shelf_fk` retirada), checks de estado, páginas y títulos, los 7 índices (unicidad, columnas y predicado) y las columnas `catalogue`/`version`.
+- `biblib.rotate_book_version()`: `plpgsql`, `RETURNS trigger`, sin argumentos ni `SECURITY DEFINER`, `search_path=pg_catalog` y cuerpo normalizado `NEW.version := gen_random_uuid(); RETURN NEW`.
+- Trigger `books_rotate_version`: `BEFORE INSERT OR UPDATE FOR EACH ROW` en `biblib.books`, sobre esa función, habilitado, sin `WHEN` ni lista de columnas.
+
+El runner solo lee `auth.users`, `auth.uid()` y los roles como prerrequisitos. Nunca los crea.
+
+### Estado, lifecycle y recuperación
+
+`db:status:local` es de solo lectura (transacción `read only`). Muestra estado, head aplicado/esperado, pendientes y comprobaciones. Sale con **0** si el destino está vacío, pendiente o al día, y con **5** ante adopción, divergencia o drift. `pnpm db:local:status` publica ahora `head: { tag, applied, expected, state }` cuando el Postgres propio está en marcha y acreditado (`null` si está parado o sin ledger). `doctor` sigue sin consultar datos. La fase `migrate` de `db:local:bootstrap` ejecuta plan + migrate locales con este mismo contrato (`.biblib/plans/bootstrap-<perfil>-<runId>.json`) y propaga su código. `seed` y `verify` siguen pendientes de U-INF-05/06.
+
+- **Drift** (por ejemplo, alguien borró el trigger): status/plan/migrate salen con **5** y no se reaplica una migración antigua. Corrige hacia delante con una migración nueva y revisada. Solo en un stack descartable puede recrearse el objeto con el mismo SQL de la migración y verificarlo con `db:status:local`.
+- **Adopción o hash legacy**: detén la aplicación y sigue U-INF-07. No borres el ledger ni rellenes filas a mano.
+- **Fallo 9**: corrige la causa (datos incompatibles, objeto previo), genera un plan nuevo y repite. El ledger no avanzó.
+- **Bloqueo 7**: es un bloqueo de sesión de Postgres y se libera al cerrar la conexión del otro runner; no hay archivo residual que borrar.
+
+`pnpm test:scripts` incluye `tests/scripts/migrations.test.mjs`: journal (idx, when, retroactivo, fichero ausente, huérfano, CRLF), hashes frente al Drizzle instalado, LF frente a CRLF legacy, adopción frente a base vacía, manifest con metadatos reales capturados de Supabase local, planes caducados, de otro proyecto, alterados o con otro hash, argumentos y despachador. Tres pruebas `[stack]` usan scratch si está arrancado y acreditado: drift en una transacción revertida, bloqueo ocupado (7) y fallo intermedio revertido (9). Se omiten con `BIBLIB_SKIP_STACK_TESTS=1`. El [informe U-INF-04](validacion/2026-10-23/O04/u-inf-04-informe.md) recoge el ensayo real sobre scratch.
