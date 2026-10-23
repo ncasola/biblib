@@ -162,7 +162,9 @@ async function prepareApp(dbUrl) {
     await symlink(path.join(repo, directory), target, process.platform === "win32" ? "junction" : "dir")
     junctions.push(target)
   }
-  for (const file of ["package.json", "next.config.mjs", "postcss.config.mjs", "tsconfig.json", "next-env.d.ts", "proxy.ts"]) {
+  // `supabase/profiles.json` lo importa la guarda del acceso local (app/(auth)/login/actions.ts).
+  await mkdir(path.join(workspace, "supabase"), { recursive: true })
+  for (const file of ["package.json", "next.config.mjs", "postcss.config.mjs", "tsconfig.json", "next-env.d.ts", "proxy.ts", "supabase/profiles.json"]) {
     await copyFile(path.join(repo, file), path.join(workspace, file))
   }
   // Solo se hereda el entorno del proceso; las tres conexiones de la app son fixtures.
