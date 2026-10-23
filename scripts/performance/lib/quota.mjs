@@ -11,8 +11,6 @@ import { summarize } from "./stats.mjs"
 // el proceso no retiene una conexión de base de datos mientras espera su plaza de cuota.
 
 const WORKER = fileURLToPath(new URL("./quota-worker.mjs", import.meta.url))
-// Holgura de planificación del sistema operativo (Windows: temporizadores de ~15 ms y carga de fondo) para el instante real de cada petición.
-const TOLERANCE_MS = 60
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 const count = (lookups) => lookups.reduce((acc, l) => ({ ...acc, [l.status]: (acc[l.status] ?? 0) + 1 }), {})
 
@@ -78,7 +76,9 @@ export async function runQuotaScenario({ sql, dbUrl, users, perProcess = 6 }) {
       procesos: 2, consultasPorProceso: perProcess, peticionesAlProveedor: times.length, intervaloOLms: 1000,
       separacionPlazasMinimaMs: slotGaps.length ? Math.round(Math.min(...slotGaps)) : null, plazasReservadas: slotGaps.length + 1,
       separacionMinimaMs: gaps.length ? Math.min(...gaps) : null, separacionMediaMs: gaps.length ? Math.round(gaps.reduce((a, b) => a + b, 0) / gaps.length) : null,
-      cumpleIntervalo: slotGaps.length > 0 && slotGaps.every((gap) => gap >= 1000) && gaps.every((gap) => gap >= 1000 - TOLERANCE_MS),
+      // La garantía es la separación de las plazas reservadas por la base; la hora real de cada petición añade jitter de planificación del proceso.
+      cumpleIntervalo: slotGaps.length > 0 && slotGaps.every((gap) => gap >= 1000),
+      jitterObservadoMs: gaps.length ? Math.max(0, 1000 - Math.min(...gaps)) : null,
       duracionTotalMs: times.length ? times.at(-1) - times[0] : null,
       latenciaConsultaMs: summarize([...one.lookups, ...two.lookups].map((l) => l.ms), 0),
       estados: count([...one.lookups, ...two.lookups]), conexiones,

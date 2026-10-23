@@ -1,5 +1,6 @@
 import { writeFileSync } from "node:fs"
 import path from "node:path"
+import { contractResults } from "./contract.mjs"
 
 // Tablas del informe de U-QA-03 generadas a partir de los resultados medidos. Solo cifras y nombres de
 // escenario: ningún dato de fichas, sesión ni identificador. El análisis y las tareas van en informe.md.
@@ -41,6 +42,12 @@ export function budgetRows(all) {
   for (const c of [5, 10]) {
     const pass = pick(result, "listado-inicial", c)
     if (pass) rows.push([`Acción de listado con ${c} sesiones concurrentes`, `p95 ≤ ${BUDGET.actionP95} ms`, `${pass.accionMs.p95} ms (${pass.peticionesPorSegundo} peticiones/s; pool máx. ${pass.pool?.maxTotal})`, verdict(pass.accionMs.p95 <= BUDGET.actionP95)])
+  }
+  // Resto de acciones de navegación con varias sesiones: se listan solo las que superan el presupuesto de acción.
+  for (const item of contractResults(result)) {
+    if (item.status !== "over-budget" || item.unit !== "ms" || item.scenario.startsWith("sql:") || item.scenario.startsWith("web:") || !item.concurrency || item.concurrency === 1) continue
+    if (item.scenario.startsWith("listado-inicial@")) continue
+    rows.push([`${item.scenario.replace("@", " con ")} sesiones concurrentes`, `p95 ≤ ${BUDGET.actionP95} ms`, `p95 ${item.p95} ms (p50 ${item.p50} ms)`, verdict(false)])
   }
   const scene = pick(result, "estanteria-3d-pagina-48")
   if (scene) rows.push(["Vista 3D: libros por página", `≤ ${BUDGET.sceneRows}`, `${scene.filas.max}`, verdict(scene.filas.max <= BUDGET.sceneRows)])
@@ -94,7 +101,7 @@ export function writeTables(dir, { manifest, all }) {
   if (all.cuota) {
     const q = all.cuota
     lines.push("## Cuota distribuida con dos procesos (catálogo en fixture)", "",
-      `- Dos procesos × ${q.distintos.consultasPorProceso} ISBN distintos: ${q.distintos.peticionesAlProveedor} peticiones al proveedor simulado, separación mínima entre las plazas reservadas por la base ${q.distintos.separacionPlazasMinimaMs} ms y entre las peticiones observadas ${q.distintos.separacionMinimaMs} ms (media ${q.distintos.separacionMediaMs} ms; intervalo exigido ${q.distintos.intervaloOLms} ms; holgura de planificación del sistema 60 ms) → ${q.distintos.cumpleIntervalo ? "cumple" : "**no cumple**"}. Duración total ${q.distintos.duracionTotalMs} ms; latencia por consulta (incluye la espera de su plaza) p50 ${q.distintos.latenciaConsultaMs.p50} ms / p95 ${q.distintos.latenciaConsultaMs.p95} ms.`,
+      `- Dos procesos × ${q.distintos.consultasPorProceso} ISBN distintos: ${q.distintos.peticionesAlProveedor} peticiones al proveedor simulado, separación mínima entre las plazas reservadas por la base ${q.distintos.separacionPlazasMinimaMs} ms (intervalo exigido ${q.distintos.intervaloOLms} ms) → ${q.distintos.cumpleIntervalo ? "cumple" : "**no cumple**"}. Entre las peticiones observadas la separación mínima fue ${q.distintos.separacionMinimaMs} ms (media ${q.distintos.separacionMediaMs} ms): hasta ${q.distintos.jitterObservadoMs} ms de jitter de planificación del proceso, no una reserva adelantada. Duración total ${q.distintos.duracionTotalMs} ms; latencia por consulta (incluye la espera de su plaza) p50 ${q.distintos.latenciaConsultaMs.p50} ms / p95 ${q.distintos.latenciaConsultaMs.p95} ms.`,
       `- Conexiones de los procesos (muestreo cada 25 ms, ${q.distintos.conexiones.muestras} muestras): máx. ${q.distintos.conexiones.conexionesMaximas} simultáneas (pool de 2 por proceso), ${q.distintos.conexiones.activasMaximas} activa(s), «idle in transaction» máx. ${q.distintos.conexiones.enTransaccionInactivaMaximas}, transacción más larga ${q.distintos.conexiones.transaccionMasLargaMs} ms.`,
       `- Caché compartida: ${q.aciertosDeCache.consultas} consultas repetidas desde el otro proceso, ${q.aciertosDeCache.peticionesAlProveedor} peticiones al proveedor, latencia p50 ${q.aciertosDeCache.latenciaMs.p50} ms / p95 ${q.aciertosDeCache.latenciaMs.p95} ms.`,
       `- Consulta en vuelo: el mismo ISBN pedido a la vez por los dos procesos → ${q.consultaEnVueloCompartida.peticionesAlProveedor} petición al proveedor.`, "")

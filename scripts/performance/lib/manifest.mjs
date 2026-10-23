@@ -19,6 +19,10 @@ function packageVersion(name) {
   try { return JSON.parse(readFileSync(path.join(REPO_ROOT, "node_modules", name, "package.json"), "utf8")).version } catch { return null }
 }
 
+function packageManager() {
+  try { return JSON.parse(readFileSync(path.join(REPO_ROOT, "package.json"), "utf8")).packageManager?.replace(/^pnpm@/, "") ?? null } catch { return null }
+}
+
 /**
  * Manifiesto de la medición: hardware del anfitrión, recursos asignados a Docker y versiones. No incluye
  * nombre de equipo, direcciones, usuario del sistema ni variables de entorno.
@@ -56,7 +60,7 @@ export async function collectManifest({ sql, projectId, browserVersion = null })
     },
     postgres: { version: version.replace(/\s+on\s+.*$/, ""), ajustes: settings },
     software: {
-      node: process.version, pnpm: await command(process.platform === "win32" ? "pnpm.cmd" : "pnpm", ["--version"]),
+      node: process.version, pnpm: packageManager(),
       next: packageVersion("next"), react: packageVersion("react"), drizzleOrm: packageVersion("drizzle-orm"),
       postgresJs: packageVersion("postgres"), supabaseCli: packageVersion("supabase"), playwright: packageVersion("@playwright/test"),
       navegador: browserVersion,

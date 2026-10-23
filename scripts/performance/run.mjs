@@ -259,8 +259,10 @@ export async function runPerformance(argv = process.argv.slice(2), out = process
     }
     writeTables(outDir, { manifest, all })
     if (options.cleanup) { await removeScaleAccount({ profile, lockHeld: true }, deps); log("Cuenta de escala eliminada.") }
+    // El contrato persistido recoge todos los tamaños de la carpeta; stdout, solo los de esta ejecución.
+    const persisted = SCALES.filter((size) => all.tamanos[size]).map((size) => ({ scale: size, results: contractResults(all.tamanos[size]) }))
+    writeJson(outDir, "contrato.json", persisted.length === 1 ? { schemaVersion: 1, profile, scale: persisted[0].scale, results: persisted[0].results } : { schemaVersion: 1, profile, scales: persisted })
     const document = contract.length === 1 ? { schemaVersion: 1, profile, scale: contract[0].scale, results: contract[0].results } : { schemaVersion: 1, profile, scales: contract }
-    writeJson(outDir, "contrato.json", document)
     if (options.json) out.write(`${JSON.stringify(document)}\n`)
     else log(`Resultados en ${path.relative(REPO_ROOT, outDir) || "."}: ${contract.reduce((n, c) => n + c.results.filter((r) => r.status === "over-budget").length, 0)} medida(s) fuera de presupuesto.`)
     return interrupted ? EXIT.INTERRUPTED : EXIT.OK
