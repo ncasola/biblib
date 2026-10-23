@@ -1,7 +1,8 @@
 "use client"
 
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState, type MouseEvent } from "react"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import { ChevronLeft, ChevronRight, Filter, LayoutGrid, List, Plus, Search, X } from "lucide-react"
 import { getShelvesAction } from "@/app/actions/shelves"
 import { listBooksAction } from "@/app/actions/library"
@@ -13,7 +14,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { LoadingState } from "@/components/loading-state"
-import { BOOK_PAGE_SIZE, defaultBookSearchFilters, normalizeBookSearchQuery, parseBookSearchFilters, serializeBookSearchFilters, type BookSearchFilters, type BookSort, type BookSortKey, type BookStatusFilter, type BookView } from "@/lib/book-search"
+import { BOOK_PAGE_SIZE, bookRowAnchor, buildBookDetailHref, buildCollectionPath, defaultBookSearchFilters, parseBookRowAnchor, normalizeBookSearchQuery, parseBookSearchFilters, serializeBookSearchFilters, type BookSearchFilters, type BookSort, type BookSortKey, type BookStatusFilter, type BookView } from "@/lib/book-search"
 import type { Book, Shelf } from "@/lib/types"
 import { unwrapAction } from "@/lib/action-result"
 
@@ -34,10 +35,12 @@ const SORT_OPTIONS: ReadonlyArray<{ value: BookSort; label: string }> = [
   { value: "-status", label: "Estado (Z-A)" },
 ]
 
+// Un cambio de filtros, orden, vista o página descarta el fragmento de la fila recordada:
+// ya no apunta a lo que se está viendo y no debe restaurarse un desplazamiento obsoleto.
 function updateAddress(filters: BookSearchFilters, defaultView: BookView = "table"): void {
   const params = new URLSearchParams(window.location.search)
   const query = serializeBookSearchFilters(filters, params, defaultView)
-  const nextUrl = `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`
+  const nextUrl = `${window.location.pathname}${query ? `?${query}` : ""}`
   window.history.replaceState(window.history.state, "", nextUrl)
 }
 
@@ -46,6 +49,7 @@ function getBookSortLabel(sort: BookSort): string {
 }
 
 export function BooksTable({ initialView = "table" }: BooksTableProps) {
+  const pathname = usePathname()
   const [filters, setFilters] = useState<BookSearchFilters>(() => defaultBookSearchFilters(initialView))
   const [queryInput, setQueryInput] = useState("")
   const [showFilters, setShowFilters] = useState(false)
@@ -91,6 +95,19 @@ export function BooksTable({ initialView = "table" }: BooksTableProps) {
     }), [])
 
   useEffect(() => { void loadShelves() }, [loadShelves])
+
+  // Al volver desde una ficha la URL trae `#book-row-<id>`: cuando ya está el listado se muestra esa fila
+  // una sola vez y se retira el fragmento. Si la fila no está en esta página, simplemente se ignora.
+  useEffect(() => {
+    if (!ready || !hasLoaded || loading || listError) return
+    const bookId = parseBookRowAnchor(window.location.hash)
+    if (!bookId) return
+    window.history.replaceState(window.history.state, "", `${window.location.pathname}${window.location.search}`)
+    const row = document.getElementById(bookRowAnchor(bookId))
+    if (!row) return
+    row.scrollIntoView({ block: "center" })
+    row.querySelector<HTMLElement>("a[href]")?.focus({ preventScroll: true })
+  }, [ready, hasLoaded, loading, listError, books])
 
   useEffect(() => {
     if (!ready || queryInput === filters.q) return
@@ -190,6 +207,13 @@ export function BooksTable({ initialView = "table" }: BooksTableProps) {
     }
   }
 
+  const collectionPath = buildCollectionPath(pathname, filters, initialView)
+  const detailHref = (bookId: string) => buildBookDetailHref(bookId, `${collectionPath}#${bookRowAnchor(bookId)}`)
+  // El historial de esta entrada recuerda la fila abierta para que «Atrás» la recupere.
+  const rememberOpenedBook = (event: MouseEvent<HTMLAnchorElement>, bookId: string) => {
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
+    window.history.replaceState(window.history.state, "", `${window.location.pathname}${window.location.search}#${bookRowAnchor(bookId)}`)
+  }
   const pageCount = Math.ceil(total / BOOK_PAGE_SIZE)
   const firstResult = total === 0 ? 0 : (filters.page - 1) * BOOK_PAGE_SIZE + 1
   const lastResult = Math.min(filters.page * BOOK_PAGE_SIZE, total)
@@ -262,11 +286,11 @@ export function BooksTable({ initialView = "table" }: BooksTableProps) {
       ) : filters.view === "table" ? (
         <div className="overflow-x-auto rounded-lg border border-border">
           <Table><TableHeader className="bg-surface"><TableRow><TableHead scope="col"><span className="sr-only">Seleccionar</span></TableHead><TableHead scope="col" className="text-foreground">Portada</TableHead>{columns.map(({ key, label }) => {const active = filters.sort === key || filters.sort === `-${key}`; const direction = filters.sort.startsWith("-") ? "desc" : "asc"; return <TableHead key={key} scope="col" aria-sort={active ? (direction === "asc" ? "ascending" : "descending") : "none"} className="p-0 text-foreground"><button type="button" onClick={() => sortColumn(key)} className="flex min-h-11 w-full items-center gap-2 px-4 text-left font-semibold hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">{label}{active && <span aria-hidden="true">{direction === "desc" ? "↓" : "↑"}</span>}<span className="sr-only">{active ? `Orden actual ${direction === "asc" ? "ascendente" : "descendente"}` : "Ordenar"}</span></button></TableHead>})}<TableHead scope="col" className="text-foreground">Acciones</TableHead></TableRow></TableHeader>
-            <TableBody>{books.map((book) => <TableRow key={book.id} className="border-b border-border hover:bg-surface/50"><TableCell><input type="checkbox" checked={selectedIds.includes(book.id)} disabled={loading || movePending} onChange={(event) => toggleBookSelection(book.id, event.target.checked)} aria-label={`Seleccionar ${book.title}`} className="h-4 w-4 accent-primary" /></TableCell><TableCell><BookCover cover={book.cover} title={book.title} className="w-10" size="small" sizes="40px" /></TableCell><TableCell><p className="font-medium text-foreground">{book.title}</p>{book.subtitle && <p className="text-xs text-muted-foreground">{book.subtitle}</p>}</TableCell><TableCell>{book.authors.length ? book.authors.map((author) => author.name).join(", ") : "Desconocido"}</TableCell><TableCell>{book.number_of_pages || "—"}</TableCell><TableCell>{book.publish_date || "—"}</TableCell><TableCell><BookStatusBadge status={book.status} /></TableCell><TableCell><Link href={`/book/${book.id}`} className="font-medium text-primary underline-offset-4 hover:underline">Ver<span className="sr-only"> {book.title}</span></Link></TableCell></TableRow>)}</TableBody>
+            <TableBody>{books.map((book) => <TableRow key={book.id} id={bookRowAnchor(book.id)} className="scroll-mt-28 border-b border-border hover:bg-surface/50"><TableCell><input type="checkbox" checked={selectedIds.includes(book.id)} disabled={loading || movePending} onChange={(event) => toggleBookSelection(book.id, event.target.checked)} aria-label={`Seleccionar ${book.title}`} className="h-4 w-4 accent-primary" /></TableCell><TableCell><BookCover cover={book.cover} title={book.title} className="w-10" size="small" sizes="40px" /></TableCell><TableCell><p className="font-medium text-foreground">{book.title}</p>{book.subtitle && <p className="text-xs text-muted-foreground">{book.subtitle}</p>}</TableCell><TableCell>{book.authors.length ? book.authors.map((author) => author.name).join(", ") : "Desconocido"}</TableCell><TableCell>{book.number_of_pages || "—"}</TableCell><TableCell>{book.publish_date || "—"}</TableCell><TableCell><BookStatusBadge status={book.status} /></TableCell><TableCell><Link href={detailHref(book.id)} onClick={(event) => rememberOpenedBook(event, book.id)} className="font-medium text-primary underline-offset-4 hover:underline">Ver<span className="sr-only"> {book.title}</span></Link></TableCell></TableRow>)}</TableBody>
           </Table>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">{books.map((book) => <article key={book.id} className="flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-lg"><div className="flex items-center justify-between gap-2 p-3"><label className="flex items-center gap-2 text-sm text-muted-foreground"><input type="checkbox" checked={selectedIds.includes(book.id)} disabled={loading || movePending} onChange={(event) => toggleBookSelection(book.id, event.target.checked)} aria-label={`Seleccionar ${book.title}`} className="h-4 w-4 accent-primary" />Seleccionar</label><BookStatusBadge status={book.status} /></div><Link href={`/book/${book.id}`} className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"><BookCover cover={book.cover} title={book.title} className="w-full rounded-none border-x-0 border-b-0 border-t" sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" /></Link><div className="flex flex-1 flex-col gap-2 p-5"><h2 className="line-clamp-2 font-bold text-foreground"><Link href={`/book/${book.id}`} className="underline-offset-4 hover:text-primary hover:underline">{book.title}</Link></h2><p className="text-sm text-muted-foreground">{book.authors.map((author) => author.name).join(", ") || "Desconocido"}</p><div className="mt-auto flex items-end justify-between gap-3 pt-3"><span className="text-xs text-muted-foreground">{book.shelf_name}</span></div></div></article>)}</div>
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">{books.map((book) => <article key={book.id} id={bookRowAnchor(book.id)} className="flex h-full scroll-mt-28 flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-lg"><div className="flex items-center justify-between gap-2 p-3"><label className="flex items-center gap-2 text-sm text-muted-foreground"><input type="checkbox" checked={selectedIds.includes(book.id)} disabled={loading || movePending} onChange={(event) => toggleBookSelection(book.id, event.target.checked)} aria-label={`Seleccionar ${book.title}`} className="h-4 w-4 accent-primary" />Seleccionar</label><BookStatusBadge status={book.status} /></div><Link href={detailHref(book.id)} onClick={(event) => rememberOpenedBook(event, book.id)} className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"><BookCover cover={book.cover} title={book.title} className="w-full rounded-none border-x-0 border-b-0 border-t" sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" /></Link><div className="flex flex-1 flex-col gap-2 p-5"><h2 className="line-clamp-2 font-bold text-foreground"><Link href={detailHref(book.id)} onClick={(event) => rememberOpenedBook(event, book.id)} className="underline-offset-4 hover:text-primary hover:underline">{book.title}</Link></h2><p className="text-sm text-muted-foreground">{book.authors.map((author) => author.name).join(", ") || "Desconocido"}</p><div className="mt-auto flex items-end justify-between gap-3 pt-3"><span className="text-xs text-muted-foreground">{book.shelf_name}</span></div></div></article>)}</div>
       )}
 
       <div className="flex flex-col items-center justify-between gap-4 pt-2 sm:flex-row"><p className="text-center text-sm text-muted-foreground sm:text-left">Mostrando {firstResult} a {lastResult} de {total} libros</p><nav aria-label="Paginación de libros" className="flex items-center gap-2"><Button variant="outline" size="sm" aria-label="Página anterior" onClick={() => updateFilters({ page: Math.max(filters.page - 1, 1) }, false)} disabled={filters.page <= 1 || loading}><ChevronLeft aria-hidden="true" /></Button><span className="min-w-24 text-center text-sm text-muted-foreground">Página {pageCount ? Math.min(filters.page, pageCount) : 0} de {pageCount}</span><Button variant="outline" size="sm" aria-label="Página siguiente" onClick={() => updateFilters({ page: Math.min(filters.page + 1, pageCount) }, false)} disabled={filters.page >= pageCount || loading}><ChevronRight aria-hidden="true" /></Button></nav></div>
