@@ -1,22 +1,22 @@
 import { defineConfig } from "drizzle-kit"
-import { existsSync } from "node:fs"
 
-// Generar SQL es offline: no lee archivos privados ni exige credenciales.
-// La aplicación legacy conserva su carga actual hasta el despachador U-INF-04.
-const generating = process.argv.includes("generate")
-if (!generating) {
-  for (const file of [".env.local", ".env"]) {
-    if (existsSync(file)) process.loadEnvFile(file)
-  }
+// Drizzle Kit solo se usa offline (generate/check): no lee .env/.env.local ni abre conexiones.
+// El único aplicador del esquema es el runner de U-INF-04 (db:status/plan/migrate:local), que
+// fija el mismo ledger que se declara aquí.
+const offline = ["generate", "check", "up"]
+const command = process.argv.slice(2).find((arg) => !arg.startsWith("-"))
+if (command && !offline.includes(command)) {
+  throw new Error(`drizzle-kit ${command} no está habilitado en BibLib: usa pnpm db:status:local, db:plan:local y db:migrate:local.`)
 }
 
 export default defineConfig({
   schema: "./lib/db/schema.ts",
   out: "./drizzle",
   dialect: "postgresql",
-  ...(!generating && { dbCredentials: {
-    url: process.env.SUPABASE_DB_URL ?? "",
-  } }),
+  migrations: {
+    schema: "drizzle",
+    table: "__drizzle_migrations",
+  },
   strict: true,
   verbose: true,
   entities: {
