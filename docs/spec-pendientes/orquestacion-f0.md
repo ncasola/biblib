@@ -1,6 +1,6 @@
 # Orquestación de F0 con Orca
 
-**Versión:** 1.0 · **Fecha:** 23 de octubre de 2026 · **Estado:** en ejecución.
+**Versión:** 1.0 · **Fecha:** 23 de octubre de 2026 · **Estado:** F0 implementada en local (G06 superada el 23-10-2026, [evidencia](../validacion/2026-10-23/O06/g06-coordinador.md)); pendientes externos en `unidades.json`.
 
 Plan operativo para implementar la fase F0 (O00–O06) de esta spec con workers supervisados de Orca: Claude Code, Codex y OpenCode Go. Este documento fija las reglas comunes, el contrato compartido entre unidades y el reparto de agentes. Las unidades y su aceptación siguen siendo las de [01](01-entorno-y-migraciones.md) y [04](04-calidad-seguridad-y-operacion.md); aquí solo se concreta lo que la spec deja a la implementación y que varios workers necesitan compartir.
 

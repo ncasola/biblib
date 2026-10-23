@@ -165,7 +165,8 @@
         "QA-02",
         "OPS-02"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O06 · merge 011c627; reset físico acotado + SIGINT/continuación + bootstrap doble (docs/validacion/2026-10-23/O06/); G06 en g06-coordinador.md"
     },
     {
       "id": "U-INF-07",
