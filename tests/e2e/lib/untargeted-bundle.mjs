@@ -9,7 +9,8 @@ import { checkClientBundle } from "../../../scripts/check-client-bundle.mjs"
 // Comprueba que un `next build` sin BIBLIB_TARGET (el equivalente a `pnpm build`) no contiene el formulario
 // de acceso local. Se compila en una carpeta temporal, como scripts/smoke-app.mjs, para no leer ni
 // arrastrar archivos .env del checkout ni pisar `.next`. Se hereda a propósito
-// NEXT_PUBLIC_BIBLIB_LOCAL_LOGIN=1: next.config.mjs debe ignorarla sin objetivo.
+// NEXT_PUBLIC_BIBLIB_LOCAL_LOGIN=1: next.config.mjs debe ignorarla sin objetivo. Se compila con webpack,
+// como el smoke: Turbopack no resuelve el node_modules enlazado fuera de la raíz temporal.
 
 const LINKED = ["app", "components", "hooks", "lib", "public", "scripts", "tests/fixtures", "node_modules"]
 const COPIED = ["package.json", "next.config.mjs", "postcss.config.mjs", "tsconfig.json", "next-env.d.ts", "proxy.ts", "supabase/profiles.json"]
@@ -37,7 +38,7 @@ export async function checkUntargetedBuild({ logFile }) {
     })
     const output = []
     const code = await new Promise((resolve, reject) => {
-      const child = spawn(process.execPath, [path.join(REPO_ROOT, "node_modules/next/dist/bin/next"), "build", workspace], { cwd: workspace, env, windowsHide: true, stdio: ["ignore", "pipe", "pipe"] })
+      const child = spawn(process.execPath, [path.join(REPO_ROOT, "node_modules/next/dist/bin/next"), "build", workspace, "--webpack"], { cwd: workspace, env, windowsHide: true, stdio: ["ignore", "pipe", "pipe"] })
       for (const stream of [child.stdout, child.stderr]) stream.on("data", (chunk) => output.push(chunk))
       child.once("error", reject)
       child.once("close", resolve)

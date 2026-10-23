@@ -20,7 +20,7 @@ export const BROWSERS = ["chromium", "firefox", "webkit"]
 export const E2E_DIR = path.join(REPO_ROOT, ".biblib", "e2e")
 const PLAYWRIGHT_CLI = path.join(REPO_ROOT, "node_modules", "@playwright", "test", "cli.js")
 const GUARD = path.join(REPO_ROOT, "tests", "e2e", "lib", "server-network-guard.mjs")
-const USAGE = "Uso: test:e2e:local [--profile test] [--project chromium|firefox|webkit]… [--reuse-build] [--check-untargeted-build] [--grep <texto>] [--no-deps] [--ui] · test:e2e:external"
+const USAGE = "Uso: test:e2e:local [--profile test] [--project chromium|firefox|webkit]… [--reuse-build] [--grep <texto>] [--no-deps] [--ui] · --check-untargeted-build · test:e2e:external"
 const fail = (code, phase, message) => { throw new BiblibError(code, phase, message) }
 
 export function parseArgs(argv) {
@@ -40,7 +40,9 @@ export function parseArgs(argv) {
     else if (flag === "--grep" && argv[i + 1] && !argv[i + 1].startsWith("--")) parsed.grep = argv[++i]
     else fail(EXIT.INVALID_ARGS, "argumentos", USAGE)
   }
-  if (parsed.external && (parsed.projects.length || parsed.reuseBuild || parsed.ui || parsed.checkUntargeted || parsed.noDeps)) fail(EXIT.INVALID_ARGS, "argumentos", "test:e2e:external no admite opciones del stack local.")
+  const local = parsed.projects.length || parsed.reuseBuild || parsed.ui || parsed.noDeps || parsed.grep !== undefined
+  if (parsed.external && (local || parsed.checkUntargeted)) fail(EXIT.INVALID_ARGS, "argumentos", "test:e2e:external no admite opciones del stack local.")
+  if (parsed.checkUntargeted && local) fail(EXIT.INVALID_ARGS, "argumentos", "--check-untargeted-build es una comprobación aparte: no se combina con los recorridos.")
   if (!parsed.projects.length) parsed.projects.push("chromium")
   return parsed
 }
@@ -105,6 +107,14 @@ async function runExternal(options, out) {
 export async function runE2E(argv = process.argv.slice(2), out = process.stdout) {
   const options = parseArgs(argv)
   if (options.external) return runExternal(options, out)
+  if (options.checkUntargeted) {
+    // Comprobación de U-LOC-01: sin stack ni sesiones; solo compila y revisa el bundle.
+    mkdirSync(E2E_DIR, { recursive: true, mode: 0o700 })
+    out.write("Compilando un build sin objetivo en una carpeta temporal (sin archivos .env)…\n")
+    const result = await checkUntargetedBuild({ logFile: path.join(E2E_DIR, "build-sin-objetivo.log") })
+    out.write(`Build sin objetivo: ${result.files} archivos estáticos revisados, sin formulario de acceso local ni material privado.\n`)
+    return EXIT.OK
+  }
   if (process.env.BIBLIB_TARGET && process.env.BIBLIB_TARGET !== "local") fail(EXIT.IDENTITY_MISMATCH, "objetivo", "El E2E local solo admite BIBLIB_TARGET=local (perfil test).")
   const runId = randomBytes(6).toString("hex")
   mkdirSync(E2E_DIR, { recursive: true, mode: 0o700 })
@@ -132,11 +142,6 @@ export async function runE2E(argv = process.argv.slice(2), out = process.stdout)
     const usersBefore = await listUsers(admin)
 
     const env = childEnvironment({})
-    if (options.checkUntargeted) {
-      out.write("Compilando un build sin objetivo en una carpeta temporal (sin archivos .env)…\n")
-      const result = await checkUntargetedBuild({ logFile: path.join(E2E_DIR, "build-sin-objetivo.log") })
-      out.write(`Build sin objetivo: ${result.files} archivos estáticos revisados, sin formulario de acceso local ni material privado.\n`)
-    }
     if (!options.reuseBuild) {
       out.write("Compilando la app para el perfil test…\n")
       const code = await run(process.execPath, ["scripts/next-target.mjs", "build", "local", "--profile", PROFILE], { env, logFile: path.join(E2E_DIR, "build.log") })

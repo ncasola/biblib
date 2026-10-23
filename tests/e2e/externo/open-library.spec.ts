@@ -4,7 +4,8 @@ import { createConfiguredCatalog } from "../../../lib/bibliographic-catalog/regi
 
 // pnpm test:e2e:external — comprobación opt-in con Open Library real (modo live), fuera de CI de PR.
 // Usa el mismo servicio de catálogo que la app con un ISBN público de prueba; no usa cuentas ni datos
-// privados. Sin red falla con un mensaje claro en lugar de confundirse con «libro inexistente».
+// privados. Sin red falla con un mensaje claro en lugar de confundirse con «libro inexistente». No se
+// comprueba aquí un «no encontrado» live: los ISBN ficticios del censo existen en Open Library.
 
 const PUBLIC_ISBN = "9780140328721" // Fantastic Mr Fox (Puffin), ejemplo habitual de la documentación de Open Library.
 
@@ -24,11 +25,4 @@ test("Open Library live: un ISBN público se encuentra con su título", async ()
   expect(result.status).toBe("found")
   expect(result.candidates[0]?.title).toMatch(/fantastic mr\.? fox/i)
   expect(result.candidates[0]?.isbns).toContain(PUBLIC_ISBN)
-})
-
-test("Open Library live: un ISBN ficticio es «no encontrado», no un fallo del proveedor", async () => {
-  const catalog = createConfiguredCatalog(readCatalogConfig({ BIBLIB_TARGET: "local", BIBLIB_CATALOGUE_MODE: "live" }))
-  const result = await catalog.lookupISBN("9780000000019")
-  expect(result.providers.find((provider) => provider.provider === "open-library")?.status).toBe("notFound")
-  expect(result.status).toBe("notFound")
 })
