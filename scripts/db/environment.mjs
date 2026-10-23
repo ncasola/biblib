@@ -192,6 +192,20 @@ export function childEnv(ctx) {
   }
 }
 
+// U-OPS-04: credenciales que el proceso de la app no recibe nunca. Solo las usan seed, fixtures,
+// copias y verificaciones, que las obtienen de su propio loadTarget fuera de Next.
+export const APP_EXCLUDED_KEYS = Object.freeze(["SUPABASE_SERVICE_ROLE_KEY"])
+
+/**
+ * Entorno del proceso de Next (dev/build/start). Las claves excluidas se fijan vacías: además de no
+ * heredarse, impiden que Next las cargue después desde un .env.local de main generado con ellas.
+ */
+export function appEnv(ctx) {
+  const env = childEnv(ctx)
+  for (const key of APP_EXCLUDED_KEYS) env[key] = ""
+  return env
+}
+
 export function writeLocalEnvFile(ctx) {
   if (ctx.target !== "local") fail("Solo se puede generar .env.local para el objetivo local.")
   const file = path.join(ctx.cwd, ".env.local")

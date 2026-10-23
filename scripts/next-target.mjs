@@ -2,7 +2,7 @@ import { spawn } from "node:child_process"
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import path from "node:path"
 import { pathToFileURL } from "node:url"
-import { assertNoForeignEnvFiles, childEnv, loadTarget, targetInputs, validateTarget } from "./db/environment.mjs"
+import { appEnv, assertNoForeignEnvFiles, loadTarget, targetInputs, validateTarget } from "./db/environment.mjs"
 import { BiblibError, EXIT } from "./lib/exit-codes.mjs"
 import { getProfile, REPO_ROOT } from "./lib/profiles.mjs"
 
@@ -25,6 +25,11 @@ export function assertBuildTarget(ctx) {
   }
 }
 
+/** Entorno del proceso de Next: sin service_role (U-OPS-04), ni siquiera desde .env.local. */
+export function nextEnv(ctx, command) {
+  return { ...appEnv(ctx), NODE_ENV: command === "dev" ? "development" : "production" }
+}
+
 export async function runNextTarget(args, { cwd = REPO_ROOT, env = process.env } = {}) {
   const [command, target, ...options] = args
   validateTarget(target)
@@ -43,7 +48,7 @@ export async function runNextTarget(args, { cwd = REPO_ROOT, env = process.env }
   const nextArgs = [path.join(REPO_ROOT, "node_modules/next/dist/bin/next"), command]
   if (command !== "build") nextArgs.push("--hostname", app.host, "--port", String(app.port))
   const code = await new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, nextArgs, { cwd, env: { ...childEnv(ctx), NODE_ENV: command === "dev" ? "development" : "production" }, stdio: "inherit", windowsHide: true })
+    const child = spawn(process.execPath, nextArgs, { cwd, env: nextEnv(ctx, command), stdio: "inherit", windowsHide: true })
     child.once("error", () => reject(new BiblibError(EXIT.MISSING_REQUIREMENT, "next", "No se puede ejecutar el Next del repositorio.")))
     child.once("exit", (status) => resolve(status ?? EXIT.INTERRUPTED))
   })

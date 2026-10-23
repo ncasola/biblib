@@ -1,0 +1,570 @@
+{
+  "schemaVersion": 1,
+  "profile": "scratch",
+  "project": "biblib-scratch",
+  "checkedAt": "2026-10-23T19:52:35.338Z",
+  "total": 35,
+  "failed": 0,
+  "results": [
+    {
+      "route": "/",
+      "as": "a",
+      "method": "GET",
+      "type": "html-autenticado",
+      "status": 200,
+      "headers": {
+        "cache-control": "private, no-store",
+        "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch, Accept-Encoding",
+        "location": null,
+        "set-cookie": null,
+        "csp": "default-src 'self'; script-src 'self' 'nonce-…' 'strict-dynamic'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://covers.openlibrary.org http://127.0.0.1:55341; font-src 'self' data:; connect-src 'self' http://127.0.0.1:55341; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+      },
+      "ok": true,
+      "problems": []
+    },
+    {
+      "route": "/books",
+      "as": "a",
+      "method": "GET",
+      "type": "html-autenticado",
+      "status": 200,
+      "headers": {
+        "cache-control": "private, no-store",
+        "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch, Accept-Encoding",
+        "location": null,
+        "set-cookie": null,
+        "csp": "default-src 'self'; script-src 'self' 'nonce-…' 'strict-dynamic'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://covers.openlibrary.org http://127.0.0.1:55341; font-src 'self' data:; connect-src 'self' http://127.0.0.1:55341; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+      },
+      "ok": true,
+      "problems": []
+    },
+    {
+      "route": "/books/add",
+      "as": "a",
+      "method": "GET",
+      "type": "html-autenticado",
+      "status": 200,
+      "headers": {
+        "cache-control": "private, no-store",
+        "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch, Accept-Encoding",
+        "location": null,
+        "set-cookie": null,
+        "csp": "default-src 'self'; script-src 'self' 'nonce-…' 'strict-dynamic'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://covers.openlibrary.org http://127.0.0.1:55341; font-src 'self' data:; connect-src 'self' http://127.0.0.1:55341; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+      },
+      "ok": true,
+      "problems": []
+    },
+    {
+      "route": "/books/search",
+      "as": "a",
+      "method": "GET",
+      "type": "html-autenticado",
+      "status": 200,
+      "headers": {
+        "cache-control": "private, no-store",
+        "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch, Accept-Encoding",
+        "location": null,
+        "set-cookie": null,
+        "csp": "default-src 'self'; script-src 'self' 'nonce-…' 'strict-dynamic'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://covers.openlibrary.org http://127.0.0.1:55341; font-src 'self' data:; connect-src 'self' http://127.0.0.1:55341; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+      },
+      "ok": true,
+      "problems": []
+    },
+    {
+      "route": "/book/:libroA",
+      "as": "a",
+      "method": "GET",
+      "type": "html-autenticado",
+      "status": 200,
+      "headers": {
+        "cache-control": "private, no-store",
+        "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch, Accept-Encoding",
+        "location": null,
+        "set-cookie": null,
+        "csp": "default-src 'self'; script-src 'self' 'nonce-…' 'strict-dynamic'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://covers.openlibrary.org http://127.0.0.1:55341; font-src 'self' data:; connect-src 'self' http://127.0.0.1:55341; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+      },
+      "ok": true,
+      "problems": []
+    },
+    {
+      "route": "/shelves",
+      "as": "a",
+      "method": "GET",
+      "type": "html-autenticado",
+      "status": 200,
+      "headers": {
+        "cache-control": "private, no-store",
+        "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch, Accept-Encoding",
+        "location": null,
+        "set-cookie": null,
+        "csp": "default-src 'self'; script-src 'self' 'nonce-…' 'strict-dynamic'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://covers.openlibrary.org http://127.0.0.1:55341; font-src 'self' data:; connect-src 'self' http://127.0.0.1:55341; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+      },
+      "ok": true,
+      "problems": []
+    },
+    {
+      "route": "/shelves/3d",
+      "as": "a",
+      "method": "GET",
+      "type": "html-autenticado",
+      "status": 200,
+      "headers": {
+        "cache-control": "private, no-store",
+        "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch, Accept-Encoding",
+        "location": null,
+        "set-cookie": null,
+        "csp": "default-src 'self'; script-src 'self' 'nonce-…' 'strict-dynamic'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://covers.openlibrary.org http://127.0.0.1:55341; font-src 'self' data:; connect-src 'self' http://127.0.0.1:55341; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+      },
+      "ok": true,
+      "problems": []
+    },
+    {
+      "route": "/settings",
+      "as": "a",
+      "method": "GET",
+      "type": "html-autenticado",
+      "status": 200,
+      "headers": {
+        "cache-control": "private, no-store",
+        "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch, Accept-Encoding",
+        "location": null,
+        "set-cookie": null,
+        "csp": "default-src 'self'; script-src 'self' 'nonce-…' 'strict-dynamic'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://covers.openlibrary.org http://127.0.0.1:55341; font-src 'self' data:; connect-src 'self' http://127.0.0.1:55341; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+      },
+      "ok": true,
+      "problems": []
+    },
+    {
+      "route": "/profile",
+      "as": "a",
+      "method": "GET",
+      "type": "html-autenticado",
+      "status": 200,
+      "headers": {
+        "cache-control": "private, no-store",
+        "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch, Accept-Encoding",
+        "location": null,
+        "set-cookie": null,
+        "csp": "default-src 'self'; script-src 'self' 'nonce-…' 'strict-dynamic'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://covers.openlibrary.org http://127.0.0.1:55341; font-src 'self' data:; connect-src 'self' http://127.0.0.1:55341; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+      },
+      "ok": true,
+      "problems": []
+    },
+    {
+      "route": "/",
+      "as": "anon",
+      "method": "GET",
+      "type": "redireccion-sesion",
+      "status": 307,
+      "headers": {
+        "cache-control": "private, no-store",
+        "vary": "Cookie",
+        "location": "/login?redirect=%2F",
+        "set-cookie": null,
+        "csp": "default-src 'self'; script-src 'self' 'nonce-…' 'strict-dynamic'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://covers.openlibrary.org http://127.0.0.1:55341; font-src 'self' data:; connect-src 'self' http://127.0.0.1:55341; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+      },
+      "ok": true,
+      "problems": []
+    },
+    {
+      "route": "/books",
+      "as": "anon",
+      "method": "GET",
+      "type": "redireccion-sesion",
+      "status": 307,
+      "headers": {
+        "cache-control": "private, no-store",
+        "vary": "Cookie",
+        "location": "/login?redirect=%2Fbooks",
+        "set-cookie": null,
+        "csp": "default-src 'self'; script-src 'self' 'nonce-…' 'strict-dynamic'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://covers.openlibrary.org http://127.0.0.1:55341; font-src 'self' data:; connect-src 'self' http://127.0.0.1:55341; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+      },
+      "ok": true,
+      "problems": []
+    },
+    {
+      "route": "/books/add",
+      "as": "anon",
+      "method": "GET",
+      "type": "redireccion-sesion",
+      "status": 307,
+      "headers": {
+        "cache-control": "private, no-store",
+        "vary": "Cookie",
+        "location": "/login?redirect=%2Fbooks%2Fadd",
+        "set-cookie": null,
+        "csp": "default-src 'self'; script-src 'self' 'nonce-…' 'strict-dynamic'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://covers.openlibrary.org http://127.0.0.1:55341; font-src 'self' data:; connect-src 'self' http://127.0.0.1:55341; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+      },
+      "ok": true,
+      "problems": []
+    },
+    {
+      "route": "/books/search",
+      "as": "anon",
+      "method": "GET",
+      "type": "redireccion-sesion",
+      "status": 307,
+      "headers": {
+        "cache-control": "private, no-store",
+        "vary": "Cookie",
+        "location": "/login?redirect=%2Fbooks%2Fsearch",
+        "set-cookie": null,
+        "csp": "default-src 'self'; script-src 'self' 'nonce-…' 'strict-dynamic'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://covers.openlibrary.org http://127.0.0.1:55341; font-src 'self' data:; connect-src 'self' http://127.0.0.1:55341; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+      },
+      "ok": true,
+      "problems": []
+    },
+    {
+      "route": "/book/:libroA",
+      "as": "anon",
+      "method": "GET",
+      "type": "redireccion-sesion",
+      "status": 307,
+      "headers": {
+        "cache-control": "private, no-store",
+        "vary": "Cookie",
+        "location": "/login?redirect=%2Fbook%2F63781f2a-840f-58f8-acdd-b8ef7b8e76e8",
+        "set-cookie": null,
+        "csp": "default-src 'self'; script-src 'self' 'nonce-…' 'strict-dynamic'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://covers.openlibrary.org http://127.0.0.1:55341; font-src 'self' data:; connect-src 'self' http://127.0.0.1:55341; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+      },
+      "ok": true,
+      "problems": []
+    },
+    {
+      "route": "/shelves",
+      "as": "anon",
+      "method": "GET",
+      "type": "redireccion-sesion",
+      "status": 307,
+      "headers": {
+        "cache-control": "private, no-store",
+        "vary": "Cookie",
+        "location": "/login?redirect=%2Fshelves",
+        "set-cookie": null,
+        "csp": "default-src 'self'; script-src 'self' 'nonce-…' 'strict-dynamic'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://covers.openlibrary.org http://127.0.0.1:55341; font-src 'self' data:; connect-src 'self' http://127.0.0.1:55341; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+      },
+      "ok": true,
+      "problems": []
+    },
+    {
+      "route": "/shelves/3d",
+      "as": "anon",
+      "method": "GET",
+      "type": "redireccion-sesion",
+      "status": 307,
+      "headers": {
+        "cache-control": "private, no-store",
+        "vary": "Cookie",
+        "location": "/login?redirect=%2Fshelves%2F3d",
+        "set-cookie": null,
+        "csp": "default-src 'self'; script-src 'self' 'nonce-…' 'strict-dynamic'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://covers.openlibrary.org http://127.0.0.1:55341; font-src 'self' data:; connect-src 'self' http://127.0.0.1:55341; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+      },
+      "ok": true,
+      "problems": []
+    },
+    {
+      "route": "/settings",
+      "as": "anon",
+      "method": "GET",
+      "type": "redireccion-sesion",
+      "status": 307,
+      "headers": {
+        "cache-control": "private, no-store",
+        "vary": "Cookie",
+        "location": "/login?redirect=%2Fsettings",
+        "set-cookie": null,
+        "csp": "default-src 'self'; script-src 'self' 'nonce-…' 'strict-dynamic'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://covers.openlibrary.org http://127.0.0.1:55341; font-src 'self' data:; connect-src 'self' http://127.0.0.1:55341; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+      },
+      "ok": true,
+      "problems": []
+    },
+    {
+      "route": "/profile",
+      "as": "anon",
+      "method": "GET",
+      "type": "redireccion-sesion",
+      "status": 307,
+      "headers": {
+        "cache-control": "private, no-store",
+        "vary": "Cookie",
+        "location": "/login?redirect=%2Fprofile",
+        "set-cookie": null,
+        "csp": "default-src 'self'; script-src 'self' 'nonce-…' 'strict-dynamic'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://covers.openlibrary.org http://127.0.0.1:55341; font-src 'self' data:; connect-src 'self' http://127.0.0.1:55341; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+      },
+      "ok": true,
+      "problems": []
+    },
+    {
+      "route": "/books/search?q=prueba",
+      "as": "anon",
+      "method": "GET",
+      "type": "redireccion-sesion",
+      "status": 307,
+      "headers": {
+        "cache-control": "private, no-store",
+        "vary": "Cookie",
+        "location": "/login?redirect=%2Fbooks%2Fsearch%3Fq%3Dprueba",
+        "set-cookie": null,
+        "csp": "default-src 'self'; script-src 'self' 'nonce-…' 'strict-dynamic'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://covers.openlibrary.org http://127.0.0.1:55341; font-src 'self' data:; connect-src 'self' http://127.0.0.1:55341; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+      },
+      "ok": true,
+      "problems": []
+    },
+    {
+      "route": "/login",
+      "as": "anon",
+      "method": "GET",
+      "type": "html-publico",
+      "status": 200,
+      "headers": {
+        "cache-control": "private, no-store",
+        "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch, Accept-Encoding",
+        "location": null,
+        "set-cookie": null,
+        "csp": "default-src 'self'; script-src 'self' 'nonce-…' 'strict-dynamic'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://covers.openlibrary.org http://127.0.0.1:55341; font-src 'self' data:; connect-src 'self' http://127.0.0.1:55341; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+      },
+      "ok": true,
+      "problems": []
+    },
+    {
+      "route": "/login?redirect=%2Fbooks",
+      "as": "a",
+      "method": "GET",
+      "type": "redireccion-sesion",
+      "status": 307,
+      "headers": {
+        "cache-control": "private, no-store",
+        "vary": "Cookie",
+        "location": "/books",
+        "set-cookie": null,
+        "csp": "default-src 'self'; script-src 'self' 'nonce-…' 'strict-dynamic'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://covers.openlibrary.org http://127.0.0.1:55341; font-src 'self' data:; connect-src 'self' http://127.0.0.1:55341; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+      },
+      "ok": true,
+      "problems": []
+    },
+    {
+      "route": "/login?redirect=https%3A%2F%2Fexterno.invalid%2F",
+      "as": "a",
+      "method": "GET",
+      "type": "redireccion-sesion",
+      "status": 307,
+      "headers": {
+        "cache-control": "private, no-store",
+        "vary": "Cookie",
+        "location": "/",
+        "set-cookie": null,
+        "csp": "default-src 'self'; script-src 'self' 'nonce-…' 'strict-dynamic'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://covers.openlibrary.org http://127.0.0.1:55341; font-src 'self' data:; connect-src 'self' http://127.0.0.1:55341; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+      },
+      "ok": true,
+      "problems": []
+    },
+    {
+      "route": "/auth/callback?next=%2Fbooks",
+      "as": "anon",
+      "method": "GET",
+      "type": "callback",
+      "status": 303,
+      "headers": {
+        "cache-control": "private, no-store",
+        "vary": "Cookie, rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+        "location": "/login?error=oauth&redirect=%2Fbooks",
+        "set-cookie": null,
+        "csp": "default-src 'self'; script-src 'self' 'nonce-…' 'strict-dynamic'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://covers.openlibrary.org http://127.0.0.1:55341; font-src 'self' data:; connect-src 'self' http://127.0.0.1:55341; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+      },
+      "ok": true,
+      "problems": []
+    },
+    {
+      "route": "/auth/callback?next=https%3A%2F%2Fexterno.invalid%2F",
+      "as": "anon",
+      "method": "GET",
+      "type": "callback",
+      "status": 303,
+      "headers": {
+        "cache-control": "private, no-store",
+        "vary": "Cookie, rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+        "location": "/login?error=oauth&redirect=%2F",
+        "set-cookie": null,
+        "csp": "default-src 'self'; script-src 'self' 'nonce-…' 'strict-dynamic'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://covers.openlibrary.org http://127.0.0.1:55341; font-src 'self' data:; connect-src 'self' http://127.0.0.1:55341; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+      },
+      "ok": true,
+      "problems": []
+    },
+    {
+      "route": "/auth/callback?next=%2F%2Fexterno.invalid",
+      "as": "anon",
+      "method": "GET",
+      "type": "callback",
+      "status": 303,
+      "headers": {
+        "cache-control": "private, no-store",
+        "vary": "Cookie, rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+        "location": "/login?error=oauth&redirect=%2F",
+        "set-cookie": null,
+        "csp": "default-src 'self'; script-src 'self' 'nonce-…' 'strict-dynamic'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://covers.openlibrary.org http://127.0.0.1:55341; font-src 'self' data:; connect-src 'self' http://127.0.0.1:55341; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+      },
+      "ok": true,
+      "problems": []
+    },
+    {
+      "route": "/auth/callback?next=%2F%5Cexterno.invalid",
+      "as": "anon",
+      "method": "GET",
+      "type": "callback",
+      "status": 303,
+      "headers": {
+        "cache-control": "private, no-store",
+        "vary": "Cookie, rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+        "location": "/login?error=oauth&redirect=%2F",
+        "set-cookie": null,
+        "csp": "default-src 'self'; script-src 'self' 'nonce-…' 'strict-dynamic'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://covers.openlibrary.org http://127.0.0.1:55341; font-src 'self' data:; connect-src 'self' http://127.0.0.1:55341; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+      },
+      "ok": true,
+      "problems": []
+    },
+    {
+      "route": "/ruta-inexistente",
+      "as": "anon",
+      "method": "GET",
+      "type": "html-404",
+      "status": 404,
+      "headers": {
+        "cache-control": "private, no-cache, no-store, max-age=0, must-revalidate",
+        "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch, Accept-Encoding",
+        "location": null,
+        "set-cookie": null,
+        "csp": "default-src 'self'; script-src 'self' 'nonce-…' 'strict-dynamic'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://covers.openlibrary.org http://127.0.0.1:55341; font-src 'self' data:; connect-src 'self' http://127.0.0.1:55341; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+      },
+      "ok": true,
+      "problems": []
+    },
+    {
+      "route": "/",
+      "as": "a",
+      "method": "POST",
+      "type": "accion",
+      "status": 200,
+      "headers": {
+        "cache-control": "no-cache, no-store, max-age=0, must-revalidate",
+        "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch, Accept-Encoding",
+        "location": null,
+        "set-cookie": null,
+        "csp": "default-src 'self'; script-src 'self' 'nonce-…' 'strict-dynamic'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://covers.openlibrary.org http://127.0.0.1:55341; font-src 'self' data:; connect-src 'self' http://127.0.0.1:55341; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+      },
+      "ok": true,
+      "problems": []
+    },
+    {
+      "route": "/api/books/search?isbn=9780000000002",
+      "as": "anon",
+      "method": "GET",
+      "type": "api",
+      "status": 401,
+      "headers": {
+        "cache-control": "private, no-store",
+        "vary": "Cookie, rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+        "location": null,
+        "set-cookie": null,
+        "csp": null
+      },
+      "ok": true,
+      "problems": []
+    },
+    {
+      "route": "/api/books/add",
+      "as": "anon",
+      "method": "POST",
+      "type": "api",
+      "status": 401,
+      "headers": {
+        "cache-control": "private, no-store",
+        "vary": "Cookie, rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+        "location": null,
+        "set-cookie": null,
+        "csp": null
+      },
+      "ok": true,
+      "problems": []
+    },
+    {
+      "route": "/api/internal/jobs/run",
+      "as": "anon",
+      "method": "POST",
+      "type": "api",
+      "status": 401,
+      "headers": {
+        "cache-control": "private, no-store",
+        "vary": "Cookie, rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+        "location": null,
+        "set-cookie": null,
+        "csp": null
+      },
+      "ok": true,
+      "problems": []
+    },
+    {
+      "route": "/logo.png",
+      "as": "anon",
+      "method": "GET",
+      "type": "estatico-public",
+      "status": 200,
+      "headers": {
+        "cache-control": "public, max-age=0",
+        "vary": null,
+        "location": null,
+        "set-cookie": null,
+        "csp": null
+      },
+      "ok": true,
+      "problems": []
+    },
+    {
+      "route": "/default-book-cover.webp",
+      "as": "anon",
+      "method": "GET",
+      "type": "estatico-public",
+      "status": 200,
+      "headers": {
+        "cache-control": "public, max-age=0",
+        "vary": null,
+        "location": null,
+        "set-cookie": null,
+        "csp": null
+      },
+      "ok": true,
+      "problems": []
+    },
+    {
+      "route": "/manifest.webmanifest",
+      "as": "anon",
+      "method": "GET",
+      "type": "estatico-public",
+      "status": 200,
+      "headers": {
+        "cache-control": "public, max-age=0",
+        "vary": "Accept-Encoding",
+        "location": null,
+        "set-cookie": null,
+        "csp": "default-src 'self'; script-src 'self' 'nonce-…' 'strict-dynamic'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://covers.openlibrary.org http://127.0.0.1:55341; font-src 'self' data:; connect-src 'self' http://127.0.0.1:55341; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+      },
+      "ok": true,
+      "problems": []
+    },
+    {
+      "route": ":chunk",
+      "as": "anon",
+      "method": "GET",
+      "type": "estatico-hash",
+      "status": 200,
+      "headers": {
+        "cache-control": "public, max-age=31536000, immutable",
+        "vary": "Accept-Encoding",
+        "location": null,
+        "set-cookie": null,
+        "csp": null
+      },
+      "ok": true,
+      "problems": []
+    }
+  ]
+}

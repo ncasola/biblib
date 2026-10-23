@@ -1,5 +1,7 @@
 import type React from "react"
 import type { Metadata } from "next"
+import { headers } from "next/headers"
+import { connection } from "next/server"
 import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 import { AuthProvider } from "@/lib/auth-context"
@@ -23,15 +25,19 @@ export const metadata: Metadata = {
   manifest: "/manifest.webmanifest",
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  // U-OPS-04: render dinámico para que Next aplique el nonce de la CSP (lo genera proxy.ts) y el HTML
+  // no salga con s-maxage de página estática; el script inline de next-themes recibe el mismo nonce.
+  await connection()
+  const nonce = (await headers()).get("x-nonce") ?? undefined
   return (
     <html lang="es" suppressHydrationWarning>
       <body className={`font-sans antialiased`}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem enableColorScheme disableTransitionOnChange storageKey="theme">
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem enableColorScheme disableTransitionOnChange storageKey="theme" nonce={nonce}>
           <AuthProvider>{children}</AuthProvider>
         </ThemeProvider>
         {process.env.NEXT_PUBLIC_ENABLE_ANALYTICS === "true" && <Analytics />}

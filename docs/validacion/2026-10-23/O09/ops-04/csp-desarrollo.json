@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "perfil": "scratch",
+  "modo": "dev:local",
+  "navegador": "Chrome (canal chrome de Playwright)",
+  "rutas": {
+    "/login": {
+      "status": 200,
+      "unsafeEval": true,
+      "nonce": true,
+      "violations": []
+    },
+    "/": {
+      "status": 200,
+      "unsafeEval": true,
+      "nonce": true,
+      "violations": []
+    },
+    "/books": {
+      "status": 200,
+      "unsafeEval": true,
+      "nonce": true,
+      "violations": []
+    },
+    "/books/add": {
+      "status": 200,
+      "unsafeEval": true,
+      "nonce": true,
+      "violations": []
+    },
+    "/settings": {
+      "status": 200,
+      "unsafeEval": true,
+      "nonce": true,
+      "violations": []
+    }
+  }
+}

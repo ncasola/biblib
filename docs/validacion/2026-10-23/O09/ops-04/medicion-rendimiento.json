@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "perfil": "scratch",
+  "metodo": "start:local; sesión real de A; 5 peticiones de calentamiento y 40 medidas secuenciales por ruta (cuerpo completo); mismo equipo, HolaERP en marcha",
+  "antes": {
+    "commit": "9a64364",
+    "render": "estático (○)",
+    "/": {
+      "n": 40,
+      "medianMs": 62.6,
+      "p95Ms": 75.2,
+      "headers": {
+        "status": 200,
+        "cacheControl": "s-maxage=31536000",
+        "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch, Accept-Encoding",
+        "csp": false
+      }
+    },
+    "/books": {
+      "n": 40,
+      "medianMs": 96.9,
+      "p95Ms": 155.2,
+      "headers": {
+        "status": 200,
+        "cacheControl": "s-maxage=31536000",
+        "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch, Accept-Encoding",
+        "csp": false
+      }
+    }
+  },
+  "despues": {
+    "commit": "ac2c723+",
+    "render": "dinámico (ƒ)",
+    "/": {
+      "n": 40,
+      "medianMs": 54.4,
+      "p95Ms": 62.3,
+      "headers": {
+        "status": 200,
+        "cacheControl": "private, no-store",
+        "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch, Accept-Encoding",
+        "csp": true
+      }
+    },
+    "/books": {
+      "n": 40,
+      "medianMs": 53.7,
+      "p95Ms": 57.8,
+      "headers": {
+        "status": 200,
+        "cacheControl": "private, no-store",
+        "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch, Accept-Encoding",
+        "csp": true
+      }
+    }
+  }
+}

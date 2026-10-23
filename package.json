@@ -62,7 +62,9 @@
     "test:integration:jobs": "node tests/integration/jobs/run.mjs",
     "jobs:run:local": "node scripts/jobs/run-local.mjs",
     "perf:local": "node scripts/performance/run.mjs",
-    "perf:local:cleanup": "node scripts/performance/run.mjs cleanup"
+    "perf:local:cleanup": "node scripts/performance/run.mjs cleanup",
+    "security:headers:local": "node scripts/security/headers-local.mjs",
+    "test:integration:security": "node tests/integration/security/run.mjs"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "1.1.15",
