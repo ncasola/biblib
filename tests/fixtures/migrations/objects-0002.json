@@ -1,0 +1,572 @@
+{
+ "comment": "Metadatos reales de Supabase local (perfil scratch, Postgres 17.6) tras 0000→0002 con el runner U-INF-04; sin datos de usuario.",
+ "roles": [
+  "anon",
+  "authenticated"
+ ],
+ "prerequisites": {
+  "users": true,
+  "uid": true
+ },
+ "tables": [
+  {
+   "name": "books",
+   "rls": true
+  },
+  {
+   "name": "shelves",
+   "rls": true
+  }
+ ],
+ "policies": [
+  {
+   "name": "books_delete_own",
+   "table": "books",
+   "cmd": "d",
+   "permissive": true,
+   "roles": [
+    "authenticated"
+   ],
+   "using": "(user_id = auth.uid())",
+   "check": null
+  },
+  {
+   "name": "books_insert_own",
+   "table": "books",
+   "cmd": "a",
+   "permissive": true,
+   "roles": [
+    "authenticated"
+   ],
+   "using": null,
+   "check": "(user_id = auth.uid())"
+  },
+  {
+   "name": "books_select_own",
+   "table": "books",
+   "cmd": "r",
+   "permissive": true,
+   "roles": [
+    "authenticated"
+   ],
+   "using": "(user_id = auth.uid())",
+   "check": null
+  },
+  {
+   "name": "books_update_own",
+   "table": "books",
+   "cmd": "w",
+   "permissive": true,
+   "roles": [
+    "authenticated"
+   ],
+   "using": "(user_id = auth.uid())",
+   "check": "(user_id = auth.uid())"
+  },
+  {
+   "name": "shelves_delete_own",
+   "table": "shelves",
+   "cmd": "d",
+   "permissive": true,
+   "roles": [
+    "authenticated"
+   ],
+   "using": "((user_id = auth.uid()) AND (NOT is_default))",
+   "check": null
+  },
+  {
+   "name": "shelves_insert_own",
+   "table": "shelves",
+   "cmd": "a",
+   "permissive": true,
+   "roles": [
+    "authenticated"
+   ],
+   "using": null,
+   "check": "(user_id = auth.uid())"
+  },
+  {
+   "name": "shelves_select_own",
+   "table": "shelves",
+   "cmd": "r",
+   "permissive": true,
+   "roles": [
+    "authenticated"
+   ],
+   "using": "(user_id = auth.uid())",
+   "check": null
+  },
+  {
+   "name": "shelves_update_own",
+   "table": "shelves",
+   "cmd": "w",
+   "permissive": true,
+   "roles": [
+    "authenticated"
+   ],
+   "using": "((user_id = auth.uid()) AND (NOT is_default))",
+   "check": "((user_id = auth.uid()) AND (NOT is_default))"
+  }
+ ],
+ "grants": [
+  {
+   "grantee": "authenticated",
+   "table": "books",
+   "privilege": "DELETE"
+  },
+  {
+   "grantee": "authenticated",
+   "table": "books",
+   "privilege": "INSERT"
+  },
+  {
+   "grantee": "authenticated",
+   "table": "books",
+   "privilege": "SELECT"
+  },
+  {
+   "grantee": "authenticated",
+   "table": "books",
+   "privilege": "UPDATE"
+  },
+  {
+   "grantee": "authenticated",
+   "table": "shelves",
+   "privilege": "DELETE"
+  },
+  {
+   "grantee": "authenticated",
+   "table": "shelves",
+   "privilege": "INSERT"
+  },
+  {
+   "grantee": "authenticated",
+   "table": "shelves",
+   "privilege": "SELECT"
+  },
+  {
+   "grantee": "authenticated",
+   "table": "shelves",
+   "privilege": "UPDATE"
+  }
+ ],
+ "schemaUsage": [
+  {
+   "role": "anon",
+   "usage": false
+  },
+  {
+   "role": "authenticated",
+   "usage": true
+  }
+ ],
+ "constraints": [
+  {
+   "name": "books_owner_shelf_fk",
+   "table": "books",
+   "type": "f",
+   "validated": true,
+   "columns": [
+    "user_id",
+    "shelf_id"
+   ],
+   "references": "biblib.shelves",
+   "ref_columns": [
+    "user_id",
+    "id"
+   ],
+   "on_delete": "r",
+   "definition": null
+  },
+  {
+   "name": "books_pages_check",
+   "table": "books",
+   "type": "c",
+   "validated": true,
+   "columns": [
+    "number_of_pages"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": "CHECK (((number_of_pages >= 0) AND (number_of_pages <= 100000)))"
+  },
+  {
+   "name": "books_pkey",
+   "table": "books",
+   "type": "p",
+   "validated": true,
+   "columns": [
+    "id"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": null
+  },
+  {
+   "name": "books_status_check",
+   "table": "books",
+   "type": "c",
+   "validated": true,
+   "columns": [
+    "status"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": "CHECK ((status = ANY (ARRAY['read'::text, 'reading'::text, 'unread'::text, 'to-read'::text])))"
+  },
+  {
+   "name": "books_title_check",
+   "table": "books",
+   "type": "c",
+   "validated": true,
+   "columns": [
+    "title"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": "CHECK (((length(btrim(title)) >= 1) AND (length(btrim(title)) <= 500)))"
+  },
+  {
+   "name": "books_user_fk",
+   "table": "books",
+   "type": "f",
+   "validated": true,
+   "columns": [
+    "user_id"
+   ],
+   "references": "auth.users",
+   "ref_columns": [
+    "id"
+   ],
+   "on_delete": "c",
+   "definition": null
+  },
+  {
+   "name": "shelves_pkey",
+   "table": "shelves",
+   "type": "p",
+   "validated": true,
+   "columns": [
+    "id"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": null
+  },
+  {
+   "name": "shelves_title_check",
+   "table": "shelves",
+   "type": "c",
+   "validated": true,
+   "columns": [
+    "title"
+   ],
+   "references": null,
+   "ref_columns": [],
+   "on_delete": " ",
+   "definition": "CHECK (((length(btrim(title)) >= 1) AND (length(btrim(title)) <= 120)))"
+  },
+  {
+   "name": "shelves_user_fk",
+   "table": "shelves",
+   "type": "f",
+   "validated": true,
+   "columns": [
+    "user_id"
+   ],
+   "references": "auth.users",
+   "ref_columns": [
+    "id"
+   ],
+   "on_delete": "c",
+   "definition": null
+  }
+ ],
+ "indexes": [
+  {
+   "name": "books_pkey",
+   "table": "books",
+   "unique": true,
+   "partial": false,
+   "columns": [
+    "id"
+   ]
+  },
+  {
+   "name": "books_shelf_id_idx",
+   "table": "books",
+   "unique": false,
+   "partial": false,
+   "columns": [
+    "shelf_id"
+   ]
+  },
+  {
+   "name": "books_user_id_id_unique",
+   "table": "books",
+   "unique": true,
+   "partial": false,
+   "columns": [
+    "user_id",
+    "id"
+   ]
+  },
+  {
+   "name": "books_user_id_idx",
+   "table": "books",
+   "unique": false,
+   "partial": false,
+   "columns": [
+    "user_id"
+   ]
+  },
+  {
+   "name": "books_user_id_isbn_unique",
+   "table": "books",
+   "unique": true,
+   "partial": false,
+   "columns": [
+    "user_id",
+    "isbn"
+   ]
+  },
+  {
+   "name": "shelves_pkey",
+   "table": "shelves",
+   "unique": true,
+   "partial": false,
+   "columns": [
+    "id"
+   ]
+  },
+  {
+   "name": "shelves_user_id_default_unique",
+   "table": "shelves",
+   "unique": true,
+   "partial": true,
+   "columns": [
+    "user_id",
+    "is_default"
+   ]
+  },
+  {
+   "name": "shelves_user_id_id_unique",
+   "table": "shelves",
+   "unique": true,
+   "partial": false,
+   "columns": [
+    "user_id",
+    "id"
+   ]
+  },
+  {
+   "name": "shelves_user_id_title_unique",
+   "table": "shelves",
+   "unique": true,
+   "partial": false,
+   "columns": [
+    "user_id",
+    "title"
+   ]
+  }
+ ],
+ "columns": [
+  {
+   "table": "books",
+   "name": "authors",
+   "type": "jsonb",
+   "not_null": true,
+   "default": "'[]'::jsonb"
+  },
+  {
+   "table": "books",
+   "name": "catalogue",
+   "type": "jsonb",
+   "not_null": true,
+   "default": "'{\"source\": \"import\", \"isbnVerified\": false}'::jsonb"
+  },
+  {
+   "table": "books",
+   "name": "cover_large",
+   "type": "text",
+   "not_null": true,
+   "default": "'/default-book-cover.webp'::text"
+  },
+  {
+   "table": "books",
+   "name": "cover_medium",
+   "type": "text",
+   "not_null": true,
+   "default": "'/default-book-cover.webp'::text"
+  },
+  {
+   "table": "books",
+   "name": "cover_small",
+   "type": "text",
+   "not_null": true,
+   "default": "'/default-book-cover.webp'::text"
+  },
+  {
+   "table": "books",
+   "name": "created_at",
+   "type": "timestamp with time zone",
+   "not_null": true,
+   "default": "now()"
+  },
+  {
+   "table": "books",
+   "name": "id",
+   "type": "uuid",
+   "not_null": true,
+   "default": "gen_random_uuid()"
+  },
+  {
+   "table": "books",
+   "name": "isbn",
+   "type": "text",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "books",
+   "name": "number_of_pages",
+   "type": "integer",
+   "not_null": true,
+   "default": "0"
+  },
+  {
+   "table": "books",
+   "name": "publish_date",
+   "type": "text",
+   "not_null": true,
+   "default": "''::text"
+  },
+  {
+   "table": "books",
+   "name": "publishers",
+   "type": "jsonb",
+   "not_null": true,
+   "default": "'[]'::jsonb"
+  },
+  {
+   "table": "books",
+   "name": "shelf_id",
+   "type": "uuid",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "books",
+   "name": "status",
+   "type": "text",
+   "not_null": true,
+   "default": "'unread'::text"
+  },
+  {
+   "table": "books",
+   "name": "subtitle",
+   "type": "text",
+   "not_null": false,
+   "default": null
+  },
+  {
+   "table": "books",
+   "name": "title",
+   "type": "text",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "books",
+   "name": "updated_at",
+   "type": "timestamp with time zone",
+   "not_null": true,
+   "default": "now()"
+  },
+  {
+   "table": "books",
+   "name": "user_id",
+   "type": "uuid",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "books",
+   "name": "version",
+   "type": "uuid",
+   "not_null": true,
+   "default": "gen_random_uuid()"
+  },
+  {
+   "table": "shelves",
+   "name": "created_at",
+   "type": "timestamp with time zone",
+   "not_null": true,
+   "default": "now()"
+  },
+  {
+   "table": "shelves",
+   "name": "id",
+   "type": "uuid",
+   "not_null": true,
+   "default": "gen_random_uuid()"
+  },
+  {
+   "table": "shelves",
+   "name": "is_default",
+   "type": "boolean",
+   "not_null": true,
+   "default": "false"
+  },
+  {
+   "table": "shelves",
+   "name": "title",
+   "type": "text",
+   "not_null": true,
+   "default": null
+  },
+  {
+   "table": "shelves",
+   "name": "updated_at",
+   "type": "timestamp with time zone",
+   "not_null": true,
+   "default": "now()"
+  },
+  {
+   "table": "shelves",
+   "name": "user_id",
+   "type": "uuid",
+   "not_null": true,
+   "default": null
+  }
+ ],
+ "functions": [
+  {
+   "name": "rotate_book_version",
+   "language": "plpgsql",
+   "returns": "trigger",
+   "args": 0,
+   "config": [
+    "search_path=pg_catalog"
+   ],
+   "security_definer": false,
+   "body": "\nBEGIN\n  NEW.version := gen_random_uuid();\n  RETURN NEW;\nEND;\n"
+  }
+ ],
+ "triggers": [
+  {
+   "name": "books_rotate_version",
+   "table": "books",
+   "function": "biblib.rotate_book_version",
+   "tgtype": 23,
+   "enabled": "O",
+   "columns": "",
+   "conditional": false
+  }
+ ]
+}
