@@ -588,3 +588,49 @@ Cabecera, enlace «Saltar al contenido» y `<main id="main-content">` viven en `
 - **Retorno.** Los enlaces de la tabla y la cuadrícula llevan `?from=<ruta del listado con sus filtros>#book-row-<id>`. `resolveBookReturnPath` (`lib/book-search.ts`, apoyada en `getSafeRedirectPath`) solo acepta rutas internas de la aplicación; el resto cae a `/books`. «Volver a libros» restaura filtros, orden, vista y página por URL; el listado muestra una vez la fila abierta y retira el fragmento. Un clic normal en el enlace anota el fragmento en la entrada actual del historial para que «Atrás» recupere la misma fila; cambiar filtros, orden, vista o página lo descarta, así que no se guardan coordenadas de scroll.
 - **Recuperación.** Sin migración. Si el desplazamiento diera saltos, basta con quitar el `useEffect` de `components/books-table.tsx` que lee `parseBookRowAnchor` y la anotación `rememberOpenedBook`: el estado URL (`from`) sigue funcionando.
 - **Pendiente para U-QA-02.** Recorrido manual en el navegador con sesión real (búsqueda filtrada → ficha → «Volver», Atrás/Adelante y recarga, ficha en otra pestaña, id inválido y cambio de cuenta sin filtración de datos). El acceso local `db:local:login` no se usó en esta unidad; la comprobación se hizo con un escenario temporal del smoke (Chrome real, Auth simulado) que no se incorpora a `scripts/smoke-app.mjs`.
+
+## E2E · U-QA-02
+
+`pnpm test:e2e:local` recorre BibLib en un navegador real (Playwright 1.64.1, fijado en el lockfile) contra el stack Supabase del perfil **`test`** y la app compilada para ese perfil en `127.0.0.1:3148`, con catálogo `fixture`. A y B entran por el formulario «Acceso local de desarrollo» (U-LOC-01) contra GoTrue; no hay Auth simulado. Detalle de grupos, pendientes, hallazgos y correspondencia con el smoke: [tests/e2e/README.md](../tests/e2e/README.md).
+
+```powershell
+pnpm db:local:bootstrap --profile test                     # stack, migraciones y fixtures A/B
+pnpm test:e2e:local                                        # Chromium con el Chrome del sistema (PR)
+pnpm test:e2e:local --project firefox --project webkit     # cierre de ola
+pnpm test:e2e:local:ui                                     # modo UI sobre el mismo stack
+node tests/e2e/run.mjs --check-untargeted-build            # build sin objetivo sin acceso local
+pnpm test:e2e:external                                     # opt-in con Open Library real; nunca en CI
+pnpm db:local:down --profile test
+```
+
+Opciones de `test:e2e:local`: `--project chromium|firefox|webkit` (repetible), `--reuse-build`, `--grep <texto>` y, solo para depurar el cierre de un navegador, `--no-deps`. Firefox y WebKit se descargan una vez con `pnpm exec playwright install firefox webkit`; si la descarga falla, esos proyectos no se ejecutan y se dice así en la evidencia. Chromium usa `channel: "chrome"`: necesita Google Chrome instalado.
+
+### Qué hace el runner
+
+`tests/e2e/run.mjs` sigue la secuencia de `tests/integration/run.mjs` y reutiliza `tests/integration/lib/` (contexto, sesiones y procesos):
+
+1. Acredita el perfil `test` (registro, huella, propiedad Docker, servicios), toma su bloqueo y exige ledger al día y fixtures A/B completos.
+2. Limpia los restos registrados de un E2E anterior y anota las cuentas de Auth.
+3. Compila `next-target build local --profile test` (salvo `--reuse-build`) y revisa el bundle de cliente.
+4. Arranca la app con `next-target start local --profile test` y una precarga (`tests/e2e/lib/server-network-guard.mjs`) que bloquea y anota cualquier `fetch` del servidor fuera de loopback. Si el puerto 3148 está ocupado sale con **8** y no termina al ocupante.
+5. Ejecuta Playwright: por navegador, `<n>-sesion` (A y B entran por el formulario y se guarda su sesión en `.biblib/e2e/state/`), `<n>-flujos` y `<n>` (cierre: renovación, cierre de sesión, A→B, destino externo y limitador).
+6. Comprueba que el guard se cargó y no bloqueó ningún host, que las cuentas de Auth no cambiaron, limpia los datos del run y para solo el árbol de procesos que arrancó.
+
+El resultado se acredita con `.biblib/e2e/resultados.json`: superados, fallos conocidos (`test.fail`, documentados), pendientes (`test.fixme`) y repeticiones. `retries` es 0; cualquier repetición o fallo inesperado sale con **11**. Informe HTML en `.biblib/e2e/report`, artefactos de fallo (captura y traza) en `.biblib/e2e/artefactos`, capturas de evidencia en `.biblib/e2e/capturas`, registros `build.log`/`app.log`. Todo bajo `.biblib/`, ignorado por Git y por ESLint. Los proyectos que escriben contraseñas no graban traza y la contraseña nunca forma parte del título de un paso.
+
+### Qué cubre
+
+Acceso (formulario local, ruta privada directa, destino interno, destinos externos, callback inválido, renovación real, cierre con copia de cookies revocada, cambio A→B sin restos, errores genéricos y limitador), catálogo (alta manual sin éxito antes de persistir y con borrador conservado ante un corte de red, ISBN equivalente ya catalogado, edición y conflicto de versión, eliminación), organización (predeterminada protegida, movimiento individual y en lote, recurso borrado en otra pestaña, selección tras error), consulta (tildes, ISBN-10/13, filtros URL, cero resultados, página que deja de existir y el retorno contextual de U-EXP-01), importación de U-DAT-01 (la revisión no escribe, conflicto tras cambiar la colección con archivo y modo conservados, fusión, confirmación repetida sin duplicar y reemplazo real con restauración), privacidad A/B y proveedores fixture (encontrado, no encontrado y fallo simulado en el servidor fixture con el alta manual conservada). En cada recorrido se exige: sin excepciones JS ni errores de hidratación o de consola no declarados, sin tráfico externo del navegador ni del servidor y solo datos ficticios.
+
+Los grupos de unidades futuras (Trabajos, Copias multipart, Proveedores BNE/Google, Producto y parte de Privacidad) son `test.fixme` con la unidad que los activará; aparecen como pendientes, nunca como superados.
+
+### Datos, límites y recuperación
+
+- Lo creado lleva `[QA-02 <run>]`; cada prueba borra lo suyo y el runner barre al final lo marcado de A/B y las vistas previas/operaciones de importación de A/B creadas durante el run. El reemplazo de la importación guarda antes una instantánea literal de la biblioteca de A en `.biblib/e2e/test-run.json` y la restaura; si el proceso se corta, el siguiente run la restaura antes de empezar. Si la limpieza falla, sale con **10** y conserva el manifiesto.
+- GoTrue limita `sign_in_sign_ups` a 30 cada 5 minutos por IP y cada navegador hace 11 intentos: caben dos ejecuciones de Chromium seguidas. Antes de Firefox + WebKit o de `test:integration:local`, espera 5 minutos. El limitador del acceso local es por proceso; el recorrido espera 61 s a que se libere.
+- `test:e2e:external` no arranca el stack: usa el servicio de catálogo en modo `live` con un ISBN público. Sin red falla con un mensaje explícito, distinto de «no encontrado».
+- `--check-untargeted-build` compila sin `BIBLIB_TARGET` en una carpeta temporal (webpack, sin `.env`, con `NEXT_PUBLIC_BIBLIB_LOCAL_LOGIN=1` heredada a propósito) y aplica `check-client-bundle --forbid-local-login`.
+- `scripts/smoke-app.mjs` se conserva: la correspondencia escenario → recorrido y lo que queda solo en el smoke están en el README del E2E.
+- Hallazgos abiertos que no corrige esta unidad (detalle en el README): la recuperación de portadas, «Buscar portada» y el enriquecimiento de la importación llaman a Open Library con `fetch` directo aunque el modo sea `fixture` (pendiente de U-BIB-05); un id de ficha que no es UUID responde 500 y muestra un error de conexión; cerrar sesión produce una petición RSC 404 inocua en `/login`.
+
+Evidencia del ensayo: [validacion/2026-10-23/O07/qa-02](validacion/2026-10-23/O07/qa-02/informe.md).
