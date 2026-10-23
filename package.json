@@ -42,7 +42,15 @@
     "db:restore:local": "node scripts/db/restore-local.mjs",
     "db:restore:verify": "node scripts/db/restore-verify.mjs",
     "db:local:credentials": "node scripts/db/local-credentials.mjs",
-    "test:integration:catalogue": "node tests/integration/catalogue/run.mjs"
+    "test:integration:catalogue": "node tests/integration/catalogue/run.mjs",
+    "db:status:preprod": "node scripts/db/migrate.mjs status preprod",
+    "db:status:prod": "node scripts/db/migrate.mjs status prod",
+    "db:plan:preprod": "node scripts/db/plan.mjs preprod",
+    "db:plan:prod": "node scripts/db/plan.mjs prod",
+    "db:migrate:preprod": "node scripts/db/migrate.mjs apply preprod",
+    "db:migrate:prod": "node scripts/db/migrate.mjs apply prod",
+    "db:adopt:preprod": "node scripts/db/adopt.mjs preprod",
+    "db:adopt:prod": "node scripts/db/adopt.mjs prod"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "1.1.15",

@@ -10,12 +10,12 @@ import { childEnv, loadTarget } from "./environment.mjs"
 import { compareLedger, LEDGER } from "./journal-guard.mjs"
 import { checkPrerequisites, inspectObjects, verifyManifest } from "./objects-manifest.mjs"
 
-// Helpers compartidos por status/plan/migrate (U-INF-04). Solo el objetivo local está habilitado.
-export const REMOTE_PENDING = "Los objetivos preprod/prod de status, plan y migrate llegan con U-INF-07 (descriptor remoto, respaldo y adopción); no se ha conectado con ningún destino."
+// Helpers compartidos por status/plan/migrate (U-INF-04). Local prueba la propiedad del stack;
+// preprod/prod (U-INF-07) usan el descriptor remoto de remote-preflight.mjs.
+export const SUPPORTED_TARGETS = Object.freeze(["local", "preprod", "prod"])
 
 export function assertSupportedTarget(target) {
-  if (target === "preprod" || target === "prod") throw new BiblibError(EXIT.INVALID_ARGS, "objetivo", REMOTE_PENDING)
-  if (target !== "local") throw new BiblibError(EXIT.INVALID_ARGS, "objetivo", "Indica el objetivo con el sufijo del comando: local (preprod/prod pendientes de U-INF-07).")
+  if (!SUPPORTED_TARGETS.includes(target)) throw new BiblibError(EXIT.INVALID_ARGS, "objetivo", "Indica el objetivo con el sufijo del comando: local, preprod o prod (test lo prepara su harness).")
 }
 
 export function drizzleVersion(root = REPO_ROOT) {
