@@ -625,3 +625,22 @@ En modo `live`, Open Library admite ISBN, título/autor y resolución limitada d
 BNE permanece apagada por defecto: `BIBLIB_BNE_ENABLED=true` habilita SRU 1.2 en `https://catalogo.bne.es/view/sru/34BNE_INST` y solo en modo `live`. Consulta ISBN y título/autor, con máximo diez registros, 524288 bytes XML y 3,5 segundos por petición, además del deadline del orquestador. No se configura un endpoint alternativo en producción. Un fallo de BNE permite seguir con OL; para desactivarla basta devolver la bandera a `false`.
 
 Los metadatos BNE tienen política CC0 con procedencia (URL de ficha y hora de recuperación); sus portadas permanecen deshabilitadas. Las cachés locales de ambos adaptadores son acotadas y conservan solo metadatos validados, nunca XML crudo ni imágenes. Hasta integrar U-DAT-05 esta limitación/caché es por instancia; no acredita una cuota global. `fixture` continúa sin llamadas externas. El mapeo MARC, fixtures, consultas públicas y validación están en [el informe O08](validacion/2026-10-23/O08/bib-02.md).
+
+## Promoción a preproducción y producción · U-INF-07
+
+U-INF-07 habilita `status`, `plan` y `migrate` para `preprod`/`prod` y añade `db:adopt:<target>`. Esta sección sustituye la indicación de «Migraciones» según la cual esos objetivos salen con **2**. **No hay destino remoto autorizado:** los comandos están preparados y ensayados solo contra Postgres efímeros que simulan el remoto y contra `scratch`; la primera ejecución real requiere la autorización de Néstor. Procedimiento completo, condiciones abiertas y aceptación: [Promoción de migraciones](promocion.md).
+
+```powershell
+pnpm db:status:preprod --expect-project <ref> [--json]
+pnpm db:plan:preprod --out preprod.json --expect-project <ref> [--json]
+pnpm db:migrate:preprod --plan .biblib/plans/preprod.json --expect-project <ref> --expect-plan <sha256> --backup-receipt <recibo.json>
+pnpm db:adopt:preprod --plan .biblib/plans/preprod.json --expect-project <ref> --expect-plan <sha256> --backup-receipt <recibo.json>
+```
+
+- Solo variables inyectadas (`BIBLIB_EXPECT_PROJECT_REF`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_DB_URL`, `SUPABASE_DB_SSLMODE=verify-full`, opcionalmente `SUPABASE_DB_SSLROOTCERT`). Sin `.env`, `supabase link`, `db push` ni `config push`.
+- Identidad antes de conectar: URL pública y conexión administrativa del mismo proyecto (`db.<ref>.supabase.co` con rol `postgres`, o `postgres.<ref>` en el pooler de sesión), base `postgres` y TLS verificado contra ese host. Sin TLS, **3**.
+- `status` y `plan` usan una transacción `read only`: comprueban rol, permisos, versión, ledger y manifest, derivan la adopción y revisan los datos antes de `0001`/`0002` (listado restringido de correcciones, **5**).
+- `migrate` exige plan `migrate` vigente y recibo de respaldo de ese destino y head con ensayo superado; aplica bajo el bloqueo consultivo común, verifica el manifest y que `auth`/`storage` no cambian, y deja un registro en `.biblib/promotions/`. `adopt` exige plan `adopt-ledger` y solo escribe el ledger; nunca acepta `--force`.
+- `db:backup:local` escribe ahora `receipt.json` junto a `backup.json`, con alcance Mailpit (copia RAW de los mensajes, sin reinyectarlos), rutas relativas a la raíz y `discardedStateHash`. `db:backup:local --receipt-of <carpeta>` lo reemite tras `db:restore:verify`. Ese recibo es el que aceptan `db:reset:local --backup-receipt` y la promoción.
+
+`pnpm test:scripts` incluye `tests/scripts/promotion.test.mjs` (sin Docker) y `tests/scripts/promotion-stack.test.mjs` (`[stack]`: Postgres efímero propio con TLS autofirmado; se omite con `BIBLIB_SKIP_STACK_TESTS=1`). Evidencia: [O08/inf-07](validacion/2026-10-23/O08/inf-07/informe.md).
