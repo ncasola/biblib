@@ -1,6 +1,8 @@
 import { z } from "zod"
 import { DEFAULT_BOOK_COVER, normalizeBookCover } from "./book-covers"
 import { normalizeIsbn, normalizedBookIdentifier } from "./isbn"
+import { libraryRequiresV2, readBackupV2 } from "./backup-v2"
+import { catalogueProblem, catalogueSchema, normalizeCatalogue, toCatalogueV1 } from "./catalogue-provenance"
 import { openLibraryHeaders } from "./open-library"
 import { classifyProviderFailure } from "./observability/events"
 import { emitSafely, noopTelemetry, type TelemetryEmitter } from "./observability/emitter"
@@ -47,11 +49,8 @@ const librarySchema = z.object({
     status: z.enum(["read", "reading", "unread", "to-read"]),
     shelf_id: z.string().trim().min(1).max(200),
     shelf_name: z.string().max(200),
-    catalogue: z.object({
-      source: z.enum(["manual", "open-library", "photo", "import"]),
-      isbnVerified: z.boolean().default(false),
-      sourceUrl: z.url().max(2_048).refine((value) => new URL(value).protocol === "https:").optional(),
-    }).optional(),
+    // Legacy v1 o `catalogue.schemaVersion: 2`: el lector no recorta procedencia ampliada.
+    catalogue: catalogueSchema.optional(),
   })).max(MAX_IMPORT_BOOKS),
   shelves: z.array(z.object({
     id: z.string().trim().min(1).max(200),
@@ -83,20 +82,29 @@ function validateLibraryImport(input: unknown): LibraryData {
   if (serialized && new TextEncoder().encode(serialized).byteLength > MAX_IMPORT_BYTES) {
     throw new Error("El archivo supera el límite de 8 MiB.")
   }
-  if (input && typeof input === "object" && "formatVersion" in input && input.formatVersion !== 1) {
-    throw new Error("Esta versión del formato de biblioteca no es compatible. Solo se admite la versión 1 y el formato antiguo.")
+  let legacy: unknown = input
+  if (input && typeof input === "object" && "formatVersion" in input) {
+    if (input.formatVersion === 2) {
+      if ("copies" in input && Array.isArray(input.copies) && input.copies.length > MAX_IMPORT_BOOKS) {
+        throw new Error("El archivo supera el límite de 2000 libros por importación.")
+      }
+      // Formato portable v2: se adapta a la forma legacy y pasa por las mismas validaciones.
+      legacy = readBackupV2(input)
+    } else if (input.formatVersion !== 1) {
+      throw new Error("Esta versión del formato de biblioteca no es compatible. Se admiten las versiones 1 y 2 y el formato antiguo.")
+    }
   }
-  if (input && typeof input === "object") {
-    if ("books" in input && Array.isArray(input.books) && input.books.length > MAX_IMPORT_BOOKS) {
+  if (legacy && typeof legacy === "object") {
+    if ("books" in legacy && Array.isArray(legacy.books) && legacy.books.length > MAX_IMPORT_BOOKS) {
       throw new Error("El archivo supera el límite de 2000 libros por importación.")
     }
-    if ("shelves" in input && Array.isArray(input.shelves) && input.shelves.length > MAX_IMPORT_SHELVES) {
+    if ("shelves" in legacy && Array.isArray(legacy.shelves) && legacy.shelves.length > MAX_IMPORT_SHELVES) {
       throw new Error("El archivo supera el límite de 200 estanterías por importación.")
     }
   }
-  const result = librarySchema.safeParse(input)
+  const result = librarySchema.safeParse(legacy)
   if (!result.success) {
-    throw new Error("El archivo no tiene un formato de biblioteca válido. Revisa los datos de libros y estanterías.")
+    throw new Error(describeCatalogueProblem(legacy) ?? "El archivo no tiene un formato de biblioteca válido. Revisa los datos de libros y estanterías.")
   }
 
   const data = result.data
@@ -125,11 +133,8 @@ function validateLibraryImport(input: unknown): LibraryData {
       throw new Error(`El libro «${book.title}» hace referencia a una estantería inexistente. Corrige el archivo antes de importarlo.`)
     }
     counts.set(shelf.id, (counts.get(shelf.id) ?? 0) + 1)
-    return { ...book, isbn: normalizedBookIdentifier(book.isbn), shelf_name: shelf.title, cover: normalizeBookCover(book.cover), catalogue: {
-      source: book.catalogue?.source ?? "import" as const,
-      isbnVerified: Boolean(normalizeIsbn(book.isbn)) && (book.catalogue?.isbnVerified ?? false),
-      ...(book.catalogue?.sourceUrl ? { sourceUrl: book.catalogue.sourceUrl } : {}),
-    } }
+    return { ...book, isbn: normalizedBookIdentifier(book.isbn), shelf_name: shelf.title, cover: normalizeBookCover(book.cover),
+      catalogue: normalizeCatalogue(book.catalogue ?? { source: "import", isbnVerified: false }, book.isbn) }
   })
   return {
     shelves: data.shelves.map((shelf) => ({ ...shelf, book_count: counts.get(shelf.id) ?? 0 })),
@@ -137,8 +142,26 @@ function validateLibraryImport(input: unknown): LibraryData {
   }
 }
 
+/** Explica qué procedencia impide leer el archivo, en lugar de un error genérico o una degradación silenciosa. */
+function describeCatalogueProblem(input: unknown): string | null {
+  if (!input || typeof input !== "object" || !("books" in input) || !Array.isArray(input.books)) return null
+  for (const [index, book] of input.books.entries()) {
+    if (!book || typeof book !== "object" || !("catalogue" in book)) continue
+    const problem = catalogueProblem(book.catalogue)
+    if (problem) return `El libro ${index + 1} no se puede importar sin perder su procedencia. ${problem}`
+  }
+  return null
+}
+
+/** Ficha con procedencia v1; lanza si necesita el formato 2 (BNE o fuentes por campo). */
+export function toV1Book(book: Book): Book {
+  return book.catalogue ? { ...book, catalogue: toCatalogueV1(book.catalogue) } : book
+}
+
+/** Exportación v1: solo sin pérdida. Una procedencia BNE o por campo exige el formato 2. */
 export function createLibraryExport(data: LibraryData, exportedAt = new Date()): LibraryExport {
-  return { ...data, formatVersion: 1, exportedAt: exportedAt.toISOString() }
+  if (libraryRequiresV2(data)) throw new Error("La biblioteca tiene procedencia que el formato 1 no conserva. Exporta en formato 2.")
+  return { ...data, books: data.books.map(toV1Book), formatVersion: 1, exportedAt: exportedAt.toISOString() }
 }
 
 export function summarizeLibraryImport(imported: LibraryData, current: LibraryData) {
