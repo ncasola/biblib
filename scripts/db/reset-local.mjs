@@ -8,7 +8,7 @@ import { checkPublishedBindings, REPO_ROOT } from "../lib/profiles.mjs"
 import { acquireLock, readState, writeState } from "../lib/state.mjs"
 import { canonical, computePlanHash, PLAN_TTL_MS, readPlan, resolvePlanPath, writePlan } from "./plan.mjs"
 import { sha256 } from "./journal-guard.mjs"
-import { closeConnection, connect } from "./target.mjs"
+import { closeConnection, connect, connectionError } from "./target.mjs"
 import { acquireMigrationLock, releaseMigrationLock } from "./migrate.mjs"
 import { assertNoForeignEnvFiles } from "./environment.mjs"
 
@@ -177,10 +177,11 @@ export async function runReset(options, deps) {
       if (options.apply && !deps.skipDatabaseLock) {
         lockSql = connect({ target }, { applicationName: "biblib-reset-lock" })
         await acquireMigrationLock(lockSql, { signal: ctx.signal })
-        // Bloquea DML mientras se coteja la huella y se paran los servicios.
+        // Bloquea DML del dominio mientras se coteja la huella y se para el stack.
+        // Postgres local no permite LOCK en tablas auth/storage de la plataforma.
         // max:1 permite esta transacción explícita en la conexión dedicada.
         await lockSql.unsafe("begin")
-        const tables = await lockSql`select schemaname, tablename from pg_tables where schemaname in ('biblib', 'auth', 'storage', 'drizzle') order by schemaname, tablename`
+        const tables = await lockSql`select schemaname, tablename from pg_tables where schemaname in ('biblib', 'drizzle') order by schemaname, tablename`
         for (const table of tables) await lockSql`lock table ${lockSql(table.schemaname)}.${lockSql(table.tablename)} in share mode`
       }
       const discarded = await snapshot(ctx, target, { sql: lockSql })
@@ -235,6 +236,6 @@ export async function runReset(options, deps) {
   } catch (error) {
     if (recorded) save(receipt.phase, ctx.signal?.aborted || error.code === EXIT.INTERRUPTED ? "interrupted" : "failed")
     if (ctx.signal?.aborted) fail(EXIT.INTERRUPTED, "Reset interrumpido; repite la misma orden con su plan para continuar.")
-    throw error
+    throw error instanceof BiblibError ? error : connectionError(error, "reset")
   } finally { if (lockSql) { await releaseMigrationLock(lockSql); await closeConnection(lockSql) }; release() }
 }
