@@ -13,13 +13,24 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  // Matriz de cabeceras de U-OPS-04 (docs/seguridad.md). La CSP Report-Only con nonce la añade proxy.ts.
   async headers() {
-    return [{ source: "/(.*)", headers: [
-      { key: "X-Content-Type-Options", value: "nosniff" },
-      { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-      { key: "X-Frame-Options", value: "DENY" },
-      { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
-    ] }]
+    return [
+      { source: "/(.*)", headers: [
+        { key: "X-Content-Type-Options", value: "nosniff" },
+        { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+        { key: "X-Frame-Options", value: "DENY" },
+        { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+        // La cámara queda prohibida en todo el sitio; U-EXP-05 la habilitará solo en su ruta.
+        { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=(), usb=()" },
+      ] },
+      // HTML, acciones, API y callback dependen de la sesión: nada de caché compartida (CDN o proxy).
+      // Quedan fuera los estáticos con hash de Next y los archivos de public/, que no llevan cookies.
+      { source: "/((?!_next/static/|_next/image|.*\\.(?:png|jpe?g|svg|webp|ico|webmanifest|txt|xml)$).*)", headers: [
+        { key: "Cache-Control", value: "private, no-store" },
+        { key: "Vary", value: "Cookie" },
+      ] },
+    ]
   },
   // Pantallas retiradas del prototipo: el acceso publicado es solo Google OAuth,
   // así que las rutas antiguas devuelven al login en lugar de un 404.
