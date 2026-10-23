@@ -1,4 +1,4 @@
-import { alerts, expect, test, titleField } from "../lib/fixtures"
+import { alerts, capture, expect, test, titleField } from "../lib/fixtures"
 
 // Proveedores en modo fixture (A): ficha encontrada con revisión antes de guardar, ISBN sin ficha y
 // fallo del proveedor simulado en el servidor fixture. En los dos últimos el alta manual sigue
@@ -41,7 +41,7 @@ test("no encontrado: el aviso ofrece el alta manual con el ISBN conservado", asy
   expect(await stack.sql`select id from biblib.books where user_id = ${stack.users.a} and isbn = ${NOT_FOUND_ISBN}`).toHaveLength(1)
 })
 
-test("fallo del proveedor: no se confunde con «no encontrado» y conserva el alta manual", async ({ page, stack, data, guard }) => {
+test("fallo del proveedor: no se confunde con «no encontrado» y conserva el alta manual", async ({ page, stack, data, guard }, testInfo) => {
   guard.allowConsole(/status of 5\d\d/)
   const slug = data.slug("fallo")
   await page.goto("/books/add")
@@ -49,6 +49,7 @@ test("fallo del proveedor: no se confunde con «no encontrado» y conserva el al
   await page.getByRole("button", { name: "Buscar libro" }).click()
   await expect(alerts(page)).toHaveText("No se pudo consultar Open Library. Puedes volver a intentarlo o añadir el libro manualmente.")
   await expect(page.getByLabel("Número ISBN")).toHaveValue(FAILING_ISBN)
+  await capture(page, testInfo, "proveedor-no-disponible")
   await page.getByRole("button", { name: "Completar ficha manual con este ISBN" }).click()
   await expect(page.getByLabel("ISBN", { exact: true })).toHaveValue(FAILING_ISBN)
   await titleField(page).fill(data.marked(`Manual tras fallo ${slug}`))

@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto"
 import type { Page } from "@playwright/test"
-import { expect, test, type Data } from "../lib/fixtures"
+import { capture, type Data, expect, test } from "../lib/fixtures"
 
 // Consulta (A): tildes, ISBN-10/13, filtros en la URL, atrás/adelante, cero resultados, página que deja
 // de existir y retorno contextual de U-EXP-01 (filtros, página, vista y fila al volver de la ficha).
@@ -67,7 +67,7 @@ test("los filtros de la URL se aplican al cargar y la página inexistente se aju
   await expect(page.getByText("Página 1 de 1")).toBeVisible()
 })
 
-test("retorno contextual: la ficha vuelve a filtros, página, vista y fila; atrás y adelante", async ({ page, stack, data }) => {
+test("retorno contextual: la ficha vuelve a filtros, página, vista y fila; atrás y adelante", async ({ page, stack, data }, testInfo) => {
   const slug = data.slug("retorno")
   await seedCatalogue(data, slug)
   const listing = `/books?q=${encodeURIComponent(slug)}&sort=-title&page=2&view=grid`
@@ -97,6 +97,7 @@ test("retorno contextual: la ficha vuelve a filtros, página, vista y fila; atr�
   await expect(card.locator("a[href]").first()).toBeFocused()
   await expect.poll(() => new URL(page.url()).hash).toBe("")
   await expect(page.getByRole("button", { name: "Vista de cuadrícula" })).toHaveAttribute("aria-pressed", "true")
+  await capture(page, testInfo, "retorno-contextual")
 
   // Ficha abierta sin contexto (otra pestaña o enlace directo) y una ficha que ya no existe.
   await page.goto(`/book/${id}`)

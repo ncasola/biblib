@@ -1,4 +1,4 @@
-import { actionRequest, alerts, expect, test, titleField } from "../lib/fixtures"
+import { actionRequest, alerts, capture, expect, test, titleField } from "../lib/fixtures"
 
 // Catálogo (A): alta manual sin éxito antes de persistir y con borrador conservado ante un fallo de
 // red, ISBN equivalente ya catalogado, edición completa, conflicto de versión y eliminación confirmada.
@@ -64,7 +64,7 @@ test("un ISBN-10 con guiones equivalente detecta la ficha ya catalogada", async 
   await expect(page.getByRole("link", { name: "Ver libro guardado" })).toHaveAttribute("href", `/book/${stack.fixtureBookId("a", "isla")}`)
 })
 
-test("edición: el conflicto de versión conserva el borrador y la recarga es explícita", async ({ page, stack, data }) => {
+test("edición: el conflicto de versión conserva el borrador y la recarga es explícita", async ({ page, stack, data }, testInfo) => {
   const slug = data.slug("edicion")
   const shelfId = await data.shelf("a", `Origen ${slug}`)
   const otherShelf = await data.shelf("a", `Destino ${slug}`)
@@ -83,6 +83,7 @@ test("edición: el conflicto de versión conserva el borrador y la recarga es ex
   await expect(alerts(page)).toBeVisible()
   await expect(titleField(page)).toHaveValue(draft)
   expect((await stack.sql`select title from biblib.books where id = ${id}`)[0].title, "El conflicto no sobrescribe").toBe(original)
+  await capture(page, testInfo, "conflicto-version")
 
   await page.getByRole("button", { name: "Descartar formulario y cargar versión actual" }).click()
   await expect(page.getByLabel("Subtítulo")).toHaveValue("Actualizado desde otra sesión")

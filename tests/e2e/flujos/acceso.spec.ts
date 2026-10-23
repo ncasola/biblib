@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto"
-import { accountMenu, alerts, expect, localLoginForm, test } from "../lib/fixtures"
+import { accountMenu, alerts, capture, expect, localLoginForm, test } from "../lib/fixtures"
 
 // Acceso: ruta privada directa, destino interno conservado y callback inválido. La renovación, el
 // cierre y el cambio de cuenta revocan sesiones y viven en cierre/acceso-sesion.spec.ts.
@@ -7,12 +7,13 @@ import { accountMenu, alerts, expect, localLoginForm, test } from "../lib/fixtur
 test.describe("anónimo", () => {
   test.use({ account: "anon" })
 
-  test("una ruta privada directa lleva al acceso conservando el destino interno", async ({ page }) => {
+  test("una ruta privada directa lleva al acceso conservando el destino interno", async ({ page }, testInfo) => {
     await page.goto("/books?status=read&page=2")
     await page.waitForURL((url) => url.pathname === "/login")
     expect(new URL(page.url()).searchParams.get("redirect")).toBe("/books?status=read&page=2")
     await expect(localLoginForm(page)).toBeVisible()
     await expect(page.getByRole("button", { name: "Continuar con Google" })).toBeVisible()
+    await capture(page, testInfo, "acceso-formulario-local")
     const login = await page.request.get("/login")
     expect(login.headers()["x-content-type-options"]).toBe("nosniff")
     expect(login.headers()["x-frame-options"]).toBe("DENY")

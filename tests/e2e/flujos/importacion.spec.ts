@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto"
 import { readFile } from "node:fs/promises"
 import type { Page } from "@playwright/test"
 import { forgetSnapshot, recordSnapshot, restoreLibrary, snapshotLibrary } from "../lib/e2e-manifest.mjs"
-import { actionRequest, alerts, type Data, expect, type Stack, test } from "../lib/fixtures"
+import { actionRequest, alerts, capture, type Data, expect, type Stack, test } from "../lib/fixtures"
 
 // Importación (U-DAT-01) en Ajustes como A: exportación, revisión sin escrituras, colección cambiada en
 // otra pestaña → conflicto sin borrar y con el archivo conservado, fusión, confirmación repetida tras
@@ -61,7 +61,7 @@ test("la exportación descarga un JSON v1 con la colección actual de A y la ver
   await expect(page.getByRole("status").filter({ hasText: "Copia preparada con" })).toBeVisible()
 })
 
-test("la revisión no escribe; si la colección cambia en otra pestaña, confirmar da conflicto sin borrar", async ({ page, context, stack, data }) => {
+test("la revisión no escribe; si la colección cambia en otra pestaña, confirmar da conflicto sin borrar", async ({ page, context, stack, data }, testInfo) => {
   const slug = data.slug("conflicto")
   const file = libraryFile(data, slug, 2)
   const before = await libraryCount(stack)
@@ -92,6 +92,7 @@ test("la revisión no escribe; si la colección cambia en otra pestaña, confirm
   await expect(stale).toBeVisible()
   await expect(stale).toContainText(`Se conservan el archivo «${file.name}» y el modo «Reemplazar»`)
   await expect(stale.getByRole("button", { name: "Volver a revisar con los datos actuales" })).toBeVisible()
+  await capture(page, testInfo, "importacion-conflicto")
   expect(await libraryCount(stack), "El conflicto no borra ni importa nada").toBe(before)
   expect(await fixtureBooksPresent(stack)).toBe(4)
   await stale.getByRole("button", { name: "Cancelar importación" }).click()

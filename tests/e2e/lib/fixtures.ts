@@ -71,6 +71,14 @@ export function stateFile(testInfo: TestInfo, account: Account): string {
   return path.join(e2eDir, "state", `${browserOf(testInfo)}-${account}.json`)
 }
 
+/**
+ * Captura de evidencia en .biblib/e2e/capturas/<navegador>-<nombre>.png. Solo se usa en pantallas con
+ * datos ficticios (censo A/B o fichas marcadas) y nunca con una contraseña escrita.
+ */
+export async function capture(page: Page, testInfo: TestInfo, name: string): Promise<void> {
+  await page.screenshot({ path: path.join(e2eDir, "capturas", `${browserOf(testInfo)}-${name}.png`) })
+}
+
 /** Escribe un secreto sin que aparezca en el título del paso, el informe ni la salida. */
 export async function fillSecret(field: Locator, value: string): Promise<void> {
   await field.evaluate((element, secret) => { (element as HTMLInputElement).value = secret }, value)

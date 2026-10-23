@@ -1,18 +1,19 @@
 import { readFile } from "node:fs/promises"
-import { accountMenu, expect, test } from "../lib/fixtures"
+import { accountMenu, capture, expect, test } from "../lib/fixtures"
 
 // Privacidad: con la sesión de B, los datos de A no aparecen en listados, búsqueda, filtros por sus
 // IDs, ficha directa, título de la pestaña ni exportación.
 
 test.use({ account: "b" })
 
-test("los datos de A son invisibles para B", async ({ page, stack }) => {
+test("los datos de A son invisibles para B", async ({ page, stack }, testInfo) => {
   const aBook = stack.fixtureBookId("a", "cuaderno")
   const [{ shelf_id: aShelf }] = await stack.sql`select shelf_id from biblib.books where id = ${aBook}`
 
   await page.goto("/books")
   await expect(accountMenu(page, stack, "b")).toBeVisible()
   await expect(page.getByRole("row").filter({ hasText: "Versos para un faro" })).toBeVisible()
+  await capture(page, testInfo, "privacidad-coleccion-b")
   for (const title of ["El cuaderno de la bruma", "Mapas de una ciudad inventada"]) {
     await expect(page.getByText(title)).toHaveCount(0)
   }

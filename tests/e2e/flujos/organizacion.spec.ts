@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test"
-import { alerts, chooseOption, expect, test } from "../lib/fixtures"
+import { alerts, capture, chooseOption, expect, test } from "../lib/fixtures"
 
 // Organización (A): predeterminada protegida, movimiento individual y en lote, recurso borrado en otra
 // pestaña y selección conservada tras un error.
@@ -95,7 +95,7 @@ test("una estantería borrada en otra pestaña: renombrarla avisa sin recrearla"
   expect(await stack.sql`select id from biblib.shelves where user_id = ${stack.users.a} and title like ${`%${slug}%`}`).toHaveLength(0)
 })
 
-test("tras un error al mover en lote se conserva la selección", async ({ page, stack, data }) => {
+test("tras un error al mover en lote se conserva la selección", async ({ page, stack, data }, testInfo) => {
   const slug = data.slug("seleccion")
   const from = await data.shelf("a", `Origen ${slug}`)
   const doomed = await data.shelf("a", `Destino borrado ${slug}`)
@@ -112,6 +112,7 @@ test("tras un error al mover en lote se conserva la selección", async ({ page, 
   await expect(alerts(page)).toBeVisible()
   await expect(page.getByText("Seleccionar esta página(2)")).toBeVisible()
   await expect(page.getByLabel(`Seleccionar ${data.marked(`Selección ${slug} uno`)}`)).toBeChecked()
+  await capture(page, testInfo, "seleccion-tras-error")
   const rows = await stack.sql`select shelf_id from biblib.books where id in ${stack.sql(ids)}`
   expect(rows.map((row) => row.shelf_id)).toEqual([from, from])
 })
