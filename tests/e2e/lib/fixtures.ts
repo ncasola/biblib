@@ -64,6 +64,8 @@ interface Observed { text: string; at: number }
 
 /** Errores con los que la app registra una carga interrumpida (`console.error` en su catch) en Firefox/WebKit. */
 const NAVIGATION_ABORT_CONSOLE = /^Error loading [a-z ]+: (TypeError: (Load failed|NetworkError when attempting to fetch resource\.)|JSHandle@object) \[/
+/** Rechazo con el que WebKit informa de un fetch cancelado por la navegación. */
+const ACCESS_CONTROL_ABORT = /^Excepción JS: .* due to access control checks\.$/
 
 export const e2eDir = process.env.BIBLIB_E2E_DIR ?? path.join(process.cwd(), ".biblib", "e2e")
 
@@ -194,15 +196,12 @@ export const test = base.extend<{ account: Session; guard: Guard; data: Data }, 
     const problems: Observed[] = []
     const failedResponses: string[] = []
     const consoleErrors: Observed[] = []
-    const aborted: Observed[] = []
+    const navigations: number[] = []
     const allowed: RegExp[] = []
     const watchPage = (page: Page) => {
       page.on("pageerror", (error) => problems.push({ text: `Excepción JS: ${error.message}`, at: Date.now() }))
       page.on("response", (response) => { if (response.status() >= 400) failedResponses.push(`${response.status()} ${response.request().method()} ${new URL(response.url()).pathname}`) })
-      page.on("requestfailed", (request) => {
-        const url = new URL(request.url())
-        if (url.origin === appOrigin && /abort|cancel/i.test(request.failure()?.errorText ?? "")) aborted.push({ text: `${url.host}${url.pathname}${url.search}`, at: Date.now() })
-      })
+      page.on("request", (request) => { if (request.isNavigationRequest() && request.frame() === page.mainFrame()) navigations.push(Date.now()) })
       page.on("console", (message) => {
         if (message.type() !== "error") return
         // Se añade la ruta del recurso (sin consulta) para poder diagnosticar sin volcar datos.
@@ -211,11 +210,13 @@ export const test = base.extend<{ account: Session; guard: Guard; data: Data }, 
       })
     }
     // Firefox y WebKit informan de las peticiones de la app que una navegación cancela (prefetch RSC,
-    // cargas en curso) como error de consola o, en WebKit, como rechazo «access control checks». Solo se
-    // toleran si coinciden con una petición realmente abortada y quedan anotadas en el informe.
+    // acciones en curso) como error de consola o, en WebKit, como rechazo «access control checks» (sin
+    // `requestfailed` para la acción). Solo se toleran esas firmas, sobre la propia app y en los 3 s
+    // posteriores al inicio de una navegación del marco principal; quedan anotadas en el informe.
+    const appHost = new URL(stack.appUrl).host
     const navigationAbort = (entry: Observed) => {
-      if (/ due to access control checks\.$/.test(entry.text)) return aborted.some((request) => entry.text.includes(request.text))
-      return NAVIGATION_ABORT_CONSOLE.test(entry.text) && aborted.some((request) => Math.abs(request.at - entry.at) < 3_000)
+      const signature = ACCESS_CONTROL_ABORT.test(entry.text) ? entry.text.includes(`/${appHost}/`) : NAVIGATION_ABORT_CONSOLE.test(entry.text)
+      return signature && navigations.some((at) => entry.at >= at - 100 && entry.at - at < 3_000)
     }
     const watch = async (target: BrowserContext) => {
       await target.route("**/*", async (route) => {
