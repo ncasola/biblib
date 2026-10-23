@@ -96,6 +96,8 @@ test("los cuatro flujos importan el catálogo del módulo de servidor y ninguno 
   const files = collect(process.cwd())
   const adapters = /createOpenLibraryProvider|createBneSruProvider|createGoogleBooksProvider|createOpenLibraryClient/
   const outside = [...files].filter(([file, content]) => adapters.test(content) && !file.startsWith(PROVIDERS_DIR) &&
+    // Los scripts de operación (benchmark con red simulada) montan adaptadores a propósito; los flujos son app, components, hooks y lib.
+    !file.startsWith("scripts/") &&
     // Fachada legacy sobre el adaptador y registro que ensambla el servicio configurado.
     !["lib/open-library.ts", "lib/bibliographic-catalog/registry.ts"].includes(file)).map(([file]) => file)
   assert.deepEqual(outside, [])
