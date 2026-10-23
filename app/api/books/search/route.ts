@@ -1,4 +1,7 @@
-import { searchBookByISBN } from "@/lib/api-client"
+import { bibliographicCatalog } from "@/lib/bibliographic-catalog/server"
+import { catalogResultError } from "@/lib/bibliographic-catalog/action-result"
+import { candidateToLegacyBook } from "@/lib/bibliographic-catalog/normalize"
+import { normalizeIsbn } from "@/lib/isbn"
 import { DomainError, httpStatusForDomainError } from "@/lib/domain-errors"
 import { getRequiredUserId } from "@/lib/server-user"
 import { withRequestCorrelation } from "@/lib/observability/server"
@@ -7,7 +10,7 @@ import { type NextRequest, NextResponse } from "next/server"
 export async function GET(request: NextRequest) {
   return withRequestCorrelation(request, async () => {
     try {
-      await getRequiredUserId()
+      const userId = await getRequiredUserId()
       const searchParams = request.nextUrl.searchParams
       const isbn = searchParams.get("isbn")
 
@@ -15,11 +18,16 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: "El ISBN es obligatorio" }, { status: 400 })
       }
 
-      const book = await searchBookByISBN(isbn)
+      const result = await bibliographicCatalog.lookupISBN(isbn, { userId, signal: request.signal })
 
-      if (!book) {
+      if (result.status === "notFound") {
         return NextResponse.json({ error: "Libro no encontrado" }, { status: 404 })
       }
+      const failure = catalogResultError(result)
+      if (failure) throw failure
+      const candidate = result.candidates[0]
+      const cover = candidate.coverUrl ? await bibliographicCatalog.getCover(isbn, { userId, signal: request.signal }) : undefined
+      const book = candidateToLegacyBook(candidate, normalizeIsbn(isbn)!, cover?.candidates[0]?.imageUrl)
 
       return NextResponse.json(book, { headers: { "Cache-Control": "private, no-store" } })
     } catch (error) {

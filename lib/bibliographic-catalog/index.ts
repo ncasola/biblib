@@ -1,0 +1,7 @@
+export type * from "./types"
+export { createBibliographicCatalogService, CATALOG_DEADLINE_MS, PROVIDER_DEADLINE_MS, COVER_DEADLINE_MS } from "./orchestrator"
+export { createConfiguredCatalog } from "./registry"
+export { readCatalogConfig } from "./config"
+export { compareCandidates } from "./normalize"
+export { providerRightsPolicy, hasProviderRight } from "./rights"
+export type { ProviderRightsPolicy, RightsCapability } from "./rights"

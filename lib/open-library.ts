@@ -21,7 +21,13 @@ const providerBookSchema = z.object({
   publish_date: z.string().max(100).optional(),
   publishers: z.array(z.object({ name: z.string().trim().min(1).max(200) })).max(20).optional(),
   cover: z.object({ small: httpUrl.optional(), medium: httpUrl.optional(), large: httpUrl.optional() }).optional(),
+  identifiers: z.object({ isbn_10: z.array(z.string()).optional(), isbn_13: z.array(z.string()).optional(), openlibrary: z.array(z.string()).optional() }).optional(),
+  languages: z.array(z.object({ key: z.string() })).optional(),
+  physical_format: z.string().optional(),
 })
+
+export type OpenLibraryRecord = z.infer<typeof providerBookSchema>
+type LookupRecord = { book: Book; record: OpenLibraryRecord; retrievedAt: string }
 
 type ClientOptions = {
   fetch?: typeof fetch
@@ -29,6 +35,7 @@ type ClientOptions = {
   wait?: (milliseconds: number) => Promise<void>
   contact?: string
   telemetry?: TelemetryEmitter
+  cacheMetadata?: boolean
 }
 
 /** Identificación y política de uso: https://openlibrary.org/developers/api */
@@ -42,11 +49,12 @@ export function createOpenLibraryClient(options: ClientOptions = {}) {
   const now = options.now ?? Date.now
   const wait = options.wait ?? ((milliseconds: number) => new Promise<void>((resolve) => setTimeout(resolve, milliseconds)))
   const telemetry = options.telemetry ?? noopTelemetry
-  const cache = new Map<string, { expires: number; book: Book | null }>()
-  const inFlight = new Map<string, Promise<Book | null>>()
+  const cache = new Map<string, { expires: number; value: LookupRecord | null }>()
+  const inFlight = new Map<string, Promise<LookupRecord | null>>()
   let nextRequestAt = 0
 
-  async function lookup(isbn: string): Promise<Book | null> {
+  async function lookup(isbn: string, signal?: AbortSignal): Promise<LookupRecord | null> {
+    signal?.throwIfAborted()
     // Solo se reserva hasta un segundo de espera; el exceso se rechaza sin cola ilimitada.
     const start = Math.max(now(), nextRequestAt)
     if (start - now() > REQUEST_INTERVAL_MS) {
@@ -54,7 +62,15 @@ export function createOpenLibraryClient(options: ClientOptions = {}) {
     }
     const remaining = start - now()
     nextRequestAt = start + REQUEST_INTERVAL_MS
-    if (remaining > 0) await wait(remaining)
+    if (remaining > 0) {
+      if (options.wait) await wait(remaining)
+      else await new Promise<void>((resolve, reject) => {
+        const onAbort = () => { clearTimeout(timer); reject(signal?.reason) }
+        const timer = setTimeout(() => { signal?.removeEventListener("abort", onAbort); resolve() }, remaining)
+        signal?.addEventListener("abort", onAbort, { once: true })
+      })
+    }
+    signal?.throwIfAborted()
 
     const url = new URL("https://openlibrary.org/api/books")
     url.searchParams.set("bibkeys", `ISBN:${isbn}`)
@@ -63,7 +79,8 @@ export function createOpenLibraryClient(options: ClientOptions = {}) {
     const startedAt = now()
     let httpStatus: number | undefined
     try {
-      const response = await request(url, { headers: openLibraryHeaders(options.contact), signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS), cache: "no-store" })
+      const timeout = AbortSignal.timeout(REQUEST_TIMEOUT_MS)
+      const response = await request(url, { headers: openLibraryHeaders(options.contact), signal: signal ? AbortSignal.any([signal, timeout]) : timeout, cache: "no-store" })
       httpStatus = response.status
       if (response.status === 429) throw new DomainError("RATE_LIMITED", "Open Library ha limitado las consultas. Espera unos segundos y vuelve a intentarlo.")
       if (!response.ok) throw new DomainError("PROVIDER_UNAVAILABLE", "Open Library no está disponible ahora. Puedes reintentar o añadir el libro manualmente.")
@@ -94,10 +111,14 @@ export function createOpenLibraryClient(options: ClientOptions = {}) {
           catalogue: { source: "open-library", isbnVerified: false, ...(sourceUrl?.startsWith("https://") ? { sourceUrl } : {}) },
         }
       }
-      if (cache.size >= MAX_CACHE_ENTRIES) cache.delete(cache.keys().next().value!)
-      cache.set(isbn, { book, expires: now() + (book ? CACHE_TTL_MS : NOT_FOUND_TTL_MS) })
+      signal?.throwIfAborted()
+      const value = book ? { book, record: providerBookSchema.parse(raw), retrievedAt: new Date(now()).toISOString() } : null
+      if (options.cacheMetadata !== false) {
+        if (cache.size >= MAX_CACHE_ENTRIES) cache.delete(cache.keys().next().value!)
+        cache.set(isbn, { value, expires: now() + (book ? CACHE_TTL_MS : NOT_FOUND_TTL_MS) })
+      }
       emitSafely(telemetry, "provider.request", { operation: "open-library.lookup", provider: "open-library", result: "ok", durationMs: Math.max(0, now() - startedAt), httpStatus })
-      return book
+      return value
     } catch (error) {
       // Nunca se registra la URL ni el ISBN consultado: solo estado y clasificación.
       emitSafely(telemetry, "provider.request", { operation: "open-library.lookup", provider: "open-library", result: "error", durationMs: Math.max(0, now() - startedAt), httpStatus, errorCode: classifyProviderFailure(httpStatus && (httpStatus >= 400 || error instanceof DomainError) ? httpStatus : error) })
@@ -106,12 +127,15 @@ export function createOpenLibraryClient(options: ClientOptions = {}) {
     }
   }
 
-  async function searchBookByISBN(value: string): Promise<Book | null> {
+  async function searchRecordByISBN(value: string, signal?: AbortSignal): Promise<LookupRecord | null> {
+    signal?.throwIfAborted()
     const isbn = typeof value === "string" && value.length <= 100 ? normalizeIsbn(value) : null
     if (!isbn) throw new DomainError("INVALID_INPUT", "El ISBN no es válido. Introduce un ISBN de 10 o 13 dígitos con su dígito de control correcto.")
     const cached = cache.get(isbn)
-    if (cached && cached.expires > now()) return structuredClone(cached.book)
+    if (cached && cached.expires > now()) return structuredClone(cached.value)
     cache.delete(isbn)
+    // Una cancelación no debe cancelar la consulta de otro solicitante.
+    if (signal) return structuredClone(await lookup(isbn, signal))
     let pending = inFlight.get(isbn)
     if (!pending) {
       pending = lookup(isbn)
@@ -122,5 +146,9 @@ export function createOpenLibraryClient(options: ClientOptions = {}) {
     }
   }
 
-  return { searchBookByISBN }
+  async function searchBookByISBN(value: string, signal?: AbortSignal): Promise<Book | null> {
+    return (await searchRecordByISBN(value, signal))?.book ?? null
+  }
+
+  return { searchBookByISBN, searchRecordByISBN }
 }

@@ -1,7 +1,7 @@
-import island from "@/tests/fixtures/catalogue/9780000000019.json"
-import clock from "@/tests/fixtures/catalogue/9780000000026.json"
+import island from "../tests/fixtures/catalogue/9780000000019.json"
+import clock from "../tests/fixtures/catalogue/9780000000026.json"
 
-// Datos ficticios offline; U-BIB conectará el modo fixture al servicio de proveedores.
+// Datos ficticios offline consumidos exclusivamente por el adaptador fixture.
 const responses: Record<string, Record<string, unknown>> = {
   "9780000000019": island,
   "9780000000026": clock,

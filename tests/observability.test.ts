@@ -29,6 +29,19 @@ function capture(t: TestContext) {
   return { records, logger: createLogger({ sink: (record) => records.push(record) }) }
 }
 
+test("provider.request conserva requestId UUID y descarta identificadores privados", (t) => {
+  const { logger, records } = capture(t)
+  const requestId = "c88c29b3-8f29-48d6-a04a-84dc7591387f"
+  logger.emit("provider.request", { provider: "open-library", requestId, result: "found", durationMs: 2 })
+  assert.equal(records[0].fields.requestId, requestId)
+  assert.equal(records[0].fields.result, "found")
+  for (const value of ["9788401337208", "api_key=privada", "https://ejemplo.test/privado"]) {
+    logger.emit("provider.request", { requestId: value })
+    assert.equal(records.at(-1)?.fields.requestId, undefined)
+  }
+  assert.equal(logger.droppedFields, 3)
+})
+
 const isbn = "9788401337208" // Dato de prueba; nunca aparece en los eventos.
 const book: Book = {
   id: "ficha-ficticia", isbn, title: "Título privado de prueba", authors: [{ name: "Autora privada" }],
