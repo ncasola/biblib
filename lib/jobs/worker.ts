@@ -32,6 +32,8 @@ export interface WorkerDeps {
   random?: () => number
   now?: () => number
   limits?: Partial<WorkerLimits>
+  /** Escritura de portadas en la transacción del dueño; las pruebas sin base inyectan una réplica en memoria. */
+  applyCovers?: typeof applyRecoveredCovers
   /** U-BIB-04: con la revisión activa la fuente de la portada se guarda en la procedencia del campo. */
   reviewEnabled?: () => boolean
   hooks?: WorkerHooks
@@ -161,7 +163,7 @@ async function coversStep(deps: Required<Pick<WorkerDeps, "repo" | "random" | "n
     // Solo escribe si el libro conserva versión y preimagen; si no, el elemento queda omitido.
     const applied = recovered.length ? await context.asOwner(async (tx) => {
       await lockCollection(tx)
-      return applyRecoveredCovers(tx, context.owner, recovered, { reviewEnabled: deps.reviewEnabled?.() === true, now: () => new Date(deps.now()) })
+      return (deps.applyCovers ?? applyRecoveredCovers)(tx, context.owner, recovered, { reviewEnabled: deps.reviewEnabled?.() === true, now: () => new Date(deps.now()) })
     }) : new Set<string>()
     await context.updateItems(decisions.map(({ update, recovered: entry }) => entry && !applied.has(entry.id)
       ? { ...update, state: "skipped" as const, result: null, errorCode: "CHANGED" } : update))

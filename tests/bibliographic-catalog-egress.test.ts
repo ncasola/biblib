@@ -100,3 +100,14 @@ test("los cuatro flujos importan el catálogo del módulo de servidor y ninguno 
     !["lib/open-library.ts", "lib/bibliographic-catalog/registry.ts"].includes(file)).map(([file]) => file)
   assert.deepEqual(outside, [])
 })
+
+test("la preparación de la importación no consulta catálogos y las portadas pendientes las busca el trabajo", () => {
+  const read = (file: string) => readFileSync(file, "utf8")
+  for (const file of ["lib/library-import.ts", "app/actions/import-preview.ts", "lib/import-plan.ts", "lib/import-publisher.ts"]) {
+    assert.ok(!/bibliographic-catalog|enrichImportedBookCovers|getCover\(/.test(read(file)), `${file} no debe consultar catálogos`)
+  }
+  assert.ok(/seedCoverItems\(outcome\.insertedBookIds\)/.test(read("lib/jobs/worker.ts")), "tras publicar, las portadas pendientes pasan al trabajo de portadas")
+  // La recuperación pasa por el trabajo; «Buscar portada» por el orquestador de servidor.
+  assert.ok(/startCoverJobAction/.test(read("app/actions/cover-recovery.ts")))
+  assert.ok(/bibliographicCatalog\.getCover\(/.test(read("app/actions/books.ts")))
+})
