@@ -5,7 +5,7 @@ import { getSafeRedirectPath, isProtectedPath } from "@/lib/auth-navigation"
 
 export async function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl
-  const isAuthRoute = ["/login", "/signup"].includes(pathname)
+  const isAuthRoute = pathname === "/login"
   if (!isProtectedPath(pathname) && !isAuthRoute) return NextResponse.next()
 
   let response = NextResponse.next({ request })
