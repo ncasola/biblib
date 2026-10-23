@@ -5,13 +5,11 @@ import path from "node:path"
 import { test } from "node:test"
 import { runInNewContext } from "node:vm"
 import { ModuleKind, ScriptTarget, transpileModule } from "typescript"
-import { pgTable, text } from "drizzle-orm/pg-core"
-import { normalizeBookCover, DEFAULT_BOOK_COVER } from "../lib/book-covers"
+import { normalizeBookCover } from "../lib/book-covers"
 import { readCatalogConfig } from "../lib/bibliographic-catalog/config"
 import { createConfiguredCatalog } from "../lib/bibliographic-catalog/registry"
 import type { BibliographicCatalogService, CoverCandidate } from "../lib/bibliographic-catalog/types"
 import { enrichImportedBookCovers } from "../lib/library-import"
-import { noopTelemetry } from "../lib/observability/emitter"
 import type { Book } from "../lib/types"
 
 // Como las pruebas de componentes existentes: ejecuta el módulo real, sustituyendo solo sus
@@ -56,23 +54,17 @@ test("fixture: importación, recuperación y búsqueda legacy terminan sin ningu
   assert.equal(await client.searchBookByISBN("isbn-inválido"), null)
   await assert.rejects(client.searchBookByISBN("9780000000040"), { code: "PROVIDER_UNAVAILABLE" })
 
-  const row = { ...book, coverSmall: DEFAULT_BOOK_COVER, coverMedium: DEFAULT_BOOK_COVER, coverLarge: DEFAULT_BOOK_COVER }
-  const query = { from: () => query, where: () => query, orderBy: () => query, limit: async () => [row],
-    then: (resolve: (rows: typeof row[]) => unknown) => Promise.resolve([row]).then(resolve) }
-  const tx = { select: () => query, update: () => assert.fail("Sin portada fuente no se debe escribir") }
-  const recovery = loadSource<{ recoverMissingCoversAction: () => Promise<{ recovered: number; unavailable: number }> }>("app/actions/cover-recovery.ts", {
-    "@/lib/server-user": { getRequiredUserId: async () => "cuenta-fixture" },
-    "@/lib/server-action": { domainMutation: (operation: () => unknown) => operation() },
-    "@/lib/db/client": { withRlsContext: async (_userId: string, operation: (transaction: typeof tx) => unknown) => operation(tx) },
-    "@/lib/db/library": { lockLibrary: async () => {}, mapRowToBook: () => book },
-    "@/lib/db/schema": { books: pgTable("books", {
-      id: text(), userId: text(), coverSmall: text(), coverMedium: text(), coverLarge: text(),
-    }) },
-    "@/lib/observability/server": { telemetry: noopTelemetry },
+  // Desde U-DAT-03 la recuperación de portadas es un trabajo persistente: la acción solo lo encola y el
+  // worker consulta portadas con un catálogo configurado igual que este (fixture en local/test).
+  const started: unknown[] = []
+  const recovery = loadSource<{ recoverMissingCoversAction: (input: { idempotencyKey: string }) => Promise<unknown> }>("app/actions/cover-recovery.ts", {
+    "@/app/actions/library-jobs": { startCoverJobAction: async (input: unknown) => { started.push(input); return { ok: true } } },
   })
-  const recovered = await recovery.recoverMissingCoversAction()
-  assert.equal(recovered.recovered, 0)
-  assert.equal(recovered.unavailable, 1)
+  await recovery.recoverMissingCoversAction({ idempotencyKey: "clave-fixture" })
+  // El objeto llega desde otro contexto de vm: se compara su contenido, no el prototipo.
+  assert.equal(JSON.stringify(started), JSON.stringify([{ scope: "missing", idempotencyKey: "clave-fixture" }]))
+  const cover = await catalog.getCover(book.isbn)
+  assert.notEqual(cover.status, undefined)
   assert.deepEqual(book, original)
   assert.equal(fetch.mock.callCount(), 0)
 })
