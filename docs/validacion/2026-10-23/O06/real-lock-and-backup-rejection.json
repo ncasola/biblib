@@ -1,0 +1,10 @@
+{
+  "result": {
+    "code": 6,
+    "phase": "reset",
+    "message": "El recibo de respaldo no es válido."
+  },
+  "sameDockerInventory": true,
+  "databaseLockAcquiredAndReleased": true,
+  "noDestruction": true
+}

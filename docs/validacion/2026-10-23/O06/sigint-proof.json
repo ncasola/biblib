@@ -1,0 +1,14 @@
+{
+  "method": "process.emit(SIGINT) al handler real en proceso hijo Windows",
+  "exitCode": 130,
+  "result": {
+    "schemaVersion": 1,
+    "target": "local",
+    "code": 130,
+    "phase": "reset",
+    "correlation": "bca8f088-e957-4116-892a-bb0ceb16264a",
+    "message": "Reset interrumpido; repite la misma orden con su plan para continuar."
+  },
+  "phase": "destroy",
+  "noSuccess": true
+}

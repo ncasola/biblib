@@ -35,6 +35,7 @@
     "db:migrate:local": "node scripts/db/migrate.mjs apply local",
     "db:seed:local": "node scripts/db/seed-local.mjs",
     "db:local:login": "node scripts/db/local-login.mjs",
+    "db:reset:local": "node scripts/local-stack.mjs reset",
     "test:integration:local": "node tests/integration/run.mjs"
   },
   "dependencies": {
