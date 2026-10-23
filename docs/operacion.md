@@ -481,3 +481,58 @@ Diferencia con las suites existentes:
 | `pnpm test:integration:local` | GoTrue real, cookies `@supabase/ssr`, sesiones A/B | Postgres, PostgREST, Storage y Kong del perfil `test`; app compilada | Docker y perfil `test` preparado |
 
 Evidencia del ensayo: [validacion/2026-10-23/O06/qa-01](validacion/2026-10-23/O06/qa-01/informe.md).
+
+## Revisión de colección e importación en dos pasos · U-DAT-01
+
+Un reemplazo confirmado sobre una revisión antigua ya no puede borrar libros añadidos o corregidos después. Cada cuenta tiene una **revisión de colección** (`biblib.library_state.revision`, UUID opaco emitido por el servidor). Cualquier escritura de libros o estanterías la rota dentro de su transacción. La importación se prepara contra una revisión concreta y solo se confirma si sigue vigente.
+
+### Protocolo de revisión (guardas en la base)
+
+Se eligieron **guardas DB** en lugar de confiar en la aplicación, porque deben cubrir también la SQL directa autorizada:
+
+- `biblib.lock_library()` (`SECURITY DEFINER`, `search_path=pg_catalog`, sin argumentos): toma el propietario de `auth.uid()`, crea su fila si falta, la bloquea con `FOR UPDATE` y devuelve la revisión. Es el **bloqueo de colección** que sustituye al advisory lock anterior: todas las mutaciones de `app/actions` (libros, estado, portada, mover en lote, estanterías, recuperación de portadas, importación) lo toman antes de escribir, y `ensureDefaultShelf` también lo toma antes de crear la predeterminada. Sin sesión sale con `42501`. `anon` no puede ejecutarla.
+- Triggers `books_rotate_library_revision` y `shelves_rotate_library_revision` (`AFTER INSERT OR UPDATE OR DELETE FOR EACH ROW`) sobre `biblib.rotate_library_revision()` (`SECURITY DEFINER`, `search_path` fijo, no ejecutable por `authenticated`/`anon`). Rotan la revisión del propietario —y del anterior si cambia `user_id`— **una vez por transacción** (`rotated_xact = pg_current_xact_id()`), también con SQL administrativo. Conviven con `books_rotate_version`, que sigue protegiendo cada ficha.
+- `authenticated` solo tiene `SELECT` sobre `library_state` (RLS por `auth.uid()`). No puede insertar, actualizar, borrar ni truncar la revisión, ni siquiera la suya. La Data API sigue sin exponer `biblib` (406 `PGRST106`).
+
+La fila se crea en la migración para cada cuenta existente y de forma perezosa en la primera escritura o bloqueo de una cuenta nueva. Borrar la cuenta elimina su revisión por cascada sin recrearla. Orden de bloqueo: primero la colección y después las filas. Un escritor SQL externo que no tome `lock_library()` antes puede chocar con otro: Postgres aborta uno con `40P01` sin pérdidas y la app lo traduce a un error reintentable. `TRUNCATE` de las tablas de dominio no dispara triggers de fila; solo lo tiene el propietario y queda fuera del protocolo, igual que un backfill administrativo, que exige ventana coordinada.
+
+### Importar: preparar, revisar y confirmar
+
+| Acción | Contrato |
+| --- | --- |
+| `prepareImportAction(input, mode)` | Valida el archivo, busca portadas **fuera de cualquier transacción**, y bajo el bloqueo lee revisión y colección, calcula el plan y guarda la vista previa. Devuelve `{ previewId, revision, digest, expiresAt, plan }`. |
+| `confirmImportAction({ previewId, expectedRevision, idempotencyKey })` | Bajo el bloqueo: clave → caducidad/reglas → revisión. Revalida la entrada almacenada, vuelve a derivar el plan (debe coincidir) y lo aplica. Devuelve `{ operationId, status: "committed", result, replayed }`. |
+
+- **Plan privado** (`lib/import-plan.ts`): altas, conservados, sobrescritos, omitidos, reasignaciones de ID, eliminaciones y estanterías creadas/eliminadas. Es determinista: los IDs nuevos se derivan de la vista previa. La predeterminada nunca se borra ni se recrea.
+- **Vista previa** (`biblib.import_previews`): entrada validada, plan, modo, versión de reglas (`IMPORT_RULES_VERSION`), hash SHA-256 de la entrada canónica y `expires_at`. Caduca a los **30 minutos**; `BIBLIB_IMPORT_PREVIEW_TTL_MINUTES` (servidor, 1–1440) lo ajusta. El tiempo de Postgres es la autoridad. Cada cuenta conserva como máximo 10. Las caducadas se purgan al día siguiente, al preparar otra.
+- **Idempotencia** (`biblib.library_operations`): única por `(propietario, operación, clave)`. Guarda el hash de `{archivo, modo, reglas}` y el resultado durable. Repetir la misma clave devuelve el mismo `operationId` con `replayed: true`, aunque la revisión ya haya cambiado. Usar la misma clave con otro archivo o modo da `IDEMPOTENCY_CONFLICT` y no ejecuta nada. Una vista previa ya confirmada no admite otra clave. `authenticated` puede insertar y leer sus operaciones, pero no modificarlas ni borrarlas.
+- **Errores**: `REVISION_CONFLICT` (409), `PREVIEW_EXPIRED` (410) e `IDEMPOTENCY_CONFLICT` (409). Llevan mensaje en español, `retryable: false` y el `correlationId` de `lib/observability`. Ninguno se resuelve forzando: no existe `force=true`. Una vista previa ajena o inexistente devuelve `NOT_FOUND`, sin confirmar su existencia. `httpStatusForDomainError` traduce los códigos en las rutas HTTP.
+- **Ajustes**: al elegir el archivo se valida en local (errores inmediatos) y se prepara la revisión en el servidor. Cambiar de modo prepara otra. Ante `REVISION_CONFLICT` o `PREVIEW_EXPIRED` se conservan el archivo y el modo y se ofrece **Volver a revisar con los datos actuales**. Si se pierde la respuesta, se puede volver a confirmar con la misma clave sin duplicar.
+- **Firma antigua**: `importLibraryDataAction(input, options)` se ha **retirado**. Su único consumidor era Ajustes, que ya usa el flujo nuevo. El formato de los backups no cambia.
+
+### Migración `0003_library_revision` y recuperación
+
+```powershell
+pnpm db:status:local --profile test
+pnpm db:plan:local --profile test --out dat01.json
+pnpm db:migrate:local --plan .biblib/plans/dat01.json --expect-project biblib-test --expect-plan <sha256>
+```
+
+La migración crea las tres tablas con RLS, FK de propietario e índices, las funciones, los triggers y el backfill, en la misma transacción del runner. El manifest de objetos (`scripts/db/objects-manifest.mjs`) declara tablas, políticas, grants, funciones con su seguridad y permisos de ejecución, y triggers; `db:status:local` marca drift si alguien concede escritura en `library_state`, deshabilita un trigger o abre `lock_library` a `anon`. `tests/fixtures/migrations/objects-0003.json` contiene los metadatos reales tras `0003`.
+
+Recuperación: desactivar los reemplazos nuevos en la interfaz y conservar las vistas previas para diagnóstico, sin rebajar la validación de versión ni de revisión. No hay rollback automático; retirar los triggers quitaría la garantía y se detectaría como drift. Corrige hacia delante con una migración nueva.
+
+### Pruebas
+
+- `pnpm test`: plan (fusionar, reemplazar, archivo vacío, determinismo, 111 registros sintéticos), decisión de confirmación, hash canónico, caducidad, `retryable`, `correlationId` y estados HTTP.
+- `pnpm test:db`: `tests/db/revision.sql` aplica `0003` sobre datos previos y comprueba backfill, rotación única, aislamiento A/B, ausencia de escritura directa, vistas previas/operaciones, SQL administrativo, alta perezosa y borrado de cuenta.
+- `pnpm test:integration:local`: grupo `tests/integration/import/`, contra Auth/PostgREST/app reales del perfil `test`:
+  - Con dos sesiones de A, se prepara un reemplazo y después se añade un libro, se mueve, se cambia su estado o su portada, se renombra una estantería o se escribe por SQL directo. Cada caso termina en conflicto, no se borra nada y reintentar no lo aplica.
+  - B no invalida la revisión de A.
+  - La doble confirmación, secuencial y simultánea, produce un único resultado. La misma clave con otro modo o archivo da `IDEMPOTENCY_CONFLICT`.
+  - Se comprueban la caducidad, que B no puede confirmar ni ver previews de A, y que nadie altera `library_state` por SQL ni por la Data API.
+  - Se importan los 111 registros sintéticos.
+
+  Ningún reemplazo se confirma sobre los fixtures A/B. Las vistas previas y operaciones del run se registran en el manifiesto y se limpian por ID + propietario.
+
+Limitaciones: la suite no puede inyectar un proveedor lento en la app compilada (U-BIB). Lo que sí se prueba es una escritura entre la preparación, que incluye el enriquecimiento, y la confirmación. Los trabajos durables, el deshacer y la restauración multiparte siguen en U-DAT-02/03/04.
