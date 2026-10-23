@@ -18,7 +18,7 @@ Copia la conexión desde la sección **Connect** del proyecto correcto de Supaba
 
 BibLib reutiliza el cliente por proceso, limita su pool a una conexión y establece usuario y rol dentro de cada transacción. El cliente desactiva prepared statements, ejecuta las consultas de cada transacción de forma secuencial y exige SSL fuera de localhost. El tamaño del pool debe ajustarse al número de instancias y al límite real del proyecto. El pooler del proveedor no elimina ese presupuesto; el rendimiento y la concurrencia deben medirse en el despliegue concreto.
 
-Drizzle usa `SUPABASE_DB_URL` también para migrar. `drizzle.config.ts` carga `.env.local` y después `.env`, cuando existen, mediante la API de entorno de Node 24. Los valores ya presentes en el entorno tienen prioridad. Comprueba el destino antes de ejecutar `pnpm db:migrate`; cargar la variable no demuestra que apunte a la base adecuada. No imprimas la URL completa en consola ni en una incidencia.
+Las migraciones ya no se aplican con `SUPABASE_DB_URL` leída de archivos: `drizzle.config.ts` es solo offline y el único aplicador es el runner de [Migraciones](#migraciones), con objetivo, plan e identidad explícitos. No imprimas la URL completa en consola ni en una incidencia.
 
 ## Validación antes de publicar
 
@@ -41,9 +41,9 @@ El workflow `.github/workflows/ci.yml` utiliza valores públicos ficticios de Su
 
 ## Migraciones y recuperación
 
-`pnpm db:generate` genera una propuesta SQL a partir del esquema. Revísala junto con el historial de Drizzle. `pnpm db:migrate` modifica la base indicada por `SUPABASE_DB_URL`; no debe ejecutarse automáticamente desde una instalación, build o script de pruebas.
+`pnpm db:generate` genera una propuesta SQL a partir del esquema, sin conexión. Revísala junto con el historial de Drizzle. `pnpm db:migrate` ya no modifica ninguna base: es un despachador que sale con 2 y lista los comandos explícitos. En local se usa `db:status:local` → `db:plan:local` → `db:migrate:local` (ver [Migraciones](#migraciones)).
 
-Antes de aplicar `0001_library_integrity.sql` y `0002_book_versions.sql`:
+**Preproducción y producción no tienen todavía comando de migración** (U-INF-07, fase F1). Hasta entonces no se aplica `0001`/`0002` a la base real. Cuando exista, el procedimiento conservará estos pasos previos a aplicar `0001_library_integrity.sql` y `0002_book_versions.sql`:
 
 1. Identifica proyecto, entorno y versión de esquema. Confirma que la operación sobre esa base real está autorizada y acordada.
 2. Exporta las colecciones afectadas desde BibLib y crea además un respaldo de la base que incluya esquema, datos e historial de migraciones mediante el procedimiento del proveedor. El JSON de un usuario no sustituye un respaldo administrativo.
@@ -168,10 +168,10 @@ Compruébala desde otro equipo de la red con `Test-NetConnection <IP-del-equipo>
 
 ### Qué no hace todavía
 
-- No hay `pnpm db:local:doctor|status|up|down|bootstrap` (U-INF-03): la red, el workdir y el arranque se preparan a mano como arriba. No se comprueban automáticamente puertos ocupados ni bindings.
-- No hay selección de objetivo `BIBLIB_TARGET` ni `.env.local` generado para el stack (U-INF-02). La aplicación no se conecta todavía a este stack.
-- No se aplican migraciones Drizzle (U-INF-04) ni seed/fixtures de GoTrue y Storage (U-INF-05). `db:migrate` y `drizzle.config.ts` no cambian.
-- No hay reset (U-INF-06). Para descartar los datos de `scratch` hará falta ese flujo; no borres volúmenes a mano por patrón.
+Esta lista describía el estado al cerrar U-INF-01. Ya están disponibles el ciclo de vida (`db:local:doctor|status|up|down`, U-INF-03), los objetivos y builds aislados (U-INF-02) y el runner de migraciones (U-INF-04). Siguen pendientes:
+
+- Seed/fixtures de GoTrue, Storage y correo (U-INF-05).
+- Reset y bootstrap completo (U-INF-06). Para descartar los datos de `scratch` hará falta ese flujo; no borres volúmenes a mano por patrón.
 
 ## Observabilidad sin datos privados · U-OPS-01 (F0)
 
@@ -205,7 +205,7 @@ U-INF-02 añade los contextos y wrappers descritos aquí; sustituye las notas an
 
 - **Local:** ignora las variables del shell. Lee `.env.local` únicamente tras acreditar su primera línea `# biblib:generated target=local profile=<perfil> root=<sha256-raíz>`, o consulta `supabase status --output json` del workdir propio generado. Los endpoints deben coincidir exactamente con `127.0.0.1`, los puertos del perfil y la base `postgres`; `localhost` o un puerto ajeno no acreditan identidad. El estado nativo se captura en memoria y no se imprime.
 - **Test:** `loadTarget` exige un objeto `env` construido por el harness; no admite el objeto global `process.env` como entrada implícita. El wrapper construye una lista cerrada a partir de las variables inyectadas por el harness. No lee `.env*` y rechaza los archivos que Next podría cargar.
-- **Preprod/prod:** requieren URL pública, clave pública, `SUPABASE_DB_URL` y `BIBLIB_EXPECT_PROJECT_REF` inyectados. Se comprueba la correspondencia con el host Supabase del proyecto o el usuario del pooler; no se consulta el destino. No hay fallback a archivos locales. El preflight de identidad real, TLS, permisos y migraciones llegará en U-INF-04/U-INF-07.
+- **Preprod/prod:** requieren URL pública, clave pública, `SUPABASE_DB_URL` y `BIBLIB_EXPECT_PROJECT_REF` inyectados. Se comprueba la correspondencia con el host Supabase del proyecto o el usuario del pooler; no se consulta el destino. No hay fallback a archivos locales. El preflight de identidad real, TLS, permisos y migraciones remotas llegará en U-INF-07.
 
 `childEnv` elimina la herencia de Supabase/Postgres, `DATABASE_URL`, selectores del CLI, variables `BIBLIB_*` y claves/contactos de catálogos antes de inyectar el contexto. Fija `BIBLIB_TARGET`, `BIBLIB_PROFILE`, `BIBLIB_CATALOGUE_MODE` y `NEXT_PUBLIC_ENABLE_ANALYTICS=false` salvo selección explícita. Local/test usan `fixture` por defecto y dejan vacías las opciones de catálogo externo; `live` debe elegirse en la configuración del contexto. La interpretación del modo fixture por los proveedores pertenece a las unidades U-BIB; esta entrega publica la opción de servidor.
 
@@ -215,7 +215,7 @@ La comprobación de archivos cubre `.env`, `.env.local`, los archivos específic
 
 ### Generación offline y verificación del bundle
 
-`pnpm db:generate` selecciona la rama offline de `drizzle.config.ts`: no carga `.env.local` ni `.env`, no incluye `dbCredentials` y no abre conexiones. Debe funcionar incluso sin variables de base y mostrar `No schema changes` si no cambió el schema. `pnpm db:migrate` conserva provisionalmente la carga y aplicación anteriores; U-INF-04 lo convertirá en despachador explícito. No uses ese comando legacy como validación local de esta entrega.
+`pnpm db:generate` selecciona la rama offline de `drizzle.config.ts`: no carga `.env.local` ni `.env`, no incluye `dbCredentials` y no abre conexiones. Debe funcionar incluso sin variables de base y mostrar `No schema changes` si no cambió el schema. `pnpm db:migrate` es ahora un despachador sin efectos (U-INF-04).
 
 Un harness puede construir sin stack ni red inyectando placeholders en un checkout sin archivos privados:
 
@@ -249,7 +249,7 @@ Todos aceptan únicamente `--profile main|test|scratch` y `--json`. El perfil pr
 
 `doctor` es de solo lectura: valida manifiesto/configuración, versiones fijadas frente a instaladas, motor Docker, identidad, archivos de entorno mediante `assertNoForeignEnvFiles`, puertos ocupados (incluidos los reservados) y rangos TCP excluidos de Windows. Detecta el PID con netstat/ss cuando está disponible y nunca termina al ocupante. No abre Docker Desktop, no genera workdirs, no modifica esquema ni consulta datos. Un `.env*` no acreditado produce salida 3 sin mostrar su contenido. No consulta `supabase status` ni carga credenciales para diagnosticar un stack parado.
 
-`status` también es de solo lectura. Su contrato JSON es `{ schemaVersion: 1, target: "local", profile, fingerprint, endpoints, services: [{ name, status }], head: null, checks: [{ id, status, message }] }`. La huella coincide con la de `loadTarget` para ese perfil. Postgres se presenta como host/puerto/base, sin URL con usuario/contraseña; no aparecen claves, JWT, configuración de contenedores ni la salida nativa de Supabase. `head` seguirá en `null` hasta la integración de U-INF-04. Los servicios se proyectan desde su estado Docker; `running` indica que ese servicio no declara un HEALTHCHECK Docker.
+`status` también es de solo lectura. Su contrato JSON es `{ schemaVersion: 1, target: "local", profile, fingerprint, endpoints, services: [{ name, status }], head: null, checks: [{ id, status, message }] }`. La huella coincide con la de `loadTarget` para ese perfil. Postgres se presenta como host/puerto/base, sin URL con usuario/contraseña; no aparecen claves, JWT, configuración de contenedores ni la salida nativa de Supabase. `head` es `null` con el stack parado o sin ledger; con U-INF-04 publica el head aplicado (ver Migraciones). Los servicios se proyectan desde su estado Docker; `running` indica que ese servicio no declara un HEALTHCHECK Docker.
 
 `up` exige un preflight correcto, crea la red etiquetada si falta y arranca el proyecto con las comprobaciones de salud del CLI, sin `--ignore-health-check`. Comprueba además la salud Docker de todos los contenedores y HTTP de GoTrue, Storage, Studio (`/project/default`, evita la redirección normal de `/`) y Mailpit. Sobre el mismo stack sano verifica la salud y conserva los IDs, sin volver a ejecutar start. Un puerto ocupado por un proceso ajeno devuelve 8 con diagnóstico antes de crear red/contenedores; una herramienta ausente, versión incorrecta o puerto excluido devuelve 4.
 

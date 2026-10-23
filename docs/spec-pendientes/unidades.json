@@ -118,7 +118,12 @@
         "QA-02",
         "BE-02"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O04 · merge de u-inf-04; ensayo scratch 0000→0002, idempotencia, lock (7), drift/CRLF/adopción (5), fallo revertido (9) — docs/validacion/2026-10-23/O04/u-inf-04-informe.md",
+      "pending": [
+        "Ensayo nativo en Linux (CI, U-QA-04).",
+        "Preprod/prod: U-INF-07."
+      ]
     },
     {
       "id": "U-INF-05",
