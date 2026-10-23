@@ -27,7 +27,7 @@ export function targetInputs(env) {
 
 function cleanInheritedEnv(env) {
   return Object.fromEntries(Object.entries(env).filter(([key]) =>
-    !/^(SUPABASE_|NEXT_PUBLIC_SUPABASE_|DATABASE_URL$|PG|POSTGRES_|BIBLIB_|GOOGLE_BOOKS_API_KEY$|OPEN_LIBRARY_CONTACT$|NEXT_PUBLIC_ENABLE_ANALYTICS$)/i.test(key)))
+    !/^(SUPABASE_|NEXT_PUBLIC_SUPABASE_|DATABASE_URL$|PG|POSTGRES_|BIBLIB_|GOOGLE_BOOKS_API_KEY$|OPEN_LIBRARY_CONTACT$|NEXT_PUBLIC_ENABLE_ANALYTICS$|NEXT_PUBLIC_BIBLIB_)/i.test(key)))
 }
 
 function url(value, protocols) {
@@ -182,8 +182,14 @@ export function loadTarget(target, { profile, env = process.env, cwd = REPO_ROOT
   })
 }
 
+// Primera puerta del formulario local: solo se compila en local/test; en cualquier otro objetivo queda vacía.
+export const LOCAL_LOGIN_BUILD_VARIABLE = "NEXT_PUBLIC_BIBLIB_LOCAL_LOGIN"
+
 export function childEnv(ctx) {
-  return { ...cleanInheritedEnv(process.env), ...ctx.env() }
+  return {
+    ...cleanInheritedEnv(process.env), ...ctx.env(),
+    [LOCAL_LOGIN_BUILD_VARIABLE]: ["local", "test"].includes(ctx.target) ? "1" : "",
+  }
 }
 
 export function writeLocalEnvFile(ctx) {
