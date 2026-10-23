@@ -8,6 +8,8 @@ import { createOpenLibraryProvider } from "../lib/bibliographic-catalog/provider
 import { createOpenLibraryClient } from "../lib/open-library"
 import { DEFAULT_BOOK_COVER } from "../lib/book-covers"
 import { DomainError } from "../lib/domain-errors"
+import { catalogResultError } from "../lib/bibliographic-catalog/action-result"
+import { FIXTURE_UNAVAILABLE_ISBN } from "../lib/bibliographic-catalog/providers/fixture"
 
 const isbn = "9780804429573"
 const live = () => readCatalogConfig({ BIBLIB_TARGET: "test", BIBLIB_CATALOGUE_MODE: "live" })
@@ -40,6 +42,18 @@ test("fixture atiende JSON versionados sin tráfico externo aunque las banderas 
   assert.equal((await service.searchTitleAuthor({ title: "isla" })).status, "incomplete")
   assert.equal((await service.resolveEditions({ provider: "open-library", recordKind: "work", recordId: "OL1W" })).status, "incomplete")
   assert.equal(requests, 0)
+})
+
+test("fixture: ISBN nuevo encontrado y fallo reservado sin confundirse con notFound", async (t) => {
+  t.mock.method(globalThis, "fetch", async () => assert.fail("Fixture no puede llamar a Internet"))
+  const service = createConfiguredCatalog(readCatalogConfig({ BIBLIB_TARGET: "test" }))
+  const found = await service.lookupISBN("978-0-00-000003-3")
+  assert.equal(found.status, "found")
+  assert.equal(found.candidates[0].title, "El faro de las palabras")
+  const failing = await service.lookupISBN(FIXTURE_UNAVAILABLE_ISBN)
+  assert.equal(failing.status, "incomplete")
+  assert.equal(failing.providers[0].status, "unavailable")
+  assert.equal(catalogResultError(failing)?.code, "PROVIDER_UNAVAILABLE")
 })
 
 test("fixture desconocido es notFound con la configuración predeterminada", async () => {
