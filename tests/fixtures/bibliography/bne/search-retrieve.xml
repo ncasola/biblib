@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><searchRetrieveResponse xmlns="http://www.loc.gov/zing/srw/">
+  <version>1.2</version>
+  <numberOfRecords>4</numberOfRecords>
+  <records>
+    <record>
+      <recordSchema>marcxml</recordSchema>
+      <recordPacking>xml</recordPacking>
+      <recordData>
+        <record xmlns="http://www.loc.gov/MARC21/slim">
+          <leader>01562nam a2200397 c 4500</leader>
+          <controlfield tag="001">991049552139708606</controlfield>
+          <controlfield tag="008">150116s2014    sp a   | |||| 000 f spa^^</controlfield>
+          <datafield ind1=" " ind2=" " tag="020">
+            <subfield code="a">978-84-01-33720-8</subfield>
+          </datafield>
+          <datafield ind1="1" ind2=" " tag="041">
+            <subfield code="a">spa</subfield>
+            <subfield code="h">eng</subfield>
+          </datafield>
+          <datafield ind1="1" ind2=" " tag="100">
+            <subfield code="a">Rothfuss, Patrick</subfield>
+            <subfield code="4">aut</subfield>
+          </datafield>
+          <datafield ind1="1" ind2="3" tag="245">
+            <subfield code="a">La música del silencio</subfield>
+            <subfield code="c">Patrick Rothfuss ; con ilustraciones de Marc Simonetti ; traducción de Gemma Rovira</subfield>
+          </datafield>
+          <datafield ind1=" " ind2=" " tag="260">
+            <subfield code="a">Barcelona</subfield>
+            <subfield code="b">Plaza Janés</subfield>
+            <subfield code="c">2014</subfield>
+          </datafield>
+          <datafield ind1=" " ind2=" " tag="300">
+            <subfield code="a">147 p.</subfield>
+            <subfield code="b">il.</subfield>
+            <subfield code="c">25 cm</subfield>
+          </datafield>
+          <datafield ind1="1" ind2=" " tag="700">
+            <subfield code="a">Simonetti, Marc</subfield>
+            <subfield code="e">ilustrador</subfield>
+            <subfield code="4">ill</subfield>
+          </datafield>
+          <datafield ind1="1" ind2=" " tag="700">
+            <subfield code="a">Rovira Ortega, Gemma</subfield>
+            <subfield code="e">traductor</subfield>
+            <subfield code="4">trl</subfield>
+          </datafield>
+        </record>
+      </recordData>
+      <recordIdentifier>991049552139708606</recordIdentifier>
+      <recordPosition>1</recordPosition>
+    </record>
+    <record>
+      <recordSchema>marcxml</recordSchema>
+      <recordPacking>xml</recordPacking>
+      <recordData>
+        <record xmlns="http://www.loc.gov/MARC21/slim">
+          <leader>01713cam a22004092u 4500</leader>
+          <controlfield tag="001">991007050249708606</controlfield>
+          <controlfield tag="008">171218s2011    sp |||||o|||| ||| ||spa d</controlfield>
+          <datafield ind1=" " ind2=" " tag="020">
+            <subfield code="a">9788401352799</subfield>
+          </datafield>
+          <datafield ind1="1" ind2=" " tag="100">
+            <subfield code="a">Rothfuss, Patrick</subfield>
+            <subfield code="4">aut</subfield>
+          </datafield>
+          <datafield ind1="1" ind2="3" tag="245">
+            <subfield code="a">El nombre del viento</subfield>
+          </datafield>
+          <datafield ind1=" " ind2=" " tag="260">
+            <subfield code="a">Barcelona</subfield>
+            <subfield code="b">Plaza &amp; Janés</subfield>
+            <subfield code="c">2011</subfield>
+          </datafield>
+          <datafield ind1=" " ind2=" " tag="300">
+            <subfield code="a">1 recurso en línea</subfield>
+          </datafield>
+          <datafield ind1="1" ind2=" " tag="700">
+            <subfield code="a">Rovira Ortega, Gemma</subfield>
+            <subfield code="e">traductor</subfield>
+            <subfield code="4">trl</subfield>
+          </datafield>
+          <datafield ind1=" " ind2=" " tag="776">
+            <subfield code="t">El nombre del viento  El nombre del viento  La música del silencio</subfield>
+            <subfield code="h">872 p.  877 p.  147 p.</subfield>
+            <subfield code="z">978-84-01-33720-8  978-84-01-33720-8  978-84-01-33720-8</subfield>
+            <subfield code="w">Noa4530999  a5130934  a5597358</subfield>
+          </datafield>
+        </record>
+      </recordData>
+      <recordIdentifier>991007050249708606</recordIdentifier>
+      <recordPosition>2</recordPosition>
+    </record>
+  </records>
+  <nextRecordPosition>3</nextRecordPosition>
+  <extraResponseData xmlns:xb="http://www.exlibris.com/repository/search/xmlbeans/">
+    <xb:exact>true</xb:exact>
+    <xb:responseDate>2026-10-23T17:28:51+0200</xb:responseDate>
+  </extraResponseData>
+</searchRetrieveResponse>
