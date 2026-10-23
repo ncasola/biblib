@@ -1,0 +1,129 @@
+name: Cierre de ola y validación semanal
+
+on:
+  schedule:
+    - cron: "23 4 * * 1"
+  workflow_dispatch:
+    inputs:
+      previous_schema_commit:
+        description: Commit completo de la versión anterior del esquema
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cierre-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  upgrade:
+    name: Esquema anterior, reconstrucción, Firefox y WebKit
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    defaults:
+      run:
+        shell: bash
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+      PREVIOUS_COMMIT: ${{ inputs.previous_schema_commit || vars.BIBLIB_PREVIOUS_SCHEMA_COMMIT }}
+    steps:
+      - name: Descargar commit actual
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Preparar pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+      - name: Preparar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24.11.1"
+          cache: pnpm
+      - name: Exigir versión anterior fijada y prefijo inalterado del historial
+        run: node scripts/ci/previous-schema.mjs "$PREVIOUS_COMMIT"
+      - name: Cambiar al código de la versión anterior
+        run: git checkout --detach "$PREVIOUS_COMMIT"
+      - name: Instalar versión anterior
+        run: pnpm install --frozen-lockfile
+      - name: Crear base con migraciones y fixtures anteriores
+        id: stack
+        run: pnpm db:local:bootstrap --profile test
+      - name: Avanzar al commit a validar conservando estado local propio
+        if: always() && steps.stack.outcome != 'skipped'
+        env:
+          CURRENT_COMMIT: ${{ github.sha }}
+        run: git checkout --detach "$CURRENT_COMMIT"
+      - name: Instalar versión actual
+        id: install
+        run: pnpm install --frozen-lockfile
+      - name: Plan de upgrade de solo lectura
+        run: pnpm db:plan:local --profile test --out upgrade.json
+      - name: Aplicar exactamente el plan de upgrade
+        run: |
+          plan_hash=$(node -p 'JSON.parse(require("fs").readFileSync(".biblib/plans/upgrade.json", "utf8")).planHash')
+          pnpm db:migrate:local --plan .biblib/plans/upgrade.json --expect-project biblib-test --expect-plan "$plan_hash"
+      - name: Validar datos anteriores e integración tras upgrade
+        id: integration_upgrade
+        run: pnpm test:integration:local
+      - name: Planificar reconstrucción física (no ejecuta DDL)
+        run: pnpm db:reset:local --dry-run --profile test --out rebuild.json
+      - name: Reconstruir solo recursos propios y ficticios del runner
+        run: |
+          plan_hash=$(node -p 'JSON.parse(require("fs").readFileSync(".biblib/plans/rebuild.json", "utf8")).planHash')
+          pnpm db:reset:local --apply --plan .biblib/plans/rebuild.json --expect-project biblib-test --expect-plan "$plan_hash" --discard-local-data
+      - name: Verificar reconstrucción desde cero
+        id: integration_rebuild
+        run: pnpm test:integration:local
+      - name: Instalar motor de accesibilidad aislado (sin cambiar el lockfile)
+        run: |
+          mkdir -p "$RUNNER_TEMP/biblib-a11y"
+          pnpm --dir "$RUNNER_TEMP/biblib-a11y" add --ignore-workspace --ignore-scripts --lockfile=false axe-core@4.14.0
+          pnpm exec playwright install --with-deps chrome
+      - name: Auditoría automática de acceso en claro y oscuro
+        id: accessibility
+        env:
+          AXE_SOURCE: ${{ runner.temp }}/biblib-a11y/node_modules/axe-core/axe.min.js
+        run: node scripts/ci/accessibility.mjs
+      - name: Esperar a la siguiente ventana del limitador GoTrue
+        run: sleep 310
+      - name: Instalar Firefox y WebKit fijados por Playwright
+        run: pnpm exec playwright install --with-deps firefox webkit
+      - name: Firefox sobre fixtures nuevos
+        id: firefox
+        run: pnpm test:e2e:local --project firefox --reuse-build
+      - name: Conservar informe Firefox y renovar fixtures y ventana de Auth
+        run: |
+          mkdir -p .biblib/ci
+          mv .biblib/e2e/resultados.json .biblib/ci/firefox-resultados.json
+          if [ -d .biblib/e2e/capturas ]; then mv .biblib/e2e/capturas .biblib/ci/firefox-capturas; fi
+          pnpm db:reset:local --dry-run --profile test --out webkit.json
+          plan_hash=$(node -p 'JSON.parse(require("fs").readFileSync(".biblib/plans/webkit.json", "utf8")).planHash')
+          pnpm db:reset:local --apply --plan .biblib/plans/webkit.json --expect-project biblib-test --expect-plan "$plan_hash" --discard-local-data
+      - name: WebKit sobre fixtures nuevos
+        id: webkit
+        run: pnpm test:e2e:local --project webkit
+      - name: Escala de U-QA-03 o pendiente explícito
+        id: performance
+        run: node scripts/ci/performance.mjs
+      - name: Parar exclusivamente el perfil propio
+        if: always() && steps.stack.outcome != 'skipped'
+        run: pnpm db:local:down --profile test
+      - name: Recopilar evidencia permitida
+        if: always() && steps.install.outcome == 'success'
+        env:
+          CI_JOB_STATUS: ${{ job.status }}
+          CI_STEP_RESULTS: ${{ toJSON(steps) }}
+        run: pnpm ci:collect
+      - name: Conservar planes, informes y capturas ficticias
+        if: always() && steps.install.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: cierre-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .biblib/ci/public/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14
