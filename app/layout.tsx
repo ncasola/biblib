@@ -4,11 +4,13 @@ import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 import { AuthProvider } from "@/lib/auth-context"
 import { ThemeProvider } from "@/components/theme-provider"
+import { PRIVATE_ROBOTS } from "@/lib/route-metadata"
 
 export const metadata: Metadata = {
   title: { default: "BibLib", template: "%s · BibLib" },
   description: "BibLib es una aplicación de gestión de biblioteca personal.",
   generator: "BibLib",
+  robots: PRIVATE_ROBOTS,
   icons: {
     icon: [
       { url: "/logo.png", type: "image/png", sizes: "32x32" },
