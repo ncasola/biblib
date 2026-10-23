@@ -34,7 +34,8 @@
     "db:plan:local": "node scripts/db/plan.mjs local",
     "db:migrate:local": "node scripts/db/migrate.mjs apply local",
     "db:seed:local": "node scripts/db/seed-local.mjs",
-    "db:local:login": "node scripts/db/local-login.mjs"
+    "db:local:login": "node scripts/db/local-login.mjs",
+    "db:reset:local": "node scripts/local-stack.mjs reset"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "1.1.15",

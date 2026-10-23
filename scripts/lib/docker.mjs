@@ -21,7 +21,7 @@ export async function inventory(ctx) {
     docker(ctx, ["volume", "ls", "--format", "{{.Name}}"]),
   ])
   const [containers, networks, volumes] = await Promise.all([
-    lines(containerIds).length ? docker(ctx, ["container", "inspect", ...lines(containerIds), "--format", '{"id":{{json .Id}},"name":{{json .Name}},"labels":{{json .Config.Labels}},"status":{{json .State.Status}},"health":{{with index .State "Health"}}{{json .Status}}{{else}}null{{end}},"ports":{{json .NetworkSettings.Ports}},"networks":{{json .NetworkSettings.Networks}}}']).then(records) : [],
+    lines(containerIds).length ? docker(ctx, ["container", "inspect", ...lines(containerIds), "--format", '{"id":{{json .Id}},"name":{{json .Name}},"labels":{{json .Config.Labels}},"status":{{json .State.Status}},"health":{{with index .State "Health"}}{{json .Status}}{{else}}null{{end}},"ports":{{json .NetworkSettings.Ports}},"networks":{{json .NetworkSettings.Networks}},"mounts":{{json .Mounts}}}']).then(records) : [],
     lines(networkNames).length ? docker(ctx, ["network", "inspect", ...lines(networkNames), "--format", '{"id":{{json .Id}},"name":{{json .Name}},"labels":{{json .Labels}}}']).then(records) : [],
     lines(volumeNames).length ? docker(ctx, ["volume", "inspect", ...lines(volumeNames), "--format", '{"id":{{json .Name}},"name":{{json .Name}},"createdAt":{{json .CreatedAt}},"labels":{{json .Labels}}}']).then(records) : [],
   ])

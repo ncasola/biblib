@@ -8,6 +8,7 @@ import { checkPublishedBindings, generateProfileWorkdir, getProfile, loadProfile
 import { execute, pnpmCommand, sanitize, supabaseCommand } from "./lib/process.mjs"
 import { assertOwnership, docker, excludedPorts, inventory, portListening, probePorts, resourceRecord, selectResources, serviceStates } from "./lib/docker.mjs"
 import { acquireLock, readState, writeState } from "./lib/state.mjs"
+import { parseResetArgs, runReset } from "./db/reset-local.mjs"
 
 const PHASES = ["preflight", "stack", "env", "migrate", "seed", "verify"]
 const emptyResources = () => ({ containers: [], networks: [], volumes: [] })
@@ -16,6 +17,7 @@ const fail = (code, phase, message) => { throw new BiblibError(code, phase, mess
 
 export function parseArgs(argv) {
   const [command, ...args] = argv
+  if (command === "reset") return { command, ...parseResetArgs(args) }
   if (!["doctor", "status", "up", "down", "bootstrap"].includes(command)) fail(EXIT.INVALID_ARGS, "argumentos", "Uso: local-stack.mjs doctor|status|up|down|bootstrap [--profile main|test|scratch] [--json].")
   let profile = "main", json = false, selected = false
   for (let i = 0; i < args.length; i++) {
@@ -43,6 +45,7 @@ export function createContext(profile, options = {}) {
     readHead: options.readHead ?? (async (stack) => (await import("./db/migrate.mjs")).readAppliedHead(stack)),
     migrateLocal: options.migrateLocal ?? (async (stack, opts) => (await import("./db/migrate.mjs")).runLocalMigration(stack, opts)),
     seedLocal: options.seedLocal ?? (async (stack, opts) => (await import("./db/seed-local.mjs")).runSeed({ profile: stack.profile.name, root: stack.root, stack, lockHeld: true, ...opts })),
+    verifyLocal: options.verifyLocal ?? (async (stack, opts) => (await import("./db/verify-local.mjs")).verifyLocal(stack, opts)),
   }
 }
 
@@ -229,6 +232,7 @@ async function start(ctx, diagnostic, savePhase) {
 
 export async function runLocalStack(argv, options = {}) {
   const parsed = parseArgs(argv)
+  if (parsed.command === "reset") return runReset(parsed, { ...options, createContext, diagnose, validateLayout: assertLayout, bootstrap: (profile) => runLocalStack(["bootstrap", "--profile", profile, "--json"], { ...options, lockHeld: true }) })
   const ctx = createContext(parsed.profile, options)
   if (["doctor", "status"].includes(parsed.command)) {
     const diagnostic = await diagnose(ctx)
@@ -244,8 +248,13 @@ export async function runLocalStack(argv, options = {}) {
   }
   // Un checkout hijo nunca puede iniciar main/test por accidente.
   if (["up", "bootstrap"].includes(parsed.command) && existsSync(path.join(ctx.root, ".git")) && !lstatSync(path.join(ctx.root, ".git")).isDirectory() && ctx.profile.name !== "scratch") fail(EXIT.IDENTITY_MISMATCH, "preflight", "Desde un worktree solo se permite arrancar el perfil scratch.")
-  const release = acquireLock(ctx)
-  let receipt = parsed.command === "bootstrap" ? { runId: randomUUID(), status: "pending", phase: "preflight", phases: Object.fromEntries(PHASES.map((name) => [name, { status: "pending" }])) } : null
+  if (["up", "bootstrap"].includes(parsed.command) && !options.lockHeld) {
+    const reset = readState(ctx, "-reset")
+    if (reset && reset.status !== "passed") fail(EXIT.PLAN_REJECTED, "preflight", "Hay un reset incompleto; continúa con su plan antes de arrancar o hacer bootstrap.")
+  }
+  const previous = parsed.command === "bootstrap" ? readState(ctx, "-bootstrap") : null
+  const release = options.lockHeld ? () => {} : acquireLock(ctx)
+  let receipt = parsed.command === "bootstrap" ? { runId: previous && previous.status !== "passed" ? previous.runId : randomUUID(), resumedFrom: previous?.status === "passed" ? null : previous?.phase ?? null, status: "pending", phase: "preflight", phases: Object.fromEntries(PHASES.map((name) => [name, { status: "pending" }])) } : null
   let resources = emptyResources(), phase = "preflight", recorded = false, lastStatus
   const savePhase = (next, status, current = resources, extra = {}) => {
     phase = next; resources = current
@@ -308,20 +317,25 @@ export async function runLocalStack(argv, options = {}) {
         interrupted(ctx)
         savePhase("migrate", "passed", resources, { head: migrated.head, message: `Plan + migrate locales (U-INF-04): ${migrated.result}.` })
         savePhase("seed", "running", resources)
-        const seeded = await ctx.seedLocal(ctx, { signal: ctx.signal })
+        let seeded, unchanged = false
+        try { seeded = await ctx.verifyLocal(ctx, { sessions: false, signal: ctx.signal }); unchanged = true }
+        catch (error) { if (error.code === EXIT.INTERRUPTED || error.code === EXIT.IDENTITY_MISMATCH) throw error }
+        if (!unchanged) seeded = await ctx.seedLocal(ctx, { signal: ctx.signal })
         interrupted(ctx)
-        savePhase("seed", "passed", resources, { censusId: seeded.censusId })
-        receipt.phase = "verify"
-        receipt.status = "pending"
-        receipt.phases.verify = { status: "pending", message: "Verificación completa pendiente de U-INF-06." }
+        savePhase("seed", "passed", resources, { censusId: seeded.censusId, unchanged })
+        savePhase("verify", "running", resources)
+        const verified = await ctx.verifyLocal(ctx, { signal: ctx.signal })
+        interrupted(ctx)
+        savePhase("verify", "passed", resources, { verification: verified })
+        receipt.status = "passed"
         writeState(ctx, receipt, "-bootstrap")
       }
     }
     const checks = [{ id: parsed.command, status: "ok", message: parsed.command === "down" ? "Perfil parado; volúmenes conservados." : "Stack propio sano." }]
     const bindings = checkPublishedBindings(ctx.profile.name, resources.containers, { root: ctx.root })
     if (bindings.exposed.length) checks.push({ id: "bindings.loopback", status: "warn", message: "Bindings fuera de loopback; consulta alternativas A/B en docs/operacion.md." })
-    if (receipt) checks.push({ id: "bootstrap.pending", status: "pending", message: "preflight, stack, env, migrate y seed completados; verify pendiente de U-INF-06." })
-    return { code: EXIT.OK, result: { ...publicResult(ctx, resources, checks, receipt ? receipt.phases.migrate.head ?? null : null), ...(receipt ? { bootstrap: { status: "pending", phase: "verify", phases: receipt.phases } } : {}) } }
+    if (receipt) checks.push({ id: "bootstrap", status: "ok", message: "preflight, stack, env, migrate, seed y verify completados y verificados." })
+    return { code: EXIT.OK, result: { ...publicResult(ctx, resources, checks, receipt ? receipt.phases.migrate.head ?? null : null), ...(receipt ? { bootstrap: { status: receipt.status, phase: "verify", phases: receipt.phases } } : {}) } }
   } catch (error) {
     if (!recorded && ctx.signal?.aborted) {
       // También registra una interrupción temprana, siempre que la identidad sea válida.
