@@ -1,0 +1,2 @@
+111 libros: {"books":111,"bytes":76357,"chunks":2,"shelves":3} captura 13 ms
+10000 libros: {"books":10000,"bytes":6907872,"chunks":51,"shelves":3} captura 393 ms

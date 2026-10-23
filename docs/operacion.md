@@ -903,3 +903,88 @@ Suma, desde los registros JSON de `lib/observability` (que ya no llevan ISBN, co
 1. **F1**: `fixture` para revisar contrato y UI. `live` con Open Library (limitador y gateway) y BNE con `BIBLIB_BNE_ENABLED=true` junto con `BIBLIB_BIBLIOGRAPHY_REVIEW_ENABLED=true`.
 2. **F2**: Google solo con `BIBLIB_GOOGLE_BOOKS_ENABLED=true` y clave de servidor tras revisar cuota, coste y términos; su vista previa nunca se conserva.
 3. **Recuperar**: volver a `fixture`, apagar un proveedor con su bandera o desactivar la revisión. Los datos de libros y los metadatos ya elegidos no se tocan; la entrada manual sigue disponible.
+
+## Versiones anteriores y deshacer recuperable · U-DAT-02
+
+Antes de cada operación destructiva (reemplazar la biblioteca con una importación o restaurar una versión), BibLib guarda en Postgres la colección que se va a sustituir. Ajustes muestra el historial («Versiones anteriores») con fecha, motivo, cantidades y caducidad, y permite comparar una versión con la colección actual y restaurarla. Fusionar no es destructivo y no guarda nada.
+
+### Modelo y protocolo
+
+- **`biblib.library_snapshots`**: cabecera por versión con dueño, `source_operation_id` (la operación de `library_operations` que sustituyó ese estado), `reason` (`import.replace` | `snapshot.restore`), `captured_revision`, `schema_version` (1), `state` (`capturing` → `ready`), `counts` (`books`, `shelves`, `chunks`, `bytes`), `digest`, `version` (solo autoriza borrar esa versión), `expires_at` y `created_at`. Única por `(user_id, source_operation_id)`: una operación, una versión.
+- **`biblib.library_snapshot_chunks`**: trozos de hasta **200 filas** de un tipo (`shelves` primero, en orden de creación; después `books`, por ID), cada uno con el sha256 de su JSON. El hash de la cabecera es `sha256("biblib.snapshot.v1|libros|estanterías|" + hashes de los trozos en orden)`: un trozo perdido, alterado o desordenado invalida la versión. No se guarda `books.version`: nunca se reutiliza un token de edición.
+- **RLS y permisos**: `authenticated` solo tiene `SELECT` de sus filas (política `*_select_own`) y ninguna escritura directa. FK compuestas con propietario: trozos → versión (`ON DELETE CASCADE`), versión → operación (sin acción: purgar operaciones no borra versiones en silencio) e `import_previews.snapshot_id` → versión (`CASCADE`). Todo cuelga de `auth.users` en cascada.
+- **Funciones** (`SECURITY DEFINER`, `search_path = pg_catalog`, dueño de `auth.uid()`):
+  - `library_snapshot_capture(operación, motivo)` exige la operación registrada en **la misma transacción** (`created_at = now()`) y la cuenta activa (U-DAT-03). Toma el bloqueo de colección, retira las versiones vencidas del dueño, comprueba la cuota y el tamaño y escribe cabecera y trozos por conjuntos. Errores propios: `BS001` (cuota), `BS002` (cuenta bloqueada) y `BS003` (tamaño).
+  - `library_snapshot_foreign_ids(versión)` devuelve los IDs de una versión propia que hoy usa otra cuenta, sin revelar su titular.
+  - `library_snapshot_delete(versión, versión vista)` toma el bloqueo de colección (espera a una restauración en curso) y borra en cascada trozos y vistas previas de restauración.
+  - `library_snapshot_purge_expired(límite)` retira versiones vencidas de todas las cuentas. Solo la ejecuta la conexión del servidor, para el mantenimiento de F4/U-OPS-03.
+
+### Atomicidad
+
+El publicador (`lib/import-publisher.ts`) registra la operación durable, captura la versión anterior y aplica el plan **en la misma transacción final**, bajo el bloqueo de colección y tras comprobar clave, caducidad y revisión. Si la captura falla (cuota, tamaño, cuenta o cualquier error), no se reemplaza nada y no queda ninguna versión: la transacción entera se revierte. Restaurar (`publishSnapshotRestore`) sigue el mismo orden y captura antes el estado que va a sustituir, así que una restauración también se puede deshacer.
+
+### Acciones (`app/actions/library-snapshots.ts`, todas `ActionResult`)
+
+| Acción | Contrato |
+| --- | --- |
+| `listLibrarySnapshotsAction({ cursor, limit })` | Versiones vigentes del dueño, de la más reciente a la más antigua, con cursor opaco (fecha con microsegundos + ID), hasta 20 por página, cuota (`used`/`limit`) y días de retención. |
+| `previewSnapshotRestoreAction({ snapshotId })` | Crea una vista previa de U-DAT-01 (`import_previews` con `snapshot_id` y sin copiar el contenido) con la revisión actual, el plan de reemplazo y los títulos acotados que desaparecen y que vuelven. Una versión ajena, inexistente o incompleta responde `NOT_FOUND`; una vencida, `PREVIEW_EXPIRED`. |
+| `restoreSnapshotAction({ previewId, expectedRevision, idempotencyKey })` | Bajo el bloqueo: clave (una repetición idéntica devuelve el mismo `operationId` con `replayed: true`), caducidad, revisión, versión vigente, hashes y plan derivado de nuevo. Conserva los IDs propios (también los de libros borrados después), reasigna e informa los que ocupa otra cuenta, mantiene la predeterminada actual, regenera las versiones de ficha y rota la revisión de colección. Si la colección cambió: `REVISION_CONFLICT`, sin aplicar nada; hay que volver a comparar. |
+| `deleteLibrarySnapshotAction({ snapshotId, expectedVersion })` | Borrado explícito. Una versión antigua es `CONFLICT`; ajena o inexistente, `NOT_FOUND`. |
+
+`confirmImportAction` no cambia de contrato: un reemplazo bloqueado por la cuota o el tamaño devuelve `LIMIT_EXCEEDED` (413, no reintentable) con un mensaje que explica cómo liberar espacio. Ajustes usa entonces una clave nueva, porque no se aplicó nada.
+
+### Retención, cuota e inventario
+
+- **30 días** por versión y **10 versiones vigentes por cuenta** (propuesta inicial; F4 fija la capacidad definitiva). Una versión guarda como mucho 10 000 libros y 1 000 estanterías. Con la cuota agotada se bloquea la operación destructiva: **ninguna versión vigente se borra para hacer sitio**, la persona decide cuál eliminar. Las vencidas no se listan ni se restauran, y se retiran al capturar la siguiente o con `library_snapshot_purge_expired`.
+- Tamaño medido en scratch (fichas sintéticas con autoría, editorial y portadas): 111 libros ocupan 75 KiB en 2 trozos y se capturan en 13 ms; 10 000 libros, 6,6 MiB en 51 trozos y 393 ms dentro de la transacción de publicación ([medida](validacion/2026-10-23/O10/dat-02/18-tamano-captura.txt)). Con la cuota llena, una cuenta grande ocupa unos 66 MiB.
+- **Inventario para U-OPS-03** (`SNAPSHOT_INVENTORY` en `lib/library-snapshots.ts`): `biblib.library_snapshots`, `biblib.library_snapshot_chunks` y las vistas previas con `snapshot_id`. Una cuenta bloqueada (`account_set_state(..., 'blocked')`) no puede capturar y, por tanto, tampoco reemplazar ni restaurar. Borrar la cuenta elimina en cascada sus versiones, trozos y operaciones. La limpieza integral la completa U-OPS-03.
+- El respaldo portable (JSON de Ajustes) sigue incluyendo solo la colección activa. Exportar una versión anterior sería una acción aparte, todavía no implementada.
+
+### Migración `0006_library_snapshots`, índices T8, rollout y recuperación
+
+```powershell
+pnpm db:plan:local --profile scratch --out dat02.json
+pnpm db:migrate:local --plan .biblib/plans/dat02.json --expect-project biblib-scratch --expect-plan <sha256>
+pnpm db:status:local --profile scratch   # 242 comprobaciones, sin drift
+```
+
+La migración crea las dos tablas con RLS, FK e índices, las cuatro funciones y sus permisos. También añade `import_previews.snapshot_id` (con `payload` opcional y la restricción «archivo o versión, nunca ambos»), el índice único `library_operations (user_id, id)` y el motivo `snapshot.restore`. Incluye además los índices de la **tarea T8** de U-QA-03:
+
+| Índice | Consulta que lo usa (EXPLAIN como `authenticated` con RLS, 10 000 fichas) | p50 con / sin índice |
+| --- | --- | --- |
+| `books_user_title_idx (user_id, title, id)` | Colección, página 1 | 0,05 ms / 13,7 ms |
+| `books_user_shelf_title_idx (user_id, shelf_id, title, id)` | Estantería 3D (48) | 0,10 ms / 3,0 ms |
+| `books_user_created_idx (user_id, created_at DESC, id DESC)` | Inicio, «Añadidos recientemente» | 0,04 ms / 10,1 ms |
+
+Los índices descendentes se declaran con `NULLS FIRST`, el orden por defecto de `ORDER BY … DESC`. Con el `DESC NULLS LAST` que Drizzle genera por defecto, el planificador no usaba el índice.
+
+**Plan de retirada de los índices T8**: son aditivos y no los necesita ninguna restricción. Para retirarlos basta con una migración posterior con `DROP INDEX biblib.<índice>` (o `DROP INDEX CONCURRENTLY` fuera de transacción en producción), quitarlos de `lib/db/schema.ts` y del manifest de objetos y medir de nuevo con `docs/validacion/2026-10-23/O10/dat-02/explain-indices.mjs`, que simula esa retirada en una transacción revertida. `books_user_id_idx` se conserva durante la transición. Cada uno cuesta un 20–22 % de escritura masiva (U-QA-03 §6).
+
+- **Rollout**: no se infiere historial anterior al despliegue. La primera sustitución tras desplegar captura el estado vigente. Desplegar primero captura y listado, y habilitar la restauración tras ensayarla en el entorno.
+- **Desactivar**: ocultar la sección de Ajustes no borra versiones. La restauración administrativa sigue el respaldo de F4 ([recuperación](recuperacion.md)), no un SQL inverso improvisado. Correcciones siempre hacia delante, con una migración nueva.
+- **Restore administrativo**: las versiones se restauran tal cual y se comprueba su integridad (ver [recuperación](recuperacion.md#versiones-anteriores-u-dat-02)).
+
+### Ajustes
+
+La sección «Versiones anteriores» muestra la cuota y, al agotarse, un aviso. Restaurar exige comparar con la colección actual y confirmar con una casilla; un conflicto obliga a comparar de nuevo y nunca se reintenta solo. Si se pierde la respuesta, confirmar otra vez con la misma clave devuelve el mismo resultado. Eliminar pide confirmación.
+
+**Tarea T2 (CLS de Ajustes)**: los avisos de la página van en una región `aria-live` fija abajo, con botón para cerrarlos, y ya no desplazan el contenido. El estado de la última copia tiene espacio reservado y las partes de una copia dividida se ofrecen en un diálogo, que se puede volver a abrir con «Ver las N partes de la última copia».
+
+### Pruebas
+
+- `pnpm test`: `tests/library-snapshots.test.ts` cubre el plan de restauración (IDs propios, reasignación estable de IDs ajenos, predeterminada, comparación), la integridad (trozo alterado, perdido, desordenado o con cantidades distintas), el cursor, la clave de idempotencia y la traducción de `BS001`–`BS003`.
+- `pnpm test:db`: `tests/db/snapshots.sql` cubre la captura en la transacción de su operación, los hashes, el aislamiento entre cuentas, los permisos mínimos, los IDs ocupados, el borrado con versión y las cascadas, la cuota sin borrado silencioso, la cuenta bloqueada y el límite de tamaño.
+- `pnpm test:integration:snapshots --profile scratch|test [--reuse-build]`: grupo `tests/integration/snapshots` (también dentro de `pnpm test:integration:local`). Con sesiones GoTrue reales y la app compilada del perfil cubre:
+  - una versión exacta por reemplazo;
+  - que B no lista, descarga, compara, restaura ni borra la versión de A;
+  - deshacer con IDs propios y versiones nuevas;
+  - el conflicto de una segunda pestaña;
+  - un fallo inyectado entre la captura y la publicación (en el publicador compilado, dentro de su transacción);
+  - caducidad, cuota agotada, borrado durante la vista previa, respuesta perdida y cuenta bloqueada;
+  - la comprobación de integridad del restore administrativo.
+
+  La biblioteca de A se guarda en `.biblib/integration/` y se devuelve exacta, también tras una caída.
+- `pnpm test:scripts`: drift de `0006` en `migrations.test.mjs` y el trato de las versiones en el restore (`snapshots-restore.test.mjs`).
+
+Evidencia: [validacion/2026-10-23/O10/dat-02](validacion/2026-10-23/O10/dat-02/informe.md).

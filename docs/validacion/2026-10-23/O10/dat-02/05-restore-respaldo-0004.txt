@@ -1,0 +1,7 @@
+
+> biblib@1.0.0 db:restore:local C:\Users\ncaso\orca\workspaces\biblib\u-inf-03
+> node scripts/db/restore-local.mjs "--backup" ".biblib/backups/20261023T170545Z-scratch-554a07" "--profile" "scratch" "--expect-project" "biblib-scratch"
+
+Restore 20261023T170545Z-scratch-554a07 → scratch (biblib-scratch) completado en 5 s; tokens rotados: biblib.books.version (9), biblib.library_state.revision (2).
+Migraciones pendientes tras restaurar: 0005_library_jobs, 0006_library_snapshots (usa db:plan:local y db:migrate:local).
+Siguiente paso: pnpm db:restore:verify --backup .biblib/backups/20261023T170545Z-scratch-554a07 --profile scratch

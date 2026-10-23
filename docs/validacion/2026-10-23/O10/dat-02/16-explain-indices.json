@@ -1,0 +1,236 @@
+{
+ "escala": 10000,
+ "rol": "authenticated (RLS de A)",
+ "revertido": true,
+ "mediciones": [
+  {
+   "fase": "con índices 0006",
+   "id": "resumen.recientes",
+   "pantalla": "Inicio",
+   "indiceEsperado": "books_user_created_idx",
+   "usaIndice": true,
+   "nodos": [
+    "Limit",
+    "Result",
+    "Nested Loop",
+    "Index Scan (books_user_created_idx)",
+    "Materialize",
+    "Seq Scan"
+   ],
+   "ejecucionMs": {
+    "n": 20,
+    "min": 0.037,
+    "p50": 0.043,
+    "p95": 0.055,
+    "p99": 0.056,
+    "max": 0.056,
+    "mean": 0.044
+   },
+   "plan": [
+    "Limit  (cost=0.31..1.28 rows=5 width=331) (actual time=0.015..0.019 rows=5 loops=1)",
+    "  Buffers: shared hit=4",
+    "  ->  Result  (cost=0.31..1950.27 rows=10004 width=331) (actual time=0.015..0.019 rows=5 loops=1)",
+    "        One-Time Filter: ((COALESCE(NULLIF(current_setting('request.jwt.claim.sub'::text, true), ''::text), ((NULLIF(current_setting('request.jwt.claims'::text, true), ''::text))::jsonb ->> 'sub'::text)))::uuid = '<uuid>'::uuid)",
+    "        Buffers: shared hit=4",
+    "        ->  Nested Loop  (cost=0.31..1950.27 rows=10004 width=331) (actual time=0.012..0.015 rows=5 loops=1)",
+    "              Join Filter: (books.shelf_id = shelves.id)",
+    "              Rows Removed by Join Filter: 4",
+    "              Buffers: shared hit=4",
+    "              ->  Index Scan using books_user_created_idx on books  (cost=0.29..1400.36 rows=10004 width=313) (actual time=0.006..0.006 rows=5 loops=1)",
+    "                    Index Cond: (user_id = '<uuid>'::uuid)",
+    "                    Buffers: shared hit=3"
+   ]
+  },
+  {
+   "fase": "con índices 0006",
+   "id": "listado.pagina-1",
+   "pantalla": "Colección",
+   "indiceEsperado": "books_user_title_idx",
+   "usaIndice": true,
+   "nodos": [
+    "Limit",
+    "Result",
+    "Nested Loop",
+    "Index Scan (books_user_title_idx)",
+    "Materialize",
+    "Seq Scan"
+   ],
+   "ejecucionMs": {
+    "n": 20,
+    "min": 0.041,
+    "p50": 0.046,
+    "p95": 0.067,
+    "p99": 0.075,
+    "max": 0.077,
+    "mean": 0.051
+   },
+   "plan": [
+    "Limit  (cost=0.44..2.76 rows=10 width=331) (actual time=0.013..0.026 rows=10 loops=1)",
+    "  Buffers: shared hit=11",
+    "  ->  Result  (cost=0.44..2322.40 rows=10004 width=331) (actual time=0.013..0.024 rows=10 loops=1)",
+    "        One-Time Filter: ((COALESCE(NULLIF(current_setting('request.jwt.claim.sub'::text, true), ''::text), ((NULLIF(current_setting('request.jwt.claims'::text, true), ''::text))::jsonb ->> 'sub'::text)))::uuid = '<uuid>'::uuid)",
+    "        Buffers: shared hit=11",
+    "        ->  Nested Loop  (cost=0.44..2322.40 rows=10004 width=331) (actual time=0.010..0.020 rows=10 loops=1)",
+    "              Join Filter: (books.shelf_id = shelves.id)",
+    "              Rows Removed by Join Filter: 13",
+    "              Buffers: shared hit=11",
+    "              ->  Index Scan using books_user_title_idx on books  (cost=0.41..1772.48 rows=10004 width=313) (actual time=0.004..0.008 rows=10 loops=1)",
+    "                    Index Cond: (user_id = '<uuid>'::uuid)",
+    "                    Buffers: shared hit=10"
+   ]
+  },
+  {
+   "fase": "con índices 0006",
+   "id": "3d.pagina",
+   "pantalla": "Estantería 3D (48)",
+   "indiceEsperado": "books_user_shelf_title_idx",
+   "usaIndice": true,
+   "nodos": [
+    "Limit",
+    "Result",
+    "Nested Loop",
+    "Index Scan (books_user_shelf_title_idx)",
+    "Materialize",
+    "Seq Scan"
+   ],
+   "ejecucionMs": {
+    "n": 20,
+    "min": 0.099,
+    "p50": 0.101,
+    "p95": 0.124,
+    "p99": 0.156,
+    "max": 0.164,
+    "mean": 0.106
+   },
+   "plan": [
+    "Limit  (cost=23.85..47.26 rows=48 width=331) (actual time=0.056..0.097 rows=48 loops=1)",
+    "  Buffers: shared hit=102",
+    "  ->  Result  (cost=0.44..975.51 rows=1999 width=331) (actual time=0.013..0.092 rows=96 loops=1)",
+    "        One-Time Filter: ((COALESCE(NULLIF(current_setting('request.jwt.claim.sub'::text, true), ''::text), ((NULLIF(current_setting('request.jwt.claims'::text, true), ''::text))::jsonb ->> 'sub'::text)))::uuid = '<uuid>'::uuid)",
+    "        Buffers: shared hit=102",
+    "        ->  Nested Loop  (cost=0.44..975.51 rows=1999 width=331) (actual time=0.011..0.075 rows=96 loops=1)",
+    "              Buffers: shared hit=102",
+    "              ->  Index Scan using books_user_shelf_title_idx on books  (cost=0.41..949.39 rows=1999 width=313) (actual time=0.006..0.039 rows=96 loops=1)",
+    "                    Index Cond: ((user_id = '<uuid>'::uuid) AND (shelf_id = '<uuid>'::uuid))",
+    "                    Buffers: shared hit=101",
+    "              ->  Materialize  (cost=0.00..1.11 rows=1 width=34) (actual time=0.000..0.000 rows=1 loops=96)",
+    "                    Buffers: shared hit=1"
+   ]
+  },
+  {
+   "fase": "sin índices (retirada simulada)",
+   "id": "resumen.recientes",
+   "pantalla": "Inicio",
+   "indiceEsperado": "books_user_created_idx",
+   "usaIndice": false,
+   "nodos": [
+    "Limit",
+    "Sort",
+    "Result",
+    "Hash Join",
+    "Seq Scan",
+    "Hash"
+   ],
+   "ejecucionMs": {
+    "n": 20,
+    "min": 8.967,
+    "p50": 10.095,
+    "p95": 13.009,
+    "p99": 13.051,
+    "max": 13.061,
+    "mean": 10.913
+   },
+   "plan": [
+    "Limit  (cost=735.58..735.60 rows=5 width=331) (actual time=14.287..14.290 rows=5 loops=1)",
+    "  Buffers: shared hit=402",
+    "  ->  Sort  (cost=735.58..760.59 rows=10004 width=331) (actual time=14.287..14.288 rows=5 loops=1)",
+    "        Sort Key: books.created_at DESC, books.id DESC",
+    "        Sort Method: top-N heapsort  Memory: 27kB",
+    "        Buffers: shared hit=402",
+    "        ->  Result  (cost=1.16..569.42 rows=10004 width=331) (actual time=0.021..8.473 rows=10004 loops=1)",
+    "              One-Time Filter: ((COALESCE(NULLIF(current_setting('request.jwt.claim.sub'::text, true), ''::text), ((NULLIF(current_setting('request.jwt.claims'::text, true), ''::text))::jsonb ->> 'sub'::text)))::uuid = '<uuid>'::uuid)",
+    "              Buffers: shared hit=402",
+    "              ->  Hash Join  (cost=1.16..569.42 rows=10004 width=331) (actual time=0.016..6.642 rows=10004 loops=1)",
+    "                    Hash Cond: (books.shelf_id = shelves.id)",
+    "                    Buffers: shared hit=402"
+   ]
+  },
+  {
+   "fase": "sin índices (retirada simulada)",
+   "id": "listado.pagina-1",
+   "pantalla": "Colección",
+   "indiceEsperado": "books_user_title_idx",
+   "usaIndice": false,
+   "nodos": [
+    "Limit",
+    "Sort",
+    "Result",
+    "Hash Join",
+    "Seq Scan",
+    "Hash"
+   ],
+   "ejecucionMs": {
+    "n": 20,
+    "min": 11.005,
+    "p50": 13.728,
+    "p95": 16.456,
+    "p99": 19.001,
+    "max": 19.637,
+    "mean": 14.132
+   },
+   "plan": [
+    "Limit  (cost=785.60..785.63 rows=10 width=331) (actual time=12.709..12.713 rows=10 loops=1)",
+    "  Buffers: shared hit=402",
+    "  ->  Sort  (cost=785.60..810.61 rows=10004 width=331) (actual time=12.708..12.710 rows=10 loops=1)",
+    "        Sort Key: books.title, books.id",
+    "        Sort Method: top-N heapsort  Memory: 34kB",
+    "        Buffers: shared hit=402",
+    "        ->  Result  (cost=1.16..569.42 rows=10004 width=331) (actual time=0.026..7.458 rows=10004 loops=1)",
+    "              One-Time Filter: ((COALESCE(NULLIF(current_setting('request.jwt.claim.sub'::text, true), ''::text), ((NULLIF(current_setting('request.jwt.claims'::text, true), ''::text))::jsonb ->> 'sub'::text)))::uuid = '<uuid>'::uuid)",
+    "              Buffers: shared hit=402",
+    "              ->  Hash Join  (cost=1.16..569.42 rows=10004 width=331) (actual time=0.019..5.724 rows=10004 loops=1)",
+    "                    Hash Cond: (books.shelf_id = shelves.id)",
+    "                    Buffers: shared hit=402"
+   ]
+  },
+  {
+   "fase": "sin índices (retirada simulada)",
+   "id": "3d.pagina",
+   "pantalla": "Estantería 3D (48)",
+   "indiceEsperado": "books_user_shelf_title_idx",
+   "usaIndice": false,
+   "nodos": [
+    "Limit",
+    "Sort",
+    "Result",
+    "Nested Loop",
+    "Seq Scan",
+    "Bitmap Heap Scan",
+    "Bitmap Index Scan (books_shelf_id_idx)"
+   ],
+   "ejecucionMs": {
+    "n": 20,
+    "min": 2.307,
+    "p50": 2.987,
+    "p95": 3.478,
+    "p99": 5.816,
+    "max": 6.401,
+    "mean": 3.056
+   },
+   "plan": [
+    "Limit  (cost=555.84..555.96 rows=48 width=331) (actual time=3.439..3.447 rows=48 loops=1)",
+    "  Buffers: shared hit=405",
+    "  ->  Sort  (cost=555.72..560.71 rows=1999 width=331) (actual time=3.431..3.441 rows=96 loops=1)",
+    "        Sort Key: books.title, books.id",
+    "        Sort Method: top-N heapsort  Memory: 108kB",
+    "        Buffers: shared hit=405",
+    "        ->  Result  (cost=27.81..479.90 rows=1999 width=331) (actual time=0.101..1.728 rows=2000 loops=1)",
+    "              One-Time Filter: ((COALESCE(NULLIF(current_setting('request.jwt.claim.sub'::text, true), ''::text), ((NULLIF(current_setting('request.jwt.claims'::text, true), ''::text))::jsonb ->> 'sub'::text)))::uuid = '<uuid>'::uuid)",
+    "              Buffers: shared hit=405",
+    "              ->  Nested Loop  (cost=27.81..479.90 rows=1999 width=331) (actual time=0.098..1.395 rows=2000 loops=1)",
+    "                    Buffers: shared hit=405",
+    "                    ->  Seq Scan on shelves  (cost=0.00..1.10 rows=1 width=34) (actual time=0.007..0.008 rows=1 loops=1)"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,12 @@
+
+> biblib@1.0.0 db:plan:local C:\Users\ncaso\orca\workspaces\biblib\u-inf-03
+> node scripts/db/plan.mjs local "--profile" "scratch" "--out" "dat02-migrar.json"
+
+Plan de migración · biblib-scratch · estado pending
+Head aplicado: 0004_catalogue_coordination · pendientes: 0005_library_jobs, 0006_library_snapshots
+[ok] prerequisite.auth.users: auth.users lo proporciona la plataforma.
+[ok] prerequisite.auth.uid(): auth.uid() lo proporciona la plataforma.
+[ok] prerequisite.role:authenticated: role:authenticated lo proporciona la plataforma.
+[ok] prerequisite.role:anon: role:anon lo proporciona la plataforma.
+Plan migrate guardado en .biblib\plans\dat02-migrar.json (caduca 2026-10-23T22:25:32.875Z).
+Para aplicarlo: pnpm db:migrate:local --plan .biblib\plans\dat02-migrar.json --expect-project biblib-scratch --expect-plan c5f1d80129fc7301e3e767186e079bfb2e905f6c4c973316cd9fe68eb6e1a748

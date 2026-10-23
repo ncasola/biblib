@@ -66,6 +66,17 @@ No contiene contraseñas, claves, JWT, URLs con credenciales ni filas completas.
 6. **Credenciales de fixtures:** las contraseñas no viajan en el respaldo. Tras restaurar Auth se reasignan, por la API admin de GoTrue, las del registro privado del destino (o nuevas aleatorias) a las cuentas del censo, conservando sus IDs restaurados. Las cuentas que no son del censo conservan sus credenciales restauradas; sus sesiones no se restauran.
 7. No envía correo ni llama a proveedores externos. Un fallo a mitad deja el destino incompleto: reconstrúyelo con `db:reset:local` y repite. **Nunca limpies el origen** para resolver un restore fallido.
 
+#### Versiones anteriores (U-DAT-02)
+
+`biblib.library_snapshots` y `biblib.library_snapshot_chunks` son **datos de la cuenta**: el historial con el que cada persona puede deshacer un reemplazo. Se tratan así, de forma explícita (`SNAPSHOT_TABLES` en `scripts/db/restore-local.mjs`):
+
+- **Se respaldan y se restauran tal cual** con el volcado de dominio. No son tablas derivadas, así que un destino que ya tenga versiones no está vacío y el restore sale con **6**.
+- **No se rotan**: su `version` solo autoriza borrar esa misma versión y nunca escribir datos de la colección. Restaurar una versión exige una vista previa nueva contra la revisión de colección, que sí se rota. Su caducidad (`expires_at`) sigue corriendo desde la captura original. Las vistas previas de restauración caen con las demás previews.
+- **Se comprueba su integridad** en la fase `rotate`: el sha256 de cada trozo y el hash final de cada versión, en Postgres. Si alguno no cuadra, el respaldo está dañado o alterado y el restore sale con **11**. Las versiones vencidas o sin completar se informan en `review` (sin IDs) para decidir; ninguna de las dos se lista ni se restaura.
+- `db:restore:verify` las compara por cantidad, claves y contenido como el resto del dominio.
+
+Ensayo con una versión real (backup → reset → restore → verify): [O10/dat-02](validacion/2026-10-23/O10/dat-02/informe.md).
+
 ### Verificación (`db:restore:verify`)
 
 Comprueba los archivos del respaldo; que hay un restore completado de ese respaldo; el ledger idéntico; el manifest de objetos de U-INF-04 (RLS, políticas, grants, FK, índices, columnas, función y trigger de versión) y los hechos de catálogo idénticos al origen; cantidades, claves y contenido por tabla (dominio y ledger completos salvo el token rotado; Auth y Storage por cantidad y claves); que ningún token coincide con el respaldo; la muestra de fichas; sesiones GoTrue reales de A y B con `tests/integration/support/session.mjs`, sus IDs restaurados y RLS con sus claims (solo ven lo suyo, actualizar lo ajeno afecta 0 filas); buckets y cada objeto Storage con su sha256. Escribe el informe en `<respaldo>/rehearsals/` con duración del restore, de la verificación y total, discrepancias y la ventana de datos perdidos, y lo enlaza desde el recibo. Cualquier discrepancia sale con **11**.

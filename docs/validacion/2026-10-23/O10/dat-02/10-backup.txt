@@ -1,0 +1,5 @@
+
+> biblib@1.0.0 db:backup:local C:\Users\ncaso\orca\workspaces\biblib\u-inf-03
+> node scripts/db/backup-local.mjs local "--profile" "scratch"
+
+Respaldo 20261023T215556Z-scratch-7adb9b · scratch (biblib-scratch) · head 0006_library_snapshots · 4 archivos · .biblib/backups/20261023T215556Z-scratch-7adb9b · recibo .biblib/backups/20261023T215556Z-scratch-7adb9b/receipt.json (ensayo pendiente: tras db:restore:verify, reemítelo con --receipt-of)
