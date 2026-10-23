@@ -36,6 +36,13 @@
       "when": 1792770443198,
       "tag": "0004_catalogue_coordination",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792780222704,
+      "tag": "0005_library_jobs",
+      "breakpoints": true
     }
   ]
 }

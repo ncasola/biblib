@@ -4,8 +4,8 @@ import { EXIT } from "../lib/exit-codes.mjs"
 // Manifest de objetos deliberados de BibLib. Se comprueba con metadatos de pg_catalog e
 // information_schema y con expresiones normalizadas, nunca comparando el pretty-print.
 // `since`/`until` indican la migración que introduce o retira cada objeto.
-const M0 = "0000_biblib_init", M1 = "0001_library_integrity", M2 = "0002_book_versions", M3 = "0003_library_revision", M4 = "0004_catalogue_coordination"
-export const MANIFEST_MIGRATIONS = [M0, M1, M2, M3, M4]
+const M0 = "0000_biblib_init", M1 = "0001_library_integrity", M2 = "0002_book_versions", M3 = "0003_library_revision", M4 = "0004_catalogue_coordination", M5 = "0005_library_jobs"
+export const MANIFEST_MIGRATIONS = [M0, M1, M2, M3, M4, M5]
 
 const own = "user_id=auth.uid"
 const ownNotDefault = "user_id=auth.uidandnotis_default"
@@ -55,14 +55,19 @@ function migrationBodies(tag) {
   return Object.fromEntries([...source.matchAll(/CREATE FUNCTION "biblib"\."(\w+)"\([^)]*\) RETURNS [\s\S]*?AS \$\$([\s\S]*?)\$\$;/g)].map(([, name, body]) => [name, normalizeBody(body)]))
 }
 const CATALOGUE = migrationBodies(M4)
+const JOBS = migrationBodies(M5)
 const catalogueKey = ["provider", "policy_version", "credential_scope", "schema_version", "operation", "canonical_key"]
 const providerTokens = ["'open-library'", "'bne'", "'google-books'"]
 const catalogueTables = ["catalogue_cache", "catalogue_inflight", "catalogue_quota_buckets", "catalogue_quota_reservations", "catalogue_private_cache"]
 // Coordinación del catálogo: sin EXECUTE para anon/authenticated; solo la conexión del servidor.
 const catalogueFunction = (name, returns, args) => ({ name, language: "plpgsql", returns, args, searchPath: "search_path=pg_catalog", securityDefiner: true, body: CATALOGUE[name], execute: { authenticated: false, anon: false }, since: M4 })
+// Trabajos (0005): crear y controlar con auth.uid(); reclamar, renovar, cercar y el ciclo de vida solo desde el servidor.
+const jobTables = ["library_jobs", "library_job_items", "account_lifecycle"]
+const jobFunction = (name, returns, args, authenticated = false) => ({ name, language: "plpgsql", returns, args, searchPath: "search_path=pg_catalog", securityDefiner: true, body: JOBS[name], execute: { authenticated, anon: false }, since: M5 })
+const jobStateTokens = ["'queued'", "'running'", "'waiting_retry'", "'needs_review'", "'paused'", "'succeeded'", "'partially_succeeded'", "'failed'", "'cancelled'", "'expired'"]
 
 export const MANIFEST = Object.freeze({
-  tables: [{ name: "shelves", since: M0 }, { name: "books", since: M0 }, { name: "library_state", since: M3 }, { name: "import_previews", since: M3 }, { name: "library_operations", since: M3 }, ...catalogueTables.map((name) => ({ name, since: M4 }))],
+  tables: [{ name: "shelves", since: M0 }, { name: "books", since: M0 }, { name: "library_state", since: M3 }, { name: "import_previews", since: M3 }, { name: "library_operations", since: M3 }, ...catalogueTables.map((name) => ({ name, since: M4 })), ...jobTables.map((name) => ({ name, since: M5 }))],
   policies: [
     policy("shelves", "shelves_select_own", "SELECT", own, null),
     policy("shelves", "shelves_insert_own", "INSERT", null, own),
@@ -80,12 +85,13 @@ export const MANIFEST = Object.freeze({
     policy("library_operations", "library_operations_insert_own", "INSERT", null, ownSelect("library_operations"), M3),
     policy("catalogue_private_cache", "catalogue_private_cache_select_own", "SELECT", "selectauth.uid=catalogue_private_cache.owner_id", null, M4),
     policy("catalogue_private_cache", "catalogue_private_cache_delete_own", "DELETE", "selectauth.uid=catalogue_private_cache.owner_id", null, M4),
+    ...jobTables.map((table) => policy(table, `${table}_select_own`, "SELECT", ownSelect(table), null, M5)),
   ],
   // library_state solo se lee: la revisión cambia por lock_library()/triggers, nunca por escritura directa.
   // La caché compartida, las consultas en vuelo y las cuotas no tienen ningún privilegio de cliente.
   grants: {
-    authenticated: { shelves: ["DELETE", "INSERT", "SELECT", "UPDATE"], books: ["DELETE", "INSERT", "SELECT", "UPDATE"], library_state: ["SELECT"], import_previews: ["DELETE", "INSERT", "SELECT"], library_operations: ["INSERT", "SELECT"], catalogue_cache: [], catalogue_inflight: [], catalogue_quota_buckets: [], catalogue_quota_reservations: [], catalogue_private_cache: ["DELETE", "SELECT"] },
-    anon: { shelves: [], books: [], library_state: [], import_previews: [], library_operations: [], ...Object.fromEntries(catalogueTables.map((name) => [name, []])) },
+    authenticated: { shelves: ["DELETE", "INSERT", "SELECT", "UPDATE"], books: ["DELETE", "INSERT", "SELECT", "UPDATE"], library_state: ["SELECT"], import_previews: ["DELETE", "INSERT", "SELECT"], library_operations: ["INSERT", "SELECT"], catalogue_cache: [], catalogue_inflight: [], catalogue_quota_buckets: [], catalogue_quota_reservations: [], catalogue_private_cache: ["DELETE", "SELECT"], library_jobs: ["SELECT"], library_job_items: ["SELECT"], account_lifecycle: ["SELECT"] },
+    anon: { shelves: [], books: [], library_state: [], import_previews: [], library_operations: [], ...Object.fromEntries([...catalogueTables, ...jobTables].map((name) => [name, []])) },
   },
   constraints: [
     { table: "shelves", name: "shelves_pkey", type: "p", columns: ["id"], since: M0 },
@@ -135,6 +141,27 @@ export const MANIFEST = Object.freeze({
     { table: "catalogue_private_cache", name: "catalogue_private_cache_key_check", type: "c", columns: ["key_hmac"], tokens: ["'^[0-9a-f]{64}$'"], since: M4 },
     { table: "catalogue_private_cache", name: "catalogue_private_cache_payload_check", type: "c", columns: ["payload"], tokens: ["jsonb_typeof(payload)", "'array'"], since: M4 },
     { table: "catalogue_private_cache", name: "catalogue_private_cache_expiry_check", type: "c", columns: ["expires_at", "fetched_at"], tokens: ["expires_at>fetched_at"], since: M4 },
+    { table: "account_lifecycle", name: "account_lifecycle_pkey", type: "p", columns: ["user_id"], since: M5 },
+    { table: "account_lifecycle", name: "account_lifecycle_user_id_users_id_fk", type: "f", columns: ["user_id"], references: "auth.users", refColumns: ["id"], onDelete: "c", since: M5 },
+    { table: "account_lifecycle", name: "account_lifecycle_state_check", type: "c", columns: ["state"], tokens: ["'active'", "'blocked'"], since: M5 },
+    { table: "library_jobs", name: "library_jobs_pkey", type: "p", columns: ["id"], since: M5 },
+    { table: "library_jobs", name: "library_jobs_user_id_users_id_fk", type: "f", columns: ["user_id"], references: "auth.users", refColumns: ["id"], onDelete: "c", since: M5 },
+    { table: "library_jobs", name: "library_jobs_kind_check", type: "c", columns: ["kind"], tokens: ["'import'", "'covers'"], since: M5 },
+    { table: "library_jobs", name: "library_jobs_state_check", type: "c", columns: ["state"], tokens: jobStateTokens, since: M5 },
+    { table: "library_jobs", name: "library_jobs_phase_check", type: "c", columns: ["phase"], tokens: ["'publish'", "'covers'", "'done'"], since: M5 },
+    { table: "library_jobs", name: "library_jobs_key_check", type: "c", columns: ["idempotency_key"], tokens: ["length(idempotency_key)", ">=16", "<=128"], since: M5 },
+    { table: "library_jobs", name: "library_jobs_digest_check", type: "c", columns: ["input_digest"], tokens: ["'^[0-9a-f]{64}$'"], since: M5 },
+    { table: "library_jobs", name: "library_jobs_import_check", type: "c", columns: ["kind", "preview_id", "expected_revision"], tokens: ["kind<>'import'", "preview_id is not null", "expected_revision is not null"], since: M5 },
+    // Sin lease no hay ejecución, y fuera de ejecución no queda ningún lease.
+    { table: "library_jobs", name: "library_jobs_lease_check", type: "c", columns: ["state", "lease_token", "lease_until"], tokens: ["state='running'", "lease_token is not null", "lease_until is not null"], since: M5 },
+    { table: "library_jobs", name: "library_jobs_counts_check", type: "c", columns: ["counts"], tokens: ["jsonb_typeof(counts)", "'object'"], since: M5 },
+    { table: "library_jobs", name: "library_jobs_attempts_check", type: "c", columns: ["attempts", "fencing_number"], tokens: ["attempts>=0", "fencing_number>=0"], since: M5 },
+    { table: "library_job_items", name: "library_job_items_pkey", type: "p", columns: ["id"], since: M5 },
+    { table: "library_job_items", name: "library_job_items_owner_job_fk", type: "f", columns: ["user_id", "job_id"], references: "biblib.library_jobs", refColumns: ["user_id", "id"], onDelete: "c", since: M5 },
+    { table: "library_job_items", name: "library_job_items_phase_check", type: "c", columns: ["phase"], tokens: ["'covers'"], since: M5 },
+    { table: "library_job_items", name: "library_job_items_state_check", type: "c", columns: ["state"], tokens: ["'pending'", "'waiting_retry'", "'succeeded'", "'not_found'", "'skipped'", "'failed'"], since: M5 },
+    { table: "library_job_items", name: "library_job_items_key_check", type: "c", columns: ["item_key"], tokens: ["length(item_key)", ">=1", "<=200"], since: M5 },
+    { table: "library_job_items", name: "library_job_items_attempts_check", type: "c", columns: ["attempts"], tokens: ["attempts>=0"], since: M5 },
   ],
   indexes: [
     { table: "shelves", name: "shelves_user_id_title_unique", unique: true, columns: ["user_id", "title"], partial: false, since: M0 },
@@ -154,6 +181,12 @@ export const MANIFEST = Object.freeze({
     { table: "catalogue_quota_reservations", name: "catalogue_quota_reservations_active_idx", unique: false, columns: ["provider", "credential_scope", "owner_id", "purpose"], partial: true, since: M4 },
     { table: "catalogue_quota_reservations", name: "catalogue_quota_reservations_expires_at_idx", unique: false, columns: ["provider", "credential_scope", "expires_at"], partial: false, since: M4 },
     { table: "catalogue_private_cache", name: "catalogue_private_cache_expires_at_idx", unique: false, columns: ["owner_id", "expires_at"], partial: false, since: M4 },
+    { table: "library_jobs", name: "library_jobs_key_unique", unique: true, columns: ["user_id", "kind", "idempotency_key"], partial: false, since: M5 },
+    { table: "library_jobs", name: "library_jobs_user_id_id_unique", unique: true, columns: ["user_id", "id"], partial: false, since: M5 },
+    { table: "library_jobs", name: "library_jobs_user_id_created_at_idx", unique: false, columns: ["user_id", "created_at"], partial: false, since: M5 },
+    { table: "library_jobs", name: "library_jobs_due_idx", unique: false, columns: ["next_attempt_at"], partial: true, since: M5 },
+    { table: "library_job_items", name: "library_job_items_job_item_phase_unique", unique: true, columns: ["job_id", "item_key", "phase"], partial: false, since: M5 },
+    { table: "library_job_items", name: "library_job_items_due_idx", unique: false, columns: ["job_id", "state", "next_attempt_at"], partial: false, since: M5 },
   ],
   columns: [
     { table: "books", name: "catalogue", type: "jsonb", notNull: true, since: M1 },
@@ -169,6 +202,14 @@ export const MANIFEST = Object.freeze({
     { table: "catalogue_quota_reservations", name: "owner_id", type: "uuid", notNull: false, since: M4 },
     { table: "catalogue_quota_reservations", name: "expires_at", type: "timestamp with time zone", notNull: true, since: M4 },
     { table: "catalogue_private_cache", name: "owner_id", type: "uuid", notNull: true, since: M4 },
+    { table: "account_lifecycle", name: "state", type: "text", notNull: true, defaultTokens: ["'active'"], since: M5 },
+    { table: "library_jobs", name: "version", type: "uuid", notNull: true, defaultTokens: ["gen_random_uuid()"], since: M5 },
+    { table: "library_jobs", name: "lease_token", type: "uuid", notNull: false, since: M5 },
+    { table: "library_jobs", name: "lease_until", type: "timestamp with time zone", notNull: false, since: M5 },
+    { table: "library_jobs", name: "fencing_number", type: "bigint", notNull: true, since: M5 },
+    { table: "library_jobs", name: "expires_at", type: "timestamp with time zone", notNull: true, since: M5 },
+    { table: "library_jobs", name: "input_digest", type: "text", notNull: true, since: M5 },
+    { table: "library_job_items", name: "target_version", type: "uuid", notNull: false, since: M5 },
   ],
   functions: [
     { name: "rotate_book_version", language: "plpgsql", returns: "trigger", args: 0, searchPath: "search_path=pg_catalog", securityDefiner: false, body: "beginnew.version:=gen_random_uuid();returnnew;end;", since: M2 },
@@ -182,6 +223,13 @@ export const MANIFEST = Object.freeze({
     catalogueFunction("catalogue_private_get", "jsonb", 7),
     catalogueFunction("catalogue_private_put", "boolean", 10),
     catalogueFunction("catalogue_invalidate", "integer", 3),
+    jobFunction("account_is_active", "boolean", 1),
+    jobFunction("account_set_state", "integer", 2),
+    jobFunction("library_job_create", "jsonb", 5, true),
+    jobFunction("library_job_control", "jsonb", 3, true),
+    jobFunction("library_job_claim", "jsonb", 3),
+    jobFunction("library_job_renew", "boolean", 4),
+    jobFunction("library_job_fence", "uuid", 3),
   ],
   // tgtype: ROW(1) | BEFORE(2) | INSERT(4) | DELETE(8) | UPDATE(16). BEFORE INSERT OR UPDATE = 23; AFTER INSERT OR UPDATE OR DELETE = 29.
   triggers: [

@@ -58,7 +58,9 @@
     "build:prod": "node scripts/next-target.mjs build prod",
     "ci:release": "node scripts/ci/release.mjs",
     "ci:collect": "node scripts/ci/collect.mjs",
-    "ci:test": "node --test scripts/ci/*.test.mjs"
+    "ci:test": "node --test scripts/ci/*.test.mjs",
+    "test:integration:jobs": "node tests/integration/jobs/run.mjs",
+    "jobs:run:local": "node scripts/jobs/run-local.mjs"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "1.1.15",

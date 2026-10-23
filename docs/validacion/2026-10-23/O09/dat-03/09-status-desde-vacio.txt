@@ -1,0 +1,3 @@
+Estado de migraciones · biblib-scratch · up-to-date
+Head aplicado: 0005_library_jobs · esperado: 0005_library_jobs · pendientes: ninguna
+195 comprobaciones correctas.

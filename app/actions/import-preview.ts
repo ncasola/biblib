@@ -1,22 +1,25 @@
 "use server"
 
 import { createHash, randomUUID } from "node:crypto"
-import { and, asc, desc, eq, inArray, lt, sql } from "drizzle-orm"
+import { and, desc, eq, inArray, lt, sql } from "drizzle-orm"
 import { z } from "zod"
-import { withRlsContext, type DatabaseTransaction } from "@/lib/db/client"
-import { books, importPreviews, libraryOperations, shelves } from "@/lib/db/schema"
+import { withRlsContext } from "@/lib/db/client"
+import { books, importPreviews } from "@/lib/db/schema"
 import { ensureDefaultShelf, lockLibrary } from "@/lib/db/library"
 import { getRequiredUserId } from "@/lib/server-user"
-import { DomainError, idempotencyConflict, previewExpired, revisionConflict, translateDatabaseError } from "@/lib/domain-errors"
+import { DomainError, translateDatabaseError } from "@/lib/domain-errors"
 import type { ActionResult } from "@/lib/action-result"
 import { domainMutation } from "@/lib/server-action"
 import { DEFAULT_BOOK_COVER } from "@/lib/book-covers"
 import { normalizedBookIdentifier } from "@/lib/isbn"
 import { enrichImportedBookCovers, parseLibraryImport } from "@/lib/library-import"
 import {
-  buildImportPlan, canonicalJson, confirmationInput, decideConfirmation, IMPORT_RULES_VERSION, MAX_ACTIVE_PREVIEWS, operationResult, previewTtlMinutes,
-  type CollectionSnapshot, type IdAllocator, type ImportMode, type ImportOperationResult, type ImportPlan,
+  buildImportPlan, canonicalJson, IMPORT_RULES_VERSION, MAX_ACTIVE_PREVIEWS, previewTtlMinutes,
+  type ImportMode, type ImportOperationResult, type ImportPlan,
 } from "@/lib/import-plan"
+import { previewAllocator, readCollectionSnapshot } from "@/lib/import-publisher"
+import { isTerminal } from "@/lib/jobs/contracts"
+import { publicationFailure, publishInline, scheduleDrain, startImportJob } from "@/lib/jobs/server"
 import type { LibraryData } from "@/lib/types"
 import { telemetry } from "@/lib/observability/server"
 import { observeOperation } from "@/lib/observability/operations"
@@ -24,7 +27,8 @@ import { emitSafely } from "@/lib/observability/emitter"
 
 // U-DAT-01 · Importación en dos pasos vinculada a la revisión de la colección.
 // prepare: valida, busca portadas fuera de cualquier transacción y guarda entrada + plan privados.
-// confirm: bajo el bloqueo de colección compara clave, caducidad, reglas y revisión; nunca fuerza.
+// confirm: publica mediante un trabajo persistente (U-DAT-03); bajo el bloqueo de colección compara
+// clave, caducidad, reglas y revisión y nunca fuerza.
 
 export interface PreparedImport {
   previewId: string
@@ -35,9 +39,13 @@ export interface PreparedImport {
 }
 
 export interface ConfirmedImport {
+  /** Operación durable de U-DAT-01; mientras está en cola, el ID del trabajo que la publicará. */
   operationId: string
   status: "queued" | "committed"
-  result: ImportOperationResult
+  /** Solo cuando la publicación ya está confirmada. */
+  result?: ImportOperationResult
+  /** Trabajo persistente que publica la importación y continúa con las portadas pendientes. */
+  jobId: string
   /** true si la respuesta procede del resultado durable de una confirmación anterior con la misma clave. */
   replayed: boolean
 }
@@ -50,23 +58,6 @@ const confirmSchema = z.object({
 })
 
 const sha256 = (text: string) => createHash("sha256").update(text).digest("hex")
-
-/** IDs nuevos derivados de la vista previa: la misma entrada produce el mismo plan al confirmar. */
-function allocator(seed: string): IdAllocator {
-  return (kind, sourceId) => {
-    const hex = sha256(`${seed}\u0000${kind}\u0000${sourceId}`)
-    const variant = ((parseInt(hex[16], 16) & 0x3) | 0x8).toString(16)
-    return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-4${hex.slice(13, 16)}-${variant}${hex.slice(17, 20)}-${hex.slice(20, 32)}`
-  }
-}
-
-async function readSnapshot(tx: DatabaseTransaction, userId: string): Promise<CollectionSnapshot> {
-  const shelfRows = await tx.select({ id: shelves.id, title: shelves.title, isDefault: shelves.isDefault }).from(shelves)
-    .where(eq(shelves.userId, userId)).orderBy(asc(shelves.createdAt), asc(shelves.id))
-  const bookRows = await tx.select({ id: books.id, isbn: books.isbn }).from(books)
-    .where(eq(books.userId, userId)).orderBy(asc(books.id))
-  return { shelves: shelfRows, books: bookRows }
-}
 
 function parseInput(input: unknown): LibraryData {
   try { return parseLibraryImport(input, telemetry) }
@@ -95,7 +86,7 @@ async function prepareImport(input: unknown, mode: unknown): Promise<PreparedImp
       // La predeterminada se asegura antes de leer la revisión: crearla también rota la revisión.
       await ensureDefaultShelf(tx, userId)
       const revision = await lockLibrary(tx)
-      const plan = buildImportPlan({ imported: payload, current: await readSnapshot(tx, userId), mode: importMode, allocateId: allocator(previewId) })
+      const plan = buildImportPlan({ imported: payload, current: await readCollectionSnapshot(tx, userId), mode: importMode, allocateId: previewAllocator(previewId) })
       const originals = new Map(imported.books.map((book) => [book.id, book.cover.large]))
       const covers = new Map(payload.books.map((book) => [book.id, book.cover.large]))
       plan.counts.coversFound = plan.books.insert.filter((entry) => originals.get(entry.sourceId) === DEFAULT_BOOK_COVER && covers.get(entry.sourceId) !== DEFAULT_BOOK_COVER).length
@@ -116,70 +107,27 @@ async function prepareImport(input: unknown, mode: unknown): Promise<PreparedImp
   } catch (error) { translateDatabaseError(error) }
 }
 
-async function applyPlan(tx: DatabaseTransaction, userId: string, payload: LibraryData, plan: ImportPlan): Promise<void> {
-  if (plan.mode === "replace") {
-    await tx.delete(books).where(eq(books.userId, userId))
-    await tx.delete(shelves).where(and(eq(shelves.userId, userId), eq(shelves.isDefault, false)))
-  }
-  if (plan.shelves.create.length) {
-    await tx.insert(shelves).values(plan.shelves.create.map((shelf) => ({ id: shelf.id, userId, title: shelf.title, isDefault: false })))
-  }
-  const source = new Map(payload.books.map((book) => [book.id, book]))
-  const values = plan.books.insert.map((entry) => {
-    const book = source.get(entry.sourceId)
-    if (!book) throw revisionConflict()
-    return { id: entry.id, userId, isbn: normalizedBookIdentifier(book.isbn), title: book.title, subtitle: book.subtitle ?? null,
-      authors: book.authors, publishers: book.publishers ?? [], numberOfPages: book.number_of_pages, publishDate: book.publish_date,
-      coverSmall: book.cover.small, coverMedium: book.cover.medium, coverLarge: book.cover.large, status: book.status, shelfId: entry.shelfId,
-      catalogue: book.catalogue ?? { source: "import" as const, isbnVerified: false } }
-  })
-  for (let offset = 0; offset < values.length; offset += 100) await tx.insert(books).values(values.slice(offset, offset + 100))
-}
-
+/**
+ * U-DAT-03: la confirmación se publica a través de un trabajo persistente. La misma clave recupera el
+ * mismo trabajo y su resultado durable; el paso de publicación se ejecuta en línea y las portadas
+ * pendientes continúan después como otra fase, sin revertir la importación publicada.
+ */
 async function confirmImport(input: unknown): Promise<ConfirmedImport> {
   const userId = await getRequiredUserId()
   const parsed = confirmSchema.safeParse(input)
   if (!parsed.success) throw new DomainError("INVALID_INPUT", "La confirmación no es válida. Prepara de nuevo la revisión del archivo.")
   const { previewId, expectedRevision, idempotencyKey } = parsed.data
   try {
-    return await withRlsContext(userId, async (tx) => {
-      const currentRevision = await lockLibrary(tx)
-      const [preview] = await tx.select({ preview: importPreviews, expired: sql<boolean>`${importPreviews.expiresAt} <= now()` }).from(importPreviews)
-        .where(and(eq(importPreviews.id, previewId), eq(importPreviews.userId, userId))).limit(1)
-      const [existing] = await tx.select().from(libraryOperations)
-        .where(and(eq(libraryOperations.userId, userId), eq(libraryOperations.operation, "import.confirm"), eq(libraryOperations.idempotencyKey, idempotencyKey))).limit(1)
-      const [consumed] = preview ? await tx.select({ id: libraryOperations.id }).from(libraryOperations)
-        .where(and(eq(libraryOperations.userId, userId), eq(libraryOperations.previewId, previewId))).limit(1) : []
-      const digest = preview ? sha256(canonicalJson(confirmationInput(preview.preview))) : null
-
-      const decision = decideConfirmation({
-        existing: existing ? { operationId: existing.id, inputDigest: existing.inputDigest, previewId: existing.previewId } : null,
-        preview: preview ? { id: preview.preview.id, revision: preview.preview.revision, expired: preview.expired, rulesVersion: preview.preview.rulesVersion, confirmed: Boolean(consumed) } : null,
-        previewId, digest, expectedRevision, currentRevision,
-      })
-      if (decision.kind === "replay") return { operationId: existing!.id, status: existing!.status, result: existing!.result, replayed: true }
-      if (decision.kind === "reject") {
-        if (decision.code === "IDEMPOTENCY_CONFLICT") throw idempotencyConflict()
-        if (decision.code === "PREVIEW_EXPIRED") throw previewExpired()
-        if (decision.code === "REVISION_CONFLICT") throw revisionConflict()
-        if (decision.code === "ALREADY_CONFIRMED") throw new DomainError("CONFLICT", "Esta revisión ya se confirmó. Prepara una nueva si quieres volver a importar el archivo.")
-        throw new DomainError("NOT_FOUND", "La revisión de la importación no está disponible. Prepárala de nuevo.")
-      }
-
-      // Se vuelve a validar la entrada almacenada y a derivar el plan: con la misma revisión debe coincidir.
-      const stored = preview!.preview
-      let payload: LibraryData
-      try { payload = parseLibraryImport(stored.payload) } catch { throw previewExpired() }
-      const plan = buildImportPlan({ imported: payload, current: await readSnapshot(tx, userId), mode: stored.mode, allocateId: allocator(stored.id),
-        covers: { found: stored.plan.counts.coversFound, pending: stored.plan.counts.coversPending } })
-      if (canonicalJson(plan) !== canonicalJson(stored.plan)) throw revisionConflict()
-      await applyPlan(tx, userId, payload, plan)
-      const result = operationResult(plan)
-      const [operation] = await tx.insert(libraryOperations).values({
-        userId, operation: "import.confirm", idempotencyKey, inputDigest: digest!, previewId: stored.id, status: "committed", result,
-      }).returning({ id: libraryOperations.id })
-      return { operationId: operation.id, status: "committed" as const, result, replayed: false }
-    })
+    const job = await startImportJob(userId, { previewId, expectedRevision, idempotencyKey })
+    const view = await publishInline(userId, job.id)
+    if (view.published && view.result) {
+      if (!isTerminal(view.state)) scheduleDrain(userId, view.id)
+      return { operationId: view.result.operationId, status: "committed", result: view.result.result, replayed: !job.created || view.result.replayed, jobId: view.id }
+    }
+    if (isTerminal(view.state) || view.state === "needs_review") throw publicationFailure(view)
+    // Otro trabajador la está publicando o espera un reintento: el resultado se consulta con el trabajo.
+    scheduleDrain(userId, view.id)
+    return { operationId: view.id, status: "queued", replayed: !job.created, jobId: view.id }
   } catch (error) { translateDatabaseError(error) }
 }
 

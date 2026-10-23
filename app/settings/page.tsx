@@ -5,7 +5,8 @@ import Link from "next/link"
 import { Download, Upload, ArrowLeft, AlertCircle, CheckCircle, LoaderCircle, RefreshCw } from "lucide-react"
 import { Header } from "@/components/header"
 import { Button } from "@/components/ui/button"
-import { CoverRecoveryPanel } from "@/components/cover-recovery-panel"
+import { CoverRecoveryJobPanel } from "@/components/cover-recovery-job-panel"
+import { ImportJobPanel } from "@/components/import-job-panel"
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
   AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -47,6 +48,8 @@ export default function SettingsPage() {
   const [confirmationOpen, setConfirmationOpen] = useState(false)
   const [replaceAcknowledged, setReplaceAcknowledged] = useState(false)
   const [result, setResult] = useState<ImportOperationResult | null>(null)
+  // Trabajo persistente de la última confirmación: publicación y portadas pendientes (U-DAT-03).
+  const [importJobId, setImportJobId] = useState<string | null>(null)
   // Una clave por revisión preparada: reintentar tras una respuesta perdida recupera el mismo resultado.
   const idempotencyKey = useRef<string>("")
   const fileInput = useRef<HTMLInputElement>(null)
@@ -175,9 +178,15 @@ export default function SettingsPage() {
         }
         return
       }
-      setResult(response.value.result)
+      setImportJobId(response.value.jobId)
       setPreview(null)
       setPrepared(null)
+      if (!response.value.result) {
+        // Otro proceso la está publicando: el panel del trabajo muestra cuándo queda confirmada.
+        setMessage({ type: "success", text: "La importación está en cola y se publicará en segundo plano. Puedes seguir su estado debajo, aunque recargues la página." })
+        return
+      }
+      setResult(response.value.result)
       try {
         setData(await getLibraryDataAction())
         setMessage({ type: "success", text: "La importación ha terminado. Revisa el resultado debajo." })
@@ -283,9 +292,11 @@ export default function SettingsPage() {
             {isImporting && <p role="status" className="mt-4 flex items-start gap-2 text-sm"><LoaderCircle aria-hidden="true" className="w-4 h-4 animate-spin shrink-0 mt-0.5" />Aplicando la revisión confirmada. Mantén esta página abierta hasta recibir el resultado.</p>}
           </section>
 
-          {result && <section aria-labelledby="result-title" className="rounded-2xl border border-border bg-card p-5 md:p-8"><h2 id="result-title" className="text-2xl font-bold mb-4">Resultado de la importación</h2><ul className="space-y-2"><li>Libros importados: <strong>{result.imported}</strong></li><li>Libros omitidos por estar presentes: <strong>{result.skipped}</strong></li><li>Libros eliminados: <strong>{result.deleted}</strong></li><li>Estanterías de la biblioteca resultante: <strong>{result.shelves}</strong></li><li>Portadas obtenidas de Open Library: <strong>{result.coversFound}</strong></li><li>Libros importados con portada genérica: <strong>{result.coversPending}</strong></li></ul>{result.coversPending > 0 && <p className="text-sm text-muted-foreground mt-4">La colección se ha importado. Puede faltar una portada porque no exista una ficha, falte un ISBN válido o la consulta haya llegado a su límite de tiempo.</p>}<Button asChild variant="outline" className="mt-4"><Link href="/books">Ver mi colección</Link></Button></section>}
+          {result && <section aria-labelledby="result-title" className="rounded-2xl border border-border bg-card p-5 md:p-8"><h2 id="result-title" className="text-2xl font-bold mb-4">Resultado de la importación</h2><ul className="space-y-2"><li>Libros importados: <strong>{result.imported}</strong></li><li>Libros omitidos por estar presentes: <strong>{result.skipped}</strong></li><li>Libros eliminados: <strong>{result.deleted}</strong></li><li>Estanterías de la biblioteca resultante: <strong>{result.shelves}</strong></li><li>Portadas obtenidas de Open Library: <strong>{result.coversFound}</strong></li><li>Libros importados con portada genérica: <strong>{result.coversPending}</strong></li></ul>{result.coversPending > 0 && <p className="text-sm text-muted-foreground mt-4">La colección se ha importado. Las portadas pendientes se siguen buscando en segundo plano; si alguna no aparece, la importación no se revierte.</p>}<Button asChild variant="outline" className="mt-4"><Link href="/books">Ver mi colección</Link></Button></section>}
 
-          <CoverRecoveryPanel disabled={busy || loading || !data} onRunningChange={setIsRecovering} onFinish={refresh} />
+          <ImportJobPanel jobId={importJobId} disabled={loading} />
+
+          <CoverRecoveryJobPanel disabled={busy || loading || !data} onRunningChange={setIsRecovering} onFinish={refresh} />
 
           <section className="rounded-2xl border border-border bg-card/80 p-5 md:p-6"><h2 className="font-bold mb-3">Tus datos y copias</h2><ul className="list-disc pl-5 text-sm text-muted-foreground space-y-2"><li>Los datos están vinculados a tu cuenta y se guardan en la base de datos.</li><li>La copia JSON conserva fichas, estanterías y estado de lectura; no descarga las imágenes de las portadas.</li><li>Guarda copias periódicas y antes de reemplazar una colección.</li></ul></section>
         </div>
