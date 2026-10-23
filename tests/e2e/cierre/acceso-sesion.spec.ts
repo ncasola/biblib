@@ -13,6 +13,8 @@ const sessionCookies = (cookies: Cookie[]) => cookies.filter((cookie) => /^sb-.+
 
 test("sesión: destino interno, renovación, cierre y cambio de cuenta A→B sin restos", async ({ page, context, stack, guard }) => {
   guard.allowConsole(SIGN_OUT_RSC_404)
+  // Como B, una ruta de ficha de A responde 404 real (U-FIX-01): es la ausencia de restos que se comprueba.
+  guard.allowConsole(/status of 404 \(Not Found\) \[\/book\//)
   const appOrigin = new URL(stack.appUrl).origin
   const step = (title: string, body: () => Promise<void>) => test.step(title, async () => { guard.mark(title); await body() })
 
