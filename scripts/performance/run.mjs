@@ -34,8 +34,8 @@ import { contractResults } from "./lib/contract.mjs"
 // Contrato: perf:local [--profile test|scratch] [--scale 100|1000|10000] [--scenarios <lista>] [--out <dir>] [--json]
 // Salidas: 0 mide (aunque haya presupuestos incumplidos: van como «over-budget»), 2 argumentos, 3 perfil ajeno, 8 stack no disponible.
 
-const LOG_DIR = path.join(REPO_ROOT, ".biblib", "performance")
-const GUARD = path.join(REPO_ROOT, "tests", "e2e", "lib", "server-network-guard.mjs")
+export const LOG_DIR = path.join(REPO_ROOT, ".biblib", "performance")
+export const GUARD = path.join(REPO_ROOT, "tests", "e2e", "lib", "server-network-guard.mjs")
 const STEPS = ["explain", "indexes", "isolation", "web", "quota", "auth"]
 const CONCURRENCY = [1, 5, 10]
 const ALL_NAMES = [...ACTION_SCENARIO_NAMES, ...PREVIEW_SCENARIO_NAMES, ...STEPS]
@@ -69,7 +69,7 @@ export function parseArgs(argv) {
   return parsed
 }
 
-function childEnvironment(profile) {
+export function childEnvironment(profile) {
   const base = Object.fromEntries(Object.entries(process.env).filter(([key]) => !/^(SUPABASE_|NEXT_PUBLIC_SUPABASE_|DATABASE_URL$|PG|POSTGRES_|BIBLIB_|E2E_)/i.test(key)))
   return { ...base, BIBLIB_TARGET: "local", BIBLIB_PROFILE: profile, NODE_ENV: "production" }
 }
@@ -77,11 +77,12 @@ function childEnvironment(profile) {
 const writeJson = (dir, name, value) => writeFileSync(path.join(dir, name), `${JSON.stringify(value, null, 2)}\n`)
 
 /** Sondeo de GoTrue (GET /auth/v1/user) desde el cliente: ida y vuelta a través de Kong, la misma llamada que hace getUser(). */
-async function authRoundTrip(ctx, sessions, { iterations = 60 }) {
+export async function authRoundTrip(ctx, sessions, { iterations = 60, levels = CONCURRENCY }) {
   const result = {}
-  for (const concurrency of CONCURRENCY) {
+  for (const concurrency of levels) {
     const times = []
-    await Promise.all(sessions.escala.slice(0, concurrency).map(async (session) => {
+    // Con más niveles que sesiones, cada sesión se reutiliza en paralelo (el token es el mismo).
+    await Promise.all(Array.from({ length: concurrency }, (_, i) => sessions.escala[i % sessions.escala.length]).map(async (session) => {
       for (let i = 0; i < iterations; i++) {
         const started = performance.now()
         const response = await fetch(`${ctx.env.SUPABASE_URL}/auth/v1/user`, { headers: { apikey: ctx.env.SUPABASE_ANON_KEY, Authorization: `Bearer ${session.accessToken}` } })
@@ -101,7 +102,7 @@ async function connectionSnapshot(sql) {
 }
 
 /** ¿Ya contiene la cuenta de escala exactamente este dataset? Entonces no se vuelve a sembrar. */
-async function seededDataset(ctx, sql, scale) {
+export async function seededDataset(ctx, sql, scale) {
   const store = readFixtureStore(scaleResolved(ctx.resolved), scaleCensus(ctx.census))
   const id = store?.accounts?.escala?.id
   if (!id) return null

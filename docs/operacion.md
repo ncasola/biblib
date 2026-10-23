@@ -903,3 +903,22 @@ Suma, desde los registros JSON de `lib/observability` (que ya no llevan ISBN, co
 1. **F1**: `fixture` para revisar contrato y UI. `live` con Open Library (limitador y gateway) y BNE con `BIBLIB_BNE_ENABLED=true` junto con `BIBLIB_BIBLIOGRAPHY_REVIEW_ENABLED=true`.
 2. **F2**: Google solo con `BIBLIB_GOOGLE_BOOKS_ENABLED=true` y clave de servidor tras revisar cuota, coste y términos; su vista previa nunca se conserva.
 3. **Recuperar**: volver a `fixture`, apagar un proveedor con su bandera o desactivar la revisión. Los datos de libros y los metadatos ya elegidos no se tocan; la entrada manual sigue disponible.
+
+## Una verificación de sesión por petición y capacidad con varias sesiones · U-FIX-02
+
+Tareas T3 y T4 de [U-QA-03](validacion/rendimiento/2026-10-23/informe.md#9-tareas-por-presupuesto-incumplido). Decisión de seguridad en [seguridad.md](seguridad.md#verificación-de-sesión-por-petición-u-fix-02); medición en [validacion/rendimiento/2026-10-23-fix-02](validacion/rendimiento/2026-10-23-fix-02/informe.md).
+
+- **Sesión:** `proxy.ts` verifica con GoTrue y entrega a la acción de la misma petición una atestación firmada (`x-biblib-session-attestation`, clave aleatoria por proceso, ≤ 30 s, ligada a token, usuario y nonce). `getRequiredUserId()` la acepta junto con la verificación local del JWT; si falta o no valida (rutas `/api`, otro proceso), llama a `getUser()`. Una sesión cerrada sigue recibiendo 307 en páginas y acciones.
+- **Pool:** `lib/db/client.ts` abre hasta **4** conexiones por proceso (antes 1). Presupuesto: 4 por réplica de la app más las del gateway del catálogo; con `max_connections = 100` del stack local sobra margen. La preparación RLS de cada transacción es una sola sentencia.
+- **Inicio:** `getLibrarySummaryAction` comprueba la estantería predeterminada en la misma consulta de recuentos y solo llama a `ensureDefaultShelf` si falta.
+
+```powershell
+pnpm db:local:bootstrap --profile test
+pnpm perf:t4 --profile test --scale 10000                     # experimento T4: variantes base, pool-2, pool-4, sin-getuser-accion, idas-minimas, sin-getuser
+pnpm perf:t4 --variants base --label experimento-t4-despues   # solo el código actual
+pnpm perf:local --profile test --scale 10000 --skip web --skip indexes --skip quota --skip explain --out docs/validacion/rendimiento/2026-10-23-fix-02/despues
+pnpm perf:local:cleanup --profile test
+pnpm db:local:down --profile test
+```
+
+**`perf:t4`.** `[--profile test|scratch] [--scale 100|1000|10000] [--variants <lista>] [--scenarios <lista>] [--concurrency 1,5,10] [--out <dir>] [--label <nombre>]`. Por cada variante reescribe los archivos que cambia (`scripts/performance/lib/t4-variants.mjs`), compila, **restaura el original antes de arrancar la app** y comprueba con `git diff` que el árbol quedó igual (si no, sale con 11). Las variantes que quitan llamadas a GoTrue son diagnósticas y nunca se integran. Si el código cambió y el ancla de una variante ya no existe, falla antes de compilar. Abre 10 sesiones una vez para todas las variantes (límite de GoTrue respetado con el registro de `perf:local`) y añade dos sondas: `GET /auth/v1/user` directo a Kong y `GET /login` (Next sin Auth ni Postgres). Salidas: 0, 2 argumentos, 3 perfil ajeno, 8 stack o puerto, 11 build, red externa o árbol sin restaurar, 130 interrupción. No lo ejecutes con cambios sin commitear en los archivos de las variantes.

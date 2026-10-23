@@ -9,7 +9,7 @@ Este documento es el inventario de referencia. Si cambia una ruta, un grant o un
 | Comando | Qué demuestra | Requiere |
 | --- | --- | --- |
 | `pnpm security:headers:local --profile scratch [--reuse-build] [--out archivo.json]` | Compila con `build:local`, arranca con `start:local` en el puerto del perfil (3149 para `scratch`), pide las 35 peticiones del inventario como anónimo y con la sesión real de A y compara las cabeceras efectivas con la matriz. Sale con **11** si alguna no coincide. | Stack del perfil sano, migrado y con seed. Sin red externa. |
-| `pnpm test:integration:security --profile scratch [--reuse-build]` | Grupo `tests/integration/security/` (19 pruebas): acceso por el formulario local, renovación, cierre y callback PKCE reales; misma URL como A, B y anónimo; Data API, grants y `SECURITY DEFINER`; CSP Report-Only en Chrome. | Igual, más Chrome instalado (canal `chrome` de Playwright, como `playwright.config.ts`). |
+| `pnpm test:integration:security --profile scratch [--reuse-build]` | Grupo `tests/integration/security/` (23 pruebas): acceso por el formulario local, renovación, cierre y callback PKCE reales; token revocado sin escritura y atestación de sesión (U-FIX-02); misma URL como A, B y anónimo; Data API, grants y `SECURITY DEFINER`; CSP Report-Only en Chrome. | Igual, más Chrome instalado (canal `chrome` de Playwright, como `playwright.config.ts`). |
 | `pnpm test` (`tests/security-headers.test.ts`) | Constructor de la CSP y reglas de `next.config.mjs`. | Nada. |
 | `pnpm test:scripts` (`tests/scripts/security-exposure.test.mjs`) | `service_role` fuera del proceso de Next, ningún código de la app la nombra, `api.schemas`, cobertura de la matriz frente a `app/` y lógica del comparador. | Nada. |
 
@@ -81,7 +81,7 @@ Todas son propiedad de `postgres`, fijan `search_path=pg_catalog` y no conceden 
 
 `biblib.rotate_book_version()` (0002) no es definer; es la función del trigger de versión y no se puede invocar fuera de un trigger.
 
-**Cómo accede la app:** el servidor de Next abre Postgres con `SUPABASE_DB_URL` y ejecuta cada acción en una transacción con `set local role authenticated` y los claims del usuario (`lib/db/client.ts`), de modo que RLS y los grants anteriores se aplican igual que a una sesión real. La credencial de base sigue siendo un secreto de servidor con acceso total: un rol dedicado para producción queda como mejora fuera de esta unidad.
+**Cómo accede la app:** el servidor de Next abre Postgres con `SUPABASE_DB_URL` y ejecuta cada acción en una transacción con el rol `authenticated` local a la transacción (`set_config('role', 'authenticated', true)`, equivalente a `set local role`) y los claims del usuario (`lib/db/client.ts`), de modo que RLS y los grants anteriores se aplican igual que a una sesión real. La credencial de base sigue siendo un secreto de servidor con acceso total: un rol dedicado para producción queda como mejora fuera de esta unidad.
 
 ## Credencial `service_role` (hallazgo de U-QA-01)
 
@@ -165,6 +165,41 @@ Probado con GoTrue y cookies SSR del perfil `scratch` (`tests/integration/securi
 - **Ninguna respuesta de A en otra sesión:** se repite la misma URL (7 páginas y 4 acciones de lectura en la misma ruta) como A, B y anónimo, intercalando el orden. Ningún cuerpo de B ni anónimo contiene IDs, títulos propios ni el correo de A, y viceversa. Anónimo recibe 307 y la acción no se ejecuta. Todas las respuestas son `no-store`. `/book/<libro de A>` como B responde 404 y `getBookDetailAction` devuelve `null`.
 
 Esto no prueba un CDN: localmente no hay caché compartida. La garantía local es que ninguna respuesta con datos o cookies es almacenable.
+
+## Verificación de sesión por petición (U-FIX-02)
+
+**Unidad:** U-FIX-02 (tarea T3 de [U-QA-03](validacion/rendimiento/2026-10-23/informe.md#9-tareas-por-presupuesto-incumplido)) · **Fecha:** 23 de octubre de 2026 · Aprobado por el coordinador con las condiciones que se listan abajo. Medición: [validacion/rendimiento/2026-10-23-fix-02](validacion/rendimiento/2026-10-23-fix-02/informe.md).
+
+**Antes:** cada petición a una ruta privada llamaba a `getUser()` (GET `/auth/v1/user` a GoTrue) dos veces: una en `proxy.ts` y otra en `getRequiredUserId()` dentro de la acción. Eran 2,04–2,1 llamadas por acción y ~45–50 ms cada una, el 65–75 % del p50 de una acción con una sesión.
+
+**Ahora:** una sola llamada a GoTrue por petición, en lecturas y en escrituras, sin aceptar tokens revocados.
+
+1. `proxy.ts` sigue verificando la sesión con `getUser()` (y la renueva si el acceso venció), como antes. Si es válida, añade a la petición **reenviada** la cabecera interna `x-biblib-session-attestation`: `v1.<emitida en ms>.<nonce>.<user id>.<HMAC-SHA256>`. La firma cubre el usuario que devolvió GoTrue, el **sha256 del access token** que lleva la petición y el **nonce de esa petición** (el de la CSP, `x-nonce`, que el proxy fija en cada petición).
+2. `getRequiredUserId()` (`lib/server-user.ts`) acepta la atestación solo si la firma es de este proceso, el token de las cookies es el mismo, el nonce es el de la petición y tiene **≤ 30 s**. Además **verifica el JWT localmente** (`getClaims()`: firma ES256 con el JWKS de GoTrue, caché de 10 min por proceso, y `exp`) y exige que su `sub` coincida con la atestación y que el rol sea `authenticated`. El usuario sale del JWT verificado; la cabecera solo prueba que GoTrue validó esa sesión en esta misma petición.
+3. Cualquier ausencia o fallo (rutas `/api/*`, que no pasan por el proxy; firma de otro proceso; otro token; caducada; otro nonce) hace `getUser()` contra GoTrue, como antes. La atestación nunca concede acceso por sí sola.
+4. Dentro de una petición, el resultado se memoiza por objeto de petición (`headers()`) y por access token (`createRequestMemo`, `lib/supabase/session-attestation.ts`): varias llamadas a `getRequiredUserId()` en la misma acción no repiten la verificación, y dos peticiones o dos tokens nunca comparten resultado.
+
+**Condiciones de la aprobación (todas implementadas y probadas):**
+
+| Condición | Dónde |
+| --- | --- |
+| El proxy elimina siempre la cabecera de atestación que envíe el cliente, en cualquier ruta y antes de añadir la suya. | `forward()` en `proxy.ts`; `revocacion.test.mjs` (cabecera fabricada → 307). |
+| Clave HMAC aleatoria por proceso (32 bytes de `randomBytes`), solo en memoria (`globalThis` con un `Symbol.for`); nunca se registra, exporta ni escribe en disco o variables de entorno. | `processKey()` en `lib/supabase/session-attestation.ts`. |
+| Liga sha256(token) + user id + nonce único de la petición + marca de tiempo ≤ 30 s; la acción verifica además el JWT en local y exige el mismo `sub`. Cualquier fallo → `getUser()`. | `verifySessionAttestation`, `attestedUserId` en `lib/server-user.ts`. |
+| Si proxy y acción se ejecutan en procesos distintos, la atestación no valida y se cae a `getUser()`. | Comportamiento esperado (abajo). |
+| Pruebas: cabecera falsificada o de otro proceso, otro token/usuario, caducada, reutilizada en otra petición, sesión cerrada con token no caducado → 307 y escritura con token revocado rechazada. | `tests/session-attestation.test.ts` (`pnpm test`) y `tests/integration/security/revocacion.test.mjs`; la prueba existente de `auth/sesion` (307 de `getLibraryDataAction` tras el cierre) sigue en verde. |
+
+**Revocación inmediata.** No cambia: en las rutas que pasan por el proxy, GoTrue valida la sesión en cada petición, así que una sesión cerrada recibe 307 antes de ejecutar la acción, sea lectura o escritura. La atestación solo vive dentro de la petición que la creó (nonce) y caduca a los 30 s; no es reutilizable en otra petición ni sale en ninguna respuesta. En `/api/*` la acción vuelve a consultar a GoTrue.
+
+**Despliegue en procesos separados (comportamiento esperado, no un fallo).** La clave existe solo en el proceso que la creó. En `next start` el proxy (runtime Node) y las acciones comparten proceso y la atestación valida. Si un alojamiento ejecuta el proxy en otro proceso o instancia (p. ej. un middleware separado), la firma no valida, la acción hace `getUser()` y se vuelve a las dos llamadas por petición: más latencia, la misma seguridad. Para recuperar la ganancia allí habría que compartir la clave por un canal de secretos del alojamiento; no se ha hecho.
+
+**Por qué no las otras opciones.**
+
+- **(a) `cache()` de React por petición:** dentro de una Server Action Next 16 no hay una petición Flight activa (`resolveRequest()` es nulo) y `cache()` devuelve una caché nueva en cada llamada: no memoiza. Por eso la memo es propia. Y aunque memoizara, no quitaría la llamada del proxy, que es otra fase de la petición.
+- **(b) `getClaims()` local en la acción, sin GoTrue:** el stack firma con ES256 y la verificación local funciona, pero un token revocado seguiría siendo válido hasta su `exp` (`jwt_expiry = 3600`, una hora). Para lecturas detrás del proxy no haría falta (el proxy ya llamó a GoTrue), pero la acción no puede saber si el proxy se ejecutó sin una señal infalsificable: eso es justo la atestación. `getClaims()` en el **proxy** rompería además el contrato de `auth/sesion`: una acción con las cookies de una sesión cerrada debe recibir 307.
+- **(c) Mantener la doble llamada:** cuesta ~45–50 ms por acción sin ganar seguridad: las dos verifican lo mismo en la misma petición.
+
+**Nunca** se lee el usuario de una cabecera o cookie sin firmar: el usuario sale de `getUser()` o de un JWT verificado con el JWKS de GoTrue que coincide con una atestación firmada por este proceso.
 
 ## Pendientes
 

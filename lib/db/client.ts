@@ -10,8 +10,10 @@ function createDb() {
     throw new Error("No se ha configurado la conexión de la biblioteca.")
   }
 
+  // 4 conexiones por proceso (U-FIX-02): con 1, las acciones concurrentes hacían cola en la única conexión
+  // (experimento T4 en docs/validacion/rendimiento/2026-10-23-fix-02). Presupuesto: 4 por réplica de la app.
   const queryClient = postgres(dbUrl, {
-    max: 1,
+    max: 4,
     prepare: false,
     ssl: ["localhost", "127.0.0.1", "[::1]"].includes(new URL(dbUrl).hostname) ? false : "require",
     idle_timeout: 20,
@@ -41,9 +43,8 @@ export async function withRlsContext<T>(
 
   const startedAt = Date.now()
   try { return await db.transaction(async (tx) => {
-    await tx.execute(sql`select set_config('request.jwt.claims', ${claims}, true)`)
-    await tx.execute(sql`select set_config('request.jwt.claim.sub', ${userId}, true)`)
-    await tx.execute(sql`set local role authenticated`)
+    // Claims y rol en una sola ida y vuelta; `set_config('role', …, true)` equivale a `set local role`.
+    await tx.execute(sql`select set_config('request.jwt.claims', ${claims}, true), set_config('request.jwt.claim.sub', ${userId}, true), set_config('role', 'authenticated', true)`)
     return callback(tx)
   }) } catch (error) {
     console.error(JSON.stringify({ event: "database.operation_failed", durationMs: Date.now() - startedAt }))
