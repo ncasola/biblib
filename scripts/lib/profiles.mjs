@@ -13,6 +13,8 @@ export const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url
 export const PROFILES_FILE = "supabase/profiles.json"
 export const LOOPBACK = "127.0.0.1"
 export const HOST_BINDING_OPTION = "com.docker.network.bridge.host_binding_ipv4"
+/** Únicas direcciones de publicación aceptables para un puerto del stack. */
+export const LOOPBACK_HOST_IPS = Object.freeze(["127.0.0.1", "::1"])
 
 /** Puertos que otros stacks locales (HolaERP y la plantilla por defecto del CLI) ya usan. */
 export const FOREIGN_PORTS = Object.freeze([5432, ...Array.from({ length: 10 }, (_, index) => 54320 + index)])
@@ -64,6 +66,11 @@ export function validateProfiles(manifest) {
   if (data.schemaVersion !== 1) problems.push("schemaVersion debe ser 1.")
   if (data.bindAddress !== LOOPBACK) problems.push(`bindAddress debe ser ${LOOPBACK}.`)
   if (typeof data.baseConfig !== "string" || typeof data.stateDir !== "string") problems.push("baseConfig y stateDir son obligatorios.")
+  const bindingCheck = /** @type {{ allowedHostIps?: unknown } | undefined} */ (data.bindingCheck)
+  const allowedHostIps = Array.isArray(bindingCheck?.allowedHostIps) ? bindingCheck.allowedHostIps : []
+  if (allowedHostIps.length === 0 || allowedHostIps.some((ip) => !LOOPBACK_HOST_IPS.includes(ip))) {
+    problems.push(`bindingCheck.allowedHostIps solo admite direcciones loopback (${LOOPBACK_HOST_IPS.join(", ")}).`)
+  }
   const services = /** @type {{ enabled?: unknown, disabled?: unknown } | undefined} */ (data.services)
   if (!Array.isArray(services?.enabled) || !Array.isArray(services?.disabled)) problems.push("services.enabled y services.disabled deben ser listas.")
   const portKeys = Array.isArray(data.portKeys) ? data.portKeys : []
@@ -197,6 +204,44 @@ export function profileNetwork(name, options) {
     driverOptions: { [HOST_BINDING_OPTION]: profile.bindAddress },
     labels: { "biblib.profile": name, "biblib.root": rootFingerprint(options).label },
   }
+}
+
+/**
+ * Revisa los puertos realmente publicados por los contenedores de un perfil.
+ *
+ * La opción de red `host_binding_ipv4` no basta: Docker Desktop 29.4.3 la ignora y el CLI 2.117.0
+ * publica sin `HostIp`, de modo que los puertos acaban en `0.0.0.0`/`::`. Esta función es pura
+ * para que `doctor`/`status` (U-INF-03) la alimenten con `docker inspect` y avisen de la exposición.
+ *
+ * @param {string} name Perfil.
+ * @param {Array<{ name: string, ports: Record<string, Array<{ HostIp?: string, HostPort?: string }> | null> | null }>} containers
+ *   Nombre de cada contenedor y su `.NetworkSettings.Ports` de `docker inspect`.
+ * @param {{ root?: string }} [options]
+ */
+export function checkPublishedBindings(name, containers, options) {
+  const manifest = loadProfiles(options)
+  const allowed = manifest.bindingCheck.allowedHostIps
+  const profilePortSet = new Set(Object.values(profilePorts(name, options)))
+  const bindings = []
+  for (const container of containers) {
+    for (const [containerPort, hostBindings] of Object.entries(container.ports ?? {})) {
+      for (const binding of hostBindings ?? []) {
+        const hostIp = binding.HostIp || "0.0.0.0"
+        const hostPort = Number(binding.HostPort)
+        bindings.push({
+          container: container.name,
+          containerPort,
+          hostIp,
+          hostPort,
+          loopback: allowed.includes(hostIp),
+          inProfileBlock: profilePortSet.has(hostPort),
+        })
+      }
+    }
+  }
+  const exposed = bindings.filter((binding) => !binding.loopback)
+  const outOfBlock = bindings.filter((binding) => !binding.inProfileBlock)
+  return { ok: exposed.length === 0 && outOfBlock.length === 0, bindings, exposed, outOfBlock }
 }
 
 /**

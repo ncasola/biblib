@@ -5,6 +5,10 @@
   "baseConfig": "supabase/config.toml",
   "stateDir": ".biblib",
   "bindAddress": "127.0.0.1",
+  "bindingCheck": {
+    "description": "Docker Desktop 29.4.3 ignora host_binding_ipv4 de la red y el CLI 2.117.0 publica sin HostIp: los bindings reales se comprueban con docker inspect (.NetworkSettings.Ports) y cualquier HostIp fuera de esta lista es exposición.",
+    "allowedHostIps": ["127.0.0.1", "::1"]
+  },
   "portKeys": ["shadow", "api", "db", "studio", "mailpit", "smtp", "pop3", "analytics", "inspector", "pooler"],
   "services": {
     "enabled": ["postgres", "auth", "rest", "storage", "studio", "mailpit"],

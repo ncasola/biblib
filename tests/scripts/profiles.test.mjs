@@ -10,6 +10,7 @@ import {
   FOREIGN_PORTS,
   HOST_BINDING_OPTION,
   LOOPBACK,
+  checkPublishedBindings,
   generateProfileWorkdir,
   getProfile,
   loadProfiles,
@@ -226,6 +227,44 @@ describe("workdir generado por perfil", () => {
   test("conserva los saltos de línea CRLF del archivo base", () => {
     const rendered = renderProfileConfig(baseToml.replace(/\r?\n/g, "\r\n"), getProfile("main"), getProfile("scratch"))
     assert.ok(!/[^\r]\n/.test(rendered))
+  })
+})
+
+describe("bindings publicados reales", () => {
+  // `.NetworkSettings.Ports` observado en el ensayo de scratch con Docker Desktop 29.4.3 y CLI 2.117.0.
+  const observed = [
+    { name: "supabase_kong_biblib-scratch", ports: { "8000/tcp": [{ HostIp: "0.0.0.0", HostPort: "55341" }, { HostIp: "::", HostPort: "55341" }] } },
+    { name: "supabase_db_biblib-scratch", ports: { "5432/tcp": [{ HostIp: "0.0.0.0", HostPort: "55342" }, { HostIp: "::", HostPort: "55342" }] } },
+    { name: "supabase_auth_biblib-scratch", ports: { "9999/tcp": null } },
+  ]
+
+  test("solo admite direcciones loopback en el manifiesto", () => {
+    assert.deepEqual(manifest.bindingCheck.allowedHostIps, ["127.0.0.1", "::1"])
+    const permissive = clone(manifest)
+    permissive.bindingCheck.allowedHostIps = ["127.0.0.1", "0.0.0.0"]
+    assert.ok(validateProfiles(permissive).some((problem) => problem.includes("bindingCheck")))
+  })
+
+  test("detecta la publicación en 0.0.0.0 y :: del ensayo", () => {
+    const result = checkPublishedBindings("scratch", observed)
+    assert.equal(result.ok, false)
+    assert.equal(result.bindings.length, 4)
+    assert.deepEqual(result.exposed.map((binding) => `${binding.hostIp}:${binding.hostPort}`).sort(), ["0.0.0.0:55341", "0.0.0.0:55342", ":::55341", ":::55342"])
+    assert.deepEqual(result.outOfBlock, [])
+  })
+
+  test("acepta loopback explícito y trata HostIp vacío como todas las interfaces", () => {
+    const loopback = [{ name: "supabase_kong_biblib-scratch", ports: { "8000/tcp": [{ HostIp: "127.0.0.1", HostPort: "55341" }, { HostIp: "::1", HostPort: "55341" }] } }]
+    assert.equal(checkPublishedBindings("scratch", loopback).ok, true)
+    const empty = [{ name: "x", ports: { "8000/tcp": [{ HostIp: "", HostPort: "55341" }] } }]
+    assert.equal(checkPublishedBindings("scratch", empty).exposed[0].hostIp, "0.0.0.0")
+  })
+
+  test("señala puertos fuera del bloque del perfil", () => {
+    const foreign = [{ name: "supabase_db_biblib-scratch", ports: { "5432/tcp": [{ HostIp: "127.0.0.1", HostPort: "55322" }] } }]
+    const result = checkPublishedBindings("scratch", foreign)
+    assert.equal(result.ok, false)
+    assert.equal(result.outOfBlock[0].hostPort, 55322)
   })
 })
 
