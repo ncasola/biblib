@@ -38,3 +38,7 @@ supabase/.temp/
 /fotos/
 /fotos-personales/
 docs/validacion/**/privado/
+
+# Objetivos y builds aislados (U-INF-02)
+!/.env.local.example
+/.next-*/
