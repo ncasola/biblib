@@ -23,7 +23,7 @@ Plan operativo para implementar la fase F0 (O00–O06) de esta spec con workers 
 1. Leer `AGENTS.md`, [README de la spec](README.md), este documento y la sección de su unidad. Textos visibles en español, sin `any`, `pnpm`.
 2. **Prohibido** leer, imprimir o copiar `.env`, `.env.local` o cualquier secreto. Prohibido tocar la base remota.
 3. **Prohibido** detener, borrar o modificar contenedores, redes o volúmenes ajenos (`*holaerp*` u otros): nada de `supabase stop --all`, `docker system prune`, `docker volume rm` por patrón ni cerrar procesos por ocupar un puerto.
-4. Desde un worktree solo se levanta el perfil **`scratch`** (nunca `main`), y solo el worker al que la ola se lo asigne. Al terminar se para con el wrapper o `supabase stop` del workdir del perfil, conservando volúmenes salvo pruebas de reset.
+4. Desde un worktree solo se levantan los perfiles **`scratch`** o **`test`** (nunca `main`), y solo el worker al que la ola se lo asigne. Al terminar se para con el wrapper o `supabase stop` del workdir del perfil, conservando volúmenes salvo pruebas de reset.
 5. Scope cerrado: solo los archivos de la unidad y los compartidos que se le asignen abajo. Lo que se salga del scope se describe en el `worker_done`, no se hace.
 6. Conventional Commits en español (`feat(db): …`), commits pequeños en la rama del worktree. Sin push ni PR.
 7. Validación mínima antes de `worker_done`: `pnpm lint`, `pnpm typecheck`, `pnpm test` y `pnpm test:scripts` (desde que exista). Las pruebas que necesiten Docker, el CLI o el stack se ejecutan y su resultado se informa tal cual; nada se marca como pasado sin ejecutarlo.
