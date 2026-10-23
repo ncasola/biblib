@@ -1,52 +1,120 @@
-name: Validación
+name: Validación de PR
 
 on:
-  push:
   pull_request:
+  push:
+    branches: [main, feature/spec-pendientes]
 
 permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: pr-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
   checks:
-    name: Tipos, pruebas y build
+    name: Código, migraciones e integración Chromium
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 60
     env:
       NEXT_TELEMETRY_DISABLED: "1"
       # Valores ficticios de construcción; no permiten acceder a un proyecto real.
       NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-public-placeholder
+    defaults:
+      run:
+        shell: bash
     steps:
       - name: Descargar código
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
       - name: Preparar pnpm
-        uses: pnpm/action-setup@v6
+        uses: pnpm/action-setup@v4
         with:
-          version: 10.32.1
           run_install: false
       - name: Preparar Node.js
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@v4
         with:
-          node-version: "24"
+          node-version: "24.11.1"
           cache: pnpm
       - name: Instalar desde el lockfile
+        id: install
         run: pnpm install --frozen-lockfile
       - name: Lint
+        id: lint
         run: pnpm lint
       - name: Comprobar tipos
+        id: types
         run: pnpm typecheck
       - name: Pruebas unitarias
-        run: pnpm test
-      - name: Build
+        id: unit
+        run: |
+          mkdir -p .biblib/ci
+          pnpm test | tee .biblib/ci/unit.log
+      - name: Pruebas de scripts
+        id: scripts
+        run: pnpm test:scripts | tee .biblib/ci/scripts.log
+      - name: Contratos de artefactos
+        id: artifacts
+        run: pnpm ci:test
+      - name: Build sin objetivo con placeholders
+        id: build
         run: pnpm build
+      - name: Bundle sin acceso local ni referencias privadas
+        id: bundle
+        run: pnpm check:bundle --forbid-local-login
+      - name: Identificar commit, lockfile, migraciones y build probado
+        run: pnpm ci:release create untargeted
+      - name: Restaurar imágenes sin estado ni volúmenes
+        id: images
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/biblib-images.tar
+          key: images-${{ runner.os }}-supabase-2.117.0-${{ hashFiles('supabase/config.toml', 'supabase/profiles.json') }}
+      - name: Cargar imágenes en Docker
+        if: steps.images.outputs.cache-hit == 'true'
+        run: docker load --input "$RUNNER_TEMP/biblib-images.tar"
+      - name: Instalar Chrome requerido por el proyecto Chromium
+        run: pnpm exec playwright install --with-deps chrome
+      - name: Stack Supabase aislado (CLI 2.117.0 del lockfile)
+        id: stack
+        run: pnpm db:local:bootstrap --profile test
       - name: Migraciones y aislamiento en Postgres temporal
+        id: database
         run: pnpm test:db
-      - name: Recorridos de navegador con servicios temporales
-        run: pnpm test:smoke
+      - name: Integración con servicios reales y fixtures
+        id: integration
+        run: pnpm test:integration:local
+      - name: Esperar a la siguiente ventana del limitador GoTrue
+        run: sleep 310
+      - name: Chromium con GoTrue, RLS y Storage locales
+        id: chromium
+        run: pnpm test:e2e:local --project chromium --reuse-build
+      - name: Smoke complementario con servicios temporales
+        id: smoke
+        run: pnpm test:smoke --artifacts=.biblib/ci/smoke
+      - name: Guardar solo imágenes reutilizables
+        if: steps.images.outputs.cache-hit != 'true'
+        run: |
+          mapfile -t images < <(docker image ls --format '{{.Repository}}:{{.Tag}}' | awk '/^(public.ecr.aws\/supabase\/|supabase\/|postgres:17-alpine$)/ && !/:<none>$/')
+          if ((${#images[@]})); then docker save --output "$RUNNER_TEMP/biblib-images.tar" "${images[@]}"; fi
+      - name: Parar exclusivamente el perfil propio incluso tras fallo o cancelación
+        if: always() && steps.stack.outcome != 'skipped' && steps.install.outcome == 'success'
+        run: pnpm db:local:down --profile test
+      - name: Recopilar informes y capturas ficticias permitidos
+        if: always() && steps.install.outcome == 'success'
+        env:
+          CI_JOB_STATUS: ${{ job.status }}
+          CI_STEP_RESULTS: ${{ toJSON(steps) }}
+        run: pnpm ci:collect
+      - name: Conservar evidencia identificada por commit y ejecución
+        if: always() && steps.install.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .biblib/ci/public/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14
