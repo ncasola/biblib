@@ -373,7 +373,7 @@
         "BE-04",
         "UX-08"
       ],
-      "status": "planned"
+      "status": "in-progress"
     },
     {
       "id": "U-DAT-09",
@@ -973,7 +973,7 @@
         "BE-06",
         "OPS-02"
       ],
-      "status": "planned"
+      "status": "in-progress"
     },
     {
       "id": "U-OPS-05",
@@ -1104,7 +1104,7 @@
         "IMP-02",
         "FE-02"
       ],
-      "status": "planned"
+      "status": "in-progress"
     },
     {
       "id": "U-LOC-01",

@@ -32,8 +32,11 @@ Plan operativo de la fase F1 (O07–O10): integridad de colección, proveedores 
 | O09 | U-QA-03 Rendimiento (primera medición) | Claude (Sonnet) | `test` | No (índices propuestos) |
 | O09 | U-FIX-01 Cero tráfico en fixture y 404 de ficha | Codex | No | No |
 | O09 | U-QA-04 CI y artefactos (ejecución real pendiente de push) | Codex | No | No |
-| O09 | U-OPS-04 Sesión, exposición y cabeceras | Tras liberar un stack | — | No |
-| O10 | U-DAT-02, U-DAT-08, U-BIB-05, U-EXP-02 | Se fija al cerrar O09 | — | U-DAT-02 / U-EXP-02 en orden |
+| O09 | U-OPS-04 Sesión, exposición y cabeceras (local; HTTPS real pendiente) | Claude (Opus) | `scratch` | No |
+| O10 | U-DAT-08 Búsqueda título/autor | Codex | No | No |
+| O10 | U-BIB-05 Todos los flujos por el orquestador | Claude (Sonnet) | Al final | No |
+| O10 | U-DAT-02 Snapshots y deshacer | Tras liberar un stack | — | Sí (`0006`) |
+| O10 | U-EXP-02 Vistas guardadas | Tras U-DAT-02 | — | Sí (`0007`) |
 
 ## Puertas
 
