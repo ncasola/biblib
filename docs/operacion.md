@@ -368,6 +368,32 @@ El bucket **privado** `biblib-test-assets` contiene `fixtures/portada.webp`, con
 
 `pnpm test:scripts` incluye simulaciones de censo, identidad ajena, ledger pendiente, reintentos, cuenta existente, preservación de fichas y SQL acotado. La prueba **[stack]** de `tests/scripts/seed.test.mjs` usa solo `scratch` en marcha y acreditado; con `BIBLIB_SKIP_STACK_TESTS=1` se omite. Comprueba seed repetido, libro manual sin marcador, versiones, sesiones A/B, token alterado, nombre, refresh/signOut/revocación, cookies SSR, rechazo anónimo Storage, descarga firmada determinista y correo en Mailpit. Deja un libro manual ficticio `manual-ensayo-o05` en A para comprobar su conservación. Al terminar el ensayo ejecuta `pnpm db:local:down --profile scratch`; se conservan red y volúmenes propios. La matriz completa de RLS A/B corresponde a U-QA-01.
 
+### Formulario local
+
+U-LOC-01 añade a `/login`, debajo del botón de Google, la sección **Acceso local de desarrollo**: correo, contraseña y «Entrar». Sirve para trabajar con las cuentas ficticias A/B sin Google ni enlaces temporales. Usa `signInWithPassword` contra el GoTrue del perfil local mediante el cliente SSR de la aplicación, así que las cookies son las reales y Google OAuth no cambia.
+
+```powershell
+pnpm db:local:up --profile scratch
+pnpm db:seed:local --profile scratch
+pnpm dev:local --profile scratch
+# En otra terminal; solo funciona en una terminal interactiva:
+pnpm db:local:credentials --as a --profile scratch
+# Abre http://127.0.0.1:3149/login, escribe el correo y la contraseña mostrados y pulsa «Entrar».
+```
+
+`db:local:credentials --as a|b [--profile]` lee `.biblib/fixtures/<perfil>.json` (ver arriba) e imprime el correo y la contraseña de la cuenta ficticia **solo** si la salida es una terminal: rechaza una redirección a archivo o registro, no admite `--json` y avisa de que no debe copiarse a informes ni capturas. Exige el mismo perfil acreditado que `db:local:login`.
+
+**Doble puerta.** Ambas son obligatorias:
+
+1. **Build.** `childEnv` fija `NEXT_PUBLIC_BIBLIB_LOCAL_LOGIN=1` solo para `local` y `test`, la fuerza a vacío en `preprod`/`prod` y descarta cualquier valor heredado. `next.config.mjs` la define siempre (`"1"` en local/test, `""` en el resto, también sin `BIBLIB_TARGET`): Next solo sustituye las variables `NEXT_PUBLIC_` definidas, y sin esa definición el formulario sobrevive en el bundle de un `pnpm build` sin objetivo. La página importa el formulario con `dynamic()` bajo esa condición, de modo que el compilador elimina el componente y su acción cuando no vale `"1"`.
+2. **Servidor.** `signInWithLocalPasswordAction` devuelve `UNAUTHORIZED` («El acceso local no está disponible.») salvo que `BIBLIB_TARGET` sea `local` o `test` en el proceso **y** `NEXT_PUBLIC_SUPABASE_URL` sea exactamente `http://127.0.0.1:<puerto de API de un perfil de supabase/profiles.json>` (sin `localhost`, usuario, ruta ni consulta; el 54321 de HolaERP se rechaza). La comprobación va antes de validar la entrada y de crear el cliente.
+
+**Qué hace y qué no.** Valida el correo (forma válida, hasta 254 caracteres) y la contraseña (1–128). Limita a 5 intentos fallidos por minuto y por proceso (el sexto responde `RATE_LIMITED` sin consultar GoTrue; un acceso correcto reinicia el contador y un fallo de red no cuenta). Todos los errores de credenciales dicen «Correo o contraseña incorrectos.», sin distinguir si el usuario existe. Tras el acceso redirige, con navegación completa, al destino de `?redirect=` validado con `getSafeRedirectPath` (el parámetro que ya usan el proxy y el login). No crea cuentas, no ofrece registro ni recuperación de contraseña, no acepta usuario por URL ni cabecera y no tiene atajos «Entrar como A/B». No sustituye las pruebas contra GoTrue real.
+
+**Qué no protege.** No es una barrera frente a quien controle el proceso o las variables de un servidor local; su fin es que un build o despliegue remoto no pueda exponerlo ni usarlo. El límite de intentos es por proceso, no distribuido. En el stack local los puertos pueden estar publicados fuera de loopback (ver «Limitación conocida»); la contraseña de A/B solo vale en esa base ficticia.
+
+**Verificación.** `pnpm check:bundle --dist-dir <directorio> --forbid-local-login` falla (**11**) si encuentra en `static` el literal del formulario (`biblib-local-password-form`, «Acceso local de desarrollo» o el nombre de la acción). Debe fallar en `.next-test` y pasar en `.next-prod` y `.next`. Las pruebas `[build]` de `pnpm test:scripts` compilan `test` y un `prod` simulado con placeholders (unos 25 s en total; `BIBLIB_SKIP_BUILD_TESTS=1` las omite). `pnpm test` cubre la guarda, la validación y el limitador.
+
 ## Reset y bootstrap
 
 `pnpm db:reset:local` es destructivo y exige una revisión en dos pasos. Arranca primero el perfil propio: el dry-run consulta cantidades y huellas reales de Postgres y Mailpit, sin arrancar servicios ni modificar datos. En un worktree este wrapper solo reconstruye `scratch`.

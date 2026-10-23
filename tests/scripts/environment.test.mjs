@@ -7,7 +7,9 @@ import { assertNoForeignEnvFiles, childEnv, loadTarget, writeLocalEnvFile } from
 import { BiblibError, EXIT } from "../../scripts/lib/exit-codes.mjs"
 import { getProfile, profileWorkdir, REPO_ROOT, rootFingerprint } from "../../scripts/lib/profiles.mjs"
 import { assertBuildTarget, distDir, runNextTarget } from "../../scripts/next-target.mjs"
-import { checkClientBundle } from "../../scripts/check-client-bundle.mjs"
+import { checkClientBundle, parseBundleArgs } from "../../scripts/check-client-bundle.mjs"
+import { parseCredentialArgs, showCredentials } from "../../scripts/db/local-credentials.mjs"
+import { spawnSync } from "node:child_process"
 
 const temporaryRoots = []
 const secret = "private-password-placeholder"
@@ -293,4 +295,145 @@ test("el inspector de bundle detecta referencias privadas y JWT administrativos 
   }
   writeFileSync(file, "const publicKey = 'public-placeholder';")
   assert.deepEqual(checkClientBundle(cwd), { files: 1, clean: true })
+})
+
+// --- U-LOC-01: acceso local con contraseña (primera puerta, de build) ---
+
+test("childEnv fija NEXT_PUBLIC_BIBLIB_LOCAL_LOGIN=1 solo en local/test y la vacía en preprod/prod", () => {
+  const previous = process.env.NEXT_PUBLIC_BIBLIB_LOCAL_LOGIN
+  const ref = "abcdefghijklmnop"
+  const remote = {
+    NEXT_PUBLIC_SUPABASE_URL: `https://${ref}.supabase.co`, NEXT_PUBLIC_SUPABASE_ANON_KEY: "public-remote-placeholder",
+    SUPABASE_DB_URL: `postgresql://postgres:${secret}@db.${ref}.supabase.co:5432/postgres`, BIBLIB_EXPECT_PROJECT_REF: ref,
+  }
+  try {
+    for (const inherited of [undefined, "1", "0", "true"]) {
+      if (inherited === undefined) delete process.env.NEXT_PUBLIC_BIBLIB_LOCAL_LOGIN
+      else process.env.NEXT_PUBLIC_BIBLIB_LOCAL_LOGIN = inherited
+      assert.equal(childEnv(context(checkout(), "test")).NEXT_PUBLIC_BIBLIB_LOCAL_LOGIN, "1", `test heredada=${inherited}`)
+      const cwd = checkout()
+      localFile(cwd)
+      assert.equal(childEnv(loadTarget("local", { cwd, profile: "scratch" })).NEXT_PUBLIC_BIBLIB_LOCAL_LOGIN, "1", `local heredada=${inherited}`)
+      for (const target of ["preprod", "prod"]) {
+        const env = childEnv(loadTarget(target, { cwd: checkout(), env: remote }))
+        assert.equal(env.NEXT_PUBLIC_BIBLIB_LOCAL_LOGIN, "", `${target} heredada=${inherited}`)
+      }
+    }
+  } finally {
+    if (previous === undefined) delete process.env.NEXT_PUBLIC_BIBLIB_LOCAL_LOGIN
+    else process.env.NEXT_PUBLIC_BIBLIB_LOCAL_LOGIN = previous
+  }
+})
+
+test("next.config define la variable pública siempre: 1 en local/test y vacía sin objetivo, preprod y prod", () => {
+  const config = (target) => {
+    const env = { ...process.env, NEXT_PUBLIC_BIBLIB_LOCAL_LOGIN: "1" }
+    delete env.BIBLIB_TARGET
+    if (target) env.BIBLIB_TARGET = target
+    const result = spawnSync(process.execPath, ["--input-type=module", "-e", 'import c from "./next.config.mjs"; console.log(JSON.stringify(c.env))'], { cwd: REPO_ROOT, env, encoding: "utf8", windowsHide: true })
+    assert.equal(result.status, 0, result.stderr)
+    return JSON.parse(result.stdout).NEXT_PUBLIC_BIBLIB_LOCAL_LOGIN
+  }
+  assert.equal(config("local"), "1")
+  assert.equal(config("test"), "1")
+  for (const target of [undefined, "preprod", "prod"]) assert.equal(config(target), "", String(target))
+})
+
+test("check-client-bundle --forbid-local-login detecta los literales del formulario y es opcional", () => {
+  const cwd = checkout()
+  mkdirSync(path.join(cwd, "static/chunks"), { recursive: true })
+  const file = path.join(cwd, "static/chunks/login.js")
+  for (const literal of ["biblib-local-password-form", "Acceso local de desarrollo", "signInWithLocalPasswordAction"]) {
+    writeFileSync(file, `x("${literal}")`)
+    assert.deepEqual(checkClientBundle(cwd), { files: 1, clean: true })
+    assert.throws(() => checkClientBundle(cwd, { forbidLocalLogin: true }), (error) => error.code === EXIT.VERIFICATION_FAILED)
+  }
+  writeFileSync(file, "const login = 'Continuar con Google'")
+  assert.deepEqual(checkClientBundle(cwd, { forbidLocalLogin: true }), { files: 1, clean: true })
+  assert.deepEqual(parseBundleArgs([]), { distDir: undefined, forbidLocalLogin: false })
+  assert.deepEqual(parseBundleArgs(["--forbid-local-login", "--dist-dir", ".next-prod"]), { distDir: ".next-prod", forbidLocalLogin: true })
+  for (const args of [["--dist-dir"], ["--forbid-local-login", "--forbid-local-login"], ["--otra"], ["--dist-dir", "--forbid-local-login"]]) {
+    assert.throws(() => parseBundleArgs(args), (error) => error.code === EXIT.INVALID_ARGS)
+  }
+})
+
+// [build] Compila de verdad con placeholders: .next-test debe contener el formulario y .next-prod no.
+// Con BIBLIB_SKIP_BUILD_TESTS=1 se omite. No toca `.next`, que usa `pnpm test`.
+const skipBuild = process.env.BIBLIB_SKIP_BUILD_TESTS === "1" ? "BIBLIB_SKIP_BUILD_TESTS=1" : false
+function buildTarget(target, injected) {
+  const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => !/^(BIBLIB_|NEXT_PUBLIC_|SUPABASE_)/i.test(key)))
+  // Una variable heredada en el shell no debe poder activar el formulario en el build remoto.
+  Object.assign(env, { NEXT_PUBLIC_BIBLIB_LOCAL_LOGIN: "1", ...injected })
+  const result = spawnSync(process.execPath, ["scripts/next-target.mjs", "build", target], { cwd: REPO_ROOT, env, encoding: "utf8", windowsHide: true, timeout: 540000 })
+  assert.equal(result.status, 0, `${target}: ${(result.stderr || result.stdout).slice(-400)}`)
+  return path.join(REPO_ROOT, distDir(target))
+}
+
+test("[build] build:test con placeholders contiene el formulario local", { skip: skipBuild, timeout: 600000 }, () => {
+  const dir = buildTarget("test", {
+    NEXT_PUBLIC_SUPABASE_URL: "http://127.0.0.1:55331", NEXT_PUBLIC_SUPABASE_ANON_KEY: "public-build-placeholder",
+    SUPABASE_DB_URL: "postgresql://postgres:placeholder@127.0.0.1:55332/postgres",
+  })
+  assert.equal(checkClientBundle(dir).clean, true)
+  assert.throws(() => checkClientBundle(dir, { forbidLocalLogin: true }), (error) => error.code === EXIT.VERIFICATION_FAILED && /presente/.test(error.message))
+})
+
+test("[build] un build prod simulado no contiene ninguna cadena del formulario local", { skip: skipBuild, timeout: 600000 }, () => {
+  const ref = "abcdefghijklmnop"
+  const dir = buildTarget("prod", {
+    NEXT_PUBLIC_SUPABASE_URL: `https://${ref}.supabase.co`, NEXT_PUBLIC_SUPABASE_ANON_KEY: "public-build-placeholder",
+    SUPABASE_DB_URL: `postgresql://postgres:placeholder@db.${ref}.supabase.co:5432/postgres`, BIBLIB_EXPECT_PROJECT_REF: ref,
+  })
+  assert.equal(checkClientBundle(dir, { forbidLocalLogin: true }).clean, true)
+})
+
+// --- U-LOC-01: credenciales A/B solo en terminal ---
+
+function credentialDeps({ tty = true, account = { email: "lector-a@biblib.test", password: "p".repeat(32) } } = {}) {
+  const chunks = { out: "", err: "" }
+  return {
+    chunks,
+    deps: {
+      out: { isTTY: tty, write: (text) => { chunks.out += text } },
+      err: { write: (text) => { chunks.err += text } },
+      resolve: async () => ({ profile: "scratch" }),
+      read: () => ({ accounts: { a: account } }),
+      census: () => ({}),
+    },
+  }
+}
+
+test("db:local:credentials valida argumentos y solo admite A/B", () => {
+  assert.deepEqual(parseCredentialArgs(["--as", "b", "--profile", "scratch"]), { as: "b", profile: "scratch" })
+  for (const args of [[], ["--as", "c"], ["--as", "a", "--as", "b"], ["--as", "a", "--profile", "prod"], ["--as", "a", "--json"], ["--as", "a", "--email", "x@y.z"]]) {
+    assert.throws(() => parseCredentialArgs(args), (error) => error instanceof BiblibError && error.code === EXIT.INVALID_ARGS)
+  }
+})
+
+test("db:local:credentials muestra correo y contraseña solo en una terminal, con aviso y sin escribir archivos", async () => {
+  const { chunks, deps } = credentialDeps()
+  await showCredentials(["--as", "a", "--profile", "scratch"], deps)
+  assert.match(chunks.out, /lector-a@biblib\.test/)
+  assert.ok(chunks.out.includes("p".repeat(32)))
+  assert.match(chunks.err, /Aviso/)
+  assert.ok(!chunks.err.includes("p".repeat(32)), "el aviso no contiene la contraseña")
+})
+
+test("db:local:credentials rechaza salida redirigida, otro objetivo y registros ausentes sin mostrar la contraseña", async () => {
+  const piped = credentialDeps({ tty: false })
+  await assert.rejects(showCredentials(["--as", "a"], piped.deps), (error) => error.code === EXIT.INVALID_ARGS && !error.message.includes("p".repeat(32)))
+  assert.equal(piped.chunks.out, "")
+  const missing = credentialDeps({ account: null })
+  await assert.rejects(showCredentials(["--as", "a"], missing.deps), (error) => error.code === EXIT.SEED_FAILED)
+  assert.equal(missing.chunks.out, "")
+  const previous = process.env.BIBLIB_TARGET
+  process.env.BIBLIB_TARGET = "prod"
+  try {
+    const remote = credentialDeps()
+    await assert.rejects(showCredentials(["--as", "a"], remote.deps), (error) => error.code === EXIT.IDENTITY_MISMATCH)
+    assert.equal(remote.chunks.out, "")
+  } finally {
+    if (previous === undefined) delete process.env.BIBLIB_TARGET
+    else process.env.BIBLIB_TARGET = previous
+  }
 })
