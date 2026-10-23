@@ -44,6 +44,8 @@ export interface BookSpec {
   authors?: string[]
   pages?: number
   isbn?: string
+  /** Verificación humana del ISBN en el ejemplar (`catalogue.isbnVerified`). */
+  verified?: boolean
   publishDate?: string
 }
 
@@ -235,7 +237,7 @@ export const test = base.extend<{ account: Session; guard: Guard; data: Data }, 
           await stack.sql`insert into biblib.books (id, user_id, isbn, title, authors, number_of_pages, publish_date, status, shelf_id, catalogue)
             values (${id}, ${owner(account)}, ${spec.isbn ?? `manual-${id}`}, ${`[${E2E_MARKER} ${stack.runId}] ${spec.title}`},
               ${stack.sql.json((spec.authors ?? []).map((name) => ({ name })))}, ${spec.pages ?? 0}, ${spec.publishDate ?? ""},
-              ${spec.status ?? "unread"}, ${shelfId}, ${stack.sql.json({ source: "manual", isbnVerified: false })})`
+              ${spec.status ?? "unread"}, ${shelfId}, ${stack.sql.json({ source: "manual", isbnVerified: spec.verified ?? false })})`
           ids.push(id)
         }
         return ids

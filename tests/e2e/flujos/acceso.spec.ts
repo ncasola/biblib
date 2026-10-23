@@ -13,6 +13,9 @@ test.describe("anónimo", () => {
     expect(new URL(page.url()).searchParams.get("redirect")).toBe("/books?status=read&page=2")
     await expect(localLoginForm(page)).toBeVisible()
     await expect(page.getByRole("button", { name: "Continuar con Google" })).toBeVisible()
+    const login = await page.request.get("/login")
+    expect(login.headers()["x-content-type-options"]).toBe("nosniff")
+    expect(login.headers()["x-frame-options"]).toBe("DENY")
 
     await page.goto(`/book/${randomUUID()}`)
     await page.waitForURL((url) => url.pathname === "/login")

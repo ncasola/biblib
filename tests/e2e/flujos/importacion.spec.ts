@@ -45,7 +45,9 @@ function planValue(page: Page, label: string) {
 
 test.describe.configure({ mode: "serial" })
 
-test("la exportación descarga un JSON v1 con la colección actual de A", async ({ page, stack }) => {
+test("la exportación descarga un JSON v1 con la colección actual de A y la verificación del ISBN", async ({ page, stack, data }) => {
+  const slug = data.slug("exportar")
+  const [verified] = await data.books("a", await data.defaultShelf("a"), [{ title: `Verificado ${slug}`, isbn: "9780131103627", verified: true }])
   await openSettings(page)
   const download = page.waitForEvent("download")
   await page.getByRole("button", { name: "Descargar copia de seguridad" }).click()
@@ -54,6 +56,8 @@ test("la exportación descarga un JSON v1 con la colección actual de A", async 
   const ids = new Set((backup.books as { id: string }[]).map((book) => book.id))
   expect(ids.has(stack.fixtureBookId("a", "isla"))).toBe(true)
   expect(ids.has(stack.fixtureBookId("b", "versos")), "Sin fichas de B").toBe(false)
+  const exported = (backup.books as { id: string; catalogue?: { isbnVerified?: boolean } }[]).find((book) => book.id === verified)
+  expect(exported?.catalogue?.isbnVerified, "La exportación conserva la verificación humana del ISBN").toBe(true)
   await expect(page.getByRole("status").filter({ hasText: "Copia preparada con" })).toBeVisible()
 })
 
