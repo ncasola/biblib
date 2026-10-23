@@ -44,6 +44,21 @@ function updateAddress(filters: BookSearchFilters, defaultView: BookView = "tabl
   window.history.replaceState(window.history.state, "", nextUrl)
 }
 
+// El enlace «Ver en la colección» de la vista 3D llega con `pageSize` para conservar
+// exactamente la misma página de libros; fuera del rango se usa el tamaño habitual.
+const COLLECTION_PAGE_SIZE_MIN = 10
+const COLLECTION_PAGE_SIZE_MAX = 100
+
+function parseCollectionPageSize(params: URLSearchParams): number {
+  const value = Number.parseInt(params.get("pageSize") ?? "", 10)
+  return Number.isFinite(value) && value >= COLLECTION_PAGE_SIZE_MIN && value <= COLLECTION_PAGE_SIZE_MAX ? value : BOOK_PAGE_SIZE
+}
+
+function withPageSizeParam(path: string, pageSize: number): string {
+  if (pageSize === BOOK_PAGE_SIZE) return path
+  return path.includes("?") ? `${path}&pageSize=${pageSize}` : `${path}?pageSize=${pageSize}`
+}
+
 function getBookSortLabel(sort: BookSort): string {
   return SORT_OPTIONS.find((option) => option.value === sort)?.label ?? "Título (A-Z)"
 }
@@ -51,6 +66,7 @@ function getBookSortLabel(sort: BookSort): string {
 export function BooksTable({ initialView = "table" }: BooksTableProps) {
   const pathname = usePathname()
   const [filters, setFilters] = useState<BookSearchFilters>(() => defaultBookSearchFilters(initialView))
+  const [pageSize, setPageSize] = useState(BOOK_PAGE_SIZE)
   const [queryInput, setQueryInput] = useState("")
   const [showFilters, setShowFilters] = useState(false)
   const [ready, setReady] = useState(false)
@@ -72,9 +88,11 @@ export function BooksTable({ initialView = "table" }: BooksTableProps) {
 
   useEffect(() => {
     const readAddress = () => {
-      const parsed = parseBookSearchFilters(new URLSearchParams(window.location.search), initialView)
+      const params = new URLSearchParams(window.location.search)
+      const parsed = parseBookSearchFilters(params, initialView)
       setFilters(parsed)
       setQueryInput(parsed.q)
+      setPageSize(parseCollectionPageSize(params))
       setSelectedIds([])
       setLoading(true)
       setReady(true)
@@ -130,7 +148,7 @@ export function BooksTable({ initialView = "table" }: BooksTableProps) {
       shelf: filterShelf,
       sort: filterSort,
       page: filterPage,
-      pageSize: BOOK_PAGE_SIZE,
+      pageSize,
     }).then((result) => {
       if (requestSequence.current !== requestId) return
       setBooks(result.books)
@@ -155,7 +173,7 @@ export function BooksTable({ initialView = "table" }: BooksTableProps) {
     return () => {
       if (requestSequence.current === requestId) requestSequence.current += 1
     }
-  }, [filterQuery, filterStatus, filterShelf, filterSort, filterPage, ready, retryToken, initialView])
+  }, [filterQuery, filterStatus, filterShelf, filterSort, filterPage, pageSize, ready, retryToken, initialView])
 
   const updateFilters = useCallback((update: Partial<BookSearchFilters>, resetPage = true) => {
     if (update.view === undefined) setLoading(true)
@@ -207,16 +225,16 @@ export function BooksTable({ initialView = "table" }: BooksTableProps) {
     }
   }
 
-  const collectionPath = buildCollectionPath(pathname, filters, initialView)
+  const collectionPath = withPageSizeParam(buildCollectionPath(pathname, filters, initialView), pageSize)
   const detailHref = (bookId: string) => buildBookDetailHref(bookId, `${collectionPath}#${bookRowAnchor(bookId)}`)
   // El historial de esta entrada recuerda la fila abierta para que «Atrás» la recupere.
   const rememberOpenedBook = (event: MouseEvent<HTMLAnchorElement>, bookId: string) => {
     if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
     window.history.replaceState(window.history.state, "", `${window.location.pathname}${window.location.search}#${bookRowAnchor(bookId)}`)
   }
-  const pageCount = Math.ceil(total / BOOK_PAGE_SIZE)
-  const firstResult = total === 0 ? 0 : (filters.page - 1) * BOOK_PAGE_SIZE + 1
-  const lastResult = Math.min(filters.page * BOOK_PAGE_SIZE, total)
+  const pageCount = Math.ceil(total / pageSize)
+  const firstResult = total === 0 ? 0 : (filters.page - 1) * pageSize + 1
+  const lastResult = Math.min(filters.page * pageSize, total)
   const hasCriteria = Boolean(filters.q || filters.status !== "all" || filters.shelf !== "all")
   const canClear = hasCriteria || filters.sort !== "title"
   const columns = [
