@@ -71,9 +71,9 @@ export async function isolationUnderLoad({ app, sessions, sql, ctx, facts, durat
       let result = await invoke(app, session, "listBooksAction", [{ pageSize: 100 }])
       counts.peticiones[key]++
       check(label, key, "listBooksAction", result, (value) => { if (value.total !== own.books.size) bad(label, `el total (${value.total}) no coincide con sus ${own.books.size} fichas`) })
-      result = await invoke(app, session, "getLibraryDataAction", [])
+      result = await invoke(app, session, "getLibraryCountsAction", [])
       counts.peticiones[key]++
-      check(label, key, "getLibraryDataAction", result, (value) => { if (value.books.length !== own.books.size) bad(label, "la exportación no tiene el número de fichas esperado") })
+      check(label, key, "getLibraryCountsAction", result, (value) => { if (value?.ok !== true || value.value.books !== own.books.size) bad(label, "los recuentos no coinciden con sus fichas") })
       result = await invoke(app, session, "getShelvesAction", [])
       counts.peticiones[key]++
       check(label, key, "getShelvesAction", result)

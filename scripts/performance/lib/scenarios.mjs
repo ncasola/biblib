@@ -38,7 +38,9 @@ export function actionScenarios(facts) {
     { name: "detalle", pantalla: "Ficha", action: "getBookDetailAction", args: (i) => [facts.bookIds[i % facts.bookIds.length]], iterations: STANDARD },
     { name: "estanterias", pantalla: "Estanterías / filtros", action: "getShelvesAction", args: () => [], iterations: STANDARD },
     { name: "estanteria-3d-pagina-48", pantalla: "Estantería 3D", action: "listBooksAction", args: (i) => [list({ shelf: facts.bigShelf, page: 1 + (i % facts.scenePages), pageSize: 48 })], iterations: STANDARD },
-    { name: "exportacion-lectura-completa", pantalla: "Ajustes (carga y exportación)", action: "getLibraryDataAction", args: () => [], iterations: HEAVY },
+    // Tarea T1 (U-DAT-04): Ajustes carga solo recuentos; la copia por partes la genera el servidor al exportar.
+    { name: "ajustes-recuentos", pantalla: "Ajustes (carga)", action: "getLibraryCountsAction", args: () => [], iterations: STANDARD },
+    { name: "exportacion-servidor", pantalla: "Ajustes (exportación por partes)", action: "prepareLibraryExportAction", args: () => [], iterations: HEAVY },
   ]
 }
 

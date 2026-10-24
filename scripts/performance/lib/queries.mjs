@@ -59,7 +59,7 @@ export function mainQueries({ userId, shelfId, bookId, scale }) {
       sql: `select "biblib"."shelves"."id", "biblib"."shelves"."title", "biblib"."shelves"."is_default", count("biblib"."books"."id")::int from "biblib"."shelves" left join "biblib"."books" on ("biblib"."books"."shelf_id" = "biblib"."shelves"."id" and "biblib"."books"."user_id" = ${u}) where "biblib"."shelves"."user_id" = ${u} group by "biblib"."shelves"."id" order by "biblib"."shelves"."created_at" asc, "biblib"."shelves"."id" asc` },
     { id: "3d.pagina", accion: "listBooksAction", pantalla: "Estantería 3D (48)", limite: true,
       sql: `select ${COLUMNS} ${JOIN(u)} where ("biblib"."books"."user_id" = ${u} and "biblib"."books"."shelf_id" = ${s}) order by "biblib"."books"."title" asc, "biblib"."books"."id" asc limit 48 offset 48` },
-    { id: "exportacion.todo", accion: "getLibraryDataAction", pantalla: "Ajustes (carga y exportación)", limite: false,
+    { id: "exportacion.todo", accion: "prepareLibraryExportAction / descarga de partes (servidor)", pantalla: "Ajustes (exportación por partes)", limite: false,
       sql: `select ${COLUMNS} ${JOIN(u)} where "biblib"."books"."user_id" = ${u} order by "biblib"."books"."title" asc, "biblib"."books"."id" asc` },
     { id: "isbn.escaneo", accion: "getBookByIsbnAction / alta / edición", pantalla: "Añadir libro", limite: false,
       sql: `select "isbn" from "biblib"."books" where "biblib"."books"."user_id" = ${u}` },

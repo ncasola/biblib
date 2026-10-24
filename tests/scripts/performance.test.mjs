@@ -184,7 +184,7 @@ test("el contrato JSON lista cada escenario con p50, p95, presupuesto y estado (
   assert.deepEqual([byName("dashboard").budget, byName("dashboard").status], [1000, "ok"])
   assert.equal(byName("sql:listado-inicial").budget, 500)
   assert.equal(byName("sql:listado-inicial").status, "ok")
-  assert.deepEqual([byName("exportacion-lectura-completa").budget, byName("exportacion-lectura-completa").status], [null, "no-budget"])
+  assert.deepEqual([byName("exportacion-servidor").budget, byName("exportacion-servidor").status], [null, "no-budget"])
   assert.equal(byName("listado-inicial@10").concurrency, 10)
   assert.equal(byName("web:escritorio:inicio:lcp").budget, 2500)
   assert.equal(byName("web:escritorio:inicio:inp").status, "ok")
@@ -198,7 +198,7 @@ function sample(scale, overrides = {}) {
   })
   return {
     escala: scale, dataset: { id: DATASET_ID, hash: "a".repeat(64), libros: scale, estanterias: 6, porEstado: {}, estanteriaMayor: 30, isbnManuales: 10 },
-    acciones: [pass("dashboard", 1), pass("listado-inicial", 1, overrides.list), pass("listado-inicial", 5), pass("listado-inicial", 10), pass("estanteria-3d-pagina-48", 1, { filas: { n: 10, max: 48 } }), pass("exportacion-lectura-completa", 1, { filas: { n: 3, max: scale } }), pass("listado-100-filas", 1, { filas: { n: 10, max: 100 } })],
+    acciones: [pass("dashboard", 1), pass("listado-inicial", 1, overrides.list), pass("listado-inicial", 5), pass("listado-inicial", 10), pass("estanteria-3d-pagina-48", 1, { filas: { n: 10, max: 48 } }), pass("ajustes-recuentos", 1, { filas: { n: 10, max: null }, bytes: { n: 10, p50: overrides.countsBytes ?? 180 } }), pass("exportacion-servidor", 1, { filas: { n: 3, max: null } }), pass("listado-100-filas", 1, { filas: { n: 10, max: 100 } })],
     frio: [{ escenario: "dashboard", accionMs: 300, sqlMs: 8, authServidorMs: [50, 49] }],
     redExterna: { guardCargado: true, hostsBloqueadosDelServidor: [], hostsAbortadosDelNavegador: [] },
     web: { escritorio: { perfil: { id: "x", descripcion: "d" }, navegador: "1", erroresDeConsola: [], pantallas: { inicio: { frio: { lcpMs: 900, cls: 0.01, muestras: 1 }, caliente: { lcpMs: 600, cls: 0.01 }, interaccion: { inpPeorMs: 120, clsConGestos: 0.02 } } } } },
@@ -210,7 +210,9 @@ test("la comparación con presupuestos marca cumplimiento y fallo de cada medida
   assert.equal(ok.scale, 10000)
   const byName = (rows, text) => rows.find((r) => r[0].includes(text))
   assert.match(byName(ok.rows, "Consulta paginada")[3], /Cumple/)
-  assert.match(byName(ok.rows, "Navegación ordinaria")[3], /No cumple/, "leer 10000 fichas al abrir Ajustes incumple")
+  // Tarea T1 (U-DAT-04): abrir Ajustes solo lee recuentos; una respuesta que crece con la colección incumple.
+  assert.match(byName(ok.rows, "Navegación ordinaria")[3], /Cumple/, "Ajustes al abrirse solo carga recuentos")
+  assert.match(byName(budgetRows({ tamanos: { 10000: sample(10000, { countsBytes: 6_700_000 }) } }).rows, "Navegación ordinaria")[3], /No cumple/)
   assert.match(byName(ok.rows, "Vista 3D")[3], /Cumple/)
   assert.match(byName(ok.rows, "inicio (escritorio)")[3], /Cumple/)
   const slow = budgetRows({ tamanos: { 10000: sample(10000, { list: { sqlMs: { n: 10, p50: 300, p95: 600, max: 700 }, accionMs: { n: 10, p50: 900, p95: 1500, max: 1600, mean: 1000 } } }) } })

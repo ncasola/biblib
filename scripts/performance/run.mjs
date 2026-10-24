@@ -16,7 +16,8 @@ import { database, PERF_PROFILES, perfContext, startPerfApp } from "./lib/contex
 import { collectManifest } from "./lib/manifest.mjs"
 import { openSessions } from "./lib/sessions.mjs"
 import { createApp, invoke, runCold, runPass } from "./lib/load.mjs"
-import { ACTION_SCENARIO_NAMES, actionScenarios, loadExportModule, PREVIEW_SCENARIO_NAMES, previewScenarios, scaleFacts } from "./lib/scenarios.mjs"
+import { ACTION_SCENARIO_NAMES, actionScenarios, PREVIEW_SCENARIO_NAMES, previewScenarios, scaleFacts } from "./lib/scenarios.mjs"
+import { cookieHeader } from "./lib/sessions.mjs"
 import { mainQueries } from "./lib/queries.mjs"
 import { explainAll } from "./lib/explain.mjs"
 import { CANDIDATES, measureCandidate, measureWriteCost } from "./lib/indexes.mjs"
@@ -173,20 +174,27 @@ export async function runPerformance(argv = process.argv.slice(2), out = process
           log("Frío (primera llamada de cada acción tras arrancar la app)…")
           result.frio = await runCold({ app: appHandle, session: sessions.escala[0], scenarios: base, sql, containerName })
           let previews = []
-          if (!actionNames || PREVIEW_SCENARIO_NAMES.some(selected) || selected("exportacion-lectura-completa")) {
-            // Preparación de los previews: datos reales de la acción de exportación y particionado de la copia.
-            const data = await invoke(appHandle, sessions.escala[1], "getLibraryDataAction", [])
-            if (!data.ok) fail(EXIT.VERIFICATION_FAILED, "preparación", `No se pudo leer la colección para preparar los previews (HTTP ${data.status}, lanzó: ${data.thrown}).`)
-            const exporter = loadExportModule()
-            const splitTimes = []
-            let backup
-            for (let i = 0; i < 5; i++) { const t = performance.now(); backup = exporter.exportLibraryBackup(data.value); splitTimes.push(performance.now() - t) }
-            result.exportacion = {
-              formato: backup.formatVersion, partes: backup.parts.length, fichasPorParte: backup.parts.map((p) => (p.books ?? p.copies ?? []).length),
-              bytesPorParte: backup.parts.map((p) => Buffer.byteLength(JSON.stringify(p))), lecturaCompletaBytes: data.bytes, particionadoNodeMs: summarize(splitTimes, 1),
+          if (!actionNames || PREVIEW_SCENARIO_NAMES.some(selected) || selected("exportacion-servidor")) {
+            // Preparación de los previews: la copia por partes real que genera el servidor (tarea T1), descargada como el navegador.
+            const prepared = await invoke(appHandle, sessions.escala[1], "prepareLibraryExportAction", [])
+            if (!prepared.ok || prepared.value?.ok !== true) fail(EXIT.VERIFICATION_FAILED, "preparación", `No se pudo preparar la copia para los previews (HTTP ${prepared.status}, lanzó: ${prepared.thrown}).`)
+            const set = prepared.value.value
+            const parts = []
+            const downloadTimes = []
+            for (const link of set.parts) {
+              const t = performance.now()
+              const response = await fetch(`${appHandle.url}${link.href}`, { redirect: "manual", signal: AbortSignal.timeout(120_000), headers: { Cookie: cookieHeader(sessions.escala[1].cookies) } })
+              const text = await response.text()
+              downloadTimes.push(performance.now() - t)
+              if (response.status !== 200) fail(EXIT.VERIFICATION_FAILED, "preparación", `No se pudo descargar la parte ${link.index + 1} (HTTP ${response.status}).`)
+              parts.push(JSON.parse(text))
             }
-            if (backup.formatVersion !== 1 || !backup.parts[0].books) fail(EXIT.VERIFICATION_FAILED, "preparación", "La copia no es del formato 1: el escenario de preview no aplica a este dataset.")
-            previews = previewScenarios(backup.parts).filter((scenario) => selected(scenario.name))
+            result.exportacion = {
+              formato: set.formatVersion, partes: parts.length, fichasPorParte: parts.map((p) => (p.books ?? p.copies ?? []).length),
+              bytesPorParte: set.parts.map((p) => p.byteLength), accionBytes: prepared.bytes, descargaMs: summarize(downloadTimes, 1),
+            }
+            if (set.formatVersion !== 1 || !parts[0].books) fail(EXIT.VERIFICATION_FAILED, "preparación", "La copia no es del formato 1: el escenario de preview no aplica a este dataset.")
+            previews = previewScenarios(parts).filter((scenario) => selected(scenario.name))
           }
           result.acciones = []
           for (const scenario of [...base, ...previews]) {
