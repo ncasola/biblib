@@ -155,3 +155,32 @@ test("Google Books o una política sin rehostCover no generan red ni objeto, ni 
   assert.equal((await ctx.objects(`${ctx.users.a}/${requested.asset_id}/`)).length, 0, "ningún objeto")
   assert.equal((await ctx.bookRow(book.id)).cover_large, ORIGINAL_COVER)
 })
+
+test("tras un restore, la ruta revalida bytes y derechos vigentes del dueño antes de volver a servir", async () => {
+  const book = await ctx.book(ctx.users.a, "restaurada")
+  const uploaded = await uploadAs(a, book, await jpeg("#556b2f"))
+  assert.ok(ok(uploaded))
+  const asset = uploaded.value.value.asset
+  assert.ok(ok(await ctx.call("attachCoverAssetAction", [{ assetId: asset.id, entityId: book.id, expectedVersion: book.version }], a)))
+  // Lo que hace biblib.cover_asset_quarantine_restored() en db:restore:local, solo para este asset.
+  await ctx.sql`update biblib.cover_assets set state = 'restored' where id = ${asset.id}`
+  assert.equal((await ctx.read(asset.id, b)).status, 404, "B tampoco lo obtiene en revisión")
+  assert.equal((await ctx.assetRow(asset.id)).state, "restored", "ni lo revalida")
+  const served = await ctx.read(asset.id, a)
+  assert.equal(served.status, 200)
+  assert.equal((await ctx.assetRow(asset.id)).state, "ready", "la subida propia supera la revalidación")
+
+  // Una copia de proveedor restaurada cuya política vigente no permite respaldarla se descarta: la
+  // ficha vuelve a su URL original y el objeto queda para la purga.
+  const other = await ctx.book(ctx.users.a, "restaurada proveedor")
+  const second = await uploadAs(a, other, await jpeg("#8b6f47"))
+  assert.ok(ok(second))
+  const providerAsset = second.value.value.asset.id
+  assert.ok(ok(await ctx.call("attachCoverAssetAction", [{ assetId: providerAsset, entityId: other.id, expectedVersion: other.version }], a)))
+  await ctx.sql`update biblib.cover_assets set state = 'restored', source_kind = 'provider', source_ref = 'open-library:id:8739161', rights_policy_version = 'prueba' where id = ${providerAsset}`
+  assert.equal((await ctx.read(providerAsset, a)).status, 404)
+  assert.equal(await ctx.assetRow(providerAsset), undefined, "se descarta")
+  const row = await ctx.bookRow(other.id)
+  assert.equal(row.cover_asset_id, null)
+  assert.equal(row.cover_large, ORIGINAL_COVER)
+})
