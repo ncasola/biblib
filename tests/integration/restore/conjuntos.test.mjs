@@ -27,7 +27,6 @@ after(async () => {
 })
 
 const count = async (userId) => (await ctx.sql`select count(*)::int as n from biblib.books where user_id = ${userId}`)[0].n
-const titles = async (userId) => new Set((await ctx.sql`select title from biblib.books where user_id = ${userId}`).map((row) => row.title))
 
 test("2001 libros en dos partes se publican juntos; los observadores ven la colección anterior o la nueva, nunca una mezcla", async () => {
   const before = await ctx.libraryRows(ctx.users.a)
