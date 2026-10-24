@@ -1987,7 +1987,7 @@
    "references": null,
    "ref_columns": [],
    "on_delete": " ",
-   "definition": "CHECK ((((length(btrim(name)) >= 1) AND (length(btrim(name)) <= 80)) AND (name = btrim(name))))"
+   "definition": "CHECK (((length(btrim(name)) >= 1) AND (length(btrim(name)) <= 80) AND (name = btrim(name))))"
   },
   {
    "name": "saved_book_views_filters_check",
