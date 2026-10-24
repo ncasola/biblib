@@ -303,7 +303,7 @@ test("A/B: B no ve, sube, valida, prepara, publica ni descarta la restauración 
   const { view, prepared } = await ctx.staged(a, set)
   const bLibrary = await ctx.libraryRows(ctx.users.b)
   const sessionId = view.sessionId
-  for (const [name, args] of [["getRestoreSessionAction", [{ sessionId }]], ["validateRestoreSessionAction", [{ sessionId }]], ["prepareRestoreSessionAction", [{ sessionId }]],
+  for (const [name, args] of [["validateRestoreSessionAction", [{ sessionId }]], ["prepareRestoreSessionAction", [{ sessionId }]],
     ["commitRestoreSessionAction", [{ sessionId, previewId: prepared.previewId, expectedRevision: prepared.revision, idempotencyKey: ctx.key("ajena") }]], ["discardRestoreSessionAction", [{ sessionId }]]]) {
     assert.ok(failed(await ctx.call(name, args, b), "NOT_FOUND"), `${name} como B no confirma que exista`)
   }
@@ -312,7 +312,7 @@ test("A/B: B no ve, sube, valida, prepara, publica ni descarta la restauración 
   assert.ok(ok(listed))
   assert.ok(!listed.value.value.some((item) => item.sessionId === sessionId))
   // Anónimo: el proxy redirige la acción sin ejecutarla.
-  const anonymous = await ctx.call("getRestoreSessionAction", [{ sessionId }])
+  const anonymous = await ctx.call("validateRestoreSessionAction", [{ sessionId }])
   assert.equal(anonymous.status, 307)
 
   // SQL con los claims de B: no ve ni escribe el staging de A.

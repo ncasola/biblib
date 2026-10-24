@@ -133,12 +133,6 @@ async function loadSession(tx: DatabaseTransaction, userId: string, sessionId: s
   return { ...row.session, expired: row.expired, previewExpired: row.previewExpired }
 }
 
-export async function getSessionView(tx: DatabaseTransaction, userId: string, sessionId: string): Promise<RestoreSessionView> {
-  const session = await loadSession(tx, userId, sessionId)
-  if (session.expired) throw sessionUnavailable()
-  return view(session, await readParts(tx, userId, sessionId))
-}
-
 /** Restauraciones a medias del dueño (sin publicar ni caducar), las más recientes primero. */
 export async function listOpenSessions(tx: DatabaseTransaction, userId: string): Promise<RestoreSessionView[]> {
   const rows = await tx.select().from(importSessions)

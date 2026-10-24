@@ -10,7 +10,7 @@ import { domainMutation } from "@/lib/server-action"
 import { previewTtlMinutes, type ImportOperationResult } from "@/lib/import-plan"
 import { partIdSchema, RESTORE_LIMITS } from "@/lib/import-manifest"
 import {
-  beginSession, commitBudget, discardSession, getSessionView, listOpenSessions, prepareSession, publishRestoreSession, putChunk, releaseStaging,
+  beginSession, commitBudget, discardSession, listOpenSessions, prepareSession, publishRestoreSession, putChunk, releaseStaging,
   translateStagingError, validateSession, type ChunkReceipt, type PreparedRestore, type RestoreSessionView, type ValidatedSession,
 } from "@/lib/import-staging"
 import { telemetry } from "@/lib/observability/server"
@@ -124,13 +124,7 @@ export async function commitRestoreSessionAction(input: { sessionId: string; pre
   }), telemetry))
 }
 
-export async function getRestoreSessionAction(input: { sessionId: string }): Promise<ActionResult<RestoreSessionView>> {
-  return domainMutation(() => owned(async (userId) => {
-    const { sessionId } = parse(sessionSchema, input, "La restauración no es válida.")
-    return withRlsContext(userId, (tx) => getSessionView(tx, userId, sessionId))
-  }))
-}
-
+/** Restauraciones a medias del dueño: permiten continuar la subida o descartarlas. */
 export async function listRestoreSessionsAction(): Promise<ActionResult<RestoreSessionView[]>> {
   return domainMutation(() => owned((userId) => withRlsContext(userId, (tx) => listOpenSessions(tx, userId))))
 }
