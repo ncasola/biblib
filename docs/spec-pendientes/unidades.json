@@ -484,7 +484,12 @@
         "UI-03",
         "FE-01"
       ],
-      "status": "in-progress"
+      "status": "implemented",
+      "evidence": "O11 · merge a156509; axe 30/30 en Chromium/Firefox/WebKit, contraste, teclado, 320–1440 px y zoom; T6 INP móvil Estanterías 496→136 ms (docs/validacion/2026-10-24/O11/exp-03/)",
+      "pending": [
+        "Ensayos manuales reales: lector de pantalla de escritorio, VoiceOver, Safari/iOS, Edge (tests/accessibility/manual.md).",
+        "No certifica WCAG."
+      ]
     },
     {
       "id": "U-EXP-04",
