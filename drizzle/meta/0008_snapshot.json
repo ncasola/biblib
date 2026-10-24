@@ -1,5 +1,5 @@
 {
-  "id": "ed847536-ef47-4d00-964d-9e4138b28e2b",
+  "id": "32791114-2770-47b0-9a2d-04a971efc1cf",
   "prevId": "75cc4154-5de3-4579-8b8f-56c1ef34f0ac",
   "version": "7",
   "dialect": "postgresql",
@@ -3451,7 +3451,7 @@
       "checkConstraints": {
         "saved_book_views_name_check": {
           "name": "saved_book_views_name_check",
-          "value": "length(btrim(\"biblib\".\"saved_book_views\".\"name\")) between 1 and 80 and \"biblib\".\"saved_book_views\".\"name\" = btrim(\"biblib\".\"saved_book_views\".\"name\")"
+          "value": "length(btrim(\"biblib\".\"saved_book_views\".\"name\")) >= 1 and length(btrim(\"biblib\".\"saved_book_views\".\"name\")) <= 80 and \"biblib\".\"saved_book_views\".\"name\" = btrim(\"biblib\".\"saved_book_views\".\"name\")"
         },
         "saved_book_views_filters_check": {
           "name": "saved_book_views_filters_check",

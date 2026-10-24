@@ -27,7 +27,9 @@ export const savedBookViews = biblibSchema.table("saved_book_views", {
 }, (table) => [
   uniqueIndex("saved_book_views_user_name_unique").on(table.userId, sql`lower(${table.name})`),
   index("saved_book_views_user_updated_idx").on(table.userId, table.updatedAt.desc().nullsFirst()),
-  check("saved_book_views_name_check", sql`length(btrim(${table.name})) between 1 and 80 and ${table.name} = btrim(${table.name})`),
+  // Conjunción plana (0008): con `between … and … and` Postgres anidaba el AND y tras pg_dump quedaba
+  // aplanado, de modo que db:restore:verify veía una restricción distinta del origen.
+  check("saved_book_views_name_check", sql`length(btrim(${table.name})) >= 1 and length(btrim(${table.name})) <= 80 and ${table.name} = btrim(${table.name})`),
   check("saved_book_views_filters_check", sql`biblib.saved_view_filters_valid(${table.filters})`),
   pgPolicy("saved_book_views_select_own", { for: "select", to: authenticatedRole, using: ownRow(table.userId) }),
   pgPolicy("saved_book_views_insert_own", { for: "insert", to: authenticatedRole, withCheck: ownRow(table.userId) }),

@@ -99,10 +99,15 @@ ALTER TABLE "biblib"."import_session_chunks" ADD CONSTRAINT "import_session_chun
 ALTER TABLE "biblib"."import_session_parts" ADD CONSTRAINT "import_session_parts_owner_session_fk" FOREIGN KEY ("user_id","session_id") REFERENCES "biblib"."import_sessions"("user_id","id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "biblib"."import_session_rows" ADD CONSTRAINT "import_session_rows_owner_session_fk" FOREIGN KEY ("user_id","session_id") REFERENCES "biblib"."import_sessions"("user_id","id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "biblib"."import_sessions" ADD CONSTRAINT "import_sessions_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+-- Corrección hacia delante de 0007 (U-EXP-02): la misma restricción como conjunción plana. Con
+-- `between … and … and` Postgres anidaba el AND y pg_dump lo aplanaba, y db:restore:verify veía
+-- una restricción distinta del origen. Mismo nombre y semántica.
+ALTER TABLE "biblib"."saved_book_views" DROP CONSTRAINT "saved_book_views_name_check";--> statement-breakpoint
 CREATE INDEX "import_session_rows_order_idx" ON "biblib"."import_session_rows" USING btree ("session_id","kind","part_index","position");--> statement-breakpoint
 CREATE INDEX "import_sessions_user_created_idx" ON "biblib"."import_sessions" USING btree ("user_id","created_at" DESC NULLS FIRST,"id" DESC NULLS FIRST);--> statement-breakpoint
 CREATE INDEX "import_sessions_expires_at_idx" ON "biblib"."import_sessions" USING btree ("expires_at");--> statement-breakpoint
 ALTER TABLE "biblib"."library_operations" ADD CONSTRAINT "library_operations_operation_check" CHECK ("biblib"."library_operations"."operation" in ('import.confirm', 'snapshot.restore', 'restore.commit'));--> statement-breakpoint
+ALTER TABLE "biblib"."saved_book_views" ADD CONSTRAINT "saved_book_views_name_check" CHECK (length(btrim("biblib"."saved_book_views"."name")) >= 1 and length(btrim("biblib"."saved_book_views"."name")) <= 80 and "biblib"."saved_book_views"."name" = btrim("biblib"."saved_book_views"."name"));--> statement-breakpoint
 CREATE POLICY "import_session_chunks_select_own" ON "biblib"."import_session_chunks" AS PERMISSIVE FOR SELECT TO "authenticated" USING ((select auth.uid() = "biblib"."import_session_chunks"."user_id"));--> statement-breakpoint
 CREATE POLICY "import_session_chunks_insert_own" ON "biblib"."import_session_chunks" AS PERMISSIVE FOR INSERT TO "authenticated" WITH CHECK ((select auth.uid() = "biblib"."import_session_chunks"."user_id"));--> statement-breakpoint
 CREATE POLICY "import_session_chunks_delete_own" ON "biblib"."import_session_chunks" AS PERMISSIVE FOR DELETE TO "authenticated" USING ((select auth.uid() = "biblib"."import_session_chunks"."user_id"));--> statement-breakpoint
