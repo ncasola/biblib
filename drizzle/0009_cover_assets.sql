@@ -495,7 +495,8 @@ END;
 $$;
 --> statement-breakpoint
 -- Tras un restore administrativo, los assets restaurados no se sirven hasta que el servidor revalide
--- bytes y derechos vigentes. Script del operador, sin EXECUTE para roles de cliente.
+-- bytes y derechos vigentes, y las subidas que no terminaron antes del respaldo ya no se pueden
+-- completar. Script del operador, sin EXECUTE para roles de cliente.
 CREATE FUNCTION "biblib"."cover_asset_quarantine_restored"() RETURNS integer
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog AS $$
 DECLARE
@@ -503,7 +504,8 @@ DECLARE
 BEGIN
   UPDATE biblib.cover_assets AS a SET state = 'restored', updated_at = clock_timestamp() WHERE a.state = 'ready';
   GET DIAGNOSTICS affected = ROW_COUNT;
-  DELETE FROM biblib.cover_assets AS a WHERE a.state = 'quarantine';
+  UPDATE biblib.cover_assets AS a SET upload_token = NULL, expires_at = least(a.expires_at, clock_timestamp()), updated_at = clock_timestamp()
+  WHERE a.state = 'quarantine';
   RETURN affected;
 END;
 $$;

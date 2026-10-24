@@ -278,7 +278,7 @@ DO $test$
 DECLARE
   restored integer := biblib.cover_asset_quarantine_restored();
 BEGIN
-  PERFORM assert_true(restored >= 1 AND NOT EXISTS (SELECT 1 FROM biblib.cover_assets WHERE state = 'quarantine'), 'restaurados a revisión y sin cuarentenas');
+  PERFORM assert_true(restored >= 1 AND NOT EXISTS (SELECT 1 FROM biblib.cover_assets WHERE state = 'quarantine' AND (upload_token IS NOT NULL OR expires_at > clock_timestamp())), 'restaurados a revisión y cuarentenas caducadas sin intento autorizado');
   PERFORM set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-0000000000a7', true);
   BEGIN
     UPDATE biblib.books SET cover_asset_id = current_setting('biblib.test_asset')::uuid WHERE id = '30000000-0000-4000-8000-0000000001a7';
@@ -295,6 +295,7 @@ DECLARE
   i integer;
 BEGIN
   PERFORM set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-0000000000b7', true);
+  DELETE FROM biblib.cover_assets WHERE user_id = '10000000-0000-4000-8000-0000000000b7' AND state = 'quarantine';
   FOR i IN 1..5 LOOP PERFORM biblib.cover_asset_begin_upload(); END LOOP;
   PERFORM assert_true(biblib.cover_asset_begin_upload()->>'quota' = 'quarantine', 'máximo 5 subidas en cuarentena');
   PERFORM biblib.account_set_state('10000000-0000-4000-8000-0000000000a7', 'blocked');
