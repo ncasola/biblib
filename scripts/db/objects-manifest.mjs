@@ -356,7 +356,11 @@ export async function inspectObjects(sql) {
   return {
     roles: roles.map((r) => r.rolname), prerequisites: prerequisites[0],
     tables: [...tables], policies: [...policies], grants: [...grants], schemaUsage: [...schemaUsage],
-    constraints: [...constraints], indexes: [...indexes], columns: [...columns], functions: [...functions], triggers: [...triggers],
+    constraints: [...constraints],
+    // Los respaldos anteriores sellaron estos hechos sin `definition` en sus índices.
+    // Solo el objeto nuevo necesita ese detalle: se conserva el formato/hash de los heads 0000–0006.
+    indexes: indexes.map(({ definition, ...entry }) => entry.table === "saved_book_views" ? { ...entry, definition } : entry),
+    columns: [...columns], functions: [...functions], triggers: [...triggers],
   }
 }
 

@@ -4,9 +4,26 @@ import { test } from "node:test"
 import { MANIFEST_MIGRATIONS, verifyManifest } from "../../scripts/db/objects-manifest.mjs"
 import { classifyDestination, DERIVED_TABLES, SAVED_VIEW_TABLES } from "../../scripts/db/restore-local.mjs"
 import { parseArgs } from "../integration/views/run.mjs"
+import { objectFacts } from "../../scripts/lib/backup-db.mjs"
+import { canonical } from "../../scripts/db/plan.mjs"
 
 const facts = JSON.parse(readFileSync(new URL("../fixtures/migrations/objects-0007.json", import.meta.url), "utf8"))
 const failing = (input) => verifyManifest(input, MANIFEST_MIGRATIONS).filter((entry) => entry.status === "fail").map((entry) => entry.id)
+
+test("el inspector conserva los hechos sellados de respaldos anteriores a 0007", async () => {
+  const legacy = JSON.parse(readFileSync(new URL("../fixtures/migrations/objects-0006.json", import.meta.url), "utf8"))
+  delete legacy.comment
+  // Respuestas de pg_catalog tomadas de la captura real de 0006; la consulta nueva añade
+  // definición a todos los índices, pero ese campo no debe alterar un respaldo antiguo.
+  const rows = [legacy.roles.map((rolname) => ({ rolname })), [legacy.prerequisites], legacy.tables, legacy.policies, legacy.grants, legacy.schemaUsage, legacy.constraints,
+    legacy.indexes.map((entry) => ({ ...entry, definition: "detalle adicional de pg_get_indexdef" })), legacy.columns, legacy.functions, legacy.triggers]
+  const captured = await objectFacts(() => Promise.resolve(rows.shift()))
+  assert.deepEqual(Object.keys(captured.facts).sort(), Object.keys(legacy).sort())
+  for (const [key, value] of Object.entries(legacy)) {
+    if (Array.isArray(value)) assert.deepEqual(new Set(captured.facts[key].map(canonical)), new Set(value.map(canonical)), key)
+    else assert.deepEqual(captured.facts[key], value, key)
+  }
+})
 
 test("views: scratch y test explícitos, rechazo de perfiles o argumentos ajenos", () => {
   for (const profile of ["scratch", "test"]) assert.equal(parseArgs(["--profile", profile]).profile, profile)
