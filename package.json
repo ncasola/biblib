@@ -69,7 +69,8 @@
     "catalogue:telemetry": "node scripts/catalogue-telemetry.mjs",
     "perf:t4": "node scripts/performance/experiment-t4.mjs",
     "test:integration:snapshots": "node tests/integration/snapshots/run.mjs",
-    "test:integration:views": "node tests/integration/views/run.mjs"
+    "test:integration:views": "node tests/integration/views/run.mjs",
+    "test:integration:restore": "node tests/integration/restore/run.mjs"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "1.1.15",
