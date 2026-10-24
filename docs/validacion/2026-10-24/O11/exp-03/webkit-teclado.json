@@ -1,0 +1,11 @@
+{
+  "tasks": [
+    "alta",
+    "búsqueda",
+    "selección",
+    "movimiento",
+    "edición",
+    "cierre de sesión"
+  ],
+  "input": "Tab, Shift+Tab, flechas, Space, Enter, texto; sin ratón"
+}

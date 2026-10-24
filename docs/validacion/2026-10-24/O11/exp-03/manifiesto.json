@@ -1,0 +1,20 @@
+{
+  "generatedAt": "2026-10-24T10:14:38.061Z",
+  "node": "v24.11.1",
+  "platform": "win32",
+  "release": "10.0.22631",
+  "cpu": "AMD Ryzen 5 3600 6-Core Processor              ",
+  "logicalCpus": 12,
+  "memoryGiB": 48,
+  "browsers": {
+    "chromium": "155.0.8059.86",
+    "firefox": "157.0",
+    "webkit": "27.2"
+  },
+  "playwright": "1.64.1",
+  "axe": "4.11.1",
+  "profile": "test",
+  "baseBranch": "u-exp-03",
+  "app": "build de producción .next-local, 127.0.0.1:3148",
+  "network": "fixture, loopback, guard de servidor y navegador"
+}

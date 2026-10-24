@@ -1,0 +1,130 @@
+{
+  "date": "2026-10-24T09:49:00.942Z",
+  "label": "antes",
+  "dataset": {
+    "books": 10000,
+    "shelves": 41,
+    "hash": "6e9b3738de18bd6d695f605e18cefaed384db736596ef61cd71a06188f3d97fe"
+  },
+  "web": {
+    "perfil": {
+      "id": "movil-cpu-x4",
+      "descripcion": "Chrome estable en modo headless emulando un móvil (390×844, DPR 3, táctil) con la CPU 4× más lenta (Emulation.setCPUThrottlingRate) y sin limitación de red. Caché vacía en frío; poblada en caliente."
+    },
+    "navegador": "155.0.8059.86",
+    "pantallas": {
+      "ficha": {
+        "ruta": "/book/<uuid>",
+        "frio": {
+          "lcpMs": 1382,
+          "cls": 0,
+          "fcpMs": 568,
+          "datosListosMs": 1218.5,
+          "reposoRedMs": 1867,
+          "lcpElemento": "img",
+          "muestras": 2
+        },
+        "caliente": {
+          "lcpMs": 986,
+          "cls": 0,
+          "fcpMs": 160,
+          "datosListosMs": 912,
+          "reposoRedMs": 1479,
+          "muestras": 2
+        },
+        "interaccion": {
+          "inpMs": 104,
+          "inpPeorMs": 104,
+          "interacciones": 4,
+          "clsConGestos": 0,
+          "exportMs": null,
+          "tareasLargas": 3,
+          "tareasLargasMs": 278,
+          "muestras": 2
+        },
+        "gestosNoDisponibles": []
+      },
+      "estanterias": {
+        "ruta": "/shelves",
+        "frio": {
+          "lcpMs": 1152,
+          "cls": 0,
+          "fcpMs": 266,
+          "datosListosMs": 1006.5,
+          "reposoRedMs": 1858.5,
+          "lcpElemento": "h1",
+          "muestras": 2
+        },
+        "caliente": {
+          "lcpMs": 966,
+          "cls": 0,
+          "fcpMs": 184,
+          "datosListosMs": 777,
+          "reposoRedMs": 1680,
+          "muestras": 2
+        },
+        "interaccion": {
+          "inpMs": 216,
+          "inpPeorMs": 232,
+          "interacciones": 4,
+          "clsConGestos": 0,
+          "exportMs": null,
+          "tareasLargas": 3,
+          "tareasLargasMs": 319,
+          "muestras": 2
+        },
+        "gestosNoDisponibles": []
+      }
+    },
+    "peticionesExternasAbortadas": [],
+    "erroresDeConsola": []
+  },
+  "profileDialog": [
+    {
+      "name": "EventDispatch",
+      "count": 36,
+      "totalMs": 189.8,
+      "maxMs": 170.6
+    },
+    {
+      "name": "FunctionCall",
+      "count": 94,
+      "totalMs": 188.1,
+      "maxMs": 169.6
+    },
+    {
+      "name": "UpdateLayoutTree",
+      "count": 33,
+      "totalMs": 92.5,
+      "maxMs": 36.1
+    },
+    {
+      "name": "Layout",
+      "count": 1,
+      "totalMs": 15,
+      "maxMs": 15
+    },
+    {
+      "name": "PrePaint",
+      "count": 40,
+      "totalMs": 13.5,
+      "maxMs": 6.3
+    },
+    {
+      "name": "Paint",
+      "count": 41,
+      "totalMs": 23.9,
+      "maxMs": 5
+    },
+    {
+      "name": "Layerize",
+      "count": 28,
+      "totalMs": 6.1,
+      "maxMs": 1.8
+    }
+  ],
+  "source": {
+    "commit": "1c4215daf6d9578cb57f596003fae577722726c4",
+    "note": "Aplicación sin cambios de U-EXP-03; el harness se añadió antes de modificar la UI."
+  }
+}

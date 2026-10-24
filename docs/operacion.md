@@ -1064,3 +1064,36 @@ la recuperación: las preferencias viajan en el respaldo administrativo, como se
 incluyendo libros y estanterías.
 
 Evidencia: [O10/exp-02](validacion/2026-10-23/O10/exp-02/informe.md).
+
+## Accesibilidad y reflujo · U-EXP-03 (O11)
+
+```powershell
+pnpm db:local:bootstrap --profile test
+pnpm test:a11y:local
+pnpm test:a11y:local --project firefox --project webkit --reuse-build
+pnpm test:e2e:local --reuse-build
+node tests/accessibility/performance.mjs antes
+node tests/accessibility/performance.mjs despues
+pnpm perf:local:cleanup --profile test
+pnpm db:local:down --profile test
+```
+
+La suite reutiliza las guardas, sesiones por formulario local, bloqueo de red y limpieza del
+runner E2E. `@axe-core/playwright@4.11.1` está fijado; no admite violaciones serious/critical ni
+excluye reglas. Prueba claro/oscuro, las rutas principales, teclado, contención/retorno de foco,
+alertas únicas, orden de tabla, movimiento reducido, 320/375/768/1440 px y viewport equivalente
+a zoom 200/400 %. Los proyectos de cierre se ejecutan después de los flujos para que revocar
+la sesión no invalide las pruebas restantes. Sin `--reuse-build` compila el perfil test.
+
+El ensayo T6 recompila y reutiliza el perfil móvil original de U-QA-03 (390×844, DPR 3,
+táctil, CPU×4, sin limitación de red), dataset de 10 000 libros/41 estanterías, dos contextos
+por pantalla y los mismos gestos. Guarda INP/LCP/CLS y agregados de trace sin argumentos,
+URLs, credenciales ni trace crudo. No compara una muestra actual directamente con los 496 ms
+históricos como si fueran ejecuciones simultáneas.
+
+Resultados, límites y excepciones: [accesibilidad.md](accesibilidad.md) y
+[evidencia O11](validacion/2026-10-24/O11/exp-03/). Los ensayos con NVDA/Narrator, VoiceOver,
+Safari/iOS, Edge y zoom nativo están pendientes en
+[manual.md](../tests/accessibility/manual.md); los motores Playwright no los sustituyen.
+No se certifica WCAG. Los cambios CSS/semánticos no requieren migración; una regresión se
+revierte en el componente afectado conservando los indicadores de foco.

@@ -1,0 +1,138 @@
+{
+  "date": "2026-10-24T11:04:26.788Z",
+  "label": "despues",
+  "source": {
+    "commit": "6897faea00776faaf50ab70c52ef2c4ff9ab4922",
+    "files": [
+      "app/globals.css",
+      "app/shelves/page.tsx",
+      "components/shelf-card.tsx",
+      "components/ui/dialog.tsx",
+      "components/ui/button.tsx",
+      "components/header.tsx"
+    ],
+    "sha256": "e22bf1dd3153eb76f12bbf3ccfc2ca36858b41b812c055ab6e513b3ed651127b"
+  },
+  "dataset": {
+    "books": 10000,
+    "shelves": 41,
+    "hash": "6e9b3738de18bd6d695f605e18cefaed384db736596ef61cd71a06188f3d97fe"
+  },
+  "web": {
+    "perfil": {
+      "id": "movil-cpu-x4",
+      "descripcion": "Chrome estable en modo headless emulando un móvil (390×844, DPR 3, táctil) con la CPU 4× más lenta (Emulation.setCPUThrottlingRate) y sin limitación de red. Caché vacía en frío; poblada en caliente."
+    },
+    "navegador": "155.0.8059.86",
+    "pantallas": {
+      "ficha": {
+        "ruta": "/book/<uuid>",
+        "frio": {
+          "lcpMs": 1424,
+          "cls": 0,
+          "fcpMs": 556,
+          "datosListosMs": 1256,
+          "reposoRedMs": 1908,
+          "lcpElemento": "img",
+          "muestras": 2
+        },
+        "caliente": {
+          "lcpMs": 1062,
+          "cls": 0,
+          "fcpMs": 192,
+          "datosListosMs": 1002,
+          "reposoRedMs": 1554.5,
+          "muestras": 2
+        },
+        "interaccion": {
+          "inpMs": 124,
+          "inpPeorMs": 128,
+          "interacciones": 4,
+          "clsConGestos": 0,
+          "exportMs": null,
+          "tareasLargas": 3,
+          "tareasLargasMs": 290.5,
+          "muestras": 2
+        },
+        "gestosNoDisponibles": []
+      },
+      "estanterias": {
+        "ruta": "/shelves",
+        "frio": {
+          "lcpMs": 1142,
+          "cls": 0,
+          "fcpMs": 272,
+          "datosListosMs": 1027.5,
+          "reposoRedMs": 1874.5,
+          "lcpElemento": "h1",
+          "muestras": 2
+        },
+        "caliente": {
+          "lcpMs": 968,
+          "cls": 0,
+          "fcpMs": 160,
+          "datosListosMs": 816,
+          "reposoRedMs": 1730.5,
+          "muestras": 2
+        },
+        "interaccion": {
+          "inpMs": 136,
+          "inpPeorMs": 136,
+          "interacciones": 4,
+          "clsConGestos": 0,
+          "exportMs": null,
+          "tareasLargas": 3,
+          "tareasLargasMs": 349.5,
+          "muestras": 2
+        },
+        "gestosNoDisponibles": []
+      }
+    },
+    "peticionesExternasAbortadas": [],
+    "erroresDeConsola": []
+  },
+  "profileDialog": [
+    {
+      "name": "EventDispatch",
+      "count": 34,
+      "totalMs": 110,
+      "maxMs": 93.1
+    },
+    {
+      "name": "FunctionCall",
+      "count": 78,
+      "totalMs": 109,
+      "maxMs": 92.1
+    },
+    {
+      "name": "UpdateLayoutTree",
+      "count": 63,
+      "totalMs": 82.2,
+      "maxMs": 20.7
+    },
+    {
+      "name": "Layout",
+      "count": 2,
+      "totalMs": 18,
+      "maxMs": 16.2
+    },
+    {
+      "name": "PrePaint",
+      "count": 39,
+      "totalMs": 7.7,
+      "maxMs": 2
+    },
+    {
+      "name": "Paint",
+      "count": 78,
+      "totalMs": 20.6,
+      "maxMs": 1.8
+    },
+    {
+      "name": "Layerize",
+      "count": 27,
+      "totalMs": 6.8,
+      "maxMs": 1
+    }
+  ]
+}
