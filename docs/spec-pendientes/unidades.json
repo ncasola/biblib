@@ -285,7 +285,7 @@
         "IMP-02",
         "IMP-03"
       ],
-      "status": "planned"
+      "status": "in-progress"
     },
     {
       "id": "U-DAT-05",
@@ -418,7 +418,8 @@
         "FE-02",
         "OPS-02"
       ],
-      "status": "planned"
+      "status": "planned",
+      "note": "Decisión de Néstor 24-10-2026: autorizado sharp (allowBuilds) como decodificador."
     },
     {
       "id": "U-EXP-01",
@@ -483,7 +484,7 @@
         "UI-03",
         "FE-01"
       ],
-      "status": "planned"
+      "status": "in-progress"
     },
     {
       "id": "U-EXP-04",
