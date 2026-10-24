@@ -238,8 +238,10 @@ export function RestoreSetPanel({ disabled, onNotice, onCommitted }: { disabled:
 
       <div className="mt-4 space-y-4">
         {phase === "loose" && selection && <div className="rounded-xl border border-border p-4 space-y-3">
-          <p className="font-medium">Estas {selection.parts.length} partes no traen manifiesto</p>
-          <p className="text-sm">BibLib las inspeccionará, comprobará que encajan entre sí y generará el manifiesto en el servidor. Que tengan la misma fecha no demuestra que pertenezcan a la misma copia.</p>
+          <p className="font-medium">{selection.parts.length === 1 ? "Esta parte no trae manifiesto" : `Estas ${selection.parts.length} partes no traen manifiesto`}</p>
+          <p className="text-sm">{selection.parts.length === 1
+            ? "BibLib la inspeccionará y generará el manifiesto en el servidor antes de restaurarla."
+            : "BibLib las inspeccionará, comprobará que encajan entre sí y generará el manifiesto en el servidor. Que tengan la misma fecha no demuestra que pertenezcan a la misma copia."}</p>
           <ol className="list-decimal pl-5 text-sm">{selection.parts.map((part) => <li key={part.sha256} className="break-all">{part.file.name} · {mib(part.file.size)}</li>)}</ol>
           <label className="flex items-start gap-3 text-sm"><input type="checkbox" checked={looseAcknowledged} onChange={(event) => setLooseAcknowledged(event.target.checked)} className="mt-1" /><span>Confirmo que estas partes son de la misma copia, en este orden.</span></label>
           <div className="flex flex-wrap gap-3"><Button onClick={() => void upload(selection)} disabled={busy || !looseAcknowledged}>Subir y comprobar las partes</Button><Button variant="outline" onClick={reset} disabled={busy}>Cancelar</Button></div>
