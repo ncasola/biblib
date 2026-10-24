@@ -8,7 +8,8 @@ import { objectFacts } from "../../scripts/lib/backup-db.mjs"
 import { canonical } from "../../scripts/db/plan.mjs"
 
 const facts = JSON.parse(readFileSync(new URL("../fixtures/migrations/objects-0007.json", import.meta.url), "utf8"))
-const failing = (input) => verifyManifest(input, MANIFEST_MIGRATIONS).filter((entry) => entry.status === "fail").map((entry) => entry.id)
+// Los metadatos son los de 0007: se comprueban contra el manifest hasta ese head.
+const failing = (input) => verifyManifest(input, MANIFEST_MIGRATIONS.slice(0, MANIFEST_MIGRATIONS.indexOf("0007_saved_views") + 1)).filter((entry) => entry.status === "fail").map((entry) => entry.id)
 
 test("el inspector conserva los hechos sellados de respaldos anteriores a 0007", async () => {
   const legacy = JSON.parse(readFileSync(new URL("../fixtures/migrations/objects-0006.json", import.meta.url), "utf8"))
