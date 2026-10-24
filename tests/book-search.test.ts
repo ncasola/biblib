@@ -18,12 +18,12 @@ const BOOK_ID = "44444444-4444-4444-8444-444444444444"
 
 test("lee filtros válidos desde la URL y normaliza valores inválidos", () => {
   const filters = parseBookSearchFilters(new URLSearchParams(
-    "q=Quijote&status=reading&shelf=shelf-1&sort=-author&page=3&view=grid",
+    "q=Quijote&status=reading&shelf=55555555-5555-4555-8555-555555555551&sort=-author&page=3&view=grid",
   ))
   assert.deepEqual(filters, {
     q: "Quijote",
     status: "reading",
-    shelf: "shelf-1",
+    shelf: "55555555-5555-4555-8555-555555555551",
     sort: "-author",
     page: 3,
     view: "grid",
@@ -41,14 +41,14 @@ test("serializa filtros conservando otros parámetros y omitiendo valores predet
     ...defaultBookSearchFilters("grid"),
     q: "  Cien años  ",
     status: "unread" as const,
-    shelf: "shelf-2",
+    shelf: "55555555-5555-4555-8555-555555555552",
     sort: "-title" as const,
     page: 4,
   }
 
   assert.equal(
     serializeBookSearchFilters(filters, new URLSearchParams("campaign=home&status=read")),
-    "campaign=home&q=++Cien+a%C3%B1os++&status=unread&shelf=shelf-2&sort=-title&page=4&view=grid",
+    "campaign=home&q=++Cien+a%C3%B1os++&status=unread&shelf=55555555-5555-4555-8555-555555555552&sort=-title&page=4&view=grid",
   )
   assert.equal(serializeBookSearchFilters(defaultBookSearchFilters(), new URLSearchParams()), "")
   const explicitTable = serializeBookSearchFilters(defaultBookSearchFilters(), new URLSearchParams(), "grid")
@@ -118,7 +118,7 @@ test("normaliza el retorno y descarta fragmentos que no son una fila de libro", 
 })
 
 test("el enlace al detalle conserva la consulta del listado y se recupera íntegro", () => {
-  const filters = { ...defaultBookSearchFilters(), q: "Cien años & más", status: "unread" as const, shelf: "s 1", sort: "-title" as const, page: 4, view: "grid" as const }
+  const filters = { ...defaultBookSearchFilters(), q: "Cien años & más", status: "unread" as const, shelf: "55555555-5555-4555-8555-555555555553", sort: "-title" as const, page: 4, view: "grid" as const }
   const returnPath = `${buildCollectionPath("/books", filters)}#${bookRowAnchor(BOOK_ID)}`
   const href = buildBookDetailHref(BOOK_ID, returnPath)
   assert.ok(href.startsWith(`/book/${BOOK_ID}?from=`))

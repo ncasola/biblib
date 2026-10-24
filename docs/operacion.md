@@ -1007,3 +1007,60 @@ La sección «Versiones anteriores» muestra la cuota y, al agotarse, un aviso. 
 - `pnpm test:scripts`: drift de `0006` en `migrations.test.mjs` y el trato de las versiones en el restore (`snapshots-restore.test.mjs`).
 
 Evidencia: [validacion/2026-10-23/O10/dat-02](validacion/2026-10-23/O10/dat-02/informe.md).
+
+## Vistas guardadas y filtros reproducibles · U-EXP-02 (O10)
+
+La colección mantiene su fuente de verdad en la URL: `q`, `status`, `shelf`, `sort`, `page`,
+`view` y `pageSize` (10 por defecto, de 10 a 100; el enlace 3D conserva 48). El parseo limita
+texto a 500 caracteres y reemplaza valores malformados por criterios seguros. Los cambios
+de filtros y página crean entradas de historial; la canonización inicial y la corrección
+de página fuera de rango sustituyen la entrada vigente. Atrás/Adelante restaura los controles.
+
+«Vistas guardadas» permite guardar, aplicar, renombrar, sobrescribir y borrar, con confirmación
+para las dos últimas. Ningún cambio se anuncia como guardado antes de la respuesta del servidor.
+Un fallo conserva los filtros y el borrador. Aplicar consulta las estanterías vigentes, omite
+las eliminadas y vuelve a página 1. Los cambios de filtros/página limpian la selección temporal;
+el fallo de un movimiento conserva esa selección.
+
+### Contrato, cuotas y aislamiento
+
+`SavedBookView = { id, name, filters, updatedAt, version }`; `filters` solo admite
+`{ q?, status, shelf, sort, view, pageSize }`. Zod valida lecturas y escrituras; no se guardan
+páginas, selección, libros ni consultas SQL. Las cinco acciones de `app/actions/saved-views.ts`
+devuelven `ActionResult`. Renombrar, sobrescribir y borrar exigen `expectedVersion`; un token
+anterior devuelve `CONFLICT` y una vista ajena/inexistente, `NOT_FOUND`.
+
+`0007_saved_views` añade `biblib.saved_book_views` con propietario FK a `auth.users`, RLS para
+las cuatro operaciones, índice `(user_id, updated_at DESC)` y unicidad `(user_id, lower(name))`.
+Se evita así tener dos accesos indistinguibles por mayúsculas en una misma cuenta; no se
+fusionan nombres de usuarios diferentes ni se eliminan acentos. El servidor recorta el nombre
+y exige de 1 a 80 caracteres; la base también limita y exige el nombre recortado.
+
+La cuota de 100 se comprueba en servidor y en un trigger de base que serializa las altas por
+cuenta con un bloqueo consultivo. El trigger impide transferir filas y rota la versión en cada
+escritura. Una función de validación JSON y un CHECK impiden introducir criterios no admitidos
+también por SQL. Ninguna de estas operaciones modifica `library_state` ni toma el bloqueo de
+colección. La Data API sigue sin exponer el esquema `biblib`.
+
+### Ejecutar, desplegar y recuperar
+
+```powershell
+pnpm db:local:bootstrap --profile scratch
+pnpm db:status:local --profile scratch
+pnpm test:integration:views --profile scratch  # también acepta test; --reuse-build opcional
+pnpm db:local:down --profile scratch
+```
+
+El grupo `views` también está incluido en `test:integration:local` (perfil test). Usa GoTrue,
+acciones HTTP, Postgres y Chrome reales; cubre A/B, SQL, Data API, versiones, nombres, JSON,
+cuota con dos conexiones para el último hueco, estantería borrada, errores de red, confirmación
+y navegación. `tests/saved-views.test.ts` cubre el contrato puro y
+`tests/e2e/flujos/vistas.spec.ts` incorpora el CRUD a la suite E2E del coordinador.
+
+Desplegar primero la migración aditiva y después la aplicación. Para retirar la interfaz,
+ocultar el panel conserva las filas, los filtros URL y el catálogo. No ejecutar un DROP durante
+la recuperación: las preferencias viajan en el respaldo administrativo, como se detalla en
+[recuperación](recuperacion.md#vistas-guardadas-u-exp-02). El JSON portable de cuenta sigue
+incluyendo libros y estanterías.
+
+Evidencia: [O10/exp-02](validacion/2026-10-23/O10/exp-02/informe.md).

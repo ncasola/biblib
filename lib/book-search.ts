@@ -13,6 +13,7 @@ export interface BookSearchFilters {
   sort: BookSort
   page: number
   view: BookView
+  pageSize?: number
 }
 
 export const BOOK_PAGE_SIZE = 10
@@ -26,29 +27,40 @@ export function parseBookSearchFilters(params: URLSearchParams, defaultView: Boo
   const statuses: readonly BookStatusFilter[] = ["all", "read", "reading", "unread", "to-read"]
   const sortValue = params.get("sort") ?? "title"
   const sorts: readonly BookSort[] = ["title", "-title", "author", "-author", "pages", "-pages", "date", "-date", "status", "-status"]
-  const pageValue = Number.parseInt(params.get("page") ?? "1", 10)
+  const pageValue = Number(params.get("page") ?? "1")
+  const pageSize = parseBookPageSize(params.get("pageSize"))
+  const shelf = params.get("shelf") ?? "all"
   const viewValue = params.get("view")
 
   return {
-    q: params.get("q") ?? "",
+    q: (params.get("q") ?? "").slice(0, 500),
     status: statuses.includes(statusValue as BookStatusFilter) ? statusValue as BookStatusFilter : "all",
-    shelf: params.get("shelf") || "all",
+    shelf: BOOK_SHELF_ID.test(shelf) ? shelf.toLowerCase() : "all",
     sort: sorts.includes(sortValue as BookSort) ? sortValue as BookSort : "title",
-    page: Number.isFinite(pageValue) && pageValue > 0 ? pageValue : 1,
+    page: Number.isInteger(pageValue) && pageValue > 0 && pageValue <= 100_000 ? pageValue : 1,
     view: viewValue === "table" || viewValue === "grid" ? viewValue : defaultView,
+    ...(pageSize !== BOOK_PAGE_SIZE ? { pageSize } : {}),
   }
 }
 
 export function serializeBookSearchFilters(filters: BookSearchFilters, currentParams: URLSearchParams, defaultView: BookView = "table"): string {
   const params = new URLSearchParams(currentParams)
-  for (const key of ["q", "status", "shelf", "sort", "page", "view"]) params.delete(key)
+  for (const key of ["q", "status", "shelf", "sort", "page", "view", "pageSize"]) params.delete(key)
   if (filters.q.trim()) params.set("q", filters.q)
   if (filters.status !== "all") params.set("status", filters.status)
   if (filters.shelf !== "all") params.set("shelf", filters.shelf)
   if (filters.sort !== "title") params.set("sort", filters.sort)
   if (filters.page > 1) params.set("page", String(filters.page))
   if (filters.view !== defaultView) params.set("view", filters.view)
+  if (filters.pageSize && filters.pageSize !== BOOK_PAGE_SIZE) params.set("pageSize", String(filters.pageSize))
   return params.toString()
+}
+
+const BOOK_SHELF_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+
+export function parseBookPageSize(value: string | null): number {
+  const size = Number(value)
+  return Number.isInteger(size) && size >= 10 && size <= 100 ? size : BOOK_PAGE_SIZE
 }
 
 export function normalizeBookSearchQuery(query: string): string {

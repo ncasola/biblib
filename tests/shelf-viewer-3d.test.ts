@@ -84,7 +84,7 @@ test("el enlace a la colección 2D conserva estantería, página y tamaño de p�
 
   for (const page of [1, 3]) {
     const params = queryOf(buildShelfCollectionHref(SHELF_ID, page))
-    assert.deepEqual(parseBookSearchFilters(params), { q: "", status: "all", shelf: SHELF_ID, sort: "title", page, view: "table" })
+    assert.deepEqual(parseBookSearchFilters(params), { q: "", status: "all", shelf: SHELF_ID, sort: "title", page, view: "table", pageSize: 48 })
     const pageSize = Number.parseInt(params.get("pageSize") ?? "", 10)
     assert.ok(pageSize >= 10 && pageSize <= 100, "el catálogo 2D admite este tamaño de página")
   }

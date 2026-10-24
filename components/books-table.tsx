@@ -14,9 +14,12 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { LoadingState } from "@/components/loading-state"
+import { SavedBookViews } from "@/components/saved-book-views"
+import { applySavedView, type SavedViewFilters } from "@/lib/saved-views"
 import { BOOK_PAGE_SIZE, bookRowAnchor, buildBookDetailHref, buildCollectionPath, defaultBookSearchFilters, parseBookRowAnchor, normalizeBookSearchQuery, parseBookSearchFilters, serializeBookSearchFilters, type BookSearchFilters, type BookSort, type BookSortKey, type BookStatusFilter, type BookView } from "@/lib/book-search"
 import type { Book, Shelf } from "@/lib/types"
 import { unwrapAction } from "@/lib/action-result"
+import { DomainError } from "@/lib/domain-errors"
 
 interface BooksTableProps {
   initialView?: BookView
@@ -37,36 +40,27 @@ const SORT_OPTIONS: ReadonlyArray<{ value: BookSort; label: string }> = [
 
 // Un cambio de filtros, orden, vista o página descarta el fragmento de la fila recordada:
 // ya no apunta a lo que se está viendo y no debe restaurarse un desplazamiento obsoleto.
-function updateAddress(filters: BookSearchFilters, defaultView: BookView = "table"): void {
+function updateAddress(filters: BookSearchFilters, defaultView: BookView = "table", replace = false): void {
   const params = new URLSearchParams(window.location.search)
   const query = serializeBookSearchFilters(filters, params, defaultView)
   const nextUrl = `${window.location.pathname}${query ? `?${query}` : ""}`
-  window.history.replaceState(window.history.state, "", nextUrl)
-}
-
-// El enlace «Ver en la colección» de la vista 3D llega con `pageSize` para conservar
-// exactamente la misma página de libros; fuera del rango se usa el tamaño habitual.
-const COLLECTION_PAGE_SIZE_MIN = 10
-const COLLECTION_PAGE_SIZE_MAX = 100
-
-function parseCollectionPageSize(params: URLSearchParams): number {
-  const value = Number.parseInt(params.get("pageSize") ?? "", 10)
-  return Number.isFinite(value) && value >= COLLECTION_PAGE_SIZE_MIN && value <= COLLECTION_PAGE_SIZE_MAX ? value : BOOK_PAGE_SIZE
-}
-
-function withPageSizeParam(path: string, pageSize: number): string {
-  if (pageSize === BOOK_PAGE_SIZE) return path
-  return path.includes("?") ? `${path}&pageSize=${pageSize}` : `${path}?pageSize=${pageSize}`
+  if (nextUrl === `${window.location.pathname}${window.location.search}` && !window.location.hash) return
+  if (replace) window.history.replaceState(window.history.state, "", nextUrl)
+  else window.history.pushState(window.history.state, "", nextUrl)
 }
 
 function getBookSortLabel(sort: BookSort): string {
   return SORT_OPTIONS.find((option) => option.value === sort)?.label ?? "Título (A-Z)"
 }
 
+function requestKey(filters: BookSearchFilters): string {
+  return JSON.stringify([filters.q, filters.status, filters.shelf, filters.sort, filters.page, filters.pageSize ?? BOOK_PAGE_SIZE])
+}
+
 export function BooksTable({ initialView = "table" }: BooksTableProps) {
   const pathname = usePathname()
   const [filters, setFilters] = useState<BookSearchFilters>(() => defaultBookSearchFilters(initialView))
-  const [pageSize, setPageSize] = useState(BOOK_PAGE_SIZE)
+  const pageSize = filters.pageSize ?? BOOK_PAGE_SIZE
   const [queryInput, setQueryInput] = useState("")
   const [showFilters, setShowFilters] = useState(false)
   const [ready, setReady] = useState(false)
@@ -84,6 +78,7 @@ export function BooksTable({ initialView = "table" }: BooksTableProps) {
   const [movePending, setMovePending] = useState(false)
   const [moveError, setMoveError] = useState<string | null>(null)
   const requestSequence = useRef(0)
+  const requestedFilters = useRef<string | null>(null)
   const { q: filterQuery, status: filterStatus, shelf: filterShelf, sort: filterSort, page: filterPage } = filters
 
   useEffect(() => {
@@ -92,9 +87,11 @@ export function BooksTable({ initialView = "table" }: BooksTableProps) {
       const parsed = parseBookSearchFilters(params, initialView)
       setFilters(parsed)
       setQueryInput(parsed.q)
-      setPageSize(parseCollectionPageSize(params))
+      // Canoniza los parámetros malformados sin añadir entradas al historial ni perder el ancla.
+      const query = serializeBookSearchFilters(parsed, params, initialView)
+      window.history.replaceState(window.history.state, "", `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`)
       setSelectedIds([])
-      setLoading(true)
+      if (requestKey(parsed) !== requestedFilters.current) setLoading(true)
       setReady(true)
     }
     readAddress()
@@ -141,6 +138,7 @@ export function BooksTable({ initialView = "table" }: BooksTableProps) {
 
   useEffect(() => {
     if (!ready) return
+    requestedFilters.current = JSON.stringify([filterQuery, filterStatus, filterShelf, filterSort, filterPage, pageSize])
     const requestId = ++requestSequence.current
     void listBooksAction({
       q: normalizeBookSearchQuery(filterQuery),
@@ -159,7 +157,7 @@ export function BooksTable({ initialView = "table" }: BooksTableProps) {
       if (result.page !== filterPage) {
         setFilters((current) => {
           const next = { ...current, page: result.page }
-          updateAddress(next, initialView)
+          updateAddress(next, initialView, true)
           return next
         })
       }
@@ -177,7 +175,7 @@ export function BooksTable({ initialView = "table" }: BooksTableProps) {
 
   const updateFilters = useCallback((update: Partial<BookSearchFilters>, resetPage = true) => {
     if (update.view === undefined) setLoading(true)
-    if (resetPage || update.page !== undefined) setSelectedIds([])
+    setSelectedIds([])
     setFilters((current) => {
       const next = { ...current, ...update, page: resetPage ? 1 : update.page ?? current.page }
       updateAddress(next, initialView)
@@ -186,15 +184,15 @@ export function BooksTable({ initialView = "table" }: BooksTableProps) {
   }, [initialView])
 
   const clearFilters = () => {
-    setLoading(true)
     const next: BookSearchFilters = { ...filters, q: "", status: "all", shelf: "all", sort: "title", page: 1 }
     setQueryInput("")
     setFilters(next)
     setSelectedIds([])
+    if (requestKey(next) !== requestedFilters.current) setLoading(true)
     updateAddress(next, initialView)
   }
 
-  const changeQuery = (value: string) => setQueryInput(value)
+  const changeQuery = (value: string) => setQueryInput(value.slice(0, 500))
   const changeStatus = (status: BookStatusFilter) => updateFilters({ status })
   const changeShelf = (shelf: string) => updateFilters({ shelf })
   const changeSort = (sort: BookSort) => updateFilters({ sort })
@@ -219,13 +217,24 @@ export function BooksTable({ initialView = "table" }: BooksTableProps) {
       retryList()
       await loadShelves()
     } catch (error) {
-      setMoveError(error instanceof Error ? error.message : "No se pudieron mover los libros seleccionados.")
+      setMoveError(error instanceof DomainError ? error.message : "No se pudieron mover los libros seleccionados. Inténtalo de nuevo.")
     } finally {
       setMovePending(false)
     }
   }
 
-  const collectionPath = withPageSizeParam(buildCollectionPath(pathname, filters, initialView), pageSize)
+  const applyView = async (saved: SavedViewFilters) => {
+    // Se consulta al aplicar: una estantería puede haberse borrado desde que se abrió el panel.
+    const currentShelves = await getShelvesAction()
+    const next = applySavedView(saved, currentShelves.map((shelf) => shelf.id))
+    setShelves(currentShelves)
+    setFilters(next)
+    setQueryInput(next.q)
+    setSelectedIds([])
+    if (requestKey(next) !== requestedFilters.current) setLoading(true)
+    updateAddress(next, initialView)
+  }
+  const collectionPath = buildCollectionPath(pathname, filters, initialView)
   const detailHref = (bookId: string) => buildBookDetailHref(bookId, `${collectionPath}#${bookRowAnchor(bookId)}`)
   // El historial de esta entrada recuerda la fila abierta para que «Atrás» la recupere.
   const rememberOpenedBook = (event: MouseEvent<HTMLAnchorElement>, bookId: string) => {
@@ -263,10 +272,12 @@ export function BooksTable({ initialView = "table" }: BooksTableProps) {
       {listError && <div role="alert" className="flex flex-col items-start justify-between gap-3 rounded-xl border border-destructive/40 bg-destructive/5 p-4 sm:flex-row sm:items-center"><p className="text-sm text-foreground">No se pudieron actualizar los resultados. Se conserva la página anterior.</p><Button variant="outline" size="sm" onClick={retryList}>Reintentar</Button></div>}
       {shelvesError && <div role="alert" className="flex flex-col items-start justify-between gap-3 rounded-xl border border-destructive/40 bg-destructive/5 p-4 sm:flex-row sm:items-center"><p className="text-sm text-foreground">No se pudieron cargar las estanterías; el filtro no está disponible.</p><Button variant="outline" size="sm" onClick={() => void loadShelves()}>Reintentar estanterías</Button></div>}
 
+      <SavedBookViews filters={filters} onApply={applyView} />
+
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(16rem,2fr)_minmax(12rem,1fr)_minmax(12rem,1fr)]">
         <div>
           <label htmlFor="book-search" className="mb-2 block text-sm font-medium text-foreground">Buscar por título, autor o ISBN</label>
-          <div className="relative"><Search aria-hidden="true" className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input id="book-search" placeholder="Título, autor, ISBN..." value={queryInput} onChange={(event) => changeQuery(event.target.value)} className="border-border bg-surface pl-9" /></div>
+          <div className="relative"><Search aria-hidden="true" className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input id="book-search" placeholder="Título, autor, ISBN..." value={queryInput} maxLength={500} onChange={(event) => changeQuery(event.target.value)} className="border-border bg-surface pl-9" /></div>
         </div>
         <div id="book-status-filters" className={showFilters ? "" : "hidden sm:block"}>
           <label htmlFor="book-status" className="mb-2 block text-sm font-medium text-foreground">Estado</label>
