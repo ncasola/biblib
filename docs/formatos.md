@@ -9,7 +9,7 @@ BibLib separa cuatro versiones que no se deducen unas de otras:
 | Sin versión (`{ books, shelves }`) | Copia JSON antigua | Formato legacy anterior a v1 | Se lee. No se escribe. |
 | `formatVersion: 1` | Copia JSON | Libros planos + estanterías | Se lee. Se escribe solo si no pierde datos. |
 | `formatVersion: 2` | Copia JSON | Obras/ediciones/copias/estanterías (payload portable) | Se lee y se escribe. |
-| `bundleVersion: 1` | Manifest de un conjunto de partes | Integridad y orden de partes | **Reservado para U-DAT-04.** No existe todavía; ningún lector lo acepta. |
+| `bundleVersion: 1` | Manifest de un conjunto de partes | Integridad, orden y cantidades de las partes | Se lee y se escribe (U-DAT-04). Ver [conjunto de partes](#conjunto-de-partes-bundleversion-1). |
 | Sin `schemaVersion` | `catalogue` de cada ficha | Procedencia legacy (una fuente por ficha) | Se lee y se escribe. |
 | `catalogue.schemaVersion: 2` | `catalogue` de cada ficha | Procedencia por campo y fuentes ampliadas (BNE) | Se lee siempre; se escribe según la bandera de revisión. |
 
@@ -141,7 +141,36 @@ La procedencia de una edición se calcula en el servidor a partir de la ficha bl
 - **v1** si ninguna ficha necesita v2. Es compatible con versiones anteriores de BibLib.
 - **v2** si alguna ficha tiene procedencia BNE o `fields`. El formato 1 la perdería, así que no se ofrece (`createLibraryExport` y `fragmentLibraryExport` lanzan un error explicativo).
 
-Los límites por archivo son los mismos para ambos formatos: 8 MiB, 2000 libros (copias) y 200 estanterías. Una colección mayor se divide en partes independientes del mismo formato, cada una importable por sí sola. Agruparlas en un conjunto verificable (`bundleVersion: 1`) corresponde a U-DAT-04.
+Los límites por archivo son los mismos para ambos formatos: 8 MiB, 2000 libros (copias) y 200 estanterías. Una colección mayor se divide en partes independientes del mismo formato, cada una importable por sí sola, y se acompaña de un manifiesto `bundleVersion: 1` que las agrupa en un conjunto verificable. Desde U-DAT-04 la copia la genera el servidor (`lib/library-export-server.ts`): Ajustes ya no descarga la colección para exportarla.
+
+## Conjunto de partes `bundleVersion: 1`
+
+**Unidad:** U-DAT-04 (ola O11). El manifiesto (`biblib-backup-…-conjunto.json`) acompaña a las partes de una copia y permite restaurarlas todas en una sola operación. Es independiente del payload: cada parte sigue siendo un `formatVersion` 1 o 2 normal, sin cambios.
+
+```json
+{
+  "kind": "biblib.backup-set",
+  "bundleVersion": 1,
+  "exportSetId": "…uuid…",
+  "exportedAt": "2026-10-24T10:00:00.000Z",
+  "payloadFormatVersion": 1,
+  "parts": [
+    { "partId": "parte-01", "index": 0, "byteLength": 1452311, "sha256": "…64 hex…", "counts": { "books": 2000, "shelves": 3 } },
+    { "partId": "parte-02", "index": 1, "byteLength": 1093, "sha256": "…64 hex…", "counts": { "books": 1, "shelves": 4 } }
+  ],
+  "totals": { "books": 2001, "shelves": 5 }
+}
+```
+
+- **Hash y tamaño de los bytes exactos.** `sha256` y `byteLength` se calculan sobre los bytes UTF-8 del archivo tal como se descarga, nunca sobre JSON reserializado. Cambiar un solo byte de una parte la hace no coincidir.
+- **Orden y claves.** `index` va de 0 a n−1 sin huecos y `partId` es único. Una misma parte dos veces (mismo hash) se rechaza.
+- **Cantidades por formato.** En v1, `{ books, shelves }`; en v2, `{ works, editions, copies, shelves }`. `totals` son las cantidades globales únicas: una estantería que aparece en varias partes cuenta una vez, así que `totals.shelves` puede ser menor que la suma.
+- **Sin propietario ni firma.** El manifiesto acredita integridad, orden y cantidades, no la autoría. No lleva `user_id`: el dueño siempre sale de la sesión. Las claves desconocidas se rechazan.
+- **Límites del conjunto:** 10 000 libros, 1 000 estanterías, 80 MiB y 50 partes. Superarlos da `LIMIT_EXCEEDED` antes de aceptar ningún byte.
+- **Partes sueltas.** Las partes v1 o v2 existentes sin manifiesto se pueden restaurar juntas con el asistente de Ajustes. El servidor las inspecciona, comprueba que encajan (formato común, sin libros ni ISBN repetidos, estanterías compatibles, una sola predeterminada) y genera el manifiesto. Que compartan fecha no demuestra que sean de la misma copia: la persona lo confirma expresamente.
+- **Rechazos** (`MANIFEST_MISMATCH`, 422, sin modificar la colección): parte ausente, duplicada, corrupta o de otro conjunto; cantidades o totales que no coinciden con el contenido; la misma estantería con otro nombre en otra parte; dos estanterías distintas con el mismo nombre; más de una predeterminada.
+
+El código vive en `lib/import-manifest.ts` (formato y comprobaciones puras), `lib/library-export.ts` (`buildBackupSet`) y `lib/import-staging.ts` (validación del conjunto en staging). El proceso de restauración se describe en [operación](operacion.md#restauración-por-partes-con-staging-y-publicación-atómica--u-dat-04).
 
 Las versiones de BibLib anteriores a U-BIB-04 rechazan `formatVersion: 2` con un mensaje de versión no compatible. Por eso el v1 se sigue ofreciendo siempre que no pierde datos.
 
