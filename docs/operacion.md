@@ -1064,3 +1064,98 @@ la recuperación: las preferencias viajan en el respaldo administrativo, como se
 incluyendo libros y estanterías.
 
 Evidencia: [O10/exp-02](validacion/2026-10-23/O10/exp-02/informe.md).
+
+## Restauración por partes con staging y publicación atómica · U-DAT-04
+
+Una copia grande se descarga en varias partes (cada una importable por sí sola) más un manifiesto `bundleVersion: 1` ([formato](formatos.md#conjunto-de-partes-bundleversion-1)). «Restaurar una copia por partes», en Ajustes, sube todas las partes a un staging privado, las comprueba juntas y sustituye la colección en **una sola transacción**: nunca queda una restauración a medias. La importación de un archivo suelto (U-DAT-01) no cambia.
+
+### Sesión y staging (migración `0008_restore_sessions`)
+
+| Tabla | Contenido |
+| --- | --- |
+| `biblib.import_sessions` | Dueño, `state` (`receiving` → `validated` → `prepared` → `committed`, o `rejected`), `source` (`manifest` o `loose`), manifest validado y su sha256 (hash global), revisión base, versión de reglas, partes, bytes recibidos, totales, vista previa (`preview_id`, revisión, caducidad y plan), `operation_id`, `version` y `expires_at` (7 días). |
+| `biblib.import_session_parts` | Parte esperada: `part_id` estable, posición, tamaño y sha256 exactos, número de trozos de 256 KiB y recuentos comprobados. |
+| `biblib.import_session_chunks` | Trozos de los bytes originales (`bytea`, hasta 256 KiB). Postgres comprueba que `octet_length(bytes) = byte_length` y que `sha256 = encode(sha256(bytes), 'hex')`. |
+| `biblib.import_session_rows` | Libros y estanterías validados y normalizados, con clave estable `(sesión, tipo, ID de origen)`. |
+
+- **RLS de propietario** en las cuatro tablas y FK compuestas con `user_id` (trozo → parte → sesión → `auth.users`, en cascada). `authenticated` gestiona sus sesiones y partes; trozos y filas solo admiten `SELECT`, `INSERT` y `DELETE`: nunca se modifican. `anon` no tiene ningún privilegio y la Data API no expone `biblib` (406).
+- **Guarda `biblib.guard_import_staging()`** (`BEFORE INSERT` en trozos y filas, error `BR001`): solo entran en una sesión propia que siga en `receiving` y no haya caducado. Lo validado o preparado ya no cambia.
+- **`biblib.import_session_purge_expired(límite)`**: retira por lotes las sesiones caducadas con todo su staging. Solo la ejecuta el servidor (mantenimiento F4/U-OPS-03).
+- **Operación durable `restore.commit`** en `library_operations`.
+- **Inventario para U-OPS-03**: `RESTORE_SESSION_INVENTORY` en `lib/import-staging.ts`.
+
+### Flujo y contratos (`app/actions/restore-sessions.ts`, todas `ActionResult`)
+
+| Acción | Contrato |
+| --- | --- |
+| `beginRestoreSessionAction({ manifest } \| { parts: [{ byteLength, sha256 }] })` | Abre la sesión. Con manifiesto, este fija orden, hashes, tamaños y cantidades. Con partes sueltas (asistente para v1/v2 sin manifiesto) solo se fijan tamaños y hashes, y el manifiesto lo genera el servidor al validarlas. Antes de aceptar ningún byte rechaza: duplicados y manifiestos incoherentes (`MANIFEST_MISMATCH`, 422), y más de 10 000 libros, 1 000 estanterías, 80 MiB, 50 partes, 8 MiB por parte o 3 sesiones abiertas (`LIMIT_EXCEEDED`, 413). |
+| `uploadRestorePartAction({ sessionId, partId, ordinal, total, sha256, chunk: Blob })` | Un trozo de los bytes originales, por FormData/Blob (nunca base64). El servidor mide el tamaño real (≤ 256 KiB y exactamente el que corresponde a esa posición), la posición, el total y el hash antes de guardar. Repetir un trozo idéntico devuelve `replayed: true` sin cambiar nada; otro contenido en la misma posición es `CONFLICT`. Un trozo nunca autoriza ni publica nada. |
+| `validateRestoreSessionAction({ sessionId })` | Reconstruye cada parte en orden y comprueba tamaño y sha256 sobre los bytes exactos. La decodifica, comprueba formato y cantidades frente al manifiesto, la valida con el lector común (legacy, v1 o v2) y deja sus filas en staging, **una transacción por parte**. Después comprueba el conjunto: sin libros repetidos (ID o ISBN), estanterías compartidas con el mismo ID y atributos, sin dos estanterías con el mismo nombre, una sola predeterminada, totales del manifiesto y límites. Un fallo rechaza la sesión, libera el staging y no toca la colección. Faltar partes no rechaza: se pueden completar. |
+| `prepareRestoreSessionAction({ sessionId })` | Bajo el bloqueo de colección, plan de reemplazo (U-DAT-01) frente a la colección actual. Se conserva la predeterminada propia y los IDs reconocidos (por ISBN o identificador), se reasigna e informa lo demás, y se devuelven títulos acotados de lo que desaparece. Se puede repetir: cada vista previa nueva sustituye a la anterior. |
+| `commitRestoreSessionAction({ sessionId, previewId, expectedRevision, idempotencyKey })` | Publica en una transacción (ver abajo). Devuelve `operationId`, resultado, `replayed` y la versión anterior capturada. `REVISION_CONFLICT` y `PREVIEW_EXPIRED` conservan el staging y exigen revisar de nuevo; nunca hay `force`. |
+| `listRestoreSessionsAction()` / `discardRestoreSessionAction({ sessionId })` | Restauraciones a medias (hasta 3) para continuar (volviendo a seleccionar los mismos archivos: los trozos recibidos no se repiten) o descartar. Una sesión ajena o inexistente responde siempre `NOT_FOUND`. |
+
+### Publicación atómica medida
+
+`publishRestoreSession` (`lib/import-staging.ts`) hace todo en la transacción final, sin red:
+
+1. `lock_timeout` de **1 s** y bloqueo de colección (`lock_library`).
+2. Decisión por clave, caducidad, reglas y revisión (`decideConfirmation` de U-DAT-01).
+3. Operación durable.
+4. Versión anterior del estado sustituido (U-DAT-02, motivo `import.replace`). Con la cuota llena o una colección de más de 10 000 libros da `LIMIT_EXCEEDED` sin aplicar nada.
+5. `DELETE` de libros y estanterías no predeterminadas del dueño.
+6. `INSERT … SELECT` de estanterías desde el plan e `INSERT … SELECT` de libros uniendo el plan con `import_session_rows`, comprobando la cantidad insertada.
+7. Sesión `committed`.
+
+Cada sentencia lleva `statement_timeout` = mín(**5 s**, presupuesto restante), y el presupuesto total es **15 s** (`BIBLIB_RESTORE_COMMIT_BUDGET_MS`, de 1 000 a 60 000; lo fija F4). Si algo falla o no cabe, se revierte todo: colección, versiones de ficha, revisión, versión anterior, operación y estado de la sesión. El staging queda intacto y la misma clave puede reintentarse; un timeout o un bloqueo ocupado son `PROVIDER_UNAVAILABLE` reintentables. Después de publicar, el staging se libera en otra transacción.
+
+Medición en scratch (`pnpm perf:restore --profile scratch`, 3 repeticiones, Postgres con índices, triggers y RLS como `authenticated`; la publicación se mide en una transacción revertida; [resultados](validacion/2026-10-24/O11/dat-04/medicion-restauracion.json)):
+
+| Libros | Partes · trozos · bytes | Validación | Preparación | Publicación con la colección actual pequeña (p50 / máx.) | Publicación con la colección llena (p50 / máx.) |
+| --- | --- | --- | --- | --- | --- |
+| 100 | 1 · 1 · 46 KiB | 60 ms | 25 ms | 52 / 57 ms | 57 / 109 ms |
+| 1 000 | 1 · 2 · 443 KiB | 174 ms | 49 ms | 124 / 126 ms | 247 / 255 ms |
+| 10 000 | 5 · 20 · 4,3 MiB | 1 359 ms | 326 ms | 1 343 / 1 401 ms | 1 977 / 2 081 ms |
+
+Con 10 000 libros y la colección llena, la captura de la versión anterior cuesta unos 360 ms y la sustitución (`DELETE` + `INSERT … SELECT`) unos 1,6 s. La sentencia más larga queda por debajo de 1,7 s: cabe en los 5 s por sentencia y en el presupuesto de 15 s sin cambiar de diseño. **No se justifica un ADR de generaciones o puntero activo.**
+
+### Exportación por partes en el servidor (tarea T1 de U-QA-03)
+
+- Ajustes ya no lee la colección al abrirse: `getLibraryCountsAction` devuelve solo recuentos. Se retiró `getLibraryDataAction`, la lectura completa sin límite.
+- `prepareLibraryExportAction` genera en el servidor las partes y el manifiesto (`buildBackupSet`) y devuelve solo el manifiesto y los enlaces.
+- Cada parte se descarga de `GET /api/library/export?revision&exportedAt&set&part&sha256`, que la genera de nuevo para esa revisión y fecha. Si la colección cambió o los bytes no coinciden con el hash, responde 409 sin descargar nada. El navegador no materializa ninguna ficha.
+- La revisión de una importación pide con `getBookTitlesAction` solo los títulos de las primeras 50 fichas que se eliminarían.
+
+### Despliegue, desactivación y recuperación
+
+1. Desplegar la migración (aditiva, salvo la corrección hacia delante de `saved_book_views_name_check` de 0007) y después la aplicación.
+2. La publicación está activa por defecto. `BIBLIB_RESTORE_SESSIONS_PUBLISH=false` la desactiva: deja subir, validar y revisar, pero confirmar responde `CONFLICT` sin tocar la colección.
+3. Desactivar el flujo conserva las descargas por partes y los datos actuales. Las sesiones abandonadas caducan a los 7 días y se retiran al abrir otra o con la purga del servidor.
+4. Una restauración publicada se deshace desde «Versiones anteriores». El respaldo administrativo restaura el staging tal cual y comprueba sus trozos ([recuperación](recuperacion.md#restauraciones-por-partes-u-dat-04)).
+
+```powershell
+pnpm db:plan:local --profile scratch --out dat04.json
+pnpm db:migrate:local --plan .biblib/plans/dat04.json --expect-project biblib-scratch --expect-plan <sha256>
+pnpm db:status:local --profile scratch       # 326 comprobaciones, sin drift
+pnpm test:integration:restore --profile scratch [--reuse-build]
+pnpm perf:restore --profile scratch [--scale 100|1000|10000] [--repeat 1-5] [--out <archivo>]
+```
+
+### Pruebas
+
+- `pnpm test`: `tests/restore-sets.test.ts` (manifiesto, límites, copia de 2001 libros con hashes de bytes exactos y generación determinista, 111 fichas legacy, v2, presupuesto y errores).
+- `pnpm test:db`: `tests/db/restore-sessions.sql` (RLS E/F, hash y tamaño de trozos en Postgres, inmutabilidad, guarda, `restore.commit`, purga y cascadas).
+- `pnpm test:scripts`: drift de 0008 (`migrations.test.mjs`), restore administrativo y argumentos (`restore-sessions.test.mjs`).
+- `pnpm test:integration:restore --profile scratch|test`: grupo `tests/integration/restore`, también en `test:integration:local`. Con sesiones GoTrue reales, trozos en multipart y el publicador compilado cubre:
+  - 2001 libros en dos partes con observadores concurrentes;
+  - partes ausentes, duplicadas, corruptas o de otro conjunto, y totales falsos;
+  - estanterías vacías, compartidas y contradictorias;
+  - error en la última sentencia, `statement_timeout`, presupuesto total y `lock_timeout`;
+  - idempotencia de trozos y commit;
+  - CAS con otra pestaña;
+  - A/B por acciones, SQL y Data API;
+  - límites;
+  - las 111 fichas legacy;
+  - el restore administrativo.
+
+Evidencia: [O11/dat-04](validacion/2026-10-24/O11/dat-04/informe.md).

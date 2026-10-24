@@ -1,0 +1,178 @@
+{
+  "schemaVersion": 1,
+  "kind": "biblib.restore-bench",
+  "profile": "scratch",
+  "repeticiones": 3,
+  "medidoEn": "2026-10-24T10:28:13.356Z",
+  "librosActualesFixture": 4,
+  "resultados": [
+    {
+      "escala": 100,
+      "partes": 1,
+      "trozos": 1,
+      "bytes": 47013,
+      "estanterias": 20,
+      "stagingMs": {
+        "subidaBd": 79.3,
+        "validacion": 59.6,
+        "preparacion": 25.3
+      },
+      "publicacion": {
+        "actual-fixture": {
+          "librosActuales": 4,
+          "bloqueoYCapturaMs": {
+            "n": 3,
+            "p50": 22.6,
+            "max": 24.1
+          },
+          "sustitucionMs": {
+            "n": 3,
+            "p50": 25.8,
+            "max": 28.4
+          },
+          "totalMs": {
+            "n": 3,
+            "p50": 52.4,
+            "max": 56.8
+          }
+        },
+        "actual-llena": {
+          "librosActuales": 100,
+          "bloqueoYCapturaMs": {
+            "n": 3,
+            "p50": 26.2,
+            "max": 31.6
+          },
+          "sustitucionMs": {
+            "n": 3,
+            "p50": 26.8,
+            "max": 70.8
+          },
+          "totalMs": {
+            "n": 3,
+            "p50": 56.6,
+            "max": 108.9
+          }
+        }
+      },
+      "presupuesto": {
+        "lockTimeoutMs": 1000,
+        "statementTimeoutMs": 5000,
+        "totalMs": 15000,
+        "cumple": true
+      }
+    },
+    {
+      "escala": 1000,
+      "partes": 1,
+      "trozos": 2,
+      "bytes": 453723,
+      "estanterias": 20,
+      "stagingMs": {
+        "subidaBd": 78.1,
+        "validacion": 174.4,
+        "preparacion": 48.6
+      },
+      "publicacion": {
+        "actual-fixture": {
+          "librosActuales": 4,
+          "bloqueoYCapturaMs": {
+            "n": 3,
+            "p50": 21.4,
+            "max": 24.5
+          },
+          "sustitucionMs": {
+            "n": 3,
+            "p50": 96.6,
+            "max": 96.7
+          },
+          "totalMs": {
+            "n": 3,
+            "p50": 123.8,
+            "max": 125.5
+          }
+        },
+        "actual-llena": {
+          "librosActuales": 1000,
+          "bloqueoYCapturaMs": {
+            "n": 3,
+            "p50": 62.6,
+            "max": 76.6
+          },
+          "sustitucionMs": {
+            "n": 3,
+            "p50": 175,
+            "max": 185.1
+          },
+          "totalMs": {
+            "n": 3,
+            "p50": 247.4,
+            "max": 255.2
+          }
+        }
+      },
+      "presupuesto": {
+        "lockTimeoutMs": 1000,
+        "statementTimeoutMs": 5000,
+        "totalMs": 15000,
+        "cumple": true
+      }
+    },
+    {
+      "escala": 10000,
+      "partes": 5,
+      "trozos": 20,
+      "bytes": 4537935,
+      "estanterias": 20,
+      "stagingMs": {
+        "subidaBd": 691.4,
+        "validacion": 1358.8,
+        "preparacion": 325.7
+      },
+      "publicacion": {
+        "actual-fixture": {
+          "librosActuales": 4,
+          "bloqueoYCapturaMs": {
+            "n": 3,
+            "p50": 72.2,
+            "max": 75.5
+          },
+          "sustitucionMs": {
+            "n": 3,
+            "p50": 1262.9,
+            "max": 1333.1
+          },
+          "totalMs": {
+            "n": 3,
+            "p50": 1342.7,
+            "max": 1401.2
+          }
+        },
+        "actual-llena": {
+          "librosActuales": 10000,
+          "bloqueoYCapturaMs": {
+            "n": 3,
+            "p50": 363.3,
+            "max": 397.9
+          },
+          "sustitucionMs": {
+            "n": 3,
+            "p50": 1609.8,
+            "max": 1677.5
+          },
+          "totalMs": {
+            "n": 3,
+            "p50": 1977.1,
+            "max": 2080.9
+          }
+        }
+      },
+      "presupuesto": {
+        "lockTimeoutMs": 1000,
+        "statementTimeoutMs": 5000,
+        "totalMs": 15000,
+        "cumple": true
+      }
+    }
+  ]
+}

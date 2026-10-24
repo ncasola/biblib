@@ -1,0 +1,6 @@
+
+> biblib@1.0.0 db:reset:local C:\Users\ncaso\orca\workspaces\biblib\u-inf-03
+> node scripts/local-stack.mjs reset "--dry-run" "--profile" "scratch" "--out" ".biblib/plans/dat04-reset-final.json"
+
+BibLib local · scratch · ea260283d87954c1c405cb5ee4875867dd8b103c86084460f3a74244e06b13fa
+[ok] reset.plan: Plan guardado: .biblib\plans\dat04-reset-final.json · proyecto biblib-scratch · sha256 05a2102d9b1212cc889480077ede17f44fef5c7f218378d4b9e8389ee7f888d3
