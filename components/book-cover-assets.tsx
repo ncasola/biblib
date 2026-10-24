@@ -1,10 +1,10 @@
 "use client"
 
 import { useEffect, useId, useRef, useState } from "react"
-import { Loader2, ShieldCheck, Undo2, Upload } from "lucide-react"
+import { Loader2, ShieldCheck, Undo2, Upload, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { getBookDetailAction } from "@/app/actions/books"
-import { attachCoverAssetAction, beginOwnCoverUploadAction, detachCoverAssetAction, getBookCoverAssetsAction, getCoverAssetJobAction, requestProviderCoverAssetAction } from "@/app/actions/book-cover-assets"
+import { attachCoverAssetAction, beginOwnCoverUploadAction, cancelCoverAssetJobAction, detachCoverAssetAction, getBookCoverAssetsAction, getCoverAssetJobAction, requestProviderCoverAssetAction } from "@/app/actions/book-cover-assets"
 import { unwrapAction } from "@/lib/action-result"
 import { DomainError } from "@/lib/domain-errors"
 import type { BookCoverAssetState, CoverAssetJobView } from "@/lib/assets/contracts"
@@ -34,6 +34,8 @@ export function BookCoverAssets({ book, disabled, onBookChange }: BookCoverAsset
   const [busy, setBusy] = useState<"upload" | "copy" | "detach" | null>(null)
   const [message, setMessage] = useState("")
   const [error, setError] = useState("")
+  const [pendingJob, setPendingJob] = useState<CoverAssetJobView | null>(null)
+  const cancelled = useRef(false)
 
   useEffect(() => {
     let active = true
@@ -65,13 +67,16 @@ export function BookCoverAssets({ book, disabled, onBookChange }: BookCoverAsset
 
   const copy = async () => {
     if (!state.providerCoverKey || locked) return
-    setBusy("copy"); setMessage(""); setError("")
+    setBusy("copy"); setMessage(""); setError(""); cancelled.current = false
     try {
       let job: CoverAssetJobView = unwrapAction(await requestProviderCoverAssetAction({ entityId: book.id, expectedVersion: book.version ?? "", providerCoverKey: state.providerCoverKey, idempotencyKey: newKey() }))
-      for (let attempt = 0; attempt < 10 && !TERMINAL.includes(job.state); attempt++) {
+      for (let attempt = 0; attempt < 10 && !TERMINAL.includes(job.state) && !cancelled.current; attempt++) {
+        setPendingJob(job)
         await new Promise((resolve) => setTimeout(resolve, 2_000))
+        if (cancelled.current) break
         job = unwrapAction(await getCoverAssetJobAction({ jobId: job.jobId }))
       }
+      if (cancelled.current) return
       if (job.attached) {
         const latest = await getBookDetailAction(book.id)
         if (latest) onBookChange(latest)
@@ -80,7 +85,17 @@ export function BookCoverAssets({ book, disabled, onBookChange }: BookCoverAsset
       else if (TERMINAL.includes(job.state)) setError("No se pudo guardar la copia privada. La portada actual no ha cambiado.")
       else setMessage("La copia sigue pendiente. Vuelve a abrir la ficha más tarde para continuarla.")
     } catch (caught) { setError(messageOf(caught, "No se pudo guardar la copia privada. La portada actual no ha cambiado.")) }
-    finally { setBusy(null) }
+    finally { setBusy(null); setPendingJob(null) }
+  }
+
+  /** Cancelar impide registrar o adjuntar un resultado tardío; la portada actual no cambia. */
+  const cancel = async () => {
+    if (!pendingJob) return
+    cancelled.current = true
+    try {
+      unwrapAction(await cancelCoverAssetJobAction({ jobId: pendingJob.jobId, expectedVersion: pendingJob.version }))
+      setMessage("Copia cancelada. La portada actual no ha cambiado.")
+    } catch (caught) { setError(messageOf(caught, "No se pudo cancelar la copia. Vuelve a abrir la ficha para ver su estado.")) }
   }
 
   const detach = async () => {
@@ -114,6 +129,11 @@ export function BookCoverAssets({ book, disabled, onBookChange }: BookCoverAsset
         <Button type="button" variant="outline" className="w-full" disabled={locked} onClick={() => void copy()}>
           {busy === "copy" ? <Loader2 aria-hidden="true" className="mr-2 h-4 w-4 animate-spin" /> : <ShieldCheck aria-hidden="true" className="mr-2 h-4 w-4" />}
           {busy === "copy" ? "Guardando copia..." : "Guardar copia privada"}
+        </Button>
+      )}
+      {busy === "copy" && pendingJob && (
+        <Button type="button" variant="ghost" className="w-full" onClick={() => void cancel()}>
+          <X aria-hidden="true" className="mr-2 h-4 w-4" />Cancelar copia
         </Button>
       )}
       {current && (
