@@ -4,8 +4,8 @@ import { EXIT } from "../lib/exit-codes.mjs"
 // Manifest de objetos deliberados de BibLib. Se comprueba con metadatos de pg_catalog e
 // information_schema y con expresiones normalizadas, nunca comparando el pretty-print.
 // `since`/`until` indican la migración que introduce o retira cada objeto.
-const M0 = "0000_biblib_init", M1 = "0001_library_integrity", M2 = "0002_book_versions", M3 = "0003_library_revision", M4 = "0004_catalogue_coordination", M5 = "0005_library_jobs", M6 = "0006_library_snapshots", M7 = "0007_saved_views"
-export const MANIFEST_MIGRATIONS = [M0, M1, M2, M3, M4, M5, M6, M7]
+const M0 = "0000_biblib_init", M1 = "0001_library_integrity", M2 = "0002_book_versions", M3 = "0003_library_revision", M4 = "0004_catalogue_coordination", M5 = "0005_library_jobs", M6 = "0006_library_snapshots", M7 = "0007_saved_views", M8 = "0008_restore_sessions"
+export const MANIFEST_MIGRATIONS = [M0, M1, M2, M3, M4, M5, M6, M7, M8]
 
 const own = "user_id=auth.uid"
 const ownNotDefault = "user_id=auth.uidandnotis_default"
@@ -69,10 +69,15 @@ const SNAPSHOTS = migrationBodies(M6)
 const VIEWS = migrationBodies(M7)
 const snapshotTables = ["library_snapshots", "library_snapshot_chunks"]
 const snapshotFunction = (name, returns, args, authenticated = true) => ({ name, language: "plpgsql", returns, args, searchPath: "search_path=pg_catalog", securityDefiner: true, body: SNAPSHOTS[name], execute: { authenticated, anon: false }, since: M6 })
+// Sesiones de restauración (0008): el dueño escribe con RLS; la guarda ata trozos y filas a una sesión que recibe.
+const RESTORE = migrationBodies(M8)
+const restoreTables = ["import_sessions", "import_session_parts", "import_session_chunks", "import_session_rows"]
+const restoreFullTables = ["import_sessions", "import_session_parts"]
+const restoreImmutableTables = ["import_session_chunks", "import_session_rows"]
 const jobStateTokens = ["'queued'", "'running'", "'waiting_retry'", "'needs_review'", "'paused'", "'succeeded'", "'partially_succeeded'", "'failed'", "'cancelled'", "'expired'"]
 
 export const MANIFEST = Object.freeze({
-  tables: [{ name: "shelves", since: M0 }, { name: "books", since: M0 }, { name: "library_state", since: M3 }, { name: "import_previews", since: M3 }, { name: "library_operations", since: M3 }, ...catalogueTables.map((name) => ({ name, since: M4 })), ...jobTables.map((name) => ({ name, since: M5 })), ...snapshotTables.map((name) => ({ name, since: M6 })), { name: "saved_book_views", since: M7 }],
+  tables: [{ name: "shelves", since: M0 }, { name: "books", since: M0 }, { name: "library_state", since: M3 }, { name: "import_previews", since: M3 }, { name: "library_operations", since: M3 }, ...catalogueTables.map((name) => ({ name, since: M4 })), ...jobTables.map((name) => ({ name, since: M5 })), ...snapshotTables.map((name) => ({ name, since: M6 })), { name: "saved_book_views", since: M7 }, ...restoreTables.map((name) => ({ name, since: M8 }))],
   policies: [
     policy("shelves", "shelves_select_own", "SELECT", own, null),
     policy("shelves", "shelves_insert_own", "INSERT", null, own),
@@ -96,14 +101,42 @@ export const MANIFEST = Object.freeze({
     policy("saved_book_views", "saved_book_views_insert_own", "INSERT", null, ownSelect("saved_book_views"), M7),
     policy("saved_book_views", "saved_book_views_update_own", "UPDATE", ownSelect("saved_book_views"), ownSelect("saved_book_views"), M7),
     policy("saved_book_views", "saved_book_views_delete_own", "DELETE", ownSelect("saved_book_views"), null, M7),
+    ...restoreTables.flatMap((table) => [
+      policy(table, `${table}_select_own`, "SELECT", ownSelect(table), null, M8),
+      policy(table, `${table}_insert_own`, "INSERT", null, ownSelect(table), M8),
+      ...(restoreFullTables.includes(table) ? [policy(table, `${table}_update_own`, "UPDATE", ownSelect(table), ownSelect(table), M8)] : []),
+      policy(table, `${table}_delete_own`, "DELETE", ownSelect(table), null, M8),
+    ]),
   ],
   // library_state solo se lee: la revisión cambia por lock_library()/triggers, nunca por escritura directa.
   // La caché compartida, las consultas en vuelo y las cuotas no tienen ningún privilegio de cliente.
   grants: {
-    authenticated: { shelves: ["DELETE", "INSERT", "SELECT", "UPDATE"], books: ["DELETE", "INSERT", "SELECT", "UPDATE"], library_state: ["SELECT"], import_previews: ["DELETE", "INSERT", "SELECT"], library_operations: ["INSERT", "SELECT"], catalogue_cache: [], catalogue_inflight: [], catalogue_quota_buckets: [], catalogue_quota_reservations: [], catalogue_private_cache: ["DELETE", "SELECT"], library_jobs: ["SELECT"], library_job_items: ["SELECT"], account_lifecycle: ["SELECT"], library_snapshots: ["SELECT"], library_snapshot_chunks: ["SELECT"], saved_book_views: ["DELETE", "INSERT", "SELECT", "UPDATE"] },
-    anon: { shelves: [], books: [], library_state: [], import_previews: [], library_operations: [], ...Object.fromEntries([...catalogueTables, ...jobTables, ...snapshotTables, "saved_book_views"].map((name) => [name, []])) },
+    authenticated: { shelves: ["DELETE", "INSERT", "SELECT", "UPDATE"], books: ["DELETE", "INSERT", "SELECT", "UPDATE"], library_state: ["SELECT"], import_previews: ["DELETE", "INSERT", "SELECT"], library_operations: ["INSERT", "SELECT"], catalogue_cache: [], catalogue_inflight: [], catalogue_quota_buckets: [], catalogue_quota_reservations: [], catalogue_private_cache: ["DELETE", "SELECT"], library_jobs: ["SELECT"], library_job_items: ["SELECT"], account_lifecycle: ["SELECT"], library_snapshots: ["SELECT"], library_snapshot_chunks: ["SELECT"], saved_book_views: ["DELETE", "INSERT", "SELECT", "UPDATE"],
+      ...Object.fromEntries(restoreFullTables.map((name) => [name, ["DELETE", "INSERT", "SELECT", "UPDATE"]])), ...Object.fromEntries(restoreImmutableTables.map((name) => [name, ["DELETE", "INSERT", "SELECT"]])) },
+    anon: { shelves: [], books: [], library_state: [], import_previews: [], library_operations: [], ...Object.fromEntries([...catalogueTables, ...jobTables, ...snapshotTables, "saved_book_views", ...restoreTables].map((name) => [name, []])) },
   },
   constraints: [
+    // Sesiones de restauración (0008): FK con propietario, hashes y tamaños exactos y estados coherentes.
+    { table: "import_sessions", name: "import_sessions_pkey", type: "p", columns: ["id"], since: M8 },
+    { table: "import_sessions", name: "import_sessions_user_id_users_id_fk", type: "f", columns: ["user_id"], references: "auth.users", refColumns: ["id"], onDelete: "c", since: M8 },
+    { table: "import_sessions", name: "import_sessions_state_check", type: "c", columns: ["state"], tokens: ["'receiving'", "'validated'", "'prepared'", "'committed'", "'rejected'"], since: M8 },
+    { table: "import_sessions", name: "import_sessions_source_check", type: "c", columns: ["source"], tokens: ["'manifest'", "'loose'"], since: M8 },
+    { table: "import_sessions", name: "import_sessions_digest_check", type: "c", columns: ["manifest_digest"], tokens: ["'^[0-9a-f]{64}$'"], since: M8 },
+    { table: "import_sessions", name: "import_sessions_parts_check", type: "c", columns: ["part_count", "validated_parts"], tokens: ["part_count>=1", "part_count<=50", "validated_parts<=part_count"], since: M8 },
+    { table: "import_sessions", name: "import_sessions_bytes_check", type: "c", columns: ["total_bytes", "received_bytes"], tokens: ["total_bytes<=83886080", "received_bytes<=total_bytes"], since: M8 },
+    { table: "import_sessions", name: "import_sessions_committed_check", type: "c", columns: ["state", "operation_id"], tokens: ["state='committed'", "operation_id is not null"], since: M8 },
+    { table: "import_session_parts", name: "import_session_parts_pkey", type: "p", columns: ["session_id", "part_id"], since: M8 },
+    { table: "import_session_parts", name: "import_session_parts_owner_session_fk", type: "f", columns: ["user_id", "session_id"], references: "biblib.import_sessions", refColumns: ["user_id", "id"], onDelete: "c", since: M8 },
+    { table: "import_session_parts", name: "import_session_parts_size_check", type: "c", columns: ["byte_length", "total_chunks"], tokens: ["byte_length<=8388608", "total_chunks=byte_length+262143/262144"], since: M8 },
+    { table: "import_session_parts", name: "import_session_parts_sha_check", type: "c", columns: ["sha256"], tokens: ["'^[0-9a-f]{64}$'"], since: M8 },
+    { table: "import_session_chunks", name: "import_session_chunks_pkey", type: "p", columns: ["session_id", "part_id", "ordinal"], since: M8 },
+    { table: "import_session_chunks", name: "import_session_chunks_owner_part_fk", type: "f", columns: ["user_id", "session_id", "part_id"], references: "biblib.import_session_parts", refColumns: ["user_id", "session_id", "part_id"], onDelete: "c", since: M8 },
+    { table: "import_session_chunks", name: "import_session_chunks_size_check", type: "c", columns: ["byte_length", "bytes"], tokens: ["byte_length<=262144", "octet_length(bytes)=byte_length"], since: M8 },
+    // El hash de cada trozo lo comprueba Postgres sobre los bytes guardados.
+    { table: "import_session_chunks", name: "import_session_chunks_sha_check", type: "c", columns: ["sha256", "bytes"], tokens: ["sha256=encode(sha256(bytes),'hex')"], since: M8 },
+    { table: "import_session_rows", name: "import_session_rows_pkey", type: "p", columns: ["session_id", "kind", "row_key"], since: M8 },
+    { table: "import_session_rows", name: "import_session_rows_owner_session_fk", type: "f", columns: ["user_id", "session_id"], references: "biblib.import_sessions", refColumns: ["user_id", "id"], onDelete: "c", since: M8 },
+    { table: "import_session_rows", name: "import_session_rows_kind_check", type: "c", columns: ["kind"], tokens: ["'book'", "'shelf'"], since: M8 },
     { table: "saved_book_views", name: "saved_book_views_pkey", type: "p", columns: ["id"], since: M7 },
     { table: "saved_book_views", name: "saved_book_views_user_id_users_id_fk", type: "f", columns: ["user_id"], references: "auth.users", refColumns: ["id"], onDelete: "c", since: M7 },
     { table: "saved_book_views", name: "saved_book_views_name_check", type: "c", columns: ["name"], tokens: ["length(btrim(name))", ">=1", "<=80", "name=btrim(name)"], since: M7 },
@@ -199,6 +232,12 @@ export const MANIFEST = Object.freeze({
     { table: "library_snapshot_chunks", name: "library_snapshot_chunks_digest_check", type: "c", columns: ["digest"], tokens: ["'^[0-9a-f]{64}$'"], since: M6 },
   ],
   indexes: [
+    { table: "import_sessions", name: "import_sessions_user_id_id_unique", unique: true, columns: ["user_id", "id"], partial: false, since: M8 },
+    { table: "import_sessions", name: "import_sessions_user_created_idx", unique: false, columns: ["user_id", "created_at", "id"], partial: false, since: M8 },
+    { table: "import_sessions", name: "import_sessions_expires_at_idx", unique: false, columns: ["expires_at"], partial: false, since: M8 },
+    { table: "import_session_parts", name: "import_session_parts_index_unique", unique: true, columns: ["session_id", "part_index"], partial: false, since: M8 },
+    { table: "import_session_parts", name: "import_session_parts_owner_unique", unique: true, columns: ["user_id", "session_id", "part_id"], partial: false, since: M8 },
+    { table: "import_session_rows", name: "import_session_rows_order_idx", unique: false, columns: ["session_id", "kind", "part_index", "position"], partial: false, since: M8 },
     // pg_index.indkey solo enumera user_id para el índice con expresión lower(name).
     { table: "saved_book_views", name: "saved_book_views_user_name_unique", unique: true, columns: ["user_id"], partial: false, definitionTokens: ["lower(name)"], since: M7 },
     { table: "saved_book_views", name: "saved_book_views_user_updated_idx", unique: false, columns: ["user_id", "updated_at"], partial: false, definitionTokens: ["updated_at desc"], since: M7 },
@@ -237,6 +276,12 @@ export const MANIFEST = Object.freeze({
     { table: "library_snapshots", name: "library_snapshots_expires_at_idx", unique: false, columns: ["expires_at"], partial: false, since: M6 },
   ],
   columns: [
+    { table: "import_sessions", name: "base_revision", type: "uuid", notNull: true, since: M8 },
+    { table: "import_sessions", name: "manifest_digest", type: "text", notNull: true, since: M8 },
+    { table: "import_sessions", name: "expires_at", type: "timestamp with time zone", notNull: true, since: M8 },
+    { table: "import_sessions", name: "version", type: "uuid", notNull: true, defaultTokens: ["gen_random_uuid()"], since: M8 },
+    { table: "import_session_chunks", name: "bytes", type: "bytea", notNull: true, since: M8 },
+    { table: "import_session_rows", name: "data", type: "jsonb", notNull: true, since: M8 },
     ...[["id", "uuid"], ["user_id", "uuid"], ["name", "text"], ["filters", "jsonb"], ["created_at", "timestamp with time zone"], ["updated_at", "timestamp with time zone"], ["version", "uuid"]].map(([name, type]) => ({ table: "saved_book_views", name, type, notNull: true, ...(name === "version" ? { defaultTokens: ["gen_random_uuid()"] } : {}), since: M7 })),
     { table: "books", name: "catalogue", type: "jsonb", notNull: true, since: M1 },
     { table: "books", name: "version", type: "uuid", notNull: true, defaultTokens: ["gen_random_uuid()"], since: M2 },
@@ -293,6 +338,8 @@ export const MANIFEST = Object.freeze({
     snapshotFunction("library_snapshot_foreign_ids", "uuid[]", 1),
     snapshotFunction("library_snapshot_delete", "text", 2),
     snapshotFunction("library_snapshot_purge_expired", "integer", 1, false),
+    { name: "guard_import_staging", language: "plpgsql", returns: "trigger", args: 0, searchPath: "search_path=pg_catalog", securityDefiner: false, body: RESTORE.guard_import_staging, execute: { authenticated: false, anon: false }, since: M8 },
+    { name: "import_session_purge_expired", language: "plpgsql", returns: "integer", args: 1, searchPath: "search_path=pg_catalog", securityDefiner: true, body: RESTORE.import_session_purge_expired, execute: { authenticated: false, anon: false }, since: M8 },
   ],
   // tgtype: ROW(1) | BEFORE(2) | INSERT(4) | DELETE(8) | UPDATE(16). BEFORE INSERT OR UPDATE = 23; AFTER INSERT OR UPDATE OR DELETE = 29.
   triggers: [
@@ -300,6 +347,9 @@ export const MANIFEST = Object.freeze({
     { table: "books", name: "books_rotate_library_revision", function: "biblib.rotate_library_revision", timing: "AFTER", events: ["INSERT", "UPDATE", "DELETE"], level: "ROW", tgtype: 29, since: M3 },
     { table: "shelves", name: "shelves_rotate_library_revision", function: "biblib.rotate_library_revision", timing: "AFTER", events: ["INSERT", "UPDATE", "DELETE"], level: "ROW", tgtype: 29, since: M3 },
     { table: "saved_book_views", name: "saved_book_views_guard", function: "biblib.guard_saved_book_view", timing: "BEFORE", events: ["INSERT", "UPDATE"], level: "ROW", tgtype: 23, since: M7 },
+    // BEFORE INSERT FOR EACH ROW = 7.
+    { table: "import_session_chunks", name: "import_session_chunks_guard", function: "biblib.guard_import_staging", timing: "BEFORE", events: ["INSERT"], level: "ROW", tgtype: 7, since: M8 },
+    { table: "import_session_rows", name: "import_session_rows_guard", function: "biblib.guard_import_staging", timing: "BEFORE", events: ["INSERT"], level: "ROW", tgtype: 7, since: M8 },
   ],
   prerequisites: ["auth.users", "auth.uid()", "role:authenticated", "role:anon"],
 })
