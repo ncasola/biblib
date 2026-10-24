@@ -1,6 +1,6 @@
 # Orquestación de F2 con Orca
 
-**Versión:** 1.0 · **Fecha:** 24 de octubre de 2026 · **Estado:** en ejecución (O11).
+**Versión:** 1.0 · **Fecha:** 24 de octubre de 2026 · **Estado:** en ejecución: O11 cerrada ([G11](../validacion/2026-10-24/O11/g11-coordinador.md)); O12 en curso.
 
 Plan operativo de la fase F2, olas O11–O13: restauración conjunta, assets privados, accesibilidad, modelo obra/edición/ejemplar y ciclo de vida de cuenta. Las funciones de producto de O13 se solapan con F3.
 
