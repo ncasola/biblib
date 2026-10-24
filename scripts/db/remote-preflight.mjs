@@ -146,7 +146,11 @@ export async function probeRemote(sql) {
   return { code: failed?.code ?? EXIT.OK, checks, facts: { version: facts.version, major, role: facts.role, tls: facts.tls_version, owners: owners.map((o) => o.owner) } }
 }
 
-/** Huella de los esquemas de plataforma: el runner nunca debe alterar auth/storage. */
+/**
+ * Huella de los esquemas de plataforma: el runner nunca debe alterar auth/storage. Excepción declarada:
+ * las políticas biblib_* de storage.objects del bucket privado de portadas (0009, U-DAT-10) son del
+ * dominio; las comprueba el manifest de objetos (sección storage), no esta huella.
+ */
 export async function platformFingerprint(sql) {
   const rows = await sql`select n.nspname as schema, c.relname as name, c.relkind as kind, c.relrowsecurity as rls,
       coalesce((select array_agg(a.attname::text || ':' || format_type(a.atttypid, a.atttypmod) order by a.attnum) from pg_attribute a where a.attrelid = c.oid and a.attnum > 0 and not a.attisdropped), '{}') as columns
@@ -154,7 +158,7 @@ export async function platformFingerprint(sql) {
     union all select n.nspname, p.proname || '(' || pg_get_function_identity_arguments(p.oid) || ')', 'f', p.prosecdef, array[md5(p.prosrc)]
     from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname in ('auth', 'storage')
     union all select n.nspname, pol.polname || '@' || c.relname, 'P', pol.polpermissive, array[coalesce(pg_get_expr(pol.polqual, pol.polrelid), ''), coalesce(pg_get_expr(pol.polwithcheck, pol.polrelid), '')]
-    from pg_policy pol join pg_class c on c.oid = pol.polrelid join pg_namespace n on n.oid = c.relnamespace where n.nspname in ('auth', 'storage')
+    from pg_policy pol join pg_class c on c.oid = pol.polrelid join pg_namespace n on n.oid = c.relnamespace where n.nspname in ('auth', 'storage') and not starts_with(pol.polname, 'biblib_')
     order by 1, 2, 3`
   return sha256(canonical(rows.map((r) => ({ ...r }))))
 }
