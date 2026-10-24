@@ -63,7 +63,11 @@ export function dockerAvailable() {
 
 // Sustituto mínimo de Supabase (el mismo de test:db) más el rol anon y los esquemas de plataforma.
 const PLATFORM_SQL = `${readFileSync(path.join(repo, "tests/db/bootstrap.sql"), "utf8")}
-CREATE ROLE anon NOLOGIN;
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon') THEN
+    CREATE ROLE anon NOLOGIN;
+  END IF;
+END $$;
 CREATE SCHEMA storage;
 CREATE TABLE storage.buckets (id text PRIMARY KEY);
 `
