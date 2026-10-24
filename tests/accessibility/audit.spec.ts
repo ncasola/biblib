@@ -25,9 +25,14 @@ async function ready(page: Page) {
 }
 
 async function audit(page: Page, info: TestInfo, name: string) {
-  const result = await new AxeBuilder({ page }).analyze()
+  const builder = new AxeBuilder({ page })
+  const modal = await page.locator('[role="dialog"]:visible, [role="alertdialog"]:visible').count() > 0
+  // La pantalla completa se audita justo antes de abrir. Con un modal, el fondo
+  // aria-hidden es inactivo y su atenuación no es el contraste del contenido activo.
+  if (modal) builder.include('[role="dialog"], [role="alertdialog"]')
+  const result = await builder.analyze()
   // Se guardan también moderate/minor/incomplete: no se ocultan reglas ni nodos.
-  save(info, name, { url: new URL(page.url()).pathname, violations: result.violations, incomplete: result.incomplete, passes: result.passes.map(({ id }) => id), engine: result.testEngine })
+  save(info, name, { url: new URL(page.url()).pathname, scope: modal ? "diálogo activo; pantalla completa auditada antes de abrir" : "página completa", violations: result.violations, incomplete: result.incomplete, passes: result.passes.map(({ id }) => id), engine: result.testEngine })
   expect(result.violations.filter(({ impact }) => impact === "serious" || impact === "critical").map(({ id, nodes }) => ({ id, nodes: nodes.map(({ target, failureSummary }) => ({ target, failureSummary })) }))).toEqual([])
 }
 

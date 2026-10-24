@@ -68,7 +68,7 @@ export function ShelfViewer3D({ books, returnPath }: ShelfViewer3DProps) {
                   const author = book.authors[0]?.name?.trim()
 
                   return (
-                    <Link
+                    <Link tabIndex={0}
                       key={book.id}
                       id={bookRowAnchor(book.id)}
                       href={buildBookDetailHref(book.id, `${returnPath}#${bookRowAnchor(book.id)}`)}

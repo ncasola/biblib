@@ -56,7 +56,7 @@ export function ShelfCard({ shelf, bookCount, onUpdate, onDelete, isDefault }: S
 
       <div className="flex items-start justify-between gap-4 pr-12">
         <div className="flex-1">
-          <h2 className="mb-1 text-lg font-bold text-foreground"><Link href={`/books?shelf=${encodeURIComponent(shelf.id)}`} className="rounded-sm underline-offset-4 hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">{shelf.title}</Link></h2>
+          <h2 className="mb-1 text-lg font-bold text-foreground"><Link tabIndex={0} href={`/books?shelf=${encodeURIComponent(shelf.id)}`} className="rounded-sm underline-offset-4 hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">{shelf.title}</Link></h2>
           <div className="flex items-center gap-2 text-muted-foreground text-sm">
             <BookOpen className="w-4 h-4" />
             <span>
@@ -68,7 +68,7 @@ export function ShelfCard({ shelf, bookCount, onUpdate, onDelete, isDefault }: S
 
       <div className="h-px bg-border" />
 
-      <Link href={`/books?shelf=${encodeURIComponent(shelf.id)}`} className="text-sm font-medium text-primary underline-offset-4 hover:underline">Ver libros de esta estantería<span className="sr-only">: {shelf.title}</span></Link>
+      <Link tabIndex={0} href={`/books?shelf=${encodeURIComponent(shelf.id)}`} className="text-sm font-medium text-primary underline-offset-4 hover:underline">Ver libros de esta estantería<span className="sr-only">: {shelf.title}</span></Link>
 
       <div className="flex gap-2">
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>

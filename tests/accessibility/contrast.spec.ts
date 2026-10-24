@@ -1,13 +1,22 @@
 import { mkdirSync, writeFileSync } from "node:fs"
 import path from "node:path"
+import AxeBuilder from "@axe-core/playwright"
 import { expect, test } from "../e2e/lib/fixtures"
 
-test("contraste: colores compuestos, estados, componentes y foco en ambos temas", async ({ page }, info) => {
-  await page.goto("/books")
+test("contraste: colores compuestos, estados, componentes y foco en ambos temas", async ({ page, stack }, info) => {
+  await page.goto(`/book/${stack.fixtureBookId("a", "isla")}`)
+  await expect(page.getByRole("button", { name: "Editar ficha", exact: true })).toBeVisible()
   await page.waitForLoadState("networkidle")
   const results = []
   for (const theme of ["light", "dark"]) {
     await page.evaluate((theme) => document.documentElement.classList.toggle("dark", theme === "dark"), theme)
+    for (const name of ["Editar ficha", "Eliminar libro"] as const) {
+      await page.getByRole("button", { name, exact: true }).hover()
+      // Espera al fin de la transición de color; también verifica el hover real.
+      await page.waitForTimeout(250)
+      const hovered = await new AxeBuilder({ page }).analyze()
+      expect(hovered.violations.filter(({ impact }) => impact === "serious" || impact === "critical").map(({ id, nodes }) => ({ id, nodes: nodes.map(({ target, failureSummary }) => ({ target, failureSummary })) }))).toEqual([])
+    }
     const rows = await page.evaluate(() => {
       type Color = [number, number, number, number]
       const canvas = document.createElement("canvas")

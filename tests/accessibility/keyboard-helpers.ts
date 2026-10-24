@@ -6,6 +6,7 @@ export async function tabTo(page: Page, target: Locator, limit = 100) {
   await expect(target).toBeVisible()
   const key = await target.evaluate((element) => {
     const active = document.activeElement
+    if (active === document.body && element.closest("header")) return "Shift+Tab"
     return active && (element.compareDocumentPosition(active) & Node.DOCUMENT_POSITION_FOLLOWING) ? "Shift+Tab" : "Tab"
   })
   for (let i = 0; i < limit; i++) {

@@ -52,14 +52,14 @@ export function Header() {
 
   return (
     <header onBlur={(event) => { if (mobileMenuOpen && !event.currentTarget.contains(event.relatedTarget)) closeMenu() }} onKeyDown={(event) => { if (event.key === "Escape" && mobileMenuOpen) { closeMenu(); menuButton.current?.focus() } }} className="sticky top-0 z-50 border-b-2 rounded-2xl border-border/50 bg-card/80 backdrop-blur-xl shadow-lg">
-      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-3 focus:z-50 focus:rounded-lg focus:bg-background focus:p-3 focus:text-foreground focus:shadow-lg">Saltar al contenido</a>
+      <a tabIndex={0} href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-3 focus:z-50 focus:rounded-lg focus:bg-background focus:p-3 focus:text-foreground focus:shadow-lg">Saltar al contenido</a>
       <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
-        <Link href="/" onClick={closeMenu} aria-label="BibLib, inicio" className="flex items-center gap-3 group shrink-0">
+        <Link tabIndex={0} href="/" onClick={closeMenu} aria-label="BibLib, inicio" className="flex items-center gap-3 group shrink-0">
           <Image src="/logo.png" alt="" width={50} height={50} className="rounded-full border-2 border-border/60 bg-card transition-transform motion-safe:group-hover:scale-110" />
           <span className="text-2xl font-bold heading-vintage">BibLib</span>
         </Link>
         <nav aria-label="Navegación principal" className="hidden md:flex gap-2 lg:gap-5 items-center">
-          {navigation.map(({ href, label }) => <Link key={href} href={href} aria-current={isActive(href) ? "page" : undefined} className={linkClass(href)}>{label}</Link>)}
+          {navigation.map(({ href, label }) => <Link tabIndex={0} key={href} href={href} aria-current={isActive(href) ? "page" : undefined} className={linkClass(href)}>{label}</Link>)}
         </nav>
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon" onClick={toggleTheme} disabled={!mounted} aria-label={theme === "dark" ? "Activar tema claro" : "Activar tema oscuro"} className="rounded-xl hover:bg-vintage-yellow/20">
@@ -91,11 +91,11 @@ export function Header() {
       {error && <p role="alert" className="max-w-7xl mx-auto px-4 pb-3 text-sm text-destructive">{error}</p>}
       {mobileMenuOpen && (
         <nav id="mobile-navigation" aria-label="Navegación móvil" className="md:hidden max-h-[calc(100dvh-5rem)] overflow-y-auto border-t-2 border-border px-4 py-4 flex flex-col gap-3 bg-card">
-          {navigation.map(({ href, label }) => <Link key={href} href={href} onClick={closeMenu} aria-current={isActive(href) ? "page" : undefined} className={linkClass(href)}>{label}</Link>)}
+          {navigation.map(({ href, label }) => <Link tabIndex={0} key={href} href={href} onClick={closeMenu} aria-current={isActive(href) ? "page" : undefined} className={linkClass(href)}>{label}</Link>)}
           {loading ? <p role="status" className="text-sm text-muted-foreground">Cargando cuenta...</p> : user ? <>
-            <Link href="/profile" onClick={closeMenu} aria-current={pathname === "/profile" ? "page" : undefined} className={linkClass("/profile")}>Perfil</Link>
+            <Link tabIndex={0} href="/profile" onClick={closeMenu} aria-current={pathname === "/profile" ? "page" : undefined} className={linkClass("/profile")}>Perfil</Link>
             <Button variant="ghost" disabled={signingOut} onClick={() => void handleSignOut()} className="justify-start text-destructive">{signingOut ? "Cerrando sesión..." : "Cerrar sesión"}</Button>
-          </> : <Link href="/login" onClick={closeMenu} className={linkClass("/login")}>Iniciar sesión</Link>}
+          </> : <Link tabIndex={0} href="/login" onClick={closeMenu} className={linkClass("/login")}>Iniciar sesión</Link>}
         </nav>
       )}
     </header>

@@ -69,10 +69,13 @@ test("teclado: alta, búsqueda, selección, movimiento, edición, foco y cierre 
   // Selección por letras en el listbox nativo de Radix.
   await page.keyboard.type(data.marked(`Destino ${slug}`))
   await page.keyboard.press("Enter")
+  await expect(page.getByRole("combobox", { name: "Estantería de destino" })).toBeFocused()
+  await expect(page.getByRole("listbox")).toHaveCount(0)
   await tabTo(page, page.getByRole("button", { name: "Mover 1 libro", exact: true }))
   await page.keyboard.press("Enter")
   await expect.poll(async () => (await stack.sql`select shelf_id from biblib.books where id = ${id}`)[0]?.shelf_id).toBe(shelf)
   await expect(page.getByRole("checkbox", { name: `Seleccionar ${title} revisado`, exact: true })).not.toBeChecked()
+  await expect(page.getByRole("checkbox", { name: "Seleccionar todos los libros de esta página" })).toBeFocused()
   await page.waitForLoadState("networkidle")
   guard.allowConsole(SIGN_OUT_RSC_404)
   await tabTo(page, accountMenu(page, stack, "a"))
