@@ -54,9 +54,11 @@ test("servidor y base rechazan nombres largos, duplicados y criterios arbitrario
   for (const input of [{ name: "x".repeat(81), filters: FILTERS }, { name: ctx.name("SQL"), filters: { ...FILTERS, sql: "select *" } }, { name: ctx.name("Selección"), filters: { ...FILTERS, selectedIds: [] } }]) {
     failed(await ctx.call("saveCurrentViewAction", [input], a), "INVALID_INPUT")
   }
-  for (const filters of [{ ...FILTERS, page: 2 }, { ...FILTERS, status: null }, { ...FILTERS, pageSize: "10" }, { ...FILTERS, pageSize: 10.1 }, [], null]) {
+  for (const filters of [{ ...FILTERS, page: 2 }, { ...FILTERS, status: null }, { ...FILTERS, pageSize: "10" }, { ...FILTERS, pageSize: 10.1 }, []]) {
     await assert.rejects(ctx.asUser(ctx.users.a, (tx) => tx`insert into biblib.saved_book_views (user_id,name,filters) values (${ctx.users.a}, ${ctx.name("Inválida")}, ${tx.json(filters)})`), { code: "23514" })
   }
+  // Un filtro nulo lo rechaza antes la restricción NOT NULL de la columna (23502) que el CHECK de contenido.
+  await assert.rejects(ctx.asUser(ctx.users.a, (tx) => tx`insert into biblib.saved_book_views (user_id,name,filters) values (${ctx.users.a}, ${ctx.name("Nula")}, ${null})`), { code: "23502" })
   await assert.rejects(ctx.asUser(ctx.users.a, (tx) => tx`insert into biblib.saved_book_views (user_id,name,filters) values (${ctx.users.a}, ${"x".repeat(81)}, ${tx.json(FILTERS)})`), { code: "23514" })
 })
 
