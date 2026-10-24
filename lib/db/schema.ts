@@ -80,8 +80,14 @@ export const shelves = biblibSchema.table(
   ],
 ).enableRLS()
 
-export const books = biblibSchema.table(
-  "books",
+/**
+ * Tabla `books` anterior a U-DAT-06, congelada por 0011 como `books_legacy`: nadie la escribe ni la lee la
+ * aplicación, sin políticas ni privilegios de cliente y sin FK a estanterías ni portadas (no bloquea su
+ * borrado). Se conserva durante la ventana de retirada de F4 como punto de comparación del backfill
+ * (`biblib.model_compare`); su retirada es un DROP TABLE en una migración de F4 (docs/operacion.md).
+ */
+export const booksLegacy = biblibSchema.table(
+  "books_legacy",
   {
     id: uuid("id").defaultRandom().primaryKey(),
     version: uuid("version").notNull().defaultRandom(),
@@ -102,49 +108,16 @@ export const books = biblibSchema.table(
     status: text("status").$type<Book["status"]>().notNull().default("unread"),
     shelfId: uuid("shelf_id")
       .notNull(),
-    // Portada privada validada (U-DAT-10). Sustituye a las URL visibles mientras exista; las URL se
-    // conservan como alternativa. U-DAT-06 la trasladará a la edición o el ejemplar.
     coverAssetId: uuid("cover_asset_id"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
     uniqueIndex("books_user_id_isbn_unique").on(table.userId, table.isbn),
-    index("books_cover_asset_idx").on(table.userId, table.coverAssetId).where(sql`${table.coverAssetId} is not null`),
-    foreignKey({ name: "books_owner_cover_asset_fk", columns: [table.userId, table.coverAssetId], foreignColumns: [coverAssets.userId, coverAssets.id] }),
     uniqueIndex("books_user_id_id_unique").on(table.userId, table.id),
-    index("books_user_id_idx").on(table.userId),
-    index("books_shelf_id_idx").on(table.shelfId),
-    // Índices de lectura medidos por U-QA-03 (tarea T8, migración 0006): listado por título, vista 3D
-    // por estantería y «Añadidos recientemente». Aditivos; su retirada es DROP INDEX (docs/operacion.md).
-    index("books_user_title_idx").on(table.userId, table.title, table.id),
-    index("books_user_shelf_title_idx").on(table.userId, table.shelfId, table.title, table.id),
-    index("books_user_created_idx").on(table.userId, table.createdAt.desc().nullsFirst(), table.id.desc().nullsFirst()),
     check("books_status_check", sql`${table.status} in ('read', 'reading', 'unread', 'to-read')`),
     check("books_pages_check", sql`${table.numberOfPages} between 0 and 100000`),
     check("books_title_check", sql`length(btrim(${table.title})) between 1 and 500`),
-    foreignKey({ name: "books_owner_shelf_fk", columns: [table.userId, table.shelfId], foreignColumns: [shelves.userId, shelves.id] }).onDelete("restrict"),
-    pgPolicy("books_select_own", {
-      for: "select",
-      to: authenticatedRole,
-      using: ownRow(table.userId),
-    }),
-    pgPolicy("books_insert_own", {
-      for: "insert",
-      to: authenticatedRole,
-      withCheck: ownRow(table.userId),
-    }),
-    pgPolicy("books_update_own", {
-      for: "update",
-      to: authenticatedRole,
-      using: ownRow(table.userId),
-      withCheck: ownRow(table.userId),
-    }),
-    pgPolicy("books_delete_own", {
-      for: "delete",
-      to: authenticatedRole,
-      using: ownRow(table.userId),
-    }),
   ],
 ).enableRLS()
 
@@ -245,6 +218,47 @@ export const copies = biblibSchema.table("copies", {
   ...ownPolicies("copies", table.userId),
 ]).enableRLS()
 
+/**
+ * Modelo de lectura plano (U-DAT-06): la vista `biblib.books` de 0011, un ejemplar con su edición y su obra,
+ * con las columnas de la tabla legacy más las del modelo. `security_invoker`: aplica RLS de las tablas a
+ * quien consulta. `version` es el token plano (cambia con el ejemplar o con la edición); `isbn`, el ISBN-13
+ * de la edición o el identificador legacy del ejemplar. La aplicación solo la lee: escribe en `copies`,
+ * `editions` y `works`. Sus triggers INSTEAD OF mantienen compatibles los scripts SQL que escribían `books`.
+ */
+export const books = biblibSchema.view("books", {
+  id: uuid("id").notNull(),
+  version: uuid("version").notNull(),
+  userId: uuid("user_id").notNull(),
+  isbn: text("isbn"),
+  title: text("title").notNull(),
+  subtitle: text("subtitle"),
+  authors: jsonb("authors").$type<Author[]>().notNull(),
+  publishers: jsonb("publishers").$type<Publisher[]>().notNull(),
+  catalogue: jsonb("catalogue").$type<CatalogueMetadata>().notNull(),
+  numberOfPages: integer("number_of_pages").notNull(),
+  publishDate: text("publish_date").notNull(),
+  coverSmall: text("cover_small").notNull(),
+  coverMedium: text("cover_medium").notNull(),
+  coverLarge: text("cover_large").notNull(),
+  status: text("status").$type<Book["status"]>().notNull(),
+  shelfId: uuid("shelf_id").notNull(),
+  coverAssetId: uuid("cover_asset_id"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
+  editionId: uuid("edition_id").notNull(),
+  copyVersion: uuid("copy_version").notNull(),
+  editionVersion: uuid("edition_version").notNull(),
+  isbn13: text("isbn13"),
+  legacyIdentifier: text("legacy_identifier"),
+  editionVerification: jsonb("edition_verification").$type<CopyVerification>().notNull(),
+  workId: uuid("work_id"),
+  workTitle: text("work_title"),
+  language: text("language"),
+  identifiers: jsonb("identifiers").$type<EditionIdentifiers>().notNull(),
+  searchText: text("search_text"),
+  editionCopies: integer("edition_copies").notNull(),
+}).existing()
+
 export type ModelMigrationReportKind = "summary" | "normalized" | "invalid" | "conflict" | "grouped"
 
 /**
@@ -344,6 +358,12 @@ export const importPreviews = biblibSchema.table(
   ],
 ).enableRLS()
 
+/**
+ * Operaciones idempotentes por (propietario, operación, clave). U-DAT-06 añade las del modelo: crear un
+ * ejemplar o una edición, cambiar una edición y fusionar ediciones; su resultado durable es el de la acción.
+ */
+export type LibraryOperationKind = "import.confirm" | "snapshot.restore" | "restore.commit" | "copy.create" | "edition.create" | "edition.update" | "edition.merge"
+
 /** Resultado durable e idempotente por (propietario, operación, clave). Sin UPDATE ni DELETE para `authenticated`. */
 export const libraryOperations = biblibSchema.table(
   "library_operations",
@@ -352,12 +372,12 @@ export const libraryOperations = biblibSchema.table(
     userId: uuid("user_id")
       .notNull()
       .references(() => authUsers.id, { onDelete: "cascade" }),
-    operation: text("operation").$type<"import.confirm" | "snapshot.restore" | "restore.commit">().notNull(),
+    operation: text("operation").$type<LibraryOperationKind>().notNull(),
     idempotencyKey: text("idempotency_key").notNull(),
     inputDigest: text("input_digest").notNull(),
     previewId: uuid("preview_id"),
     status: text("status").$type<"committed">().notNull(),
-    result: jsonb("result").$type<ImportOperationResult>().notNull(),
+    result: jsonb("result").$type<ImportOperationResult | Record<string, unknown>>().notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
@@ -365,7 +385,7 @@ export const libraryOperations = biblibSchema.table(
     uniqueIndex("library_operations_preview_unique").on(table.userId, table.previewId).where(sql`${table.previewId} is not null`),
     // Destino de la FK con propietario de las versiones anteriores (U-DAT-02).
     uniqueIndex("library_operations_user_id_id_unique").on(table.userId, table.id),
-    check("library_operations_operation_check", sql`${table.operation} in ('import.confirm', 'snapshot.restore', 'restore.commit')`),
+    check("library_operations_operation_check", sql`${table.operation} in ('import.confirm', 'snapshot.restore', 'restore.commit', 'copy.create', 'edition.create', 'edition.update', 'edition.merge')`),
     check("library_operations_status_check", sql`${table.status} in ('committed')`),
     check("library_operations_key_check", sql`length(${table.idempotencyKey}) between 16 and 128`),
     check("library_operations_digest_check", sql`${table.inputDigest} ~ '^[0-9a-f]{64}$'`),
