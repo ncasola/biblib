@@ -71,7 +71,7 @@ export function ShelfCard({ shelf, bookCount, onUpdate, onDelete, isDefault }: S
       <Link tabIndex={0} href={`/books?shelf=${encodeURIComponent(shelf.id)}`} className="text-sm font-medium text-primary underline-offset-4 hover:underline">Ver libros de esta estantería<span className="sr-only">: {shelf.title}</span></Link>
 
       <div className="flex gap-2">
-        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <Dialog open={isEditDialogOpen} onOpenChange={(open) => { if (!pending) { setIsEditDialogOpen(open); setError(null) } }}>
           {isDefault ? (
             <Button type="button" variant="outline" size="sm" className="flex-1 border-border bg-transparent" disabled title="El nombre de esta estantería es inmutable." aria-label="Renombrar estantería predeterminada, acción deshabilitada">
               <Edit2 className="mr-2 h-4 w-4" />
@@ -98,7 +98,7 @@ export function ShelfCard({ shelf, bookCount, onUpdate, onDelete, isDefault }: S
                 className="bg-surface border-border"
               />
               <div className="flex gap-2 justify-end">
-                <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} disabled={pending}>
+                <Button variant="outline" onClick={() => { setIsEditDialogOpen(false); setError(null) }} disabled={pending}>
                   Cancelar
                 </Button>
                 <Button
@@ -109,6 +109,7 @@ export function ShelfCard({ shelf, bookCount, onUpdate, onDelete, isDefault }: S
                   {pending ? "Guardando…" : "Guardar"}
                 </Button>
               </div>
+              {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
             </div>
           </DialogContent>
         </Dialog>
@@ -130,7 +131,7 @@ export function ShelfCard({ shelf, bookCount, onUpdate, onDelete, isDefault }: S
           </Button>
         )}
       </div>
-      {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+      {error && !isEditDialogOpen && <p role="alert" className="text-sm text-destructive">{error}</p>}
     </div>
   )
 }
