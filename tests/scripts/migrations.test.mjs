@@ -15,14 +15,15 @@ import { classify, closeConnection, connect, inspectDatabase, readLedger, resolv
 
 const repo = fileURLToPath(new URL("../../", import.meta.url))
 const drizzleDir = path.join(repo, "drizzle")
-// Metadatos reales capturados de Supabase local: tras 0002 (U-INF-04), tras 0003 (U-DAT-01), tras 0004 (U-DAT-05), tras 0005 (U-DAT-03), tras 0006 (U-DAT-02), tras 0007 (U-EXP-02) y tras 0008 (U-DAT-04, head actual).
+// Metadatos reales capturados de Supabase local: tras 0002 (U-INF-04), tras 0003 (U-DAT-01), tras 0004 (U-DAT-05), tras 0005 (U-DAT-03), tras 0006 (U-DAT-02), tras 0007 (U-EXP-02), tras 0008 (U-DAT-04) y tras 0009 (U-DAT-10, head actual).
 const facts0002 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0002.json"), "utf8"))
 const facts0003 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0003.json"), "utf8"))
 const facts0004 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0004.json"), "utf8"))
 const facts0005 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0005.json"), "utf8"))
 const facts0006 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0006.json"), "utf8"))
 const facts0007 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0007.json"), "utf8"))
-const facts = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0008.json"), "utf8"))
+const facts0008 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0008.json"), "utf8"))
+const facts = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0009.json"), "utf8"))
 const named = (list, name) => list.find((item) => item.name === name)
 const temporary = []
 after(() => { for (const dir of temporary) rmSync(dir, { recursive: true, force: true }) })
@@ -107,7 +108,7 @@ describe("ledger", () => {
     assert.deepEqual(compareLedger(entries, rowsFor(entries)).pending, [])
     const partial = compareLedger(entries, rowsFor(entries, 1))
     assert.equal(partial.appliedHead.tag, "0000_biblib_init")
-    assert.deepEqual(partial.pending, ["0001_library_integrity", "0002_book_versions", "0003_library_revision", "0004_catalogue_coordination", "0005_library_jobs", "0006_library_snapshots", "0007_saved_views", "0008_restore_sessions"])
+    assert.deepEqual(partial.pending, ["0001_library_integrity", "0002_book_versions", "0003_library_revision", "0004_catalogue_coordination", "0005_library_jobs", "0006_library_snapshots", "0007_saved_views", "0008_restore_sessions", "0009_cover_assets"])
     assert.equal(compareLedger(entries, []).pending.length, entries.length)
   })
 
@@ -178,7 +179,9 @@ describe("manifest de objetos", () => {
 
   test("los metadatos reales tras 0007 cumplen su prefijo", () => { assert.deepEqual(failing(verifyManifest(facts0007, MANIFEST_MIGRATIONS.slice(0, 8))), []) })
 
-  test("los metadatos reales tras 0008 cumplen el manifest completo", () => {
+  test("los metadatos reales tras 0008 cumplen su prefijo", () => { assert.deepEqual(failing(verifyManifest(facts0008, MANIFEST_MIGRATIONS.slice(0, 9))), []) })
+
+  test("los metadatos reales tras 0009 cumplen el manifest completo", () => {
     const checks = verifyManifest(facts, MANIFEST_MIGRATIONS)
     assert.deepEqual(failing(checks), [])
     assert.ok(checks.length >= 320)
@@ -301,6 +304,44 @@ describe("manifest de objetos", () => {
     assert.deepEqual(failing(verifyManifest(ownerless, MANIFEST_MIGRATIONS)), ["constraint.import_session_chunks_owner_part_fk"])
     const open = clone(facts); named(open.policies, "import_session_rows_select_own").using = "true"
     assert.deepEqual(failing(verifyManifest(open, MANIFEST_MIGRATIONS)), ["policy.import_session_rows_select_own"])
+  })
+
+  test("drift de las portadas privadas (0009): Storage, Google, ejecutor, escritura y propietario", () => {
+    // Bucket público, otros tipos o una política nueva en storage.objects abren las portadas privadas.
+    const open = clone(facts); open.storage.buckets[0].public = true
+    assert.deepEqual(failing(verifyManifest(open, MANIFEST_MIGRATIONS)), ["storage.bucket.biblib-covers"])
+    const svg = clone(facts); svg.storage.buckets[0].allowedMimeTypes = ["image/webp", "image/svg+xml"]
+    assert.deepEqual(failing(verifyManifest(svg, MANIFEST_MIGRATIONS)), ["storage.bucket.biblib-covers"])
+    const extra = clone(facts); extra.storage.policies.push({ name: "biblib_covers_update_own", cmd: "w", permissive: true, roles: ["authenticated"], using: "true", check: "true" })
+    assert.deepEqual(failing(verifyManifest(extra, MANIFEST_MIGRATIONS)), ["storage.policy.biblib_covers_update_own"])
+    const lax = clone(facts); named(lax.storage.policies, "biblib_covers_insert_own").check = "(bucket_id = 'biblib-covers'::text)"
+    assert.deepEqual(failing(verifyManifest(lax, MANIFEST_MIGRATIONS)), ["storage.policy.biblib_covers_insert_own"])
+    const anon = clone(facts); named(anon.storage.policies, "biblib_covers_select_own").roles = ["anon", "authenticated"]
+    assert.deepEqual(failing(verifyManifest(anon, MANIFEST_MIGRATIONS)), ["storage.policy.biblib_covers_select_own"])
+    const missing = clone(facts); delete missing.storage
+    assert.deepEqual(failing(verifyManifest(missing, MANIFEST_MIGRATIONS)), ["storage.bucket.biblib-covers", "storage.policy.biblib_covers_select_own", "storage.policy.biblib_covers_insert_own", "storage.policy.biblib_covers_delete_own"])
+    // Sin la guarda de lease y fencing, un trabajador antiguo podría volver a subir.
+    const stale = clone(facts); named(stale.functions, "cover_object_access").body = named(stale.functions, "cover_object_access").body.replace("AND j.lease_until > clock_timestamp()", "")
+    assert.deepEqual(failing(verifyManifest(stale, MANIFEST_MIGRATIONS)), ["function.cover_object_access"])
+    // El ejecutor sin sesión vuelve a reclamar adquisiciones.
+    const claim = clone(facts); named(claim.functions, "library_job_claim").body = named(claim.functions, "library_job_claim").body.replace("AND (p_job_id IS NOT NULL OR j.kind <> 'cover_asset')", "")
+    assert.deepEqual(failing(verifyManifest(claim, MANIFEST_MIGRATIONS)), ["function.library_job_claim"])
+    const google = clone(facts); google.constraints = google.constraints.filter((c) => c.name !== "cover_assets_source_ref_check")
+    assert.deepEqual(failing(verifyManifest(google, MANIFEST_MIGRATIONS)), ["constraint.cover_assets_source_ref_check"])
+    const write = clone(facts); write.grants.push({ grantee: "authenticated", table: "cover_assets", privilege: "UPDATE" })
+    assert.deepEqual(failing(verifyManifest(write, MANIFEST_MIGRATIONS)), ["grant.authenticated.cover_assets"])
+    const purge = clone(facts); named(purge.functions, "cover_asset_purge_candidates").execute_authenticated = true
+    assert.deepEqual(failing(verifyManifest(purge, MANIFEST_MIGRATIONS)), ["function.cover_asset_purge_candidates"])
+    const ownerless = clone(facts); ownerless.constraints = ownerless.constraints.filter((c) => c.name !== "books_owner_cover_asset_fk")
+    assert.deepEqual(failing(verifyManifest(ownerless, MANIFEST_MIGRATIONS)), ["constraint.books_owner_cover_asset_fk"])
+    const unguarded = clone(facts); named(unguarded.triggers, "books_guard_cover_asset").enabled = "D"
+    assert.deepEqual(failing(verifyManifest(unguarded, MANIFEST_MIGRATIONS)), ["trigger.books_guard_cover_asset"])
+    // Una restricción ampliada por 0009 se comprueba con su variante: el kind de 0005 ya no basta.
+    const narrow = clone(facts); named(narrow.constraints, "library_jobs_kind_check").definition = "CHECK ((kind = ANY (ARRAY['import'::text, 'covers'::text])))"
+    assert.deepEqual(failing(verifyManifest(narrow, MANIFEST_MIGRATIONS)), ["constraint.library_jobs_kind_check"])
+    // Los metadatos de 0008 no cumplen el manifest de 0009, y los de 0009 no son un head de 0008.
+    assert.ok(failing(verifyManifest(facts0008, MANIFEST_MIGRATIONS)).includes("storage.bucket.biblib-covers"))
+    assert.ok(failing(verifyManifest(facts, MANIFEST_MIGRATIONS.slice(0, 9))).includes("policy.cover_assets_select_own"))
   })
 
   test("drift de los objetos de 0003: escritura directa, permisos, seguridad y triggers", () => {

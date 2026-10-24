@@ -2,7 +2,7 @@ import { createHash } from "node:crypto"
 import { and, eq, sql } from "drizzle-orm"
 import { z } from "zod"
 import type { DatabaseTransaction } from "./db/client"
-import { books, librarySnapshots, shelves, type LibrarySnapshotReason } from "./db/schema"
+import { books, coverAssets, librarySnapshots, shelves, type LibrarySnapshotReason } from "./db/schema"
 import { DomainError, databaseErrorCode } from "./domain-errors"
 import { canonicalJson, IMPORT_RULES_VERSION, type CollectionSnapshot, type IdAllocator, type ImportMode, type ImportPlan } from "./import-plan"
 import type { Author, Book, CatalogueMetadata, Publisher } from "./types"
@@ -44,6 +44,8 @@ export interface SnapshotBookEntry {
   status: Book["status"]
   shelf_id: string
   created_at: string
+  /** Portada privada de la ficha (U-DAT-10, desde 0009); ausente en las fichas sin asset y en versiones anteriores. */
+  cover_asset_id?: string
 }
 export interface SnapshotContent { shelves: SnapshotShelfEntry[]; books: SnapshotBookEntry[] }
 
@@ -224,7 +226,7 @@ const bookEntrySchema = z.object({
   id: uuidText, isbn: z.string(), title: z.string(), subtitle: z.string().nullable(), authors: jsonArray<Author>(), publishers: jsonArray<Publisher>(),
   catalogue: jsonObject<CatalogueMetadata>(), number_of_pages: z.number().int(), publish_date: z.string(),
   cover_small: z.string(), cover_medium: z.string(), cover_large: z.string(), status: z.enum(["read", "reading", "unread", "to-read"]),
-  shelf_id: uuidText, created_at: z.string(),
+  shelf_id: uuidText, created_at: z.string(), cover_asset_id: uuidText.optional(),
 })
 
 export interface SnapshotChunkRow { seq: number; kind: string; itemCount: number; digest: string; valid: boolean; payload: unknown }
@@ -309,12 +311,18 @@ export async function applyRestorePlan(tx: DatabaseTransaction, userId: string, 
     await tx.insert(shelves).values(plan.shelves.create.map((entry) => ({ id: entry.id, userId, title: entry.title, isDefault: false, createdAt: new Date(shelfSource.get(entry.sourceId)?.created_at ?? Date.now()) })))
   }
   const bookSource = new Map(content.books.map((book) => [book.id, book]))
+  // La versión retiene la referencia a la portada privada; solo se recupera si el asset propio sigue
+  // utilizable (la purga no retira lo que una versión cita, pero una licencia vencida sí).
+  const referenced = [...new Set(content.books.flatMap((book) => book.cover_asset_id ? [book.cover_asset_id] : []))]
+  const usable = new Set(referenced.length ? (await tx.select({ id: coverAssets.id }).from(coverAssets)
+    .where(and(eq(coverAssets.userId, userId), eq(coverAssets.state, "ready"), sql`${coverAssets.id} = any(${`{${referenced.join(",")}}`}::uuid[])`, sql`(${coverAssets.expiresAt} is null or ${coverAssets.expiresAt} > now())`))).map((row) => row.id) : [])
   const values = plan.books.insert.map((entry) => {
     const book = bookSource.get(entry.sourceId)
     if (!book) throw snapshotDamaged()
     return { id: entry.id, userId, isbn: book.isbn, title: book.title, subtitle: book.subtitle, authors: book.authors, publishers: book.publishers,
       catalogue: book.catalogue, numberOfPages: book.number_of_pages, publishDate: book.publish_date,
       coverSmall: book.cover_small, coverMedium: book.cover_medium, coverLarge: book.cover_large, status: book.status, shelfId: entry.shelfId,
+      coverAssetId: book.cover_asset_id && usable.has(book.cover_asset_id) ? book.cover_asset_id : null,
       createdAt: new Date(book.created_at) }
   })
   for (let offset = 0; offset < values.length; offset += 100) await tx.insert(books).values(values.slice(offset, offset + 100))

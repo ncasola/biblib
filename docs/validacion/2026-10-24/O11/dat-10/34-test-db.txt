@@ -1,0 +1,40 @@
+
+> biblib@1.0.0 test:db C:\Users\ncaso\orca\workspaces\biblib\u-inf-03
+> node scripts/test-database.mjs
+
+Correcto: tests/db/bootstrap.sql
+Correcto: drizzle/0000_biblib_init.sql
+Correcto: tests/db/legacy.sql
+Correcto: drizzle/0001_library_integrity.sql
+Correcto: drizzle/0002_book_versions.sql
+Correcto: drizzle/0003_library_revision.sql
+Correcto: tests/db/versions.sql
+Correcto: tests/db/rls.sql
+Correcto: migraciones, aislamiento A/B, FK de propietario, predeterminada, integridad y rollback.
+Correcto: tests/db/revision.sql
+Correcto: revisión de colección, bloqueo, rotación única, aislamiento A/B, vistas previas e idempotencia.
+Correcto: drizzle/0004_catalogue_coordination.sql
+Correcto: tests/db/catalogue.sql
+Correcto: cuota atómica, intervalo, horizonte, tope por dueño, cooldown, fencing, caché sin caídas, invalidación y aislamiento A/B.
+Correcto: drizzle/0005_library_jobs.sql
+Correcto: tests/db/jobs.sql
+Correcto: trabajos (alta idempotente, A/B, permisos, lease, fencing, control, cuenta activa, caducidad y elementos)
+Correcto: drizzle/0006_library_snapshots.sql
+Correcto: tests/db/snapshots.sql
+Correcto: versiones anteriores (captura en la transacción, hashes, C/D, permisos, IDs ocupados, borrado, cuota, cuenta bloqueada, tamaño y cascadas)
+Correcto: drizzle/0007_saved_views.sql
+Correcto: drizzle/0008_restore_sessions.sql
+Correcto: tests/db/restore-sessions.sql
+Correcto: sesiones de restauración (RLS E/F, hash y tamaño de trozos, inmutabilidad, guarda de sesión, restore.commit, purga y cascadas)
+Correcto: drizzle/0009_cover_assets.sql
+Correcto: tests/db/cover-assets.sql
+Correcto: bucket privado biblib-covers con WebP y 5 MiB
+Correcto: subida propia en cuarentena, intento autorizado, registro con objeto presente e inmutable
+Correcto: deduplicación solo dentro del dueño; H y anon no ven, suben, registran ni descartan nada de G
+Correcto: guarda de adjunto (BA001), FK con propietario y sin escritura directa ni funciones de servidor para authenticated
+Correcto: adquisición idempotente atada a la ficha vigente, Google rechazado por Postgres y subida solo con lease y fencing vigentes
+Correcto: fichas y versiones anteriores retienen el asset; gracia, huérfanos y purga confirmada
+Correcto: la versión anterior retiene la referencia sin cambiar las fichas sin asset
+Correcto: restore deja los assets en revisión hasta revalidarlos
+Correcto: cuenta bloqueada sin subidas ni adquisiciones; cuota de cuarentena
+Pruebas de base de datos completadas en un contenedor aislado.

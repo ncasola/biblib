@@ -1,0 +1,3 @@
+Restore 20261024T103626Z-scratch-aaa2fa → scratch (biblib-scratch) completado en 5 s; tokens rotados: biblib.books.version (9), biblib.library_state.revision (2).
+Migraciones pendientes tras restaurar: 0009_cover_assets (usa db:plan:local y db:migrate:local).
+Siguiente paso: pnpm db:restore:verify --backup .biblib/backups/20261024T103626Z-scratch-aaa2fa --profile scratch

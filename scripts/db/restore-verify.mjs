@@ -5,7 +5,7 @@ import { pathToFileURL } from "node:url"
 import { createClient } from "@supabase/supabase-js"
 import { signInFixture } from "../../tests/integration/support/session.mjs"
 import { checkBackupFiles, MANIFEST_FILE, readManifest, resolveBackupDir, sha256 } from "../lib/backup-files.mjs"
-import { bookSample, CONTENT_SCHEMAS, contentDigests, objectFacts, tokenHashes } from "../lib/backup-db.mjs"
+import { bookSample, CONTENT_SCHEMAS, contentDigests, coverAssetInventory, KEY_ONLY_TABLES, objectFacts, tokenHashes } from "../lib/backup-db.mjs"
 import { inventory } from "../lib/docker.mjs"
 import { BiblibError, EXIT } from "../lib/exit-codes.mjs"
 import { sanitize } from "../lib/process.mjs"
@@ -48,11 +48,16 @@ export function compareRestored(manifest, current) {
   const facts = Object.keys(manifest.objects.facts).filter((k) => canonical(manifest.objects.facts[k]) !== canonical(current.objects.facts[k]))
   check("objects.facts", current.objects.hash === manifest.objects.hash, "Hechos de catálogo (tablas, RLS, políticas, grants, constraints, índices, columnas, función, trigger) idénticos al origen.", `Hechos de catálogo distintos del origen en: ${facts.join(", ")}.`)
 
+  // Portadas de proveedores excluidas por su política: ni su fila ni su objeto se restauran.
+  const excluded = manifest.assets?.excluded ?? []
+  const excludedObjects = (manifest.assets?.items ?? []).filter((item) => !item.included && item.key).length
+  const adjusted = { "biblib.cover_assets": excluded.length, "storage.objects": excludedObjects }
   for (const expected of manifest.digests) {
     const id = `${expected.schema}.${expected.table}`
     const found = current.digests.find((d) => d.schema === expected.schema && d.table === expected.table)
-    const content = CONTENT_SCHEMAS.includes(expected.schema)
-    const ok = found && found.count === expected.count && found.keys === expected.keys && (!content || found.content === expected.content)
+    const content = CONTENT_SCHEMAS.includes(expected.schema) && !KEY_ONLY_TABLES.includes(id)
+    const less = adjusted[id] ?? 0
+    const ok = found && found.count === expected.count - less && (less > 0 || found.keys === expected.keys) && (!content || found.content === expected.content)
     check(`table.${id}`, ok, `${id}: ${expected.count} fila(s)${content ? ", claves y contenido" : " y claves"} iguales al recibo.`, found ? `${id}: ${found.count}/${expected.count} filas o claves/contenido distintos.` : `${id}: falta la tabla.`)
   }
 
@@ -60,6 +65,15 @@ export function compareRestored(manifest, current) {
     const restored = current.tokens[token] ?? []
     const reused = restored.filter((h) => hashes.includes(h)).length
     check(`tokens.${token}`, restored.length === hashes.length && reused === 0, `${token}: ${restored.length} token(s) rotados; ninguno coincide con el respaldo.`, `${token}: ${reused} token(s) del respaldo siguen vigentes o la cantidad difiere.`)
+  }
+
+  if (manifest.assets) {
+    // Manifiesto de portadas: cada asset incluido vuelve con su clave, sha256 y tamaño, en revisión.
+    const restored = new Map((current.assets ?? []).map((asset) => [asset.id, asset]))
+    const included = manifest.assets.items.filter((item) => item.included)
+    const wrong = included.filter((item) => { const found = restored.get(item.id); return !found || found.key !== item.key || found.sha256 !== item.sha256 || found.bytes !== item.bytes || found.owner !== item.owner || (item.state !== "quarantine" && !["restored", "ready"].includes(found.state)) })
+    const leaked = excluded.filter((id) => restored.has(id))
+    check("assets.manifest", wrong.length === 0 && leaked.length === 0, `Portadas privadas: ${included.length} asset(s) con su clave, sha256 y tamaño (en revisión hasta revalidarse); ${excluded.length} excluido(s) por su política.`, `Portadas privadas: ${wrong.length} asset(s) distintos del manifiesto y ${leaked.length} excluido(s) restaurados.`)
   }
 
   const missing = manifest.sample.filter((s) => !current.sample.some((c) => c.id === s.id && c.digest === s.digest))
@@ -153,6 +167,7 @@ export async function runVerify(options, deps = {}) {
         objects: await objectFacts(tx),
         digests: await contentDigests(tx, tables.filter((t) => present.some((p) => p.schema === t.schema && p.table === t.table))),
         tokens: await tokenHashes(tx), sample: await bookSample(tx, Math.max(manifest.sample.length, 5)),
+        assets: await coverAssetInventory(tx),
       }
     })
     checks.push(...compareRestored(manifest, current))

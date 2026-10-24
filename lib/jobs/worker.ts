@@ -8,6 +8,7 @@ import {
   classifyCoverLookup, JOB_LIMITS, retryDelayMs, stateAfterCovers,
   type CoverOutcome, type JobPhase, type JobState,
 } from "./contracts"
+import { coverAssetStep, type AssetWorkerDeps } from "./cover-assets"
 import { applyRecoveredCovers, LeaseLostError, type ClaimedJob, type ItemUpdate, type JobRepository, type RecoveredCover } from "./repository"
 
 // Ejecutor acotado de trabajos (U-DAT-03). Cada paso reclama un trabajo con lease, hace como mucho
@@ -37,6 +38,8 @@ export interface WorkerDeps {
   /** U-BIB-04: con la revisión activa la fuente de la portada se guarda en la procedencia del campo. */
   reviewEnabled?: () => boolean
   hooks?: WorkerHooks
+  /** U-DAT-10: solo con la sesión del dueño (Storage). El ejecutor sin sesión no reclama adquisiciones. */
+  assets?: AssetWorkerDeps
 }
 
 export interface StepReport {
@@ -199,7 +202,9 @@ export async function runJobStep(input: WorkerDeps, filter: { jobId?: string; ow
   const started = deps.now()
   emitSafely(telemetry, "job.started", { operation: operation(job), result: "ok", attempt: job.attempts })
   try {
-    const report = job.kind === "import" && job.phase === "publish" ? await publishStep(deps, job) : await coversStep(deps, job, limits)
+    const report: StepReport = job.kind === "cover_asset"
+      ? { jobId: job.id, kind: job.kind, phase: job.phase, outcome: "progressed", state: (await coverAssetStep(deps, job, limits)).state }
+      : job.kind === "import" && job.phase === "publish" ? await publishStep(deps, job) : await coversStep(deps, job, limits)
     emitSafely(telemetry, "db.operation", { operation: operation(job), result: "ok", durationMs: Math.max(0, deps.now() - started) })
     return report
   } catch (error) {

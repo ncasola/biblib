@@ -166,3 +166,54 @@ export async function rotateRestoredTokens(tx) {
   }
   return result
 }
+
+// Portadas privadas (U-DAT-10). El bucket `biblib-covers` se copia objeto a objeto como el resto de
+// Storage, pero con su propio manifiesto: cada asset con su clave, sha256 y tamaño, comprobados contra
+// los bytes copiados. Nunca se guarda una URL firmada. Solo entran las subidas propias y las copias de
+// proveedores cuya política publicada permite rehostCover y backupAsset: hoy ninguna (rights.ts de
+// U-BIB-04; Google ni siquiera puede guardarse, lo impide un CHECK de 0009). Mantener esta lista
+// alineada con rights.ts (la prueba unitaria tests/cover-assets.test.ts lo comprueba).
+export const COVERS_BUCKET = "biblib-covers"
+export const BACKUP_ASSET_PROVIDERS = Object.freeze([])
+// Restore deja los assets en revisión (`state`, `updated_at`) y caduca las subidas a medias: la tabla
+// se compara por claves y el contenido por el manifiesto de assets.
+export const KEY_ONLY_TABLES = Object.freeze(["biblib.cover_assets"])
+
+/** Assets con objeto registrado (o en cuarentena con intento), sin títulos ni datos de la ficha. */
+export async function coverAssetInventory(tx) {
+  if (!(await relationExists(tx, "biblib", "cover_assets"))) return null
+  const rows = await tx`select id::text as id, user_id::text as owner, storage_key as key, sha256, bytes, state, source_kind as "sourceKind", split_part(source_ref, ':', 1) as provider
+    from biblib.cover_assets order by id`
+  return rows.map((row) => ({ ...row }))
+}
+
+/**
+ * Decide qué assets entran en el respaldo. Un asset de proveedor sin `backupAsset` en su política no
+ * entra (ni su objeto ni su fila restaurada); la ficha volverá a su URL original al restaurar.
+ */
+export function classifyCoverAssets(rows, { providers = BACKUP_ASSET_PROVIDERS } = {}) {
+  if (!rows) return null
+  const items = rows.map((row) => {
+    const included = row.sourceKind === "upload" || (row.provider !== "google-books" && providers.includes(row.provider))
+    return { ...row, included, ...(included ? {} : { reason: row.provider === "google-books" ? "google" : "policy" }) }
+  })
+  return { bucket: COVERS_BUCKET, providers: [...providers], items, excluded: items.filter((item) => !item.included).map((item) => item.id) }
+}
+
+/** Claves de objeto de los assets excluidos: no se descargan ni se restauran. */
+export function excludedCoverKeys(assets) {
+  return new Set((assets?.items ?? []).filter((item) => !item.included && item.key).map((item) => item.key))
+}
+
+/** Cada objeto registrado copiado debe coincidir en bytes y hash con su asset; si no, el respaldo no vale. */
+export function verifyCoverObjects(assets, objects) {
+  const byKey = new Map(objects.filter((object) => object.bucket === COVERS_BUCKET).map((object) => [object.name, object]))
+  const problems = []
+  for (const item of assets?.items ?? []) {
+    if (!item.included || item.state === "quarantine" || !item.key) continue
+    const object = byKey.get(item.key)
+    if (!object) problems.push(`falta el objeto del asset ${item.id}`)
+    else if (object.sha256 !== item.sha256 || object.size !== item.bytes) problems.push(`el objeto del asset ${item.id} no coincide con su sha256 o tamaño`)
+  }
+  return problems
+}

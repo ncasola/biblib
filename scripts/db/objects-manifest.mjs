@@ -4,8 +4,8 @@ import { EXIT } from "../lib/exit-codes.mjs"
 // Manifest de objetos deliberados de BibLib. Se comprueba con metadatos de pg_catalog e
 // information_schema y con expresiones normalizadas, nunca comparando el pretty-print.
 // `since`/`until` indican la migración que introduce o retira cada objeto.
-const M0 = "0000_biblib_init", M1 = "0001_library_integrity", M2 = "0002_book_versions", M3 = "0003_library_revision", M4 = "0004_catalogue_coordination", M5 = "0005_library_jobs", M6 = "0006_library_snapshots", M7 = "0007_saved_views", M8 = "0008_restore_sessions"
-export const MANIFEST_MIGRATIONS = [M0, M1, M2, M3, M4, M5, M6, M7, M8]
+const M0 = "0000_biblib_init", M1 = "0001_library_integrity", M2 = "0002_book_versions", M3 = "0003_library_revision", M4 = "0004_catalogue_coordination", M5 = "0005_library_jobs", M6 = "0006_library_snapshots", M7 = "0007_saved_views", M8 = "0008_restore_sessions", M9 = "0009_cover_assets"
+export const MANIFEST_MIGRATIONS = [M0, M1, M2, M3, M4, M5, M6, M7, M8, M9]
 
 const own = "user_id=auth.uid"
 const ownNotDefault = "user_id=auth.uidandnotis_default"
@@ -52,7 +52,7 @@ END;
 // duplicar ~150 líneas de plpgsql; se comparan normalizados igual que los de 0003.
 function migrationBodies(tag) {
   const source = readFileSync(new URL(`../../drizzle/${tag}.sql`, import.meta.url), "utf8")
-  return Object.fromEntries([...source.matchAll(/CREATE FUNCTION "biblib"\."(\w+)"\([^)]*\) RETURNS [\s\S]*?AS \$\$([\s\S]*?)\$\$;/g)].map(([, name, body]) => [name, normalizeBody(body)]))
+  return Object.fromEntries([...source.matchAll(/CREATE (?:OR REPLACE )?FUNCTION "biblib"\."(\w+)"\([^)]*\) RETURNS [\s\S]*?AS \$\$([\s\S]*?)\$\$;/g)].map(([, name, body]) => [name, normalizeBody(body)]))
 }
 const CATALOGUE = migrationBodies(M4)
 const JOBS = migrationBodies(M5)
@@ -74,10 +74,17 @@ const RESTORE = migrationBodies(M8)
 const restoreTables = ["import_sessions", "import_session_parts", "import_session_chunks", "import_session_rows"]
 const restoreFullTables = ["import_sessions", "import_session_parts"]
 const restoreImmutableTables = ["import_session_chunks", "import_session_rows"]
+// Portadas privadas (0009): el dueño solo lee sus assets; toda transición pasa por funciones definer.
+// 0009 sustituye library_job_claim (sin adquisiciones para el ejecutor sin sesión) y library_snapshot_capture (retiene cover_asset_id).
+const ASSETS = migrationBodies(M9)
+const assetFunction = (name, returns, args, authenticated = true, securityDefiner = true) => ({ name, language: "plpgsql", returns, args, searchPath: "search_path=pg_catalog", securityDefiner, body: ASSETS[name], execute: { authenticated, anon: false }, since: M9 })
+const COVERS_BUCKET = "biblib-covers"
+const coversCondition = (action) => normalizeExpression(`bucket_id = '${COVERS_BUCKET}' and biblib.cover_object_access(name, '${action}')`)
+const storagePolicy = (name, cmd, action) => ({ name, cmd, roles: ["authenticated"], using: cmd === "INSERT" ? null : coversCondition(action), check: cmd === "INSERT" ? coversCondition(action) : null, since: M9 })
 const jobStateTokens = ["'queued'", "'running'", "'waiting_retry'", "'needs_review'", "'paused'", "'succeeded'", "'partially_succeeded'", "'failed'", "'cancelled'", "'expired'"]
 
 export const MANIFEST = Object.freeze({
-  tables: [{ name: "shelves", since: M0 }, { name: "books", since: M0 }, { name: "library_state", since: M3 }, { name: "import_previews", since: M3 }, { name: "library_operations", since: M3 }, ...catalogueTables.map((name) => ({ name, since: M4 })), ...jobTables.map((name) => ({ name, since: M5 })), ...snapshotTables.map((name) => ({ name, since: M6 })), { name: "saved_book_views", since: M7 }, ...restoreTables.map((name) => ({ name, since: M8 }))],
+  tables: [{ name: "shelves", since: M0 }, { name: "books", since: M0 }, { name: "library_state", since: M3 }, { name: "import_previews", since: M3 }, { name: "library_operations", since: M3 }, ...catalogueTables.map((name) => ({ name, since: M4 })), ...jobTables.map((name) => ({ name, since: M5 })), ...snapshotTables.map((name) => ({ name, since: M6 })), { name: "saved_book_views", since: M7 }, ...restoreTables.map((name) => ({ name, since: M8 })), { name: "cover_assets", since: M9 }],
   policies: [
     policy("shelves", "shelves_select_own", "SELECT", own, null),
     policy("shelves", "shelves_insert_own", "INSERT", null, own),
@@ -107,15 +114,32 @@ export const MANIFEST = Object.freeze({
       ...(restoreFullTables.includes(table) ? [policy(table, `${table}_update_own`, "UPDATE", ownSelect(table), ownSelect(table), M8)] : []),
       policy(table, `${table}_delete_own`, "DELETE", ownSelect(table), null, M8),
     ]),
+    policy("cover_assets", "cover_assets_select_own", "SELECT", ownSelect("cover_assets"), null, M9),
   ],
   // library_state solo se lee: la revisión cambia por lock_library()/triggers, nunca por escritura directa.
   // La caché compartida, las consultas en vuelo y las cuotas no tienen ningún privilegio de cliente.
   grants: {
     authenticated: { shelves: ["DELETE", "INSERT", "SELECT", "UPDATE"], books: ["DELETE", "INSERT", "SELECT", "UPDATE"], library_state: ["SELECT"], import_previews: ["DELETE", "INSERT", "SELECT"], library_operations: ["INSERT", "SELECT"], catalogue_cache: [], catalogue_inflight: [], catalogue_quota_buckets: [], catalogue_quota_reservations: [], catalogue_private_cache: ["DELETE", "SELECT"], library_jobs: ["SELECT"], library_job_items: ["SELECT"], account_lifecycle: ["SELECT"], library_snapshots: ["SELECT"], library_snapshot_chunks: ["SELECT"], saved_book_views: ["DELETE", "INSERT", "SELECT", "UPDATE"],
-      ...Object.fromEntries(restoreFullTables.map((name) => [name, ["DELETE", "INSERT", "SELECT", "UPDATE"]])), ...Object.fromEntries(restoreImmutableTables.map((name) => [name, ["DELETE", "INSERT", "SELECT"]])) },
-    anon: { shelves: [], books: [], library_state: [], import_previews: [], library_operations: [], ...Object.fromEntries([...catalogueTables, ...jobTables, ...snapshotTables, "saved_book_views", ...restoreTables].map((name) => [name, []])) },
+      ...Object.fromEntries(restoreFullTables.map((name) => [name, ["DELETE", "INSERT", "SELECT", "UPDATE"]])), ...Object.fromEntries(restoreImmutableTables.map((name) => [name, ["DELETE", "INSERT", "SELECT"]])), cover_assets: ["SELECT"] },
+    anon: { shelves: [], books: [], library_state: [], import_previews: [], library_operations: [], ...Object.fromEntries([...catalogueTables, ...jobTables, ...snapshotTables, "saved_book_views", ...restoreTables, "cover_assets"].map((name) => [name, []])) },
   },
   constraints: [
+    // Portadas privadas (0009): FK con propietario, Google excluido por Postgres, asset utilizable completo.
+    { table: "cover_assets", name: "cover_assets_pkey", type: "p", columns: ["id"], since: M9 },
+    { table: "cover_assets", name: "cover_assets_user_id_users_id_fk", type: "f", columns: ["user_id"], references: "auth.users", refColumns: ["id"], onDelete: "c", since: M9 },
+    // Al purgar el resumen del trabajo solo se anula job_id (ON DELETE SET NULL ("job_id")): el asset y su dueño permanecen.
+    { table: "cover_assets", name: "cover_assets_owner_job_fk", type: "f", columns: ["user_id", "job_id"], references: "biblib.library_jobs", refColumns: ["user_id", "id"], onDelete: "n", since: M9 },
+    { table: "cover_assets", name: "cover_assets_state_check", type: "c", columns: ["state"], tokens: ["'quarantine'", "'ready'", "'restored'"], since: M9 },
+    { table: "cover_assets", name: "cover_assets_source_kind_check", type: "c", columns: ["source_kind"], tokens: ["'provider'", "'upload'"], since: M9 },
+    { table: "cover_assets", name: "cover_assets_source_ref_check", type: "c", columns: ["source_kind", "source_ref"], tokens: ["source_ref='upload'", "'^(open-library|bne):[a-z]{2,8}:[A-Za-z0-9-]{1,40}$'"], since: M9 },
+    { table: "cover_assets", name: "cover_assets_sha_check", type: "c", columns: ["sha256"], tokens: ["'^[0-9a-f]{64}$'"], since: M9 },
+    { table: "cover_assets", name: "cover_assets_key_check", type: "c", columns: ["storage_key"], tokens: ["[.]webp$'"], since: M9 },
+    { table: "cover_assets", name: "cover_assets_token_check", type: "c", columns: ["upload_token"], tokens: ["'^[A-Za-z0-9_-]{1,64}$'"], since: M9 },
+    { table: "cover_assets", name: "cover_assets_size_check", type: "c", columns: ["bytes", "width", "height"], tokens: ["bytes<=5242880", "width<=10000", "height<=10000"], since: M9 },
+    { table: "cover_assets", name: "cover_assets_ready_check", type: "c", columns: ["state", "storage_key", "sha256", "mime", "width", "height", "bytes"], tokens: ["state='quarantine'", "storage_key is not null", "sha256 is not null", "mime='image/webp'"], since: M9 },
+    { table: "cover_assets", name: "cover_assets_quarantine_check", type: "c", columns: ["state", "expires_at"], tokens: ["state<>'quarantine'", "expires_at is not null"], since: M9 },
+    { table: "cover_assets", name: "cover_assets_attach_check", type: "c", columns: ["attach_book_id", "attach_book_version"], tokens: ["attach_book_id is null", "attach_book_version is null"], since: M9 },
+    { table: "books", name: "books_owner_cover_asset_fk", type: "f", columns: ["user_id", "cover_asset_id"], references: "biblib.cover_assets", refColumns: ["user_id", "id"], onDelete: "a", since: M9 },
     // Sesiones de restauración (0008): FK con propietario, hashes y tamaños exactos y estados coherentes.
     { table: "import_sessions", name: "import_sessions_pkey", type: "p", columns: ["id"], since: M8 },
     { table: "import_sessions", name: "import_sessions_user_id_users_id_fk", type: "f", columns: ["user_id"], references: "auth.users", refColumns: ["id"], onDelete: "c", since: M8 },
@@ -193,9 +217,9 @@ export const MANIFEST = Object.freeze({
     { table: "account_lifecycle", name: "account_lifecycle_state_check", type: "c", columns: ["state"], tokens: ["'active'", "'blocked'"], since: M5 },
     { table: "library_jobs", name: "library_jobs_pkey", type: "p", columns: ["id"], since: M5 },
     { table: "library_jobs", name: "library_jobs_user_id_users_id_fk", type: "f", columns: ["user_id"], references: "auth.users", refColumns: ["id"], onDelete: "c", since: M5 },
-    { table: "library_jobs", name: "library_jobs_kind_check", type: "c", columns: ["kind"], tokens: ["'import'", "'covers'"], since: M5 },
+    { table: "library_jobs", name: "library_jobs_kind_check", type: "c", columns: ["kind"], tokens: ["'import'", "'covers'"], since: M5, variants: [{ since: M9, tokens: ["'import'", "'covers'", "'cover_asset'"] }] },
     { table: "library_jobs", name: "library_jobs_state_check", type: "c", columns: ["state"], tokens: jobStateTokens, since: M5 },
-    { table: "library_jobs", name: "library_jobs_phase_check", type: "c", columns: ["phase"], tokens: ["'publish'", "'covers'", "'done'"], since: M5 },
+    { table: "library_jobs", name: "library_jobs_phase_check", type: "c", columns: ["phase"], tokens: ["'publish'", "'covers'", "'done'"], since: M5, variants: [{ since: M9, tokens: ["'publish'", "'covers'", "'asset'", "'done'"] }] },
     { table: "library_jobs", name: "library_jobs_key_check", type: "c", columns: ["idempotency_key"], tokens: ["length(idempotency_key)", ">=16", "<=128"], since: M5 },
     { table: "library_jobs", name: "library_jobs_digest_check", type: "c", columns: ["input_digest"], tokens: ["'^[0-9a-f]{64}$'"], since: M5 },
     { table: "library_jobs", name: "library_jobs_import_check", type: "c", columns: ["kind", "preview_id", "expected_revision"], tokens: ["kind<>'import'", "preview_id is not null", "expected_revision is not null"], since: M5 },
@@ -232,6 +256,12 @@ export const MANIFEST = Object.freeze({
     { table: "library_snapshot_chunks", name: "library_snapshot_chunks_digest_check", type: "c", columns: ["digest"], tokens: ["'^[0-9a-f]{64}$'"], since: M6 },
   ],
   indexes: [
+    { table: "cover_assets", name: "cover_assets_user_id_id_unique", unique: true, columns: ["user_id", "id"], partial: false, since: M9 },
+    { table: "cover_assets", name: "cover_assets_user_sha_unique", unique: true, columns: ["user_id", "sha256"], partial: true, since: M9 },
+    { table: "cover_assets", name: "cover_assets_job_unique", unique: true, columns: ["job_id"], partial: true, since: M9 },
+    { table: "cover_assets", name: "cover_assets_user_created_idx", unique: false, columns: ["user_id", "created_at"], partial: false, since: M9 },
+    { table: "cover_assets", name: "cover_assets_expires_at_idx", unique: false, columns: ["expires_at"], partial: true, since: M9 },
+    { table: "books", name: "books_cover_asset_idx", unique: false, columns: ["user_id", "cover_asset_id"], partial: true, since: M9 },
     { table: "import_sessions", name: "import_sessions_user_id_id_unique", unique: true, columns: ["user_id", "id"], partial: false, since: M8 },
     { table: "import_sessions", name: "import_sessions_user_created_idx", unique: false, columns: ["user_id", "created_at", "id"], partial: false, since: M8 },
     { table: "import_sessions", name: "import_sessions_expires_at_idx", unique: false, columns: ["expires_at"], partial: false, since: M8 },
@@ -276,6 +306,15 @@ export const MANIFEST = Object.freeze({
     { table: "library_snapshots", name: "library_snapshots_expires_at_idx", unique: false, columns: ["expires_at"], partial: false, since: M6 },
   ],
   columns: [
+    { table: "books", name: "cover_asset_id", type: "uuid", notNull: false, since: M9 },
+    { table: "cover_assets", name: "state", type: "text", notNull: true, defaultTokens: ["'quarantine'"], since: M9 },
+    { table: "cover_assets", name: "storage_key", type: "text", notNull: false, since: M9 },
+    { table: "cover_assets", name: "sha256", type: "text", notNull: false, since: M9 },
+    { table: "cover_assets", name: "source_ref", type: "text", notNull: true, since: M9 },
+    { table: "cover_assets", name: "rights_policy_version", type: "text", notNull: true, since: M9 },
+    { table: "cover_assets", name: "upload_token", type: "text", notNull: false, since: M9 },
+    { table: "cover_assets", name: "expires_at", type: "timestamp with time zone", notNull: false, since: M9 },
+    { table: "cover_assets", name: "version", type: "uuid", notNull: true, defaultTokens: ["gen_random_uuid()"], since: M9 },
     { table: "import_sessions", name: "base_revision", type: "uuid", notNull: true, since: M8 },
     { table: "import_sessions", name: "manifest_digest", type: "text", notNull: true, since: M8 },
     { table: "import_sessions", name: "expires_at", type: "timestamp with time zone", notNull: true, since: M8 },
@@ -331,15 +370,30 @@ export const MANIFEST = Object.freeze({
     jobFunction("account_set_state", "integer", 2),
     jobFunction("library_job_create", "jsonb", 5, true),
     jobFunction("library_job_control", "jsonb", 3, true),
-    jobFunction("library_job_claim", "jsonb", 3),
+    { ...jobFunction("library_job_claim", "jsonb", 3), until: M9 },
+    assetFunction("library_job_claim", "jsonb", 3, false),
     jobFunction("library_job_renew", "boolean", 4),
     jobFunction("library_job_fence", "uuid", 3),
-    snapshotFunction("library_snapshot_capture", "jsonb", 2),
+    { ...snapshotFunction("library_snapshot_capture", "jsonb", 2), until: M9 },
+    assetFunction("library_snapshot_capture", "jsonb", 2),
     snapshotFunction("library_snapshot_foreign_ids", "uuid[]", 1),
     snapshotFunction("library_snapshot_delete", "text", 2),
     snapshotFunction("library_snapshot_purge_expired", "integer", 1, false),
     { name: "guard_import_staging", language: "plpgsql", returns: "trigger", args: 0, searchPath: "search_path=pg_catalog", securityDefiner: false, body: RESTORE.guard_import_staging, execute: { authenticated: false, anon: false }, since: M8 },
     { name: "import_session_purge_expired", language: "plpgsql", returns: "integer", args: 1, searchPath: "search_path=pg_catalog", securityDefiner: true, body: RESTORE.import_session_purge_expired, execute: { authenticated: false, anon: false }, since: M8 },
+    assetFunction("cover_object_access", "boolean", 2),
+    assetFunction("cover_asset_quota", "text", 1, false),
+    assetFunction("cover_asset_request", "jsonb", 7),
+    assetFunction("cover_asset_begin_upload", "jsonb", 0),
+    assetFunction("cover_asset_authorize", "boolean", 2),
+    assetFunction("cover_asset_register", "jsonb", 7),
+    assetFunction("cover_asset_discard", "boolean", 1),
+    assetFunction("cover_asset_revalidate", "text", 2),
+    assetFunction("guard_book_cover_asset", "trigger", 0, false, false),
+    assetFunction("cover_asset_purge_candidates", "jsonb", 3, false),
+    assetFunction("cover_asset_purge_confirm", "text[]", 3, false),
+    assetFunction("cover_asset_quarantine_restored", "integer", 0, false),
+    assetFunction("cover_storage_install", "void", 0, false, false),
   ],
   // tgtype: ROW(1) | BEFORE(2) | INSERT(4) | DELETE(8) | UPDATE(16). BEFORE INSERT OR UPDATE = 23; AFTER INSERT OR UPDATE OR DELETE = 29.
   triggers: [
@@ -350,7 +404,15 @@ export const MANIFEST = Object.freeze({
     // BEFORE INSERT FOR EACH ROW = 7.
     { table: "import_session_chunks", name: "import_session_chunks_guard", function: "biblib.guard_import_staging", timing: "BEFORE", events: ["INSERT"], level: "ROW", tgtype: 7, since: M8 },
     { table: "import_session_rows", name: "import_session_rows_guard", function: "biblib.guard_import_staging", timing: "BEFORE", events: ["INSERT"], level: "ROW", tgtype: 7, since: M8 },
+    // BEFORE UPDATE FOR EACH ROW = 19.
+    { table: "books", name: "books_guard_cover_asset", function: "biblib.guard_book_cover_asset", timing: "BEFORE", events: ["UPDATE"], level: "ROW", tgtype: 19, since: M9 },
   ],
+  // Bucket privado de portadas y sus políticas en storage.objects (0009). Fuera del esquema biblib, pero
+  // del dominio: se comprueban igual y una política biblib_* no declarada es drift.
+  storage: {
+    buckets: [{ id: COVERS_BUCKET, public: false, fileSizeLimit: 5242880, allowedMimeTypes: ["image/webp"], since: M9 }],
+    policies: [storagePolicy("biblib_covers_select_own", "SELECT", "select"), storagePolicy("biblib_covers_insert_own", "INSERT", "insert"), storagePolicy("biblib_covers_delete_own", "DELETE", "delete")],
+  },
   prerequisites: ["auth.users", "auth.uid()", "role:authenticated", "role:anon"],
 })
 
@@ -403,6 +465,7 @@ export async function inspectObjects(sql) {
       from pg_trigger t join pg_class c on c.oid = t.tgrelid join pg_namespace n on n.oid = c.relnamespace join pg_proc p on p.oid = t.tgfoid join pg_namespace pn on pn.oid = p.pronamespace
       where n.nspname = 'biblib' and not t.tgisinternal`,
   ])
+  const storage = await inspectStorage(sql)
   return {
     roles: roles.map((r) => r.rolname), prerequisites: prerequisites[0],
     tables: [...tables], policies: [...policies], grants: [...grants], schemaUsage: [...schemaUsage],
@@ -411,6 +474,29 @@ export async function inspectObjects(sql) {
     // Solo el objeto nuevo necesita ese detalle: se conserva el formato/hash de los heads 0000–0006.
     indexes: indexes.map(({ definition, ...entry }) => entry.table === "saved_book_views" ? { ...entry, definition } : entry),
     columns: [...columns], functions: [...functions], triggers: [...triggers],
+    ...(storage ? { storage } : {}),
+  }
+}
+
+/**
+ * Bucket de portadas y políticas biblib_* de storage.objects, solo con el dominio de 0009 presente
+ * (biblib.cover_assets): la fila del bucket es un dato de Storage que sobrevive a borrar el esquema
+ * biblib, y sin el dominio no forma parte de sus hechos. null en heads anteriores a 0009.
+ */
+async function inspectStorage(sql) {
+  const rows = await sql`select to_regclass('storage.objects') is not null and to_regclass('storage.buckets') is not null and to_regclass('biblib.cover_assets') is not null as found`
+  // Un inspector simulado de heads anteriores (pruebas de hechos sellados) no responde a esta consulta.
+  if (!Array.isArray(rows) || !rows[0]?.found) return null
+  const [buckets, policies] = await Promise.all([
+    sql`select id, public, file_size_limit, allowed_mime_types from storage.buckets where id = ${COVERS_BUCKET}`,
+    sql`select p.polname as name, p.polcmd as cmd, p.polpermissive as permissive,
+        coalesce((select array_agg(case when r = 0 then 'public' else (select rolname::text from pg_roles where oid = r) end order by 1) from unnest(p.polroles) r), '{}'::text[]) as roles,
+        pg_get_expr(p.polqual, p.polrelid) as using, pg_get_expr(p.polwithcheck, p.polrelid) as check
+      from pg_policy p where p.polrelid = 'storage.objects'::regclass and starts_with(p.polname, 'biblib_')`,
+  ])
+  return {
+    buckets: buckets.map((b) => ({ id: b.id, public: b.public, fileSizeLimit: b.file_size_limit === null ? null : Number(b.file_size_limit), allowedMimeTypes: b.allowed_mime_types ?? null })),
+    policies: [...policies].sort((a, b) => a.name.localeCompare(b.name)),
   }
 }
 
@@ -458,7 +544,9 @@ export function verifyManifest(facts, appliedTags) {
     }
   }
 
-  for (const expected of MANIFEST.constraints) {
+  for (const declared of MANIFEST.constraints) {
+    // Una migración posterior puede ampliar la condición de la misma restricción (variants).
+    const expected = { ...declared, ...[...(declared.variants ?? [])].reverse().find((v) => applied.has(v.since)) }
     const found = facts.constraints.find((c) => c.name === expected.name && c.table === expected.table)
     if (!active(expected)) {
       if (expected.until && applied.has(expected.until)) result(`constraint.${expected.name}`, !found, `${expected.name} retirada por ${expected.until}.`, `${expected.name} debería haberse retirado en ${expected.until}.`)
@@ -499,6 +587,22 @@ export function verifyManifest(facts, appliedTags) {
       && same(decoded.events, expected.events) && found.enabled === "O" && !found.conditional && !String(found.columns ?? "").trim()
     result(`trigger.${expected.name}`, okay, `Trigger ${expected.name} conforme (${expected.timing} ${expected.events.join(" OR ")} FOR EACH ${expected.level} en biblib.${expected.table}).`, found ? `El trigger ${expected.name} difiere en momento, eventos, nivel, tabla, función o estado.` : `Falta el trigger ${expected.name} en biblib.${expected.table}.`)
   }
+  const storage = facts.storage ?? { buckets: [], policies: [] }
+  for (const expected of MANIFEST.storage.buckets.filter(active)) {
+    const found = storage.buckets.find((b) => b.id === expected.id)
+    const okay = found && found.public === expected.public && found.fileSizeLimit === expected.fileSizeLimit && same(found.allowedMimeTypes ?? [], expected.allowedMimeTypes)
+    result(`storage.bucket.${expected.id}`, okay, `Bucket ${expected.id} privado, ${expected.allowedMimeTypes.join(",")} y ${expected.fileSizeLimit} bytes.`, found ? `El bucket ${expected.id} es público o admite otros tipos o tamaños.` : `Falta el bucket ${expected.id}.`)
+  }
+  const storagePolicies = MANIFEST.storage.policies.filter(active)
+  for (const expected of storagePolicies) {
+    const found = storage.policies.find((p) => p.name === expected.name)
+    const cmd = { r: "SELECT", a: "INSERT", w: "UPDATE", d: "DELETE", "*": "ALL" }[found?.cmd]
+    const okay = found && cmd === expected.cmd && found.permissive && same(found.roles, expected.roles) && normalizeExpression(found.using) === expected.using && normalizeExpression(found.check) === expected.check
+    result(`storage.policy.${expected.name}`, okay, `Política ${expected.name} de storage.objects conforme.`, found ? `La política ${expected.name} de storage.objects difiere en comando, roles o expresión.` : `Falta la política ${expected.name} en storage.objects.`)
+  }
+  for (const extra of storage.policies.filter((p) => !storagePolicies.some((e) => e.name === p.name))) {
+    result(`storage.policy.${extra.name}`, false, "", `Política no declarada ${extra.name} en storage.objects: podría ampliar el acceso a las portadas.`)
+  }
   return checks
 }
 
@@ -515,5 +619,6 @@ export function expectedObjects(appliedTags = MANIFEST_MIGRATIONS) {
     columns: MANIFEST.columns.filter(active).map((c) => `${c.table}.${c.name}`),
     functions: MANIFEST.functions.filter(active).map((f) => `biblib.${f.name}`),
     triggers: MANIFEST.triggers.filter(active).map((t) => `${t.name}:${t.timing} ${t.events.join(" OR ")} ${t.level}`),
+    storage: [...MANIFEST.storage.buckets.filter(active).map((b) => `bucket:${b.id}`), ...MANIFEST.storage.policies.filter(active).map((p) => `policy:${p.name}:${p.cmd}`)],
   }
 }

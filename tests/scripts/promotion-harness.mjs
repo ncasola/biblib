@@ -68,8 +68,9 @@ DO $$ BEGIN
     CREATE ROLE anon NOLOGIN;
   END IF;
 END $$;
-CREATE SCHEMA storage;
-CREATE TABLE storage.buckets (id text PRIMARY KEY);
+-- bootstrap.sql ya crea un Storage mínimo desde U-DAT-10 (0009 instala su bucket y sus políticas).
+CREATE SCHEMA IF NOT EXISTS storage;
+CREATE TABLE IF NOT EXISTS storage.buckets (id text PRIMARY KEY);
 `
 
 /**
@@ -222,6 +223,9 @@ export async function rehearseRestore(backup, { root = repo } = {}) {
       const file = backup.receipt.files.find((f) => f.role === role)
       copy.psql(readFileSync(path.join(root, file.path), "utf8"))
     }
+    // Desde 0009 el bucket de portadas y sus políticas de storage.objects se reinstalan tras el volcado
+    // de dominio, como hace db:restore:local (el volcado de biblib/drizzle no los contiene).
+    copy.psql("DO $$ BEGIN IF to_regprocedure('biblib.cover_storage_install()') IS NOT NULL THEN PERFORM biblib.cover_storage_install(); END IF; END $$;")
     const sql = adminClient(copy)
     let report
     try {

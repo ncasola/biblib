@@ -1,0 +1,2 @@
+Migración · biblib-scratch · aplicado: 0009_cover_assets
+Head anterior: 0008_restore_sessions · head actual: 0009_cover_assets

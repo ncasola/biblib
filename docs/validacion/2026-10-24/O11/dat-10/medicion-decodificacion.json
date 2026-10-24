@@ -1,0 +1,39 @@
+{
+  "sharp": "0.35.5",
+  "vips": "8.18.7",
+  "repeticiones": 5,
+  "casos": [
+    {
+      "caso": "portada 600×900 JPEG",
+      "entradaBytes": 128988,
+      "salida": "600×900",
+      "salidaBytes": 120022,
+      "p50ms": 69,
+      "maxms": 76
+    },
+    {
+      "caso": "1600×2400 PNG",
+      "entradaBytes": 3806577,
+      "salida": "1200×1800",
+      "salidaBytes": 324408,
+      "p50ms": 273,
+      "maxms": 281
+    },
+    {
+      "caso": "3162×3162 JPEG (10 MP)",
+      "entradaBytes": 2372132,
+      "salida": "1200×1200",
+      "salidaBytes": 36174,
+      "p50ms": 178,
+      "maxms": 188
+    },
+    {
+      "caso": "3162×3162 WebP (10 MP)",
+      "entradaBytes": 3024804,
+      "salida": "1200×1200",
+      "salidaBytes": 33920,
+      "p50ms": 310,
+      "maxms": 321
+    }
+  ]
+}

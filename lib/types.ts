@@ -68,6 +68,11 @@ export interface Book {
   shelf_id: string
   shelf_name: string
   catalogue?: CatalogueMetadata
+  /**
+   * Portada privada validada (U-DAT-10). La portada visible es la de `displayCover`; `cover` conserva las
+   * URL originales, que son las que se editan y exportan.
+   */
+  coverAssetId?: string
 }
 
 export interface Shelf {

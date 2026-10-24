@@ -201,6 +201,21 @@ Esto no prueba un CDN: localmente no hay caché compartida. La garantía local e
 
 **Nunca** se lee el usuario de una cabecera o cookie sin firmar: el usuario sale de `getUser()` o de un JWT verificado con el JWKS de GoTrue que coincide con una atestación firmada por este proceso.
 
+## Portadas privadas (U-DAT-10)
+
+- **Sin hosts nuevos en la CSP.** La portada privada se sirve desde el propio origen (`/api/covers/<asset>`), cubierto por `img-src 'self'`. La respuesta lleva:
+  - `Cache-Control: private, no-store` y `Vary: Cookie`;
+  - `Content-Type: image/webp` y `X-Content-Type-Options: nosniff`;
+  - `Content-Security-Policy: default-src 'none'; sandbox` (solo en la imagen);
+  - `Cross-Origin-Resource-Policy: same-origin`.
+
+  Un asset ajeno, inexistente, en cuarentena o con licencia vencida responde 404, igual que uno que no existe; sin sesión, 401. La matriz de cabeceras incluye la ruta.
+- **Dos barreras.** El servidor comprueba sesión, dueño (RLS de `cover_assets`), estado, licencia y sha256 del objeto. Además descarga con la sesión del dueño, así que las políticas `biblib_covers_*` de `storage.objects` vuelven a decidir. B no puede leer, firmar, listar, subir, sustituir ni retirar objetos de A ni con su JWT directo contra Storage; conocer el UUID o la ruta no basta. `anon` no tiene ninguna política.
+- **Sin credencial administrativa en la app.** Las escrituras en Storage usan la sesión del dueño. La política de subida solo admite el intento autorizado (token de la subida o número de fencing del trabajo con su lease vigente) y la cuenta activa. La purga global la hace `pnpm assets:purge:local`, fuera de Next.
+- **Enlaces firmados.** La app no emite URL firmadas. El dueño podría firmar sus propios objetos con su JWT contra Storage. Un enlace firmado da acceso mientras dure su TTL aunque la fila cambie después: RLS no revoca un enlace ya emitido. Por eso la app no los usa ni los respalda.
+- **SSRF.** La adquisición nunca recibe una URL. Usa hosts HTTPS fijos por proveedor, la IP resuelta una vez y fijada, y bloquea redes privadas, link-local, metadatos cloud, IPv4 mapeada, NAT64 y 6to4. No sigue redirecciones, solo admite el puerto 443 y tiene límites de 5 MiB y 8 s ([operación](operacion.md#portadas-privadas--u-dat-10-o11)).
+- **Funciones `SECURITY DEFINER` para `authenticated`** (lista de `tests/integration/security/exposicion.test.mjs`): `cover_asset_request`, `cover_asset_begin_upload`, `cover_asset_authorize`, `cover_asset_register`, `cover_asset_discard`, `cover_asset_revalidate` y `cover_object_access` (la guarda de las políticas). Todas toman el dueño de `auth.uid()`. La purga, la cuota y el restore no se conceden a ningún rol de cliente.
+- **Huella de plataforma de la promoción** (`platformFingerprint`): excluye las políticas `biblib_*` de `storage.objects`, que son del dominio y comprueba el manifest de objetos. Cualquier otro cambio en `auth` o `storage` sigue haciendo fallar la promoción.
 ## Pendientes
 
 Ninguno de estos puntos se ha verificado en local; no se presentan como superados.

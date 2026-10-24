@@ -3,7 +3,7 @@ import path from "node:path"
 import { pathToFileURL } from "node:url"
 import { createClient } from "@supabase/supabase-js"
 import { authExclusions, BACKUP_KIND, backupFilePath, checkBackupFiles, encrypt, ENCRYPTION, MANIFEST_FILE, newBackupId, objectFile, readKeyFile, readManifest, resolveBackupDir, resolveBackupsRoot, sealManifest, sha256 } from "../lib/backup-files.mjs"
-import { bookSample, contentDigests, fixtureAccounts, objectFacts, scopeTables, stateMark, storageInventory, tokenHashes } from "../lib/backup-db.mjs"
+import { bookSample, classifyCoverAssets, contentDigests, COVERS_BUCKET, coverAssetInventory, excludedCoverKeys, fixtureAccounts, objectFacts, scopeTables, stateMark, storageInventory, tokenHashes, verifyCoverObjects } from "../lib/backup-db.mjs"
 import { streamCommand } from "../lib/backup-process.mjs"
 import { inventory } from "../lib/docker.mjs"
 import { BiblibError, EXIT } from "../lib/exit-codes.mjs"
@@ -203,11 +203,13 @@ export async function runBackup({ profile, out, keyFile, root = REPO_ROOT, signa
       const domain = await (deps.dumpDomain ?? dumpDomain)(stack, db, id, signal)
       // Misma huella que el plan de db:reset:local: así su --backup-receipt acredita este estado.
       const discarded = await (deps.discardedState ?? discardedState)({ ...stack, fetch: deps.fetch ?? globalThis.fetch, signal }, resolved.target, { sql: tx })
-      return { inspection, scope, mark, domain, discarded, digests: await contentDigests(tx, scope.tables), objects: await objectFacts(tx), tokens: await tokenHashes(tx), sample: await bookSample(tx), accounts: await fixtureAccounts(tx, census), storage: await storageInventory(tx) }
+      return { inspection, scope, mark, domain, discarded, digests: await contentDigests(tx, scope.tables), objects: await objectFacts(tx), tokens: await tokenHashes(tx), sample: await bookSample(tx), accounts: await fixtureAccounts(tx, census), storage: await storageInventory(tx), assets: classifyCoverAssets(await coverAssetInventory(tx)) }
     })
     const excludedAuth = authExclusions(snapshot.scope.authTables)
     const auth = await (deps.dumpAuth ?? dumpAuth)(stack, excludedAuth, signal)
-    const objects = await (deps.downloadObjects ?? downloadObjects)(resolved, snapshot.storage.objects)
+    // U-DAT-10: las portadas de proveedores sin backupAsset no se copian (Google nunca).
+    const excludedCovers = excludedCoverKeys(snapshot.assets)
+    const objects = await (deps.downloadObjects ?? downloadObjects)(resolved, snapshot.storage.objects.filter((object) => !(object.bucket === COVERS_BUCKET && excludedCovers.has(object.name))))
     const mail = await (deps.downloadMail ?? downloadMail)({ ...stack, fetch: deps.fetch ?? globalThis.fetch, signal }, snapshot.discarded.mailpitHash)
     const after = await sql.begin("isolation level repeatable read read only", (tx) => stateMark(tx, snapshot.scope.tables))
     if (after !== snapshot.mark) fail(EXIT.LOCK_BUSY, "Hubo escrituras durante el respaldo (marca de estado distinta antes y después); detén la aplicación y repítelo. No se ha guardado nada.", "consistencia")
@@ -232,6 +234,8 @@ export async function runBackup({ profile, out, keyFile, root = REPO_ROOT, signa
       add("storage-object", file, bytes)
       return { ...object, size: bytes.length, sha256: sha256(bytes), file: files.at(-1).path }
     })
+    const coverProblems = verifyCoverObjects(snapshot.assets, storageObjects)
+    if (coverProblems.length) fail(EXIT.VERIFICATION_FAILED, `Las portadas privadas no coinciden con su registro (${coverProblems.length}: ${coverProblems[0]}); el respaldo no se guarda.`, "storage")
     for (const message of mail) add("mailpit-message", `mailpit/${sha256(message.id).slice(0, 40)}.eml`, message.raw)
     const { inspection } = snapshot
     const applied = compareLedger(journal.entries, inspection.ledger.rows).migrations.filter((m) => m.status === "applied").map((m) => ({ tag: m.tag, hash: m.hash, created_at: m.when }))
@@ -250,11 +254,13 @@ export async function runBackup({ profile, out, keyFile, root = REPO_ROOT, signa
         mailpit: { method: "API de Mailpit del perfil (mensajes RAW, sin marcarlos como leídos)", messages: mail.length, restored: false },
       },
       discardedStateHash: snapshot.discarded.hash,
-      exclusions: exclusionsFor(excludedAuth),
+      exclusions: [...exclusionsFor(excludedAuth), ...(snapshot.assets ? [{ item: `${COVERS_BUCKET}: copias de proveedores sin backupAsset`, reason: `Su política de derechos no permite respaldarlas (Google nunca); al restaurar, la ficha vuelve a su URL original. Excluidas: ${snapshot.assets.excluded.length}.` }] : [])],
       consistency: { method: "pg_dump con snapshot exportado para dominio/ledger; marca de estado igual antes y después de Auth y Storage", mark: snapshot.mark },
       counts: Object.fromEntries(snapshot.digests.map((d) => [`${d.schema}.${d.table}`, d.count])),
       digests: snapshot.digests, objects: snapshot.objects, tokens: snapshot.tokens, sample: snapshot.sample, fixtureAccounts: snapshot.accounts,
       storage: { buckets: snapshot.storage.buckets, objects: storageObjects },
+      // Manifiesto de portadas privadas (desde 0009): asset, clave, sha256 y tamaño, separado de los bytes.
+      ...(snapshot.assets ? { assets: snapshot.assets } : {}),
       files,
       encryption: key ? { algorithm: ENCRYPTION.algorithm, keyFingerprint: key.fingerprint, key: "externa: no se guarda con el respaldo" } : null,
       restoreVerification: null,

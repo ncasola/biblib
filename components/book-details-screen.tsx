@@ -7,6 +7,8 @@ import { ArrowLeft, Edit2, Loader2, RefreshCw, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { BookForm } from "@/components/book-form"
 import { BookCover } from "@/components/book-cover"
+import { BookCoverAssets } from "@/components/book-cover-assets"
+import { displayCover } from "@/lib/book-covers"
 import { BookStatusForm } from "@/components/book-status-form"
 import { CatalogueProvenanceDetails } from "@/components/catalogue-provenance-details"
 import { getBookDetailAction, updateBookAction, updateBookStatusAction, deleteBookAction, refreshBookCoverAction, moveBookShelfAction } from "@/app/actions/books"
@@ -117,9 +119,10 @@ export function BookDetailsScreen({ bookId, returnPath }: BookDetailsScreenProps
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-[240px_minmax(0,1fr)] gap-6 md:gap-8">
           <aside className="space-y-4">
-            <BookCover cover={book.cover} title={book.title} priority className="w-48 md:w-full mx-auto shadow-xl" sizes="(max-width: 768px) 192px, 240px" />
+            <BookCover cover={displayCover(book)} title={book.title} priority className="w-48 md:w-full mx-auto shadow-xl" sizes="(max-width: 768px) 192px, 240px" />
             <Button type="button" variant="outline" className="w-full" disabled={Boolean(pending) || !normalizeIsbn(book.isbn)} onClick={() => void refreshCover()}>{pending === "cover" ? <Loader2 aria-hidden="true" className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw aria-hidden="true" className="h-4 w-4 mr-2" />}{pending === "cover" ? "Buscando portada..." : "Buscar portada"}</Button>
             <p className="text-xs text-muted-foreground">{normalizeIsbn(book.isbn) ? "Busca y sustituye la portada con la disponible en Open Library." : "Añade un ISBN válido al editar la ficha para buscar su portada."}</p>
+            <BookCoverAssets book={book} disabled={Boolean(pending)} onBookChange={(updated) => { setBook(updated); setTargetShelf(updated.shelf_id); setError("") }} />
           </aside>
           <div className="space-y-5 min-w-0">
             <div className="flex flex-col sm:flex-row items-start justify-between gap-4"><div className="min-w-0"><h1 className="text-3xl sm:text-4xl font-bold heading-vintage break-words">{book.title}</h1>{book.subtitle && <p className="text-lg text-muted-foreground mt-2">{book.subtitle}</p>}</div><Button ref={editButton} variant="outline" disabled={Boolean(pending)} onClick={() => { setEditing(true); setError(""); setMessage("") }}><Edit2 aria-hidden="true" className="w-4 h-4 mr-2" />Editar ficha</Button></div>

@@ -102,6 +102,23 @@ La migración `0007_saved_views` es aditiva; la recuperación no elimina la tabl
 
 Desactivar la publicación (`BIBLIB_RESTORE_SESSIONS_PUBLISH=false`) deja validar y revisar, conserva las descargas por partes y no toca la colección. Una restauración ya publicada se deshace desde «Versiones anteriores» o con el respaldo administrativo, nunca con SQL inverso.
 
+#### Portadas privadas (U-DAT-10)
+
+`biblib.cover_assets` y los objetos del bucket privado `biblib-covers` son **datos de la cuenta**:
+
+- **Respaldo.** Los objetos se copian con su sha256, y el manifiesto `assets` (asset, dueño, clave, hash, tamaño) se comprueba contra ellos. Si no coinciden, el respaldo no se guarda. Las copias de proveedores sin `backupAsset` se excluyen y quedan declaradas (Google nunca entra).
+- **Destino.** Tras el reset, 0009 crea el bucket vacío: no cuenta como dato ajeno. Un objeto en él sí.
+- **Fase `rotate`.** Hace tres cosas:
+  - reinstala las políticas `biblib_covers_*` de `storage.objects` con `biblib.cover_storage_install()`, porque `drop schema biblib cascade` las retira;
+  - retira los assets excluidos, cuyas fichas vuelven a su URL original;
+  - pasa los demás a `restored` y caduca las subidas a medias.
+
+  El restore informa en `review` de cuántas portadas quedan en revisión.
+- **Revalidación con el dueño.** Una portada restaurada no se sirve hasta que su dueño la abre. Entonces el servidor comprueba sha256, imagen válida y derechos vigentes: si los supera vuelve a `ready`; si no, se descarta y la ficha recupera su URL.
+- **`db:restore:verify`** compara `cover_assets` por claves y las portadas por el manifiesto (clave, hash, tamaño, dueño, en revisión), además de los objetos de Storage con su sha256.
+
+En una restauración remota (U-INF-07), tras cargar el volcado de dominio, hay que ejecutar `select biblib.cover_storage_install()` antes de abrir tráfico, como hace el ensayo de promoción.
+
 ### Verificación (`db:restore:verify`)
 
 Comprueba los archivos del respaldo; que hay un restore completado de ese respaldo; el ledger idéntico; el manifest de objetos de U-INF-04 (RLS, políticas, grants, FK, índices, columnas, función y trigger de versión) y los hechos de catálogo idénticos al origen; cantidades, claves y contenido por tabla (dominio y ledger completos salvo el token rotado; Auth y Storage por cantidad y claves); que ningún token coincide con el respaldo; la muestra de fichas; sesiones GoTrue reales de A y B con `tests/integration/support/session.mjs`, sus IDs restaurados y RLS con sus claims (solo ven lo suyo, actualizar lo ajeno afecta 0 filas); buckets y cada objeto Storage con su sha256. Escribe el informe en `<respaldo>/rehearsals/` con duración del restore, de la verificación y total, discrepancias y la ventana de datos perdidos, y lo enlaza desde el recibo. Cualquier discrepancia sale con **11**.

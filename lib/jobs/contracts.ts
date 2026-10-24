@@ -10,7 +10,7 @@ import type { Book } from "../types"
 
 export const JOB_CONTRACT_VERSION = 1
 
-export const JOB_KINDS = ["import", "covers"] as const
+export const JOB_KINDS = ["import", "covers", "cover_asset"] as const
 export type JobKind = (typeof JOB_KINDS)[number]
 
 export const JOB_STATES = ["queued", "running", "waiting_retry", "needs_review", "paused", "succeeded", "partially_succeeded", "failed", "cancelled", "expired"] as const
@@ -20,8 +20,11 @@ export const TERMINAL_JOB_STATES: readonly JobState[] = ["succeeded", "partially
 /** Estados en los que el ejecutor puede reclamar el trabajo. */
 export const ACTIVE_JOB_STATES: readonly JobState[] = ["queued", "running", "waiting_retry"]
 
-/** La publicación de metadatos y la búsqueda de portadas son fases separadas con resultados distintos. */
-export type JobPhase = "publish" | "covers" | "done"
+/**
+ * La publicación de metadatos y la búsqueda de portadas son fases separadas con resultados distintos.
+ * `asset` es la adquisición de una copia privada de portada (U-DAT-10), que solo ejecuta la sesión del dueño.
+ */
+export type JobPhase = "publish" | "covers" | "asset" | "done"
 
 export const ITEM_STATES = ["pending", "waiting_retry", "succeeded", "not_found", "skipped", "failed"] as const
 export type JobItemState = (typeof ITEM_STATES)[number]

@@ -4,7 +4,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { useState, type MouseEvent } from "react"
 import { bookRowAnchor, buildBookDetailHref } from "@/lib/book-search"
-import { DEFAULT_BOOK_COVER } from "@/lib/book-covers"
+import { DEFAULT_BOOK_COVER, displayCover } from "@/lib/book-covers"
 import type { Book } from "@/lib/types"
 import {
   SCENE_SPINE_COLORS,
@@ -25,7 +25,7 @@ const BOOK_WIDTH = 40
 const BOOK_DEPTH = 24
 
 function ShelfBookCover({ book }: { book: Book }) {
-  const source = sceneCoverSource(book.cover)
+  const source = sceneCoverSource(displayCover(book))
   const [failedSource, setFailedSource] = useState<string | null>(null)
   const fallback = !source || failedSource === source
   const author = book.authors[0]?.name?.trim()

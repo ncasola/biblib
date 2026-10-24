@@ -17,6 +17,16 @@ function isRealCover(value: unknown): value is string {
   }
 }
 
+/**
+ * Portada que se muestra: la copia privada (U-DAT-10), servida por la ruta autenticada del propio
+ * origen, o las URL guardadas en la ficha. La ruta coincide con `coverAssetUrl` de lib/assets/contracts.
+ */
+export function displayCover(book: Pick<Book, "cover" | "coverAssetId">): Book["cover"] {
+  if (!book.coverAssetId) return book.cover
+  const url = `/api/covers/${book.coverAssetId}`
+  return { small: url, medium: url, large: url }
+}
+
 export function normalizeBookCover(cover?: Partial<Book["cover"]> | null): Book["cover"] {
   const available = [cover?.large, cover?.medium, cover?.small].find(isRealCover)
   return {
