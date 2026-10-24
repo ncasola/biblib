@@ -102,11 +102,16 @@ export const books = biblibSchema.table(
     status: text("status").$type<Book["status"]>().notNull().default("unread"),
     shelfId: uuid("shelf_id")
       .notNull(),
+    // Portada privada validada (U-DAT-10). Sustituye a las URL visibles mientras exista; las URL se
+    // conservan como alternativa. U-DAT-06 la trasladará a la edición o el ejemplar.
+    coverAssetId: uuid("cover_asset_id"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
     uniqueIndex("books_user_id_isbn_unique").on(table.userId, table.isbn),
+    index("books_cover_asset_idx").on(table.userId, table.coverAssetId).where(sql`${table.coverAssetId} is not null`),
+    foreignKey({ name: "books_owner_cover_asset_fk", columns: [table.userId, table.coverAssetId], foreignColumns: [coverAssets.userId, coverAssets.id] }),
     uniqueIndex("books_user_id_id_unique").on(table.userId, table.id),
     index("books_user_id_idx").on(table.userId),
     index("books_shelf_id_idx").on(table.shelfId),
@@ -445,7 +450,7 @@ export const libraryJobs = biblibSchema.table(
     userId: uuid("user_id")
       .notNull()
       .references(() => authUsers.id, { onDelete: "cascade" }),
-    kind: text("kind").$type<"import" | "covers">().notNull(),
+    kind: text("kind").$type<"import" | "covers" | "cover_asset">().notNull(),
     contractVersion: integer("contract_version").notNull().default(1),
     idempotencyKey: text("idempotency_key").notNull(),
     inputDigest: text("input_digest").notNull(),
@@ -475,9 +480,9 @@ export const libraryJobs = biblibSchema.table(
     uniqueIndex("library_jobs_user_id_id_unique").on(table.userId, table.id),
     index("library_jobs_user_id_created_at_idx").on(table.userId, table.createdAt),
     index("library_jobs_due_idx").on(table.nextAttemptAt).where(sql`${table.state} in ('queued', 'running', 'waiting_retry')`),
-    check("library_jobs_kind_check", sql`${table.kind} in ('import', 'covers')`),
+    check("library_jobs_kind_check", sql`${table.kind} in ('import', 'covers', 'cover_asset')`),
     check("library_jobs_state_check", sql`${table.state} in ${jobStates}`),
-    check("library_jobs_phase_check", sql`${table.phase} in ('publish', 'covers', 'done')`),
+    check("library_jobs_phase_check", sql`${table.phase} in ('publish', 'covers', 'asset', 'done')`),
     check("library_jobs_key_check", sql`length(${table.idempotencyKey}) between 16 and 128`),
     check("library_jobs_digest_check", sql`${table.inputDigest} ~ '^[0-9a-f]{64}$'`),
     check("library_jobs_import_check", sql`${table.kind} <> 'import' or (${table.previewId} is not null and ${table.expectedRevision} is not null)`),
@@ -758,3 +763,64 @@ export const importSessionRows = biblibSchema.table(
     pgPolicy("import_session_rows_delete_own", { for: "delete", to: authenticatedRole, using: ownRow(table.userId) }),
   ],
 ).enableRLS()
+
+/*
+ * Portadas privadas (U-DAT-10). Un asset nace en cuarentena (subida propia o adquisición de un
+ * proveedor con `rehostCover`), y solo pasa a `ready` cuando el servidor ha validado y reencodificado
+ * los bytes, los ha subido al bucket privado `biblib-covers` con la sesión del dueño y ha registrado su
+ * sha256. `restored` marca los assets de un restore administrativo hasta que el servidor los revalida.
+ * `authenticated` solo lee sus filas; toda transición pasa por las funciones `biblib.cover_asset_*`.
+ * Las políticas de `storage.objects` las instala `biblib.cover_storage_install()` (0009).
+ */
+export type CoverAssetState = "quarantine" | "ready" | "restored"
+export type CoverAssetSourceKind = "provider" | "upload"
+
+export const coverAssets = biblibSchema.table("cover_assets", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id").notNull().references(() => authUsers.id, { onDelete: "cascade" }),
+  // `<dueño>/<asset>/<intento>.webp`; nulo hasta registrar el objeto validado.
+  storageKey: text("storage_key"),
+  sha256: text("sha256"),
+  mime: text("mime"),
+  width: integer("width"),
+  height: integer("height"),
+  bytes: integer("bytes"),
+  state: text("state").$type<CoverAssetState>().notNull().default("quarantine"),
+  sourceKind: text("source_kind").$type<CoverAssetSourceKind>().notNull(),
+  // Clave de proveedor validada por el servidor (`open-library:id:123`) o `upload`; nunca una URL.
+  sourceRef: text("source_ref").notNull(),
+  rightsPolicyVersion: text("rights_policy_version").notNull(),
+  attribution: text("attribution"),
+  // Único intento autorizado a subir: número de fencing del trabajo o token de la subida propia.
+  uploadToken: text("upload_token"),
+  jobId: uuid("job_id"),
+  // Ficha y versión a las que adjuntar al terminar la adquisición; solo si la versión sigue igual.
+  attachBookId: uuid("attach_book_id"),
+  attachBookVersion: uuid("attach_book_version"),
+  // Cuarentena: caducidad de la subida. Listo: caducidad de la licencia (nulo, sin caducidad).
+  expiresAt: timestamp("expires_at", { withTimezone: true }),
+  version: uuid("version").notNull().defaultRandom(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  uniqueIndex("cover_assets_user_id_id_unique").on(table.userId, table.id),
+  // Deduplicación solo dentro del mismo propietario: nunca un índice global de hashes.
+  uniqueIndex("cover_assets_user_sha_unique").on(table.userId, table.sha256).where(sql`${table.state} in ('ready', 'restored')`),
+  uniqueIndex("cover_assets_job_unique").on(table.jobId).where(sql`${table.jobId} is not null`),
+  index("cover_assets_user_created_idx").on(table.userId, table.createdAt.desc().nullsFirst()),
+  index("cover_assets_expires_at_idx").on(table.expiresAt).where(sql`${table.expiresAt} is not null`),
+  foreignKey({ name: "cover_assets_owner_job_fk", columns: [table.userId, table.jobId], foreignColumns: [libraryJobs.userId, libraryJobs.id] }).onDelete("set null"),
+  check("cover_assets_state_check", sql`${table.state} in ('quarantine', 'ready', 'restored')`),
+  check("cover_assets_source_kind_check", sql`${table.sourceKind} in ('provider', 'upload')`),
+  // Google Books nunca autoriza copiar sus imágenes: ni siquiera una fila manipulada lo admite.
+  check("cover_assets_source_ref_check", sql`(${table.sourceKind} = 'upload' and ${table.sourceRef} = 'upload') or (${table.sourceKind} = 'provider' and ${table.sourceRef} ~ '^(open-library|bne):[a-z]{2,8}:[A-Za-z0-9-]{1,40}$')`),
+  check("cover_assets_sha_check", sql`${table.sha256} is null or ${table.sha256} ~ '^[0-9a-f]{64}$'`),
+  check("cover_assets_key_check", sql`${table.storageKey} is null or ${table.storageKey} ~ '^[0-9a-f-]{36}/[0-9a-f-]{36}/[A-Za-z0-9_-]{1,64}[.]webp$'`),
+  check("cover_assets_token_check", sql`${table.uploadToken} is null or ${table.uploadToken} ~ '^[A-Za-z0-9_-]{1,64}$'`),
+  check("cover_assets_size_check", sql`(${table.bytes} is null or (${table.bytes} >= 1 and ${table.bytes} <= 5242880)) and (${table.width} is null or (${table.width} >= 1 and ${table.width} <= 10000)) and (${table.height} is null or (${table.height} >= 1 and ${table.height} <= 10000))`),
+  // Un asset utilizable siempre tiene objeto, hash, tipo y dimensiones; uno en cuarentena caduca.
+  check("cover_assets_ready_check", sql`${table.state} = 'quarantine' or (${table.storageKey} is not null and ${table.sha256} is not null and ${table.mime} = 'image/webp' and ${table.width} is not null and ${table.height} is not null and ${table.bytes} is not null)`),
+  check("cover_assets_quarantine_check", sql`${table.state} <> 'quarantine' or ${table.expiresAt} is not null`),
+  check("cover_assets_attach_check", sql`(${table.attachBookId} is null) = (${table.attachBookVersion} is null)`),
+  pgPolicy("cover_assets_select_own", { for: "select", to: authenticatedRole, using: ownRow(table.userId) }),
+]).enableRLS()

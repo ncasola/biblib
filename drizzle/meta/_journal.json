@@ -64,6 +64,13 @@
       "when": 1792837978637,
       "tag": "0008_restore_sessions",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1792851547262,
+      "tag": "0009_cover_assets",
+      "breakpoints": true
     }
   ]
 }
