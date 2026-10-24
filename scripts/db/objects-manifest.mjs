@@ -478,10 +478,15 @@ export async function inspectObjects(sql) {
   }
 }
 
-/** Bucket de portadas y políticas biblib_* de storage.objects; null si no hay ninguno (heads anteriores a 0009). */
+/**
+ * Bucket de portadas y políticas biblib_* de storage.objects, solo con el dominio de 0009 presente
+ * (biblib.cover_assets): la fila del bucket es un dato de Storage que sobrevive a borrar el esquema
+ * biblib, y sin el dominio no forma parte de sus hechos. null en heads anteriores a 0009.
+ */
 async function inspectStorage(sql) {
-  const [present] = await sql`select to_regclass('storage.objects') is not null and to_regclass('storage.buckets') is not null as found`
-  if (!present.found) return null
+  const rows = await sql`select to_regclass('storage.objects') is not null and to_regclass('storage.buckets') is not null and to_regclass('biblib.cover_assets') is not null as found`
+  // Un inspector simulado de heads anteriores (pruebas de hechos sellados) no responde a esta consulta.
+  if (!Array.isArray(rows) || !rows[0]?.found) return null
   const [buckets, policies] = await Promise.all([
     sql`select id, public, file_size_limit, allowed_mime_types from storage.buckets where id = ${COVERS_BUCKET}`,
     sql`select p.polname as name, p.polcmd as cmd, p.polpermissive as permissive,
@@ -489,7 +494,6 @@ async function inspectStorage(sql) {
         pg_get_expr(p.polqual, p.polrelid) as using, pg_get_expr(p.polwithcheck, p.polrelid) as check
       from pg_policy p where p.polrelid = 'storage.objects'::regclass and starts_with(p.polname, 'biblib_')`,
   ])
-  if (!buckets.length && !policies.length) return null
   return {
     buckets: buckets.map((b) => ({ id: b.id, public: b.public, fileSizeLimit: b.file_size_limit === null ? null : Number(b.file_size_limit), allowedMimeTypes: b.allowed_mime_types ?? null })),
     policies: [...policies].sort((a, b) => a.name.localeCompare(b.name)),
