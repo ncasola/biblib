@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { deleteSavedViewAction, listSavedViewsAction, overwriteSavedViewAction, renameSavedViewAction, saveCurrentViewAction } from "@/app/actions/saved-views"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -18,9 +18,21 @@ export function SavedBookViews({ filters, onApply }: { filters: BookSearchFilter
   const [loaded, setLoaded] = useState(false)
   const [error, setError] = useState("")
   const [message, setMessage] = useState("")
+  const summaryRef = useRef<HTMLElement>(null)
+  const pendingFocus = useRef<HTMLElement | null>(null)
+
+  useEffect(() => {
+    if (pending) return
+    const previous = pendingFocus.current
+    pendingFocus.current = null
+    if (!previous || document.activeElement !== document.body) return
+    if (previous !== document.body && previous.isConnected && !previous.matches(":disabled")) previous.focus()
+    else summaryRef.current?.focus()
+  }, [pending])
 
   async function run(work: () => Promise<void>, success: string) {
     if (pending) return
+    pendingFocus.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
     setPending(true)
     setError("")
     setMessage("")
@@ -42,9 +54,9 @@ export function SavedBookViews({ filters, onApply }: { filters: BookSearchFilter
     if (view) setViews((current) => [view, ...current.filter((entry) => entry.id !== view.id)])
   }
 
-  return <section aria-label="Vistas guardadas" className="rounded-2xl border border-border bg-card/80 p-4 shadow-xl backdrop-blur-xl">
+  return <section aria-label="Vistas guardadas" className="rounded-2xl border border-border bg-card/80 p-4 shadow-xl backdrop-blur-xl [overflow-wrap:anywhere]">
     <details>
-      <summary className="cursor-pointer rounded-lg py-2 font-semibold text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">Vistas guardadas{loaded ? ` (${views.length}/100)` : ""}</summary>
+      <summary ref={summaryRef} className="cursor-pointer rounded-lg py-2 font-semibold text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">Vistas guardadas{loaded ? ` (${views.length}/100)` : ""}</summary>
       <fieldset disabled={pending} aria-busy={pending} className="mt-3 space-y-4">
         <form className="flex flex-col gap-2 sm:flex-row sm:items-end" onSubmit={(event) => {
           event.preventDefault()

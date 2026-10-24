@@ -1,4 +1,4 @@
-import { execFileSync, spawn } from "node:child_process"
+import { spawn } from "node:child_process"
 import { randomBytes } from "node:crypto"
 import { createWriteStream, mkdirSync, readdirSync } from "node:fs"
 import path from "node:path"
@@ -15,7 +15,7 @@ import { PROFILES } from "./lib/context.mjs"
 
 // pnpm test:integration:views [--profile scratch|test] [--reuse-build] — U-EXP-02. Ejecuta el grupo
 // tests/integration/views contra Postgres, GoTrue y la app compilada del perfil: Server Actions
-// por HTTP con sesiones reales y el publicador compilado para inyectar fallos en su transacción.
+// por HTTP con sesiones reales y navegación en Chrome.
 // En el perfil test el grupo también corre dentro de pnpm test:integration:local.
 
 const LOG_DIR = path.join(REPO_ROOT, ".biblib", "integration")
@@ -79,8 +79,6 @@ export async function main(argv = process.argv.slice(2), out = process.stdout) {
     out.write(`Grupo views · perfil ${profile} · ${resolved.stack.profile.projectId} · run ${runId}\n`)
 
     const env = childEnvironment(profile, runId)
-    // El publicador compilado de las pruebas TS es el que reciben los fallos inyectados.
-    execFileSync(process.execPath, [path.join(REPO_ROOT, "node_modules", "typescript", "bin", "tsc"), "-p", "tsconfig.tests.json"], { cwd: REPO_ROOT, stdio: "ignore", windowsHide: true })
     if (!reuseBuild) {
       out.write(`Compilando la app para el perfil ${profile}…\n`)
       const code = await run(process.execPath, ["scripts/next-target.mjs", "build", "local", "--profile", profile], { env, logFile: path.join(LOG_DIR, "views-build.log") })

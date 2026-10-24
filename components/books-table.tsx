@@ -192,7 +192,7 @@ export function BooksTable({ initialView = "table" }: BooksTableProps) {
     updateAddress(next, initialView)
   }
 
-  const changeQuery = (value: string) => setQueryInput(value)
+  const changeQuery = (value: string) => setQueryInput(value.slice(0, 500))
   const changeStatus = (status: BookStatusFilter) => updateFilters({ status })
   const changeShelf = (shelf: string) => updateFilters({ shelf })
   const changeSort = (sort: BookSort) => updateFilters({ sort })
@@ -277,7 +277,7 @@ export function BooksTable({ initialView = "table" }: BooksTableProps) {
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(16rem,2fr)_minmax(12rem,1fr)_minmax(12rem,1fr)]">
         <div>
           <label htmlFor="book-search" className="mb-2 block text-sm font-medium text-foreground">Buscar por título, autor o ISBN</label>
-          <div className="relative"><Search aria-hidden="true" className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input id="book-search" placeholder="Título, autor, ISBN..." value={queryInput} onChange={(event) => changeQuery(event.target.value)} className="border-border bg-surface pl-9" /></div>
+          <div className="relative"><Search aria-hidden="true" className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input id="book-search" placeholder="Título, autor, ISBN..." value={queryInput} maxLength={500} onChange={(event) => changeQuery(event.target.value)} className="border-border bg-surface pl-9" /></div>
         </div>
         <div id="book-status-filters" className={showFilters ? "" : "hidden sm:block"}>
           <label htmlFor="book-status" className="mb-2 block text-sm font-medium text-foreground">Estado</label>

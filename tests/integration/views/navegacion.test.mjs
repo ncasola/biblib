@@ -18,7 +18,10 @@ after(async () => { await browser?.close(); if (ctx) { await ctx.cleanup(); awai
 
 async function panel() {
   const section = page.getByRole("region", { name: "Vistas guardadas" })
-  if (!await section.locator("details").getAttribute("open").then((value) => value !== null)) await section.locator("summary").click()
+  if (!await section.locator("details").getAttribute("open").then((value) => value !== null)) {
+    await section.locator("summary").focus()
+    await page.keyboard.press("Enter")
+  }
   await expect(section.getByRole("button", { name: "Guardar vista actual" })).toBeVisible()
   return section
 }
@@ -34,7 +37,8 @@ test("Chrome real: URL, recarga, atrás/adelante, selección, errores de red y e
   const p = await panel()
   await expect(p.getByText(/Aún no tienes vistas guardadas|Actualizar vistas/).first()).toBeVisible()
   await p.getByLabel("Nombre de la vista", { exact: true }).fill(name)
-  await p.getByRole("button", { name: "Guardar vista actual", exact: true }).click()
+  await expect(p.getByRole("button", { name: "Guardar vista actual", exact: true })).toBeEnabled()
+  await p.getByLabel("Nombre de la vista", { exact: true }).press("Enter")
   await expect(p.getByRole("status")).toHaveText("Vista guardada.")
   const row = p.getByRole("listitem").filter({ hasText: name })
   await page.getByRole("checkbox", { name: "Seleccionar todos los libros de esta página" }).check()
@@ -58,6 +62,7 @@ test("Chrome real: URL, recarga, atrás/adelante, selección, errores de red y e
   await page.route("**/*", rejectSave)
   await p.getByRole("button", { name: "Guardar vista actual", exact: true }).click()
   await expect(p.getByRole("alert")).toHaveText("No se pudo completar la operación. Tus filtros se conservan.")
+  await expect(p.getByRole("button", { name: "Guardar vista actual", exact: true })).toBeFocused()
   assert.equal(page.url(), urlBefore)
   assert.equal((await ctx.sql`select count(*)::int n from biblib.saved_book_views where user_id = ${ctx.users.a} and name like ${`${ctx.prefix}%`}`)[0].n, 1)
   await page.unroute("**/*", rejectSave)
@@ -104,6 +109,7 @@ test("Chrome real: URL, recarga, atrás/adelante, selección, errores de red y e
   } finally { release() }
   await expect(p.getByRole("status")).toHaveText("Vista borrada.")
   await expect(row).toHaveCount(0)
+  await expect(p.locator("summary")).toBeFocused()
   await page.unroute("**/*", delayDelete)
 
   // Valores malformados se canonizan en URL y controles sin convertirlos en fallo de listado.
