@@ -1,4 +1,5 @@
 import assert from "node:assert/strict"
+import { readFileSync } from "node:fs"
 import { describe, test } from "node:test"
 import sharp from "sharp"
 import { providerRightsPolicy } from "../lib/bibliographic-catalog/rights"
@@ -49,6 +50,15 @@ describe("claves de portada y derechos", () => {
     assert.equal(coverAssetRights("open-library", (provider) => ({ ...permissive(provider), version: "" })).rehost, false, "sin versión no hay derecho")
     assert.equal(licenseExpiry(rights.policy, new Date("2026-10-24T00:00:00Z"))?.toISOString(), "2026-10-24T01:00:00.000Z")
     assert.equal(licenseExpiry(providerRightsPolicy("open-library"), new Date()), null)
+  })
+
+  test("el respaldo administrativo solo incluye copias de proveedores cuya política publicada lo permite", () => {
+    const source = readFileSync("scripts/lib/backup-db.mjs", "utf8")
+    const declared = /BACKUP_ASSET_PROVIDERS = Object\.freeze\(\[([^\]]*)\]\)/.exec(source)?.[1]
+    assert.notEqual(declared, undefined)
+    const listed = declared!.split(",").map((entry) => entry.trim().replace(/^["']|["']$/g, "")).filter(Boolean).sort()
+    const allowed = (["open-library", "bne", "google-books"] as const).filter((provider) => coverAssetRights(provider).backup).sort()
+    assert.deepEqual(listed, allowed, "scripts/lib/backup-db.mjs y rights.ts deben coincidir")
   })
 
   test("ruta de objeto derivada por el servidor, lectura del propio origen y error 422 no reintentable", () => {

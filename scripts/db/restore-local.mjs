@@ -4,7 +4,7 @@ import path from "node:path"
 import { pathToFileURL } from "node:url"
 import { createClient } from "@supabase/supabase-js"
 import { checkBackupFiles, compareMigrations, readBackupFile, readKeyFile, readManifest, resolveBackupDir } from "../lib/backup-files.mjs"
-import { rotateRestoredTokens } from "../lib/backup-db.mjs"
+import { COVERS_BUCKET, rotateRestoredTokens } from "../lib/backup-db.mjs"
 import { streamCommand } from "../lib/backup-process.mjs"
 import { inventory } from "../lib/docker.mjs"
 import { BiblibError, EXIT } from "../lib/exit-codes.mjs"
@@ -133,6 +133,26 @@ export async function verifyRestoredSessions(tx) {
 }
 
 /**
+ * Portadas privadas restauradas (U-DAT-10, desde 0009). `drop schema biblib cascade` retira también las
+ * políticas de storage.objects que dependen de funciones de biblib: se reinstalan con la misma función
+ * de la migración. Los assets excluidos del respaldo se retiran (la ficha vuelve a su URL original) y
+ * los restaurados quedan en revisión hasta que el servidor revalide bytes y derechos vigentes.
+ */
+export async function restoreCoverAssets(tx, manifest) {
+  const [present] = await tx`select to_regprocedure('biblib.cover_storage_install()') is not null as found`
+  if (!present.found) return { installed: false, restored: 0, excluded: 0, review: [] }
+  await tx`select biblib.cover_storage_install()`
+  const excluded = manifest.assets?.excluded ?? []
+  if (excluded.length) {
+    await tx`update biblib.books set cover_asset_id = null where cover_asset_id = any(${excluded}::uuid[])`
+    await tx`delete from biblib.cover_assets where id = any(${excluded}::uuid[])`
+  }
+  const [{ restored }] = await tx`select biblib.cover_asset_quarantine_restored() as restored`
+  const review = restored ? [{ table: "biblib.cover_assets", message: `${restored} portada(s) privada(s) en revisión: el servidor revalida bytes y derechos vigentes la primera vez que su dueño las abre.` }] : []
+  return { installed: true, restored, excluded: excluded.length, review }
+}
+
+/**
  * Destino vacío o recién reseteado: solo puede contener las cuentas, bibliotecas y el objeto
  * del censo de fixtures que vuelve a crear `db:reset:local`, más filas de tablas derivadas.
  * Cualquier otro dato aborta.
@@ -145,7 +165,8 @@ export function classifyDestination({ users, books, shelves, otherRows, buckets,
   if (books.some((b) => b.census !== census.censusId || !b.fixture || !fixtureUsers.has(b.user_id))) foreign.push("libros que no son fixtures")
   if (shelves.some((s) => !fixtureUsers.has(s.user_id))) foreign.push("estanterías de otras cuentas")
   if (otherRows.some((r) => r.rows > 0 && !DERIVED_TABLES.includes(r.table))) foreign.push("filas en otras tablas de biblib")
-  if (buckets.some((b) => b.id !== BUCKET) || objects.some((o) => o.bucket !== BUCKET || o.name !== ASSET)) foreign.push("objetos Storage fuera del fixture")
+  // El bucket de portadas lo crea la migración 0009 (vacío tras el reset); cualquier objeto en él es ajeno.
+  if (buckets.some((b) => b.id !== BUCKET && b.id !== COVERS_BUCKET) || objects.some((o) => o.bucket !== BUCKET || o.name !== ASSET)) foreign.push("objetos Storage fuera del fixture")
   return { fresh: foreign.length === 0, foreign, fixtureUsers: [...fixtureUsers] }
 }
 
@@ -287,7 +308,8 @@ export async function runRestore(options, deps = {}) {
       const rotated = await rotateRestoredTokens(tx)
       const snapshots = await verifyRestoredSnapshots(tx)
       const restoreSessions = await verifyRestoredSessions(tx)
-      return { ...rotated, snapshots, restoreSessions, review: [...rotated.review, ...snapshots.review, ...restoreSessions.review] }
+      const coverAssets = await restoreCoverAssets(tx, manifest)
+      return { ...rotated, snapshots, restoreSessions, coverAssets, review: [...rotated.review, ...snapshots.review, ...restoreSessions.review, ...coverAssets.review] }
     })
     if (rotation.staleWriteRejected === false) fail(EXIT.VERIFICATION_FAILED, "Una escritura condicional con una versión del respaldo siguió aplicando tras la rotación.", "rotate")
     save("rotate", "passed", rotation)
