@@ -238,7 +238,8 @@
         "IMP-03",
         "OPS-02"
       ],
-      "status": "in-progress"
+      "status": "implemented",
+      "evidence": "O10 · merge de0a75d; 0006 + índices T8; snapshots 10/10 (docs/validacion/2026-10-23/O10/dat-02/)"
     },
     {
       "id": "U-DAT-03",
@@ -459,7 +460,8 @@
         "UX-06",
         "FE-03"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O10 · merge 4e24880 + afad8ea; 0007; views 5/5; G10 en docs/validacion/2026-10-24/O10/g10-coordinador.md"
     },
     {
       "id": "U-EXP-03",

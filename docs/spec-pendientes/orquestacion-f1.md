@@ -1,6 +1,6 @@
 # Orquestación de F1 con Orca
 
-**Versión:** 1.0 · **Fecha:** 23 de octubre de 2026 · **Estado:** en ejecución: O07–O09 cerradas (G07/G08/G09); O10 en curso.
+**Versión:** 1.0 · **Fecha:** 23 de octubre de 2026 · **Estado:** F1 implementada en local (G10 superada el 24-10-2026, [evidencia](../validacion/2026-10-24/O10/g10-coordinador.md)); pendientes externos en `unidades.json`.
 
 Plan operativo de la fase F1 (O07–O10): integridad de colección, proveedores bibliográficos, cuotas, trabajos y recuperación. Las reglas comunes (§0) y el contrato de F0 (§1) de [orquestación de F0](orquestacion-f0.md) siguen vigentes; este documento solo añade lo propio de F1. Unidades y aceptación: [02](02-datos-importacion-y-catalogacion.md), [03](03-experiencia-y-funciones.md), [04](04-calidad-seguridad-y-operacion.md), [01](01-entorno-y-migraciones.md) y [06](06-proveedores-bibliograficos.md).
 
@@ -37,7 +37,7 @@ Plan operativo de la fase F1 (O07–O10): integridad de colección, proveedores 
 | O10 | U-BIB-05 Todos los flujos por el orquestador | Claude (Sonnet) | Al final | No |
 | O10 | U-DAT-02 Snapshots y deshacer (+ índices T8, CLS T2) | Claude (Opus) | `scratch` | Sí (`0006`) |
 | O10 | U-FIX-02 Sesión por petición y latencia (T3/T4) | Claude (Opus) | `test` | No |
-| O10 | U-EXP-02 Vistas guardadas | Tras U-DAT-02 | — | Sí (`0007`) |
+| O10 | U-EXP-02 Vistas guardadas | Codex | `scratch` | Sí (`0007`) |
 
 ## Puertas
 
