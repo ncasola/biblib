@@ -15,13 +15,14 @@ import { classify, closeConnection, connect, inspectDatabase, readLedger, resolv
 
 const repo = fileURLToPath(new URL("../../", import.meta.url))
 const drizzleDir = path.join(repo, "drizzle")
-// Metadatos reales capturados de Supabase local: tras 0002 (U-INF-04), tras 0003 (U-DAT-01), tras 0004 (U-DAT-05), tras 0005 (U-DAT-03) y tras 0006 (U-DAT-02, head actual).
+// Metadatos reales capturados de Supabase local: tras 0002 (U-INF-04), tras 0003 (U-DAT-01), tras 0004 (U-DAT-05), tras 0005 (U-DAT-03), tras 0006 (U-DAT-02), tras 0007 (U-EXP-02) y tras 0008 (U-DAT-04, head actual).
 const facts0002 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0002.json"), "utf8"))
 const facts0003 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0003.json"), "utf8"))
 const facts0004 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0004.json"), "utf8"))
 const facts0005 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0005.json"), "utf8"))
 const facts0006 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0006.json"), "utf8"))
-const facts = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0007.json"), "utf8"))
+const facts0007 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0007.json"), "utf8"))
+const facts = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0008.json"), "utf8"))
 const named = (list, name) => list.find((item) => item.name === name)
 const temporary = []
 after(() => { for (const dir of temporary) rmSync(dir, { recursive: true, force: true }) })
@@ -106,7 +107,7 @@ describe("ledger", () => {
     assert.deepEqual(compareLedger(entries, rowsFor(entries)).pending, [])
     const partial = compareLedger(entries, rowsFor(entries, 1))
     assert.equal(partial.appliedHead.tag, "0000_biblib_init")
-    assert.deepEqual(partial.pending, ["0001_library_integrity", "0002_book_versions", "0003_library_revision", "0004_catalogue_coordination", "0005_library_jobs", "0006_library_snapshots", "0007_saved_views"])
+    assert.deepEqual(partial.pending, ["0001_library_integrity", "0002_book_versions", "0003_library_revision", "0004_catalogue_coordination", "0005_library_jobs", "0006_library_snapshots", "0007_saved_views", "0008_restore_sessions"])
     assert.equal(compareLedger(entries, []).pending.length, entries.length)
   })
 
@@ -175,10 +176,15 @@ describe("manifest de objetos", () => {
     assert.ok(checks.length >= 190)
   })
 
-  test("los metadatos reales tras 0007 cumplen el manifest completo", () => {
+  test("los metadatos reales tras 0007 cumplen su prefijo", () => { assert.deepEqual(failing(verifyManifest(facts0007, MANIFEST_MIGRATIONS.slice(0, 8))), []) })
+
+  test("los metadatos reales tras 0008 cumplen el manifest completo", () => {
     const checks = verifyManifest(facts, MANIFEST_MIGRATIONS)
     assert.deepEqual(failing(checks), [])
-    assert.ok(checks.length >= 235)
+    assert.ok(checks.length >= 320)
+    // Antes de 0008 faltan las tablas y la guarda de staging; un head anterior marca sus políticas como no declaradas.
+    assert.ok(failing(verifyManifest(facts0007, MANIFEST_MIGRATIONS)).includes("function.guard_import_staging"))
+    assert.ok(failing(verifyManifest(facts, MANIFEST_MIGRATIONS.slice(0, 8))).includes("policy.import_sessions_select_own"))
     // Un head anterior que aún no conoce los trabajos o las versiones anteriores marca sus políticas como no declaradas.
     assert.ok(failing(verifyManifest(facts, MANIFEST_MIGRATIONS.slice(0, 5))).includes("policy.library_jobs_select_own"))
     assert.ok(failing(verifyManifest(facts, MANIFEST_MIGRATIONS.slice(0, 6))).includes("policy.library_snapshots_select_own"))
@@ -271,6 +277,30 @@ describe("manifest de objetos", () => {
     assert.deepEqual(failing(verifyManifest(partial, MANIFEST_MIGRATIONS)), ["constraint.library_snapshots_ready_check"])
     const unindexed = clone(facts); unindexed.indexes = unindexed.indexes.filter((i) => i.name !== "books_user_created_idx")
     assert.deepEqual(failing(verifyManifest(unindexed, MANIFEST_MIGRATIONS)), ["index.books_user_created_idx"])
+  })
+
+  test("drift de las sesiones de restauración (0008): trozos mutables, guarda, purga, hash y propietario", () => {
+    // Trozos y filas validadas no se modifican nunca; anon no tiene ningún privilegio.
+    for (const table of ["import_session_chunks", "import_session_rows"]) {
+      const mutable = clone(facts); mutable.grants.push({ grantee: "authenticated", table, privilege: "UPDATE" })
+      assert.deepEqual(failing(verifyManifest(mutable, MANIFEST_MIGRATIONS)), [`grant.authenticated.${table}`])
+    }
+    for (const table of ["import_sessions", "import_session_parts", "import_session_chunks", "import_session_rows"]) {
+      const readable = clone(facts); readable.grants.push({ grantee: "anon", table, privilege: "SELECT" })
+      assert.deepEqual(failing(verifyManifest(readable, MANIFEST_MIGRATIONS)), [`grant.anon.${table}`])
+    }
+    const disabled = clone(facts); named(disabled.triggers, "import_session_chunks_guard").enabled = "D"
+    assert.deepEqual(failing(verifyManifest(disabled, MANIFEST_MIGRATIONS)), ["trigger.import_session_chunks_guard"])
+    const lax = clone(facts); named(lax.functions, "guard_import_staging").body = named(lax.functions, "guard_import_staging").body.replace("AND s.expires_at > now()", "")
+    assert.deepEqual(failing(verifyManifest(lax, MANIFEST_MIGRATIONS)), ["function.guard_import_staging"])
+    const purge = clone(facts); named(purge.functions, "import_session_purge_expired").execute_authenticated = true
+    assert.deepEqual(failing(verifyManifest(purge, MANIFEST_MIGRATIONS)), ["function.import_session_purge_expired"])
+    const unhashed = clone(facts); unhashed.constraints = unhashed.constraints.filter((c) => c.name !== "import_session_chunks_sha_check")
+    assert.deepEqual(failing(verifyManifest(unhashed, MANIFEST_MIGRATIONS)), ["constraint.import_session_chunks_sha_check"])
+    const ownerless = clone(facts); ownerless.constraints = ownerless.constraints.filter((c) => c.name !== "import_session_chunks_owner_part_fk")
+    assert.deepEqual(failing(verifyManifest(ownerless, MANIFEST_MIGRATIONS)), ["constraint.import_session_chunks_owner_part_fk"])
+    const open = clone(facts); named(open.policies, "import_session_rows_select_own").using = "true"
+    assert.deepEqual(failing(verifyManifest(open, MANIFEST_MIGRATIONS)), ["policy.import_session_rows_select_own"])
   })
 
   test("drift de los objetos de 0003: escritura directa, permisos, seguridad y triggers", () => {
