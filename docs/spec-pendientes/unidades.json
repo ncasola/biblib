@@ -332,7 +332,7 @@
         "UX-01",
         "UX-08"
       ],
-      "status": "planned"
+      "status": "in-progress"
     },
     {
       "id": "U-DAT-07",
@@ -419,8 +419,13 @@
         "FE-02",
         "OPS-02"
       ],
-      "status": "in-progress",
-      "note": "Decisión de Néstor 24-10-2026: autorizado sharp (allowBuilds) como decodificador."
+      "status": "implemented",
+      "note": "Decisión de Néstor 24-10-2026: autorizado sharp (allowBuilds) como decodificador.",
+      "evidence": "O11 · merge dafbfc2; 0009; sharp 0.35.5; ensayo con portada privada backup→reset→restore→verify (docs/validacion/2026-10-24/O11/dat-10/)",
+      "pending": [
+        "Ningún proveedor concede rehostCover: «Guardar copia privada» oculto hasta revisar licencias.",
+        "Referencia de portada a edición/copia: U-DAT-06."
+      ]
     },
     {
       "id": "U-EXP-01",
