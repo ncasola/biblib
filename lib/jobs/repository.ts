@@ -69,7 +69,8 @@ export interface FinishUpdate {
   phase?: JobPhase
   counts?: JobCounts
   cursor?: string | null
-  result?: ImportJobResult
+  /** Resultado de la publicación, o el de una adquisición de portada (U-DAT-10). */
+  result?: ImportJobResult | Record<string, unknown>
   published?: boolean
   errorCode?: string | null
   delayMs?: number
