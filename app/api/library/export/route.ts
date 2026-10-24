@@ -21,14 +21,15 @@ const noStore = { "Cache-Control": "private, no-store" }
 const changed = () => NextResponse.json({ error: "Tu biblioteca ha cambiado desde que preparaste la copia. Prepárala de nuevo para descargar todas las partes del mismo estado.", code: "REVISION_CONFLICT" }, { status: 409, headers: noStore })
 
 export async function GET(request: NextRequest) {
-  const parsed = querySchema.safeParse(Object.fromEntries(request.nextUrl.searchParams))
-  if (!parsed.success) return NextResponse.json({ error: "El enlace de descarga no es válido. Prepara la copia de nuevo." }, { status: 400, headers: noStore })
-  const { revision, exportedAt, set, part, sha256 } = parsed.data
+  // Primero la sesión: sin ella la respuesta es siempre 401, sin revelar nada sobre el enlace.
   let userId: string
   try { userId = await getRequiredUserId() } catch (error) {
     if (error instanceof DomainError) return NextResponse.json({ error: error.message, code: error.code }, { status: 401, headers: noStore })
     throw error
   }
+  const parsed = querySchema.safeParse(Object.fromEntries(request.nextUrl.searchParams))
+  if (!parsed.success) return NextResponse.json({ error: "El enlace de descarga no es válido. Prepara la copia de nuevo." }, { status: 400, headers: noStore })
+  const { revision, exportedAt, set, part, sha256 } = parsed.data
   try {
     const read = await withRlsContext(userId, (tx) => readExportLibrary(tx, userId))
     if (!read || read.revision !== revision) return changed()
