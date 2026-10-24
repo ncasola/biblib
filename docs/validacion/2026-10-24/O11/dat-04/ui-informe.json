@@ -1,0 +1,23 @@
+{
+ "pasos": [
+  {
+   "escritorio": {
+    "libros": 2001,
+    "desbordamiento": false
+   }
+  },
+  {
+   "exportacion": {
+    "parteDescargadaBytes": 678,
+    "libros": 1
+   }
+  },
+  {
+   "movil": {
+    "desbordamiento": false
+   }
+  }
+ ],
+ "consola": [],
+ "bibliotecaDevuelta": true
+}

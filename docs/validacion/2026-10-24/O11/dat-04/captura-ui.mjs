@@ -38,7 +38,7 @@ const report = { pasos: [] }
 const env = { ...Object.fromEntries(Object.entries(process.env).filter(([key]) => !/^(SUPABASE_|NEXT_PUBLIC_SUPABASE_|DATABASE_URL$|PG|POSTGRES_|BIBLIB_)/i.test(key))), BIBLIB_TARGET: "local", BIBLIB_PROFILE: "scratch", NODE_ENV: "test" }
 const app = spawn(process.execPath, ["scripts/next-target.mjs", "start", "local", "--profile", "scratch"], { cwd: repo, env, windowsHide: true, stdio: "ignore" })
 const files = mkdtempSync(path.join(tmpdir(), "biblib-dat04-ui-"))
-let browser, session
+let browser, session, page
 try {
   for (let i = 0; i < 120; i++) { try { if ((await fetch(`${url}/login`, { signal: AbortSignal.timeout(2000) })).status === 200) break } catch { /* Arrancando. */ } await new Promise((r) => setTimeout(r, 500)) }
   session = await signInFixture("a", { profile: "scratch" })
@@ -55,12 +55,15 @@ try {
 
   const desktop = await browser.newContext({ viewport: { width: 1280, height: 900 }, colorScheme: "dark", acceptDownloads: true })
   await desktop.addCookies(cookies.map((c) => ({ ...c, url })))
-  const page = await desktop.newPage()
+  page = await desktop.newPage()
+  const consola = []; report.consola = consola
+  page.on("console", (m) => { if (m.type() === "error") consola.push(m.text().slice(0, 200)) }); page.on("pageerror", (e) => consola.push(String(e).slice(0, 200)))
   await page.goto(`${url}/settings`)
   const panel = page.getByRole("region", { name: "Restaurar una copia por partes" })
   await panel.getByRole("button", { name: "Seleccionar las partes de la copia" }).waitFor()
   await panel.scrollIntoViewIfNeeded()
   await panel.screenshot({ path: path.join(out, "ui-restaurar-inicio.png") })
+  await page.waitForFunction(() => !document.querySelector("#restore-set-files")?.disabled)
   await page.locator("#restore-set-files").setInputFiles(paths)
   await panel.getByText("Conjunto completo y verificado").waitFor({ timeout: 60_000 })
   await panel.screenshot({ path: path.join(out, "ui-restaurar-verificado.png") })
@@ -95,14 +98,17 @@ try {
   await phone.goto(`${url}/settings`)
   const mobilePanel = phone.getByRole("region", { name: "Restaurar una copia por partes" })
   await mobilePanel.getByRole("button", { name: "Seleccionar las partes de la copia" }).waitFor()
+  await phone.waitForFunction(() => !document.querySelector("#restore-set-files")?.disabled)
   await phone.locator("#restore-set-files").setInputFiles([path.join(repo, "tests/fixtures/import/sintetico-111.json")])
-  await mobilePanel.getByText("no traen manifiesto").waitFor()
+  await mobilePanel.getByText("Esta parte no trae manifiesto").waitFor()
   await mobilePanel.scrollIntoViewIfNeeded()
   await mobilePanel.screenshot({ path: path.join(out, "ui-restaurar-sueltas-movil.png") })
   report.pasos.push({ movil: { desbordamiento: await phone.evaluate(() => document.documentElement.scrollWidth > innerWidth) } })
   await mobile.close()
 } catch (error) {
   report.error = String(error?.message ?? error).slice(0, 300)
+  if (process.env.DAT04_DEBUG) await page?.screenshot({ path: process.env.DAT04_DEBUG }).catch(() => {})
+  report.avisos = await page?.locator("[role=alert], [role=status]").allInnerTexts().catch(() => []) ?? []
 } finally {
   await browser?.close()
   stopTree(app)
