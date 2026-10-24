@@ -10,6 +10,8 @@ Siguen vigentes las reglas de [orquestación de F0](orquestacion-f0.md) (§0 y �
 
 - **24-10-2026 · Imágenes:** se autoriza `sharp`, con `allowBuilds: sharp: true` en `pnpm-workspace.yaml`, como decodificador de U-DAT-10. Ya era dependencia, bajo el override de seguridad `>=0.35.5`. También vuelve a habilitar la optimización de `next/image`.
 
+- **24-10-2026 · Worktrees de stack:** se mantienen los dos worktrees dueños de perfil, renombrados en Orca como `stack-scratch` (antes `u-inf-03`) y `stack-test` (antes `u-qa-01`). Cada unidad con stack trabaja en ellos en su propia rama, porque el ciclo de vida liga cada perfil a la raíz del checkout.
+
 ## Olas y agentes
 
 | Ola | Unidad | Agente | Stack | Schema |
