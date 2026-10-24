@@ -5,13 +5,13 @@
 
 :root {
   /* Texto de color sobre crema: contraste mínimo revisado de 4.96:1. */
-  --vintage-red: #b52b30;
+  --vintage-red: #DC2626;
   --vintage-olive: #536332;
   --vintage-yellow: #8b6500;
   --vintage-purple: #624477;
   --vintage-cream: #f6eddd;
   --vintage-brown: #644b32;
-  --vintage-red-text: var(--vintage-red);
+  --vintage-red-text: #b52b30;
   --vintage-olive-text: var(--vintage-olive);
   --vintage-yellow-text: var(--vintage-yellow);
   --vintage-purple-text: var(--vintage-purple);
@@ -26,9 +26,9 @@
   --card-foreground: var(--vintage-brown);
   --popover: #fffdf9;
   --popover-foreground: var(--vintage-brown);
-  --primary: var(--vintage-red);
+  --primary: #b52b30;
   --primary-foreground: oklch(0.99 0 0);
-  --secondary: var(--vintage-olive);
+  --secondary: #465529;
   --secondary-foreground: oklch(0.99 0 0);
   --muted: #eee5d5;
   --muted-foreground: var(--foreground-light);
@@ -38,6 +38,7 @@
   --destructive-foreground: oklch(0.99 0 0);
   --border: #d8cbb6;
   --input: #f4eddf;
+  --control-border: #88775e;
   --ring: var(--vintage-red);
   --radius: 1rem;
   --chart-1: oklch(0.646 0.222 41.116);
@@ -88,6 +89,7 @@
   --destructive-foreground: #202028;
   --border: #4b4b55;
   --input: #32323b;
+  --control-border: #98919d;
   --ring: #ffaaa3;
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
@@ -171,6 +173,41 @@
     @apply bg-background text-foreground;
   }
 
+  html {
+    scroll-padding-block-start: 7rem;
+  }
+
+  :where(main, section, article, aside, form, fieldset) {
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
+  }
+
+  :where(a, button, input, select, textarea, [tabindex]) {
+    scroll-margin-block: 7rem 1rem;
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--ring) !important;
+    outline-offset: 3px !important;
+  }
+
+  :where([data-slot="input"], [data-slot="select-trigger"], select, textarea) {
+    min-height: 2.75rem;
+  }
+
+  :where([data-slot="tabs-list"], [data-slot="tabs-trigger"], [data-slot="select-item"], [role="menuitem"]) {
+    min-height: 2.75rem;
+  }
+
+  [data-slot="select-trigger"] {
+    min-width: 0;
+  }
+
+  input[type="checkbox"] {
+    min-width: 1.5rem;
+    min-height: 1.5rem;
+  }
+
   button:not(:disabled) {
     cursor: pointer;
   }
@@ -183,7 +220,29 @@
 /* Remove @layer components and use simple CSS classes */
 .heading-vintage {
   font-weight: 700;
-  color: var(--vintage-red);
+  color: var(--vintage-red-text);
+}
+
+.text-vintage-red {
+  color: var(--vintage-red-text);
+}
+
+.hover\:bg-vintage-red\/90:hover {
+  background-color: var(--primary);
+}
+
+.active\:bg-vintage-olive\/80:active {
+  background-color: var(--secondary);
+}
+
+/* Fuera de las capas: las utilidades border-input/border-border de cada
+   formulario no deben volver a sustituir el borde de control por un relleno. */
+:where([data-slot="input"], [data-slot="select-trigger"], select, textarea, [data-slot="button"].border):not([aria-invalid="true"]):not(.text-destructive) {
+  border-color: var(--control-border);
+}
+
+[data-slot="tabs-trigger"][data-state="active"] {
+  border-color: var(--ring);
 }
 
 .dark .text-vintage-red,
@@ -233,10 +292,16 @@
   *::before,
   *::after {
     scroll-behavior: auto !important;
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+    animation: none !important;
+    transition: none !important;
   }
+}
+
+/* Evita recalcular/pintar tarjetas fuera de pantalla al bloquear el scroll de
+   un diálogo. El DOM y el árbol accesible se conservan; el foco las revela. */
+.shelves-grid > * {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 17rem;
 }
 
 /* ==================================================================

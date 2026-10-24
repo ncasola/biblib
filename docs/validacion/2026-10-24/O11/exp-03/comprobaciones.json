@@ -1,0 +1,29 @@
+{
+  "generatedAt": "2026-10-24T11:07:32.035Z",
+  "exits": {
+    "lint": 0,
+    "typecheck": 0,
+    "test": 0,
+    "build": 0,
+    "smoke": 0,
+    "scripts": 0
+  },
+  "unit": {
+    "tests": 322,
+    "passed": 322,
+    "failed": 0,
+    "skipped": 0
+  },
+  "scripts": {
+    "tests": 235,
+    "passed": 233,
+    "failed": 0,
+    "skipped": 2,
+    "reason": "Pruebas del perfil scratch no disponible/acreditado; promoción efímera ejecutada 8/8, sin BIBLIB_SKIP_STACK_TESTS"
+  },
+  "smoke": {
+    "ok": true,
+    "checks": 12
+  },
+  "build": "Next de producción sin objetivo, salida 0"
+}

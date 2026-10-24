@@ -1,0 +1,9 @@
+{
+  "observedOn": "2026-10-24",
+  "sourceCommit": "1547f3c",
+  "source": "Resumen de la salida de medición anterior a la corrección del aviso de renombrado; no es un trace completo",
+  "shelves": { "inpMedianMs": 144, "inpWorstMs": 176, "coldLcpMedianMs": 1402, "cls": 0 },
+  "detail": { "inpMedianMs": 176, "inpWorstMs": 208, "coldLcpMedianMs": 1824, "cls": 0 },
+  "samplesPerScreen": 2,
+  "isolatedDialogTrace": { "eventDispatchMaxMs": 128.1, "updateLayoutTreeMaxMs": 27.5 }
+}

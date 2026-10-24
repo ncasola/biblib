@@ -1,0 +1,102 @@
+{
+  "url": "/books",
+  "scope": "página completa",
+  "violations": [],
+  "incomplete": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "tags": [
+        "cat.color",
+        "wcag2aa",
+        "wcag143",
+        "TTv5",
+        "TT13.c",
+        "EN-301-549",
+        "EN-9.1.4.3",
+        "ACT",
+        "RGAAv4",
+        "RGAA-3.2.1"
+      ],
+      "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/color-contrast?application=playwright",
+      "nodes": [
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "messageKey": "nonBmp"
+              },
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element content contains only non-text characters"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span aria-hidden=\"true\">↑</span>",
+          "target": [
+            "span[aria-hidden=\"true\"]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element content contains only non-text characters"
+        }
+      ]
+    }
+  ],
+  "passes": [
+    "aria-allowed-attr",
+    "aria-allowed-role",
+    "aria-conditional-attr",
+    "aria-deprecated-role",
+    "aria-hidden-body",
+    "aria-hidden-focus",
+    "aria-prohibited-attr",
+    "aria-required-attr",
+    "aria-roles",
+    "aria-valid-attr-value",
+    "aria-valid-attr",
+    "avoid-inline-spacing",
+    "button-name",
+    "bypass",
+    "color-contrast",
+    "document-title",
+    "duplicate-id-aria",
+    "empty-heading",
+    "empty-table-header",
+    "form-field-multiple-labels",
+    "heading-order",
+    "html-has-lang",
+    "html-lang-valid",
+    "image-alt",
+    "image-redundant-alt",
+    "label-title-only",
+    "label",
+    "landmark-banner-is-top-level",
+    "landmark-main-is-top-level",
+    "landmark-no-duplicate-banner",
+    "landmark-no-duplicate-main",
+    "landmark-one-main",
+    "landmark-unique",
+    "link-name",
+    "meta-viewport-large",
+    "meta-viewport",
+    "nested-interactive",
+    "page-has-heading-one",
+    "presentation-role-conflict",
+    "region",
+    "scope-attr-valid",
+    "skip-link",
+    "summary-name",
+    "tabindex",
+    "table-duplicate-name",
+    "td-headers-attr",
+    "th-has-data-cells"
+  ],
+  "engine": {
+    "name": "axe-core",
+    "version": "4.11.4"
+  }
+}

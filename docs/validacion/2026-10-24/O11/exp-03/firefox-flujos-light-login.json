@@ -1,0 +1,525 @@
+{
+  "url": "/login",
+  "scope": "página completa",
+  "violations": [
+    {
+      "id": "landmark-one-main",
+      "impact": "moderate",
+      "tags": [
+        "cat.semantics",
+        "best-practice"
+      ],
+      "description": "Ensure the document has a main landmark",
+      "help": "Document should have one main landmark",
+      "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/landmark-one-main?application=playwright",
+      "nodes": [
+        {
+          "any": [],
+          "all": [
+            {
+              "id": "page-has-main",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "moderate",
+              "message": "Document does not have a main landmark"
+            }
+          ],
+          "none": [],
+          "impact": "moderate",
+          "html": "<html lang=\"es\" class=\"light\" style=\"color-scheme: light;\">",
+          "target": [
+            "html"
+          ],
+          "failureSummary": "Fix all of the following:\n  Document does not have a main landmark"
+        }
+      ]
+    },
+    {
+      "id": "region",
+      "impact": "moderate",
+      "tags": [
+        "cat.keyboard",
+        "best-practice",
+        "RGAAv4",
+        "RGAA-9.2.1"
+      ],
+      "description": "Ensure all page content is contained by landmarks",
+      "help": "All page content should be contained by landmarks",
+      "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/region?application=playwright",
+      "nodes": [
+        {
+          "any": [
+            {
+              "id": "region",
+              "data": {
+                "isIframe": false
+              },
+              "relatedNodes": [],
+              "impact": "moderate",
+              "message": "Some page content is not contained by landmarks"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "moderate",
+          "html": "<div class=\"flex flex-col items-center mb-8\">",
+          "target": [
+            ".mb-8"
+          ],
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "any": [
+            {
+              "id": "region",
+              "data": {
+                "isIframe": false
+              },
+              "relatedNodes": [],
+              "impact": "moderate",
+              "message": "Some page content is not contained by landmarks"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "moderate",
+          "html": "<div class=\"mt-6 text-center\"><p class=\"text-muted-foreground\">El acceso se gestiona con Google OAuth.<!-- --> <a class=\"text-vintage-olive font-semibold hover:underline\" href=\"/\">Volver al inicio</a></p></div>",
+          "target": [
+            ".mt-6.text-center"
+          ],
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        }
+      ]
+    }
+  ],
+  "incomplete": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "tags": [
+        "cat.color",
+        "wcag2aa",
+        "wcag143",
+        "TTv5",
+        "TT13.c",
+        "EN-301-549",
+        "EN-9.1.4.3",
+        "ACT",
+        "RGAAv4",
+        "RGAA-3.2.1"
+      ],
+      "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/color-contrast?application=playwright",
+      "nodes": [
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "22.5pt (30px)",
+                "fontWeight": "bold",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "3:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div data-slot=\"card\" class=\"text-card-foreground flex flex-col gap-6 w-full max-w-md p-8 bg-card/80 backdrop-blur-xl border-2 border-border/50 shadow-2xl rounded-2xl\">",
+                  "target": [
+                    ".text-card-foreground"
+                  ]
+                },
+                {
+                  "html": "<div class=\"min-h-screen flex items-center justify-center p-4 bg-linear-to-br from-vintage-yellow/10 via-background to-vintage-purple/10\">",
+                  "target": [
+                    ".bg-linear-to-br"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<h1 class=\"text-3xl font-bold heading-vintage text-center\">Bienvenido a BibLib</h1>",
+          "target": [
+            "h1"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "12.0pt (16px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div data-slot=\"card\" class=\"text-card-foreground flex flex-col gap-6 w-full max-w-md p-8 bg-card/80 backdrop-blur-xl border-2 border-border/50 shadow-2xl rounded-2xl\">",
+                  "target": [
+                    ".text-card-foreground"
+                  ]
+                },
+                {
+                  "html": "<div class=\"min-h-screen flex items-center justify-center p-4 bg-linear-to-br from-vintage-yellow/10 via-background to-vintage-purple/10\">",
+                  "target": [
+                    ".bg-linear-to-br"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<p class=\"text-muted-foreground text-center mt-2\">Inicia sesión con tu cuenta de Google</p>",
+          "target": [
+            ".mt-2"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div data-slot=\"card\" class=\"text-card-foreground flex flex-col gap-6 w-full max-w-md p-8 bg-card/80 backdrop-blur-xl border-2 border-border/50 shadow-2xl rounded-2xl\">",
+                  "target": [
+                    ".text-card-foreground"
+                  ]
+                },
+                {
+                  "html": "<div class=\"min-h-screen flex items-center justify-center p-4 bg-linear-to-br from-vintage-yellow/10 via-background to-vintage-purple/10\">",
+                  "target": [
+                    ".bg-linear-to-br"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<p role=\"alert\" class=\"text-destructive text-sm\">No se pudo completar el acceso con Google. Vuelve a intentarlo.</p>",
+          "target": [
+            ".text-destructive"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "12.0pt (16px)",
+                "fontWeight": "bold",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<section aria-labelledby=\"_R_2dbsnpfjb_-title\" data-biblib-local-login=\"biblib-local-password-form\" class=\"mt-6 rounded-2xl border-2 border-dashed border-vintage-brown/50 bg-vintage-yellow/10 p-4\">",
+                  "target": [
+                    "section"
+                  ]
+                },
+                {
+                  "html": "<div data-slot=\"card\" class=\"text-card-foreground flex flex-col gap-6 w-full max-w-md p-8 bg-card/80 backdrop-blur-xl border-2 border-border/50 shadow-2xl rounded-2xl\">",
+                  "target": [
+                    ".text-card-foreground"
+                  ]
+                },
+                {
+                  "html": "<div class=\"min-h-screen flex items-center justify-center p-4 bg-linear-to-br from-vintage-yellow/10 via-background to-vintage-purple/10\">",
+                  "target": [
+                    ".bg-linear-to-br"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<h2 id=\"_R_2dbsnpfjb_-title\" class=\"text-base font-semibold heading-vintage\">Acceso local de desarrollo</h2>",
+          "target": [
+            "#_R_2dbsnpfjb_-title"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<section aria-labelledby=\"_R_2dbsnpfjb_-title\" data-biblib-local-login=\"biblib-local-password-form\" class=\"mt-6 rounded-2xl border-2 border-dashed border-vintage-brown/50 bg-vintage-yellow/10 p-4\">",
+                  "target": [
+                    "section"
+                  ]
+                },
+                {
+                  "html": "<div data-slot=\"card\" class=\"text-card-foreground flex flex-col gap-6 w-full max-w-md p-8 bg-card/80 backdrop-blur-xl border-2 border-border/50 shadow-2xl rounded-2xl\">",
+                  "target": [
+                    ".text-card-foreground"
+                  ]
+                },
+                {
+                  "html": "<div class=\"min-h-screen flex items-center justify-center p-4 bg-linear-to-br from-vintage-yellow/10 via-background to-vintage-purple/10\">",
+                  "target": [
+                    ".bg-linear-to-br"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<p class=\"mt-1 text-sm text-muted-foreground\">Solo existe en este entorno local. No aparece en preproducción ni en producción y solo acepta el Supabase local de este equipo.</p>",
+          "target": [
+            ".mt-1"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<section aria-labelledby=\"_R_2dbsnpfjb_-title\" data-biblib-local-login=\"biblib-local-password-form\" class=\"mt-6 rounded-2xl border-2 border-dashed border-vintage-brown/50 bg-vintage-yellow/10 p-4\">",
+                  "target": [
+                    "section"
+                  ]
+                },
+                {
+                  "html": "<div data-slot=\"card\" class=\"text-card-foreground flex flex-col gap-6 w-full max-w-md p-8 bg-card/80 backdrop-blur-xl border-2 border-border/50 shadow-2xl rounded-2xl\">",
+                  "target": [
+                    ".text-card-foreground"
+                  ]
+                },
+                {
+                  "html": "<div class=\"min-h-screen flex items-center justify-center p-4 bg-linear-to-br from-vintage-yellow/10 via-background to-vintage-purple/10\">",
+                  "target": [
+                    ".bg-linear-to-br"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<label data-slot=\"label\" class=\"flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50\" for=\"_R_2dbsnpfjb_-email\">Correo</label>",
+          "target": [
+            "label[for=\"_R_2dbsnpfjb_-email\"]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<section aria-labelledby=\"_R_2dbsnpfjb_-title\" data-biblib-local-login=\"biblib-local-password-form\" class=\"mt-6 rounded-2xl border-2 border-dashed border-vintage-brown/50 bg-vintage-yellow/10 p-4\">",
+                  "target": [
+                    "section"
+                  ]
+                },
+                {
+                  "html": "<div data-slot=\"card\" class=\"text-card-foreground flex flex-col gap-6 w-full max-w-md p-8 bg-card/80 backdrop-blur-xl border-2 border-border/50 shadow-2xl rounded-2xl\">",
+                  "target": [
+                    ".text-card-foreground"
+                  ]
+                },
+                {
+                  "html": "<div class=\"min-h-screen flex items-center justify-center p-4 bg-linear-to-br from-vintage-yellow/10 via-background to-vintage-purple/10\">",
+                  "target": [
+                    ".bg-linear-to-br"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<label data-slot=\"label\" class=\"flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50\" for=\"_R_2dbsnpfjb_-password\">Contraseña</label>",
+          "target": [
+            "label[for=\"_R_2dbsnpfjb_-password\"]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "12.0pt (16px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div data-slot=\"card\" class=\"text-card-foreground flex flex-col gap-6 w-full max-w-md p-8 bg-card/80 backdrop-blur-xl border-2 border-border/50 shadow-2xl rounded-2xl\">",
+                  "target": [
+                    ".text-card-foreground"
+                  ]
+                },
+                {
+                  "html": "<div class=\"min-h-screen flex items-center justify-center p-4 bg-linear-to-br from-vintage-yellow/10 via-background to-vintage-purple/10\">",
+                  "target": [
+                    ".bg-linear-to-br"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<p class=\"text-muted-foreground\">El acceso se gestiona con Google OAuth.<!-- --> <a class=\"text-vintage-olive font-semibold hover:underline\" href=\"/\">Volver al inicio</a></p>",
+          "target": [
+            ".mt-6.text-center > .text-muted-foreground"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "12.0pt (16px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div data-slot=\"card\" class=\"text-card-foreground flex flex-col gap-6 w-full max-w-md p-8 bg-card/80 backdrop-blur-xl border-2 border-border/50 shadow-2xl rounded-2xl\">",
+                  "target": [
+                    ".text-card-foreground"
+                  ]
+                },
+                {
+                  "html": "<div class=\"min-h-screen flex items-center justify-center p-4 bg-linear-to-br from-vintage-yellow/10 via-background to-vintage-purple/10\">",
+                  "target": [
+                    ".bg-linear-to-br"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<a class=\"text-vintage-olive font-semibold hover:underline\" href=\"/\">Volver al inicio</a>",
+          "target": [
+            "a"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        }
+      ]
+    }
+  ],
+  "passes": [
+    "aria-allowed-attr",
+    "aria-allowed-role",
+    "aria-conditional-attr",
+    "aria-deprecated-role",
+    "aria-hidden-body",
+    "aria-hidden-focus",
+    "aria-prohibited-attr",
+    "aria-required-attr",
+    "aria-roles",
+    "aria-valid-attr-value",
+    "aria-valid-attr",
+    "autocomplete-valid",
+    "avoid-inline-spacing",
+    "button-name",
+    "bypass",
+    "color-contrast",
+    "document-title",
+    "duplicate-id-aria",
+    "empty-heading",
+    "form-field-multiple-labels",
+    "heading-order",
+    "html-has-lang",
+    "html-lang-valid",
+    "image-alt",
+    "image-redundant-alt",
+    "label-title-only",
+    "label",
+    "landmark-unique",
+    "link-in-text-block",
+    "link-name",
+    "meta-viewport-large",
+    "meta-viewport",
+    "nested-interactive",
+    "page-has-heading-one",
+    "region"
+  ],
+  "engine": {
+    "name": "axe-core",
+    "version": "4.11.4"
+  }
+}

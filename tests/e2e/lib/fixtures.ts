@@ -100,7 +100,10 @@ export function localLoginForm(page: Page): Locator {
 export async function loginWithForm(page: Page, stack: Stack, account: Account, { password }: { password?: string } = {}): Promise<void> {
   const form = localLoginForm(page)
   await expect(form.getByRole("heading", { name: "Acceso local de desarrollo" })).toBeVisible()
-  await form.getByLabel("Correo").fill(stack.email(account))
+  // WebKit 27.2 puede resolver fill() sobre type=email sin escribir valor.
+  // La escritura real de teclas permite el mismo formulario sin un bypass de Auth.
+  await form.getByLabel("Correo").fill("")
+  await form.getByLabel("Correo").pressSequentially(stack.email(account))
   await fillSecret(form.getByLabel("Contraseña"), password ?? stack.password(account))
   await form.getByRole("button", { name: "Entrar" }).click()
 }
@@ -206,9 +209,21 @@ export const test = base.extend<{ account: Session; guard: Guard; data: Data }, 
     const consoleErrors: Observed[] = []
     const navigations: number[] = []
     const allowed: RegExp[] = []
+    if (testInfo.project.name.startsWith("webkit")) {
+      // WebKit clasifica como error de consola este aviso de una CSP solo informativa.
+      // No es una excepción JS ni una violación de la política; se documenta en accesibilidad.md.
+      allowed.push(/^The Content Security Policy '[^\n]*' was delivered in report-only mode, but does not specify a 'report-to'; the policy will have no effect\. Please either add a 'report-to' directive, or deliver the policy via the 'Content-Security-Policy' header\.$/)
+      testInfo.annotations.push({ type: "aviso WebKit conocido", description: "CSP en modo informe sin report-to; pendiente de receptor de informes de U-OPS-04." })
+    }
+    if (testInfo.project.name.startsWith("firefox")) {
+      // Solo el aviso Report-Only del runtime propio de Next; una CSP aplicada,
+      // otro origen, otro tipo de rechazo o una excepción real siguen fallando.
+      allowed.push(/^\[JavaScript Error: "Content-Security-Policy: \(Report-Only policy\) The page’s settings would block a JavaScript eval \(script-src\).+\(Missing 'unsafe-eval'\)" \{file: "http:\/\/127\.0\.0\.1:3148\/_next\/static\/chunks\/[^"]+" line: \d+\}\] \[\/_next\/static\/chunks\/[^\]]+\]$/)
+      testInfo.annotations.push({ type: "aviso Firefox conocido", description: "CSP solo en informe: eval del runtime Next, pendiente de revisión de U-OPS-04 antes de aplicar la política." })
+    }
     const watchPage = (page: Page) => {
       const where = () => new URL(page.url()).pathname
-      page.on("pageerror", (error) => { problems.push({ text: `Excepción JS: ${error.message}`, at: Date.now() }); note(`excepción en ${where()}`) })
+      page.on("pageerror", (error) => { problems.push({ text: `Excepción JS: ${error.message}`, at: Date.now() }); note(`excepción en ${where()}: ${error.stack?.split("\n").slice(0, 4).join(" ") ?? error.message}`) })
       page.on("response", (response) => { if (response.status() >= 400) note(`${response.status()} ${response.request().method()} ${new URL(response.url()).pathname} (página ${where()})`) })
       page.on("request", (request) => { if (request.isNavigationRequest() && request.frame() === page.mainFrame()) navigations.push(Date.now()) })
       page.on("console", (message) => {

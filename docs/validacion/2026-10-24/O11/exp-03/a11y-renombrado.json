@@ -1,0 +1,20 @@
+{
+  "generatedAt": "2026-10-24T11:08:41.004Z",
+  "scope": "Último ajuste de ShelfCard: error único dentro del diálogo y retorno de foco en Chromium/Firefox/WebKit, seis accesos reales de preparación y tres escenarios de diálogo",
+  "sourceCommit": "6897fae",
+  "summary": {
+    "passed": 9,
+    "known": [],
+    "pending": 0,
+    "unexpected": [],
+    "repeated": []
+  },
+  "stats": {
+    "startTime": "2026-10-24T11:06:15.130Z",
+    "duration": 64128.415,
+    "expected": 9,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

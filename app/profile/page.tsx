@@ -49,24 +49,24 @@ function ProfileForm({ user }: { user: User }) {
     <div className="mx-auto max-w-4xl">
         <h1 className="text-4xl font-bold heading-vintage mb-8 text-vintage-red">Mi perfil</h1>
 
-        <div className="grid gap-8 md:grid-cols-[300px_1fr]">
+        <div className="grid gap-8 md:grid-cols-[300px_minmax(0,1fr)]">
           <Card className="p-6 bg-card/80 backdrop-blur-xl border-2 border-border/50 rounded-2xl h-fit">
             <div className="flex flex-col items-center">
               <div className="relative mb-4">
                 <Avatar className="w-32 h-32 border-4 border-vintage-yellow">
                   <AvatarImage src={user.avatar} alt="Foto de tu cuenta de Google" />
-                  <AvatarFallback className="bg-vintage-yellow text-black text-3xl">
+                  <AvatarFallback className="bg-accent text-accent-foreground text-3xl">
                     {user.name?.charAt(0).toUpperCase() || user.email.charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
               </div>
-              <h2 className="text-xl font-bold">{user.name || user.email}</h2>
+              <h2 className="max-w-full break-words text-xl font-bold">{user.name || user.email}</h2>
               <p className="text-muted-foreground text-sm break-all">{user.email}</p>
               <p className="text-muted-foreground text-sm mt-3 text-center">Foto y correo vinculados a tu cuenta de Google.</p>
             </div>
           </Card>
 
-          <Card className="p-8 bg-card/80 backdrop-blur-xl border-2 border-border/50 rounded-2xl">
+          <Card className="p-5 sm:p-8 bg-card/80 backdrop-blur-xl border-2 border-border/50 rounded-2xl">
             <h2 className="text-2xl font-bold heading-vintage mb-6">Información de la cuenta</h2>
 
             <form onSubmit={handleSubmit} className="space-y-6" aria-busy={loading}>

@@ -69,7 +69,8 @@
     "catalogue:telemetry": "node scripts/catalogue-telemetry.mjs",
     "perf:t4": "node scripts/performance/experiment-t4.mjs",
     "test:integration:snapshots": "node tests/integration/snapshots/run.mjs",
-    "test:integration:views": "node tests/integration/views/run.mjs"
+    "test:integration:views": "node tests/integration/views/run.mjs",
+    "test:a11y:local": "node tests/accessibility/run.mjs"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "1.1.15",
@@ -98,6 +99,7 @@
     "zod": "4.1.13"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.11.1",
     "@playwright/test": "1.64.1",
     "@tailwindcss/postcss": "^4.3.3",
     "@types/node": "^26.1.2",

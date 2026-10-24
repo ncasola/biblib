@@ -1,0 +1,36 @@
+{
+  "generatedAt": "2026-10-24T11:02:59.928Z",
+  "suite": "e2e",
+  "summary": {
+    "passed": 40,
+    "known": [],
+    "pending": 19,
+    "unexpected": [],
+    "repeated": []
+  },
+  "projects": {
+    "chromium-sesion": {
+      "passed": 2,
+      "pending": 0,
+      "known": 0
+    },
+    "chromium-flujos": {
+      "passed": 36,
+      "pending": 19,
+      "known": 0
+    },
+    "chromium": {
+      "passed": 2,
+      "pending": 0,
+      "known": 0
+    }
+  },
+  "stats": {
+    "startTime": "2026-10-24T10:55:59.257Z",
+    "duration": 215105.277,
+    "expected": 40,
+    "skipped": 19,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

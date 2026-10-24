@@ -198,7 +198,7 @@ export default function Shelf3DPage() {
                     className={`min-h-11 w-full rounded-xl px-3 py-2 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${shelfId === shelf.id ? "bg-primary text-primary-foreground" : "bg-surface text-foreground hover:bg-border"}`}
                   >
                     <span className="block text-sm font-medium">{shelf.title}</span>
-                    <span className="block text-xs opacity-75">{shelf.book_count} libro{shelf.book_count === 1 ? "" : "s"}</span>
+                    <span className="block text-xs">{shelf.book_count} libro{shelf.book_count === 1 ? "" : "s"}</span>
                   </button>
                 ))}
               </div>

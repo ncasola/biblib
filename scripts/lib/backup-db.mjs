@@ -59,7 +59,19 @@ export async function contentDigests(tx, tables) {
 /** Hechos de esquema ordenados (tablas, RLS, políticas, grants, FK, índices, función y trigger). */
 export async function objectFacts(tx) {
   const facts = await inspectObjects(tx)
-  const sorted = Object.fromEntries(Object.entries(facts).map(([name, value]) => [name, Array.isArray(value) ? [...value].map((v) => (typeof v === "object" && v !== null ? { ...v } : v)).sort((a, b) => canonical(a).localeCompare(canonical(b))) : value]))
+  // PostgreSQL aplana este AND al restaurarlo desde pg_dump. Solo se normaliza
+  // la agrupación redundante observada de este check, sin omitir hechos ni
+  // aceptar otras definiciones. Evidencia: O11/exp-03/informe.md.
+  const normalize = (name, value) => {
+    if (typeof value !== "object" || value === null) return value
+    const copy = { ...value }
+    if (name === "constraints" && copy.table === "saved_book_views" && copy.name === "saved_book_views_name_check"
+      && copy.definition === "CHECK (((length(btrim(name)) >= 1) AND (length(btrim(name)) <= 80) AND (name = btrim(name))))") {
+      copy.definition = "CHECK ((((length(btrim(name)) >= 1) AND (length(btrim(name)) <= 80)) AND (name = btrim(name))))"
+    }
+    return copy
+  }
+  const sorted = Object.fromEntries(Object.entries(facts).map(([name, value]) => [name, Array.isArray(value) ? [...value].map((v) => normalize(name, v)).sort((a, b) => canonical(a).localeCompare(canonical(b))) : value]))
   return { hash: sha256(canonical(sorted)), facts: sorted }
 }
 

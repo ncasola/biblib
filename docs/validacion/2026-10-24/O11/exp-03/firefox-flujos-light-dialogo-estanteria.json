@@ -1,0 +1,34 @@
+{
+  "url": "/shelves",
+  "scope": "diálogo activo; pantalla completa auditada antes de abrir",
+  "violations": [],
+  "incomplete": [],
+  "passes": [
+    "aria-allowed-attr",
+    "aria-allowed-role",
+    "aria-conditional-attr",
+    "aria-deprecated-role",
+    "aria-dialog-name",
+    "aria-hidden-focus",
+    "aria-prohibited-attr",
+    "aria-required-attr",
+    "aria-roles",
+    "aria-valid-attr-value",
+    "aria-valid-attr",
+    "avoid-inline-spacing",
+    "button-name",
+    "color-contrast",
+    "duplicate-id-aria",
+    "empty-heading",
+    "form-field-multiple-labels",
+    "heading-order",
+    "label-title-only",
+    "label",
+    "nested-interactive",
+    "tabindex"
+  ],
+  "engine": {
+    "name": "axe-core",
+    "version": "4.11.4"
+  }
+}

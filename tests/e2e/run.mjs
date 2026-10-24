@@ -49,7 +49,7 @@ export function parseArgs(argv) {
 
 /** Argumentos de Playwright: el proyecto de cada navegador arrastra su sesión y sus recorridos por dependencias. */
 export function playwrightArgs(options) {
-  const args = [PLAYWRIGHT_CLI, "test", "--config", "playwright.config.ts"]
+  const args = [PLAYWRIGHT_CLI, "test", "--config", options.config ?? "playwright.config.ts"]
   if (options.external) return [...args, "--project", "external"]
   for (const project of options.projects) args.push("--project", project)
   if (options.grep) args.push("--grep", options.grep)
@@ -104,8 +104,9 @@ async function runExternal(options, out) {
   return EXIT.OK
 }
 
-export async function runE2E(argv = process.argv.slice(2), out = process.stdout) {
+export async function runE2E(argv = process.argv.slice(2), out = process.stdout, config) {
   const options = parseArgs(argv)
+  options.config = config
   if (options.external) return runExternal(options, out)
   if (options.checkUntargeted) {
     // Comprobación de U-LOC-01: sin stack ni sesiones; solo compila y revisa el bundle.
@@ -193,8 +194,8 @@ export async function runE2E(argv = process.argv.slice(2), out = process.stdout)
   }
 }
 
-export async function main(argv = process.argv.slice(2)) {
-  try { return await runE2E(argv) } catch (error) {
+export async function main(argv = process.argv.slice(2), config) {
+  try { return await runE2E(argv, process.stdout, config) } catch (error) {
     const code = error instanceof BiblibError ? error.code : EXIT.VERIFICATION_FAILED
     const phase = error instanceof BiblibError ? error.phase : "e2e"
     console.error(`Error [${phase}] (${code}): ${error instanceof BiblibError ? error.message : "Fallo inesperado del runner E2E."}`)
