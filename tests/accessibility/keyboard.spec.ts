@@ -65,9 +65,15 @@ test("teclado: alta, búsqueda, selección, movimiento, edición, foco y cierre 
   await page.keyboard.press("Space")
   await tabTo(page, page.getByRole("combobox", { name: "Estantería de destino" }))
   await page.keyboard.press("Enter")
-  await page.keyboard.press("End")
-  // Selección por letras en el listbox nativo de Radix.
-  await page.keyboard.type(data.marked(`Destino ${slug}`))
+  const options = page.getByRole("option")
+  const index = (await options.allTextContents()).findIndex((label) => label.trim() === data.marked(`Destino ${slug}`))
+  expect(index).toBeGreaterThanOrEqual(0)
+  await page.keyboard.press("Home")
+  await expect(options.first()).toBeFocused()
+  for (let position = 1; position <= index; position++) {
+    await page.keyboard.press("ArrowDown")
+    await expect(options.nth(position)).toBeFocused()
+  }
   await page.keyboard.press("Enter")
   await expect(page.getByRole("combobox", { name: "Estantería de destino" })).toBeFocused()
   await expect(page.getByRole("listbox")).toHaveCount(0)

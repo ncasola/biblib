@@ -223,7 +223,7 @@ export const test = base.extend<{ account: Session; guard: Guard; data: Data }, 
     }
     const watchPage = (page: Page) => {
       const where = () => new URL(page.url()).pathname
-      page.on("pageerror", (error) => { problems.push({ text: `Excepción JS: ${error.message}`, at: Date.now() }); note(`excepción en ${where()}`) })
+      page.on("pageerror", (error) => { problems.push({ text: `Excepción JS: ${error.message}`, at: Date.now() }); note(`excepción en ${where()}: ${error.stack?.split("\n").slice(0, 4).join(" ") ?? error.message}`) })
       page.on("response", (response) => { if (response.status() >= 400) note(`${response.status()} ${response.request().method()} ${new URL(response.url()).pathname} (página ${where()})`) })
       page.on("request", (request) => { if (request.isNavigationRequest() && request.frame() === page.mainFrame()) navigations.push(Date.now()) })
       page.on("console", (message) => {
