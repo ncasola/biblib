@@ -12,8 +12,9 @@ import {
   AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { getLibraryDataAction } from "@/app/actions/library"
+import { getBookTitlesAction, getLibraryCountsAction, prepareLibraryExportAction, type ExportPartLink, type PreparedLibraryExport } from "@/app/actions/library-export"
 import { confirmImportAction, prepareImportAction, type PreparedImport } from "@/app/actions/import-preview"
+import { RestoreSetPanel } from "@/components/restore-set-panel"
 import {
   deleteLibrarySnapshotAction, listLibrarySnapshotsAction, previewSnapshotRestoreAction, restoreSnapshotAction,
   type SnapshotRestorePreview,
@@ -21,11 +22,9 @@ import {
 import type { SnapshotPage, SnapshotSummary } from "@/lib/library-snapshots"
 import {
   MAX_IMPORT_BOOKS, MAX_IMPORT_BYTES, MAX_IMPORT_SHELVES,
-  parseLibraryImport, type LibraryImportOptions, type LibraryExport,
+  parseLibraryImport, type LibraryImportOptions,
 } from "@/lib/library-import"
 import type { ImportOperationResult } from "@/lib/import-plan"
-import { backupPartCounts, exportLibraryBackup } from "@/lib/library-export"
-import type { PortableBackupV2 } from "@/lib/backup-v2"
 import type { LibraryData } from "@/lib/types"
 import type { ActionError } from "@/lib/action-result"
 
@@ -228,12 +227,21 @@ function SnapshotHistory({ refreshKey, disabled, onNotice, onRestored }: {
   )
 }
 
+/** Descarga un archivo servido por la app sin cargar su contenido en la página. */
+function downloadLink(href: string, fileName: string) {
+  const link = document.createElement("a")
+  link.href = href
+  link.download = fileName
+  document.body.appendChild(link); link.click(); link.remove()
+}
+
 export default function SettingsPage() {
-  const [data, setData] = useState<LibraryData | null>(null)
+  // Tarea T1: Ajustes solo carga recuentos; la colección completa nunca viaja al navegador.
+  const [counts, setCounts] = useState<{ books: number; shelves: number } | null>(null)
   const [loading, setLoading] = useState(true)
   const [isExporting, setIsExporting] = useState(false)
-  const [exportParts, setExportParts] = useState<(LibraryExport | PortableBackupV2)[]>([])
-  const [exportFormat, setExportFormat] = useState<1 | 2 | null>(null)
+  const [exportSet, setExportSet] = useState<PreparedLibraryExport | null>(null)
+  const [deletedTitles, setDeletedTitles] = useState<{ titles: string[]; total: number }>({ titles: [], total: 0 })
   const [isValidating, setIsValidating] = useState(false)
   const [isPreparing, setIsPreparing] = useState(false)
   const [isImporting, setIsImporting] = useState(false)
@@ -256,25 +264,24 @@ export default function SettingsPage() {
   const fileInput = useRef<HTMLInputElement>(null)
   const busy = isImporting || isValidating || isPreparing || isExporting || isRecovering
 
-  const refresh = useCallback(() => getLibraryDataAction().then((loaded) => {
-      setData(loaded)
+  const refresh = useCallback(() => getLibraryCountsAction().then((loaded) => {
+      if (!loaded.ok) throw new Error(loaded.error.code)
+      setCounts(loaded.value)
       setMessage(null)
     }).catch(() => {
-      setData(null)
+      setCounts(null)
       setMessage({ type: "error", text: "No se pudo cargar tu biblioteca. Reintenta la carga antes de importar o exportar." })
     }).finally(() => {
       setLoading(false)
     }), [])
+  const refreshCounts = () => getLibraryCountsAction().then((loaded) => { if (loaded.ok) setCounts(loaded.value) }).catch(() => { /* Se recarga al volver. */ })
 
   useEffect(() => { void refresh() }, [refresh])
 
-  const downloadPart = (part: LibraryExport | PortableBackupV2, index: number, total: number) => {
-    const url = URL.createObjectURL(new Blob([JSON.stringify(part)], { type: "application/json" }))
-    const link = document.createElement("a")
-    link.href = url
-    const suffix = total > 1 ? `-parte-${String(index + 1).padStart(String(total).length, "0")}-de-${total}` : ""
-    link.download = `biblib-backup-${part.formatVersion === 2 ? "v2-" : ""}${part.exportedAt.replace(/[:.]/g, "-")}${suffix}.json`
-    document.body.appendChild(link); link.click(); link.remove()
+  const downloadPart = (part: ExportPartLink) => downloadLink(part.href, part.fileName)
+  const downloadManifest = (prepared: PreparedLibraryExport) => {
+    const url = URL.createObjectURL(new Blob([prepared.manifestText], { type: "application/json" }))
+    downloadLink(url, prepared.manifestFileName)
     setTimeout(() => URL.revokeObjectURL(url), 1000)
   }
 
@@ -282,23 +289,23 @@ export default function SettingsPage() {
     if (busy) return
     setIsExporting(true)
     try {
-      const current = await getLibraryDataAction()
-      setData(current)
-      setExportParts([])
+      // U-DAT-04 (T1): el servidor genera las partes y su manifiesto; cada parte se descarga de la app.
       // U-BIB-04: formato 1 solo si no pierde datos; con procedencia BNE o por campo, formato 2.
-      const backup = exportLibraryBackup(current)
-      const parts: (LibraryExport | PortableBackupV2)[] = backup.parts
-      setExportParts(parts)
-      setExportFormat(backup.formatVersion)
-      if (parts.length === 1) downloadPart(parts[0], 0, 1)
+      const response = await prepareLibraryExportAction()
+      if (!response.ok) { setMessage({ type: "error", text: response.error.message, reference: response.error.correlationId }); return }
+      const prepared = response.value
+      setExportSet(prepared)
+      setCounts(prepared.totals)
+      const parts = prepared.parts
+      if (parts.length === 1) downloadPart(parts[0])
       // Las partes se ofrecen en un diálogo: la lista no empuja el resto de la página (tarea T2 de rendimiento).
       else setPartsOpen(true)
-      const format = backup.formatVersion === 2
+      const format = prepared.formatVersion === 2
         ? " Se usa el formato 2 porque tu biblioteca tiene procedencia por campo o de la BNE que el formato 1 no conserva."
         : " Se usa el formato 1, compatible con versiones anteriores, porque conserva todos tus datos."
       setMessage({ type: "success", text: (parts.length === 1
-        ? `Copia preparada con ${current.books.length} libros y ${current.shelves.length} estanterías. Conserva el archivo descargado para restaurar la colección.`
-        : `Copia dividida en ${parts.length} archivos importables. Descarga y conserva todas las partes; puedes volver a abrir la lista con «Ver las ${parts.length} partes de la última copia».`) + format })
+        ? `Copia preparada con ${prepared.totals.books} libros y ${prepared.totals.shelves} estanterías. Conserva el archivo descargado para restaurar la colección.`
+        : `Copia dividida en ${parts.length} archivos importables. Descarga todas las partes y el manifiesto para restaurarlas juntas; puedes volver a abrir la lista con «Ver las ${parts.length} partes de la última copia».`) + format })
     } catch {
       setMessage({ type: "error", text: "No se pudo preparar la copia. No se han modificado tus datos; vuelve a intentarlo." })
     } finally {
@@ -320,7 +327,19 @@ export default function SettingsPage() {
       if (!response.ok) { setMessage(errorMessage(response.error)); return }
       idempotencyKey.current = newIdempotencyKey()
       setPrepared(response.value)
-      try { setData(await getLibraryDataAction()) } catch { /* La revisión del servidor sigue siendo válida. */ }
+      // Solo los títulos de las primeras fichas que se eliminarían, no la colección (tarea T1).
+      const removed = response.value.plan.books.delete
+      setDeletedTitles({ titles: [], total: removed.length })
+      if (removed.length) {
+        try {
+          const titles = await getBookTitlesAction({ ids: removed.slice(0, 50) })
+          if (titles.ok) {
+            const byId = new Map(titles.value.map((row) => [row.id, row.title]))
+            setDeletedTitles({ titles: removed.slice(0, 50).map((id) => byId.get(id) ?? "Libro sin título disponible"), total: removed.length })
+          }
+        } catch { /* La revisión del servidor sigue siendo válida; solo faltan los títulos. */ }
+      }
+      void refreshCounts()
     } catch {
       setMessage({ type: "error", text: "No se pudo preparar la revisión. No se han modificado tus datos; vuelve a intentarlo." })
     } finally {
@@ -393,11 +412,12 @@ export default function SettingsPage() {
         return
       }
       setResult(response.value.result)
-      try {
-        setData(await getLibraryDataAction())
+      const updated = await getLibraryCountsAction().catch(() => null)
+      if (updated?.ok) {
+        setCounts(updated.value)
         setMessage({ type: "success", text: "La importación ha terminado. Revisa el resultado debajo." })
-      } catch {
-        setData(null)
+      } else {
+        setCounts(null)
         setMessage({ type: "success", text: "La importación ha terminado, pero no se pudo actualizar la vista. Recarga los datos para ver la colección actual." })
       }
     } catch {
@@ -415,8 +435,7 @@ export default function SettingsPage() {
   }
 
   const plan = prepared?.plan
-  const titles = new Map((data?.books ?? []).map((book) => [book.id, book.title]))
-  const deletedTitles = plan ? plan.books.delete.map((id) => titles.get(id) ?? "Libro sin título disponible") : []
+  const exportParts = exportSet?.parts ?? []
   const skippedTitles = plan && preview ? plan.books.skip.map((entry) => preview.library.books.find((book) => book.id === entry.sourceId)?.title ?? "") : []
   const expiresAt = prepared ? new Date(prepared.expiresAt).toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" }) : ""
 
@@ -438,26 +457,27 @@ export default function SettingsPage() {
             <Button type="button" variant="ghost" size="icon" className="shrink-0 -mr-2 -mt-2" onClick={() => setMessage(null)} aria-label="Cerrar aviso"><X aria-hidden="true" /></Button>
           </div>}
         </div>
-        {!data && !loading && <Button onClick={() => { setLoading(true); void refresh() }} disabled={busy} variant="outline" className="mb-6">Reintentar carga</Button>}
+        {!counts && !loading && <Button onClick={() => { setLoading(true); void refresh() }} disabled={busy} variant="outline" className="mb-6">Reintentar carga</Button>}
 
         <div className="space-y-6">
           <section aria-labelledby="export-title" className="rounded-2xl border border-border bg-card/80 backdrop-blur-xl p-5 md:p-8 shadow-xl">
             <h2 id="export-title" className="text-2xl font-bold mb-2">Exportar una copia</h2>
-            <p className="text-muted-foreground mb-4">Descarga un JSON con libros, estanterías, estado de lectura, versión del formato y fecha de exportación. Se consultarán los datos actuales antes de descargar. Las colecciones grandes se dividen automáticamente en archivos que respetan los límites de importación.</p>
-            {loading ? <p role="status" className="text-sm mb-4">Cargando biblioteca…</p> : data && <p className="text-sm mb-4">Biblioteca actual: {data.books.length} libros en {data.shelves.length} estanterías.</p>}
-            <Button onClick={() => void handleExport()} disabled={!data || busy || loading} className="rounded-xl">{isExporting ? <LoaderCircle aria-hidden="true" className="animate-spin" /> : <Download aria-hidden="true" />}{isExporting ? "Preparando copia…" : "Descargar copia de seguridad"}</Button>
+            <p className="text-muted-foreground mb-4">Descarga un JSON con libros, estanterías, estado de lectura, versión del formato y fecha de exportación. La copia se prepara en el servidor con los datos actuales. Las colecciones grandes se dividen automáticamente en archivos que respetan los límites de importación, con un manifiesto que acredita qué partes forman la copia.</p>
+            {loading ? <p role="status" className="text-sm mb-4">Cargando biblioteca…</p> : counts && <p className="text-sm mb-4">Biblioteca actual: {counts.books} libros en {counts.shelves} estanterías.</p>}
+            <Button onClick={() => void handleExport()} disabled={!counts || busy || loading} className="rounded-xl">{isExporting ? <LoaderCircle aria-hidden="true" className="animate-spin" /> : <Download aria-hidden="true" />}{isExporting ? "Preparando copia…" : "Descargar copia de seguridad"}</Button>
             {/* Espacio reservado para el estado de la última copia: aparecer no empuja las secciones siguientes. */}
             <div className="mt-3 min-h-[4.5rem] text-xs text-muted-foreground space-y-1">
-              <p>{exportFormat ? `Formato de la última copia: ${exportFormat === 2 ? "versión 2 (conserva la procedencia por campo; solo la importan versiones de BibLib que leen el formato 2)" : "versión 1 (sin pérdida de datos)"}.` : "Todavía no has descargado ninguna copia en esta visita."}</p>
+              <p>{exportSet ? `Formato de la última copia: ${exportSet.formatVersion === 2 ? "versión 2 (conserva la procedencia por campo; solo la importan versiones de BibLib que leen el formato 2)" : "versión 1 (sin pérdida de datos)"}.` : "Todavía no has descargado ninguna copia en esta visita."}</p>
               {exportParts.length > 1 && <Button type="button" variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => setPartsOpen(true)} disabled={busy}>Ver las {exportParts.length} partes de la última copia</Button>}
             </div>
           </section>
 
           <Dialog open={partsOpen && exportParts.length > 1} onOpenChange={setPartsOpen}>
             <DialogContent className="max-h-[85vh] overflow-y-auto">
-              <DialogHeader><DialogTitle>Descarga las {exportParts.length} partes</DialogTitle><DialogDescription>Para restaurar sustituyendo la colección, usa «Reemplazar» solo con la primera y «Fusionar» con todas las demás. Comprueba el resultado de cada importación.</DialogDescription></DialogHeader>
-              <ol className="space-y-2 list-decimal pl-5">{exportParts.map((part, index) => <li key={index}><Button type="button" variant="outline" disabled={busy} onClick={() => downloadPart(part, index, exportParts.length)} className="h-auto whitespace-normal text-left">Descargar parte {index + 1} de {exportParts.length} · {backupPartCounts(part).books} libros · {backupPartCounts(part).shelves} estanterías</Button></li>)}</ol>
-              <p className="text-xs text-muted-foreground">Las partes comparten fecha e identificadores. Las estanterías con libros en varias partes se unen al fusionar.</p>
+              <DialogHeader><DialogTitle>Descarga las {exportParts.length} partes</DialogTitle><DialogDescription>Para restaurar la copia completa en una sola operación, selecciona todas las partes y el manifiesto en «Restaurar una copia por partes». Cada parte sigue siendo importable por separado.</DialogDescription></DialogHeader>
+              <ol className="space-y-2 list-decimal pl-5">{exportParts.map((part) => <li key={part.index}><Button type="button" variant="outline" disabled={busy} onClick={() => downloadPart(part)} className="h-auto whitespace-normal text-left">Descargar parte {part.index + 1} de {exportParts.length} · {part.books} libros · {part.shelves} estanterías</Button></li>)}</ol>
+              {exportSet && <Button type="button" variant="secondary" disabled={busy} onClick={() => downloadManifest(exportSet)} className="h-auto whitespace-normal text-left">Descargar el manifiesto del conjunto</Button>}
+              <p className="text-xs text-muted-foreground">Las partes comparten fecha e identificadores. El manifiesto guarda el tamaño y el hash de cada parte, en orden: si falta una o cambia un solo byte, la restauración se rechaza sin modificar tu biblioteca.</p>
             </DialogContent>
           </Dialog>
 
@@ -465,8 +485,8 @@ export default function SettingsPage() {
             <h2 id="import-title" className="text-2xl font-bold mb-2">Importar una biblioteca</h2>
             <p className="text-muted-foreground mb-4">Selecciona un JSON para validarlo y revisar qué cambiará en tu biblioteca. Elegir el archivo todavía no modifica tus datos.</p>
             <p id="import-limits" className="text-sm text-muted-foreground mb-4">Formato antiguo de BibLib o versión 1. Máximo 8 MiB, {MAX_IMPORT_BOOKS.toLocaleString("es")} libros y {MAX_IMPORT_SHELVES} estanterías.</p>
-            <input ref={fileInput} id="import-file" type="file" accept=".json,application/json" onChange={(event) => void handleFile(event)} disabled={busy || !data || loading} className="sr-only" tabIndex={-1} aria-label="Archivo JSON de biblioteca" aria-describedby="import-limits" />
-            <Button type="button" onClick={() => fileInput.current?.click()} disabled={busy || !data || loading} variant="secondary" className="rounded-xl">{isValidating ? <LoaderCircle aria-hidden="true" className="animate-spin" /> : <Upload aria-hidden="true" />}{isValidating ? "Validando archivo…" : preview ? "Elegir otro archivo" : "Seleccionar archivo JSON"}</Button>
+            <input ref={fileInput} id="import-file" type="file" accept=".json,application/json" onChange={(event) => void handleFile(event)} disabled={busy || !counts || loading} className="sr-only" tabIndex={-1} aria-label="Archivo JSON de biblioteca" aria-describedby="import-limits" />
+            <Button type="button" onClick={() => fileInput.current?.click()} disabled={busy || !counts || loading} variant="secondary" className="rounded-xl">{isValidating ? <LoaderCircle aria-hidden="true" className="animate-spin" /> : <Upload aria-hidden="true" />}{isValidating ? "Validando archivo…" : preview ? "Elegir otro archivo" : "Seleccionar archivo JSON"}</Button>
 
             {preview && isPreparing && <p role="status" className="mt-6 flex items-start gap-2 text-sm"><LoaderCircle aria-hidden="true" className="w-4 h-4 animate-spin shrink-0 mt-0.5" />Preparando la revisión de «{preview.name}» con tu biblioteca actual. No se consulta ningún catálogo: las portadas pendientes se buscan después, en segundo plano.</p>}
 
@@ -496,7 +516,7 @@ export default function SettingsPage() {
                 </dl>
                 <p className="text-sm mt-3">Tras la importación tendrás {plan.counts.booksAfter} libros en {plan.counts.shelvesAfter} estanterías.</p>
                 {skippedTitles.length > 0 && <p className="text-sm mt-3">Ya presentes: {skippedTitles.slice(0, 5).join("; ")}{skippedTitles.length > 5 ? "…" : ""}. Al fusionar se conservarán sus datos actuales.</p>}
-                {deletedTitles.length > 0 && <details className="mt-3 text-sm" open={deletedTitles.length <= 10}><summary className="cursor-pointer font-medium">Libros actuales que se eliminarán ({deletedTitles.length})</summary><ul className="list-disc pl-5 mt-2 space-y-1 max-h-64 overflow-auto">{deletedTitles.map((title, index) => <li key={`${plan.books.delete[index]}`}>{title}</li>)}</ul></details>}
+                {deletedTitles.total > 0 && <details className="mt-3 text-sm" open={deletedTitles.total <= 10}><summary className="cursor-pointer font-medium">Libros actuales que se eliminarán ({deletedTitles.total})</summary><ul className="list-disc pl-5 mt-2 space-y-1 max-h-64 overflow-auto">{deletedTitles.titles.map((title, index) => <li key={`${plan.books.delete[index]}`}>{title}</li>)}</ul>{deletedTitles.total > deletedTitles.titles.length && <p className="mt-1 text-muted-foreground">Y {deletedTitles.total - deletedTitles.titles.length} más.</p>}</details>}
                 {preview.library.books.length > 0 && <details className="mt-3 text-sm"><summary className="cursor-pointer font-medium">Ver libros del archivo</summary><ul className="list-disc pl-5 mt-2 space-y-1 max-h-64 overflow-auto">{preview.library.books.map((book) => <li key={book.id}>{book.title}{book.authors.length > 0 ? ` — ${book.authors.map((author) => author.name).join(", ")}` : ""}</li>)}</ul></details>}
               </div>
 
@@ -517,9 +537,11 @@ export default function SettingsPage() {
 
           <ImportJobPanel jobId={importJobId} disabled={loading} />
 
-          <SnapshotHistory refreshKey={historyKey} disabled={busy} onNotice={setMessage} onRestored={() => { setResult(null); getLibraryDataAction().then(setData).catch(() => setData(null)) }} />
+          <SnapshotHistory refreshKey={historyKey} disabled={busy} onNotice={setMessage} onRestored={() => { setResult(null); void refreshCounts() }} />
 
-          <CoverRecoveryJobPanel disabled={busy || loading || !data} onRunningChange={setIsRecovering} onFinish={refresh} />
+          <RestoreSetPanel disabled={busy || loading || !counts} onNotice={setMessage} onCommitted={() => { setResult(null); setHistoryKey((key) => key + 1); void refreshCounts() }} />
+
+          <CoverRecoveryJobPanel disabled={busy || loading || !counts} onRunningChange={setIsRecovering} onFinish={refresh} />
 
           <section className="rounded-2xl border border-border bg-card/80 p-5 md:p-6"><h2 className="font-bold mb-3">Tus datos y copias</h2><ul className="list-disc pl-5 text-sm text-muted-foreground space-y-2"><li>Los datos están vinculados a tu cuenta y se guardan en la base de datos.</li><li>La copia JSON conserva fichas, estanterías y estado de lectura; no descarga las imágenes de las portadas.</li><li>Guarda copias periódicas y antes de reemplazar una colección.</li></ul></section>
         </div>

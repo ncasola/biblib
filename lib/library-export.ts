@@ -7,6 +7,7 @@ import {
   type LibraryExport,
 } from "./library-import"
 import { bookToEditionAndCopy, createBackupV2, libraryRequiresV2, type PortableBackupV2 } from "./backup-v2"
+import { backupFileNames, createBackupSetManifest, payloadCounts, serializeBackupSetManifest, type BackupSetManifest, type PartCounts } from "./import-manifest"
 import type { Book, LibraryData, Shelf } from "./types"
 
 function jsonByteLength(value: unknown): number {
@@ -156,4 +157,52 @@ export function exportLibraryBackup(data: LibraryData, exportedAt = new Date()):
 /** Recuentos visibles de una parte de cualquier formato. */
 export function backupPartCounts(part: LibraryExport | PortableBackupV2): { books: number; shelves: number } {
   return { books: part.formatVersion === 2 ? part.copies.length : part.books.length, shelves: part.shelves.length }
+}
+
+export interface BackupSetFile {
+  index: number
+  fileName: string
+  /** Texto exacto que se descarga; el tamaño y el hash del manifest se calculan sobre sus bytes UTF-8. */
+  text: string
+  byteLength: number
+  sha256: string
+  counts: PartCounts
+}
+
+export interface BackupSet {
+  formatVersion: 1 | 2
+  /** Por qué se exige el formato 2, si es el caso. */
+  reason?: string
+  manifest: BackupSetManifest
+  manifestText: string
+  manifestFileName: string
+  files: BackupSetFile[]
+}
+
+/**
+ * Copia por partes con manifest `bundleVersion: 1` (U-DAT-04). Se genera en el servidor: cada parte se
+ * serializa una sola vez y su tamaño y hash corresponden exactamente a los bytes que se descargan. Con
+ * la misma colección, fecha y conjunto el resultado es idéntico, así que cada parte puede volver a
+ * generarse por separado y compararse con el manifest. El hash se inyecta (node:crypto o Web Crypto).
+ */
+export function buildBackupSet(data: LibraryData, options: { exportedAt: Date; exportSetId: string; sha256: (bytes: Uint8Array) => string }): BackupSet {
+  const backup = exportLibraryBackup(data, options.exportedAt)
+  const exportedAt = options.exportedAt.toISOString()
+  const names = backupFileNames(exportedAt, backup.formatVersion, backup.parts.length)
+  const encoder = new TextEncoder()
+  const files = backup.parts.map((part: LibraryExport | PortableBackupV2, index): BackupSetFile => {
+    const text = JSON.stringify(part)
+    const bytes = encoder.encode(text)
+    return { index, fileName: names.part(index), text, byteLength: bytes.byteLength, sha256: options.sha256(bytes), counts: payloadCounts(part).counts }
+  })
+  const books = data.books.length
+  const manifest = createBackupSetManifest({
+    exportSetId: options.exportSetId, exportedAt, payloadFormatVersion: backup.formatVersion,
+    parts: files.map(({ byteLength, sha256, counts }) => ({ byteLength, sha256, counts })),
+    totals: backup.formatVersion === 2 ? { works: 0, editions: books, copies: books, shelves: data.shelves.length } : { books, shelves: data.shelves.length },
+  })
+  return {
+    formatVersion: backup.formatVersion, ...(backup.formatVersion === 2 ? { reason: backup.reason } : {}),
+    manifest, manifestText: serializeBackupSetManifest(manifest), manifestFileName: names.manifest, files,
+  }
 }
