@@ -174,6 +174,25 @@ El código vive en `lib/import-manifest.ts` (formato y comprobaciones puras), `l
 
 Las versiones de BibLib anteriores a U-BIB-04 rechazan `formatVersion: 2` con un mensaje de versión no compatible. Por eso el v1 se sigue ofreciendo siempre que no pierde datos.
 
+## Portadas privadas (U-DAT-10)
+
+- **Copias JSON (v1 y v2).** No contienen imágenes privadas ni su referencia: exportan las URL originales de la ficha (`cover`), que se conservan aunque se muestre una copia privada. La interfaz lo advierte en la ficha. La imagen privada solo se recupera con el respaldo administrativo o desde la cuenta.
+- **Respaldo administrativo** (`backup.json`, desde 0009). Lleva un manifiesto `assets` separado de los bytes. Los objetos van en `storage/` con su sha256, como el resto de Storage:
+
+```json
+"assets": {
+  "bucket": "biblib-covers",
+  "providers": [],
+  "items": [
+    { "id": "…uuid…", "owner": "…uuid…", "key": "<dueño>/<asset>/<intento>.webp", "sha256": "…64 hex…", "bytes": 120022, "state": "ready", "sourceKind": "upload", "provider": "upload", "included": true }
+  ],
+  "excluded": []
+}
+```
+
+- **Exclusiones.** `providers` lista los proveedores cuya política publicada permite `rehostCover` y `backupAsset`; hoy, ninguno. Una copia de proveedor fuera de la lista va con `included: false` y su motivo (`policy`, o `google`, que nunca entra). Ni su objeto se copia ni su fila se restaura.
+- **Comprobación.** Cada objeto copiado debe coincidir en sha256 y tamaño con su asset. El manifiesto no contiene títulos, ISBN ni URL firmadas.
+
 ## Pruebas
 
 - `tests/backup-v2.test.ts`: payload canónico, ida y vuelta v1→v2→v1 y v2→v2 con `tests/fixtures/import/sintetico-111.json`, rechazos explicados, Google y fuentes desconocidas, `isbnVerified`, partes v2 y plan de U-DAT-01.

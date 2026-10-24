@@ -1192,3 +1192,106 @@ pnpm perf:restore --profile scratch [--scale 100|1000|10000] [--repeat 1-5] [--o
   - el restore administrativo.
 
 Evidencia: [O11/dat-04](validacion/2026-10-24/O11/dat-04/informe.md).
+
+## Portadas privadas · U-DAT-10 (O11)
+
+Una ficha puede mostrar una **copia privada** de su portada en lugar de la URL externa: una imagen propia subida por la persona o, cuando la política del proveedor lo permita, una copia de la portada del catálogo. La imagen se valida, se convierte a WebP sin metadatos, se guarda en el bucket privado `biblib-covers` y se sirve solo a su dueño desde el propio origen (`/api/covers/<asset>`). Las URL originales se conservan en la ficha: son las que se editan y exportan, y vuelven a mostrarse si se quita la copia.
+
+### Modelo y migración (`0009_cover_assets`)
+
+- `biblib.cover_assets`: `user_id`, `id`, `storage_key` (`<dueño>/<asset>/<intento>.webp`), `sha256`, `mime`, `width`, `height`, `bytes`, `state` (`quarantine` → `ready`; `restored` tras un restore administrativo), `source_kind` (`upload` o `provider`), `source_ref` (clave validada, nunca una URL), `rights_policy_version`, `attribution`, `expires_at` (caducidad de la cuarentena o de la licencia), `version`, `created_at`. RLS de lectura propia; ninguna escritura directa de `authenticated`.
+- `books.cover_asset_id` con FK `(user_id, cover_asset_id)` y la guarda `BA001` (solo un asset propio `ready` con licencia vigente). **U-DAT-06** la trasladará a la edición o el ejemplar; las versiones anteriores ya guardan `cover_asset_id` en su contenido.
+- Funciones `biblib.cover_asset_*` (dueño de `auth.uid()`, `search_path` fijo): reservar, solicitar, autorizar un intento, registrar (solo con el objeto ya presente en Storage y del tamaño declarado), descartar y revalidar. Las de purga y la de restore solo las ejecuta el servidor.
+- Bucket privado `biblib-covers` (5 MiB, solo `image/webp`) y políticas `biblib_covers_*` de `storage.objects`, instaladas por `biblib.cover_storage_install()`:
+  - leer y firmar, solo el dueño;
+  - subir, solo el intento autorizado de un asset en cuarentena vigente, con la cuenta activa y, si lo adquiere un trabajo, con su lease vigente y el mismo número de fencing;
+  - retirar, nunca el objeto registrado de un asset utilizable;
+  - nada para `anon` ni actualizaciones.
+- `library_jobs` admite `kind = 'cover_asset'` y la fase `asset`. `library_job_claim` no reclama adquisiciones para el ejecutor sin sesión.
+- La migración no toca `supabase/migrations` ni el bucket fixture `biblib-test-assets`.
+
+```powershell
+pnpm db:plan:local --profile scratch --out dat10.json
+pnpm db:migrate:local --plan .biblib/plans/dat10.json --expect-project biblib-scratch --expect-plan <sha256>
+pnpm db:status:local --profile scratch       # 377 comprobaciones (incluye bucket y políticas de Storage), sin drift
+```
+
+### Acciones (`app/actions/book-cover-assets.ts`, todas `ActionResult`)
+
+| Acción | Qué hace |
+| --- | --- |
+| `getBookCoverAssetsAction(bookId)` | Estado de la portada privada, cuota usada y si se puede subir o copiar (lo decide el servidor). |
+| `beginOwnCoverUploadAction(FormData{entityId, mime, bytes, file})` | Valida el archivo, lo reencodifica y lo guarda en cuarentena → `ready`. No cambia la portada visible. La misma imagen del mismo dueño se reutiliza. |
+| `attachCoverAssetAction({assetId, entityId, expectedVersion})` / `detachCoverAssetAction` | Adjunta o quita la copia con la versión de la ficha (`CONFLICT` si cambió). |
+| `requestProviderCoverAssetAction({entityId, expectedVersion, providerCoverKey, idempotencyKey})` | Comprueba los derechos vigentes **antes** de crear nada o de cualquier red, crea el trabajo y lo ejecuta en la misma petición. Al terminar adjunta solo si la ficha conserva la versión. |
+| `getCoverAssetJobAction` / `cancelCoverAssetJobAction` | Continúa un paso pendiente con la sesión del dueño o lo cancela; cancelar impide registrar o adjuntar un resultado tardío. |
+
+Errores: `ASSET_REJECTED` (422, con motivo: tipo, firma, marcado, políglota, píxeles, tamaño, destino o derechos), `LIMIT_EXCEEDED` (5 subidas en cuarentena, 500 imágenes o 200 MiB por cuenta), `PROVIDER_UNAVAILABLE`, `CONFLICT` y `UNAUTHORIZED` con la cuenta bloqueada.
+
+### Red, archivo y presupuesto
+
+- **Sin proxy de URL.** La única entrada es una clave de proveedor (`open-library:id:123`); el servidor la convierte en `https://<host fijo>/b/<tipo>/<valor>-L.jpg`. Hosts fijos: solo Open Library; BNE no publica imágenes y Google no autoriza copiarlas.
+- **Política de red** (`lib/assets/fetch-policy.ts`):
+  - resuelve una vez y exige que todas las direcciones sean públicas (loopback, privadas, CGNAT, link-local y metadatos cloud, IPv4 mapeada o compatible, NAT64, 6to4, ULA, multicast y documentación bloqueadas);
+  - fija la IP para la conexión (sin DNS rebinding) y valida el certificado con el nombre del host;
+  - sin redirecciones, solo puerto 443, 5 MiB contados en streaming (un `Content-Length` grande corta antes; uno pequeño no se cree) y 8 s en total.
+- **Modo `fixture`:** cero red; la adquisición usa una imagen ficticia determinista por clave.
+- **Archivo** (`lib/assets/image-validation.ts`): firma JPEG, PNG o WebP antes de decodificar nada; rechazo de SVG, HTML y XML en cualquier parte del archivo, de datos tras el final de la imagen (políglotas) y de animaciones; dimensiones y 10 megapíxeles por cabecera; decodificación real con `sharp` (`limitInputPixels`, `failOn: "error"`); reencodificación a WebP (máximo 1200×1800, calidad 82) sin EXIF, XMP ni ICC. Un tipo declarado distinto de la firma es `MIME_MISMATCH`.
+- **Presupuesto medido** ([medición](validacion/2026-10-24/O11/dat-10/medicion-decodificacion.json), sharp 0.35.5 y libvips 8.18.7, 5 repeticiones): portada 600×900 JPEG, 69 ms; PNG 1600×2400, 273 ms; JPEG de 10 MP, 178 ms; WebP de 10 MP, 310 ms. El plazo de decodificación es de 5 s y el de la acción, 15 s.
+- **`next/image`** sigue con `images.unoptimized: true`: las portadas privadas ya llegan reencodificadas y el optimizador no podría pedir la ruta autenticada sin cookies. `sharp` está compilado (`allowBuilds`), así que activar la optimización es solo cambiar `next.config.mjs` si algún día se quiere.
+
+### Activar la copia de portadas de un proveedor
+
+Hoy **ninguna** política publicada concede `rehostCover` (`lib/bibliographic-catalog/rights.ts`, U-BIB-04): Open Library declara que las imágenes conservan los derechos de sus titulares, BNE no aporta imágenes y Google solo permite una vista previa temporal. Por eso la interfaz solo ofrece «Subir portada propia» y oculta «Guardar copia privada». Decisión del coordinador del 24-10-2026. Para activarla con un proveedor:
+
+1. Revisar y documentar su licencia de imágenes.
+2. Cambiar en `rights.ts` `rehostCover` (y, si procede, `backupAsset`, `offlineUse` y `coverTtlSeconds`) **con una versión nueva** de la política. Los assets guardan `rights_policy_version`.
+3. Si permite respaldarlas, añadirlo a `BACKUP_ASSET_PROVIDERS` en `scripts/lib/backup-db.mjs`. `tests/cover-assets.test.ts` exige que la lista coincida con `rights.ts`.
+4. Repetir `pnpm test:integration:assets`. Las pruebas ya ejercitan la adquisición con una política inyectada solo en pruebas.
+
+Google nunca puede guardarse: lo impide un `CHECK` de 0009 además de su política.
+
+### Despliegue por etapas y desactivación
+
+`BIBLIB_COVER_ASSETS` (servidor):
+
+| Valor | Efecto |
+| --- | --- |
+| `full` (por defecto) | Subidas y adquisiciones (si la política lo permite). |
+| `uploads` | Solo subidas propias y adjuntos. |
+| `off` | Detiene subidas y adquisiciones; las portadas privadas existentes se siguen leyendo, y las fichas pueden volver a su URL original. |
+
+Orden de despliegue: migración, después aplicación con `uploads`, y `full` solo tras activar un proveedor. No se descargan de golpe las URL existentes.
+
+### Vida útil y purga
+
+- Una subida que no termina queda en cuarentena 15 minutos y una adquisición 1 día; después caducan.
+- Un asset sin fichas ni versiones anteriores que lo citen se purga tras 24 h de gracia. Una licencia vencida deja de servirse; la purga devuelve la ficha a su URL original y retira el objeto. Un objeto subido sin registrar (caída entre subir y registrar) es huérfano y también se purga: nunca queda un enlace roto confirmado.
+- Las acciones de adjuntar y quitar purgan lo del propio dueño con su sesión. La purga global la hace un script **fuera del proceso Next**, porque la app no tiene la credencial administrativa:
+
+```powershell
+pnpm assets:purge:local --profile scratch [--limit 1-1000] [--grace-seconds 0-2592000] [--json]
+```
+
+Solo imprime cantidades. El scheduler de F4 lo sustituirá. El borrado de cuenta (U-OPS-03) deberá retirar filas y objetos: `account_set_state(…, 'blocked')` ya impide subir, registrar o reclamar, y caduca los trabajos.
+
+### Respaldo y restore administrativos
+
+- `db:backup:local` copia los objetos de `biblib-covers` como el resto de Storage, con sha256, y añade `assets` al manifiesto: asset, dueño, clave, sha256, tamaño y estado. Cada objeto copiado se comprueba contra su asset; si no coincide, el respaldo no se guarda. Nunca se respalda una URL firmada.
+- Las copias de proveedores sin `backupAsset` se excluyen y quedan declaradas en `exclusions`. Google nunca entra.
+- `db:restore:local` hace cuatro cosas:
+  - admite el bucket vacío que crea 0009 tras el reset;
+  - reinstala las políticas de Storage (`drop schema biblib cascade` las retira);
+  - retira los assets excluidos, cuyas fichas vuelven a su URL;
+  - deja los demás en `restored` y caduca las cuarentenas.
+- La ruta de lectura revalida cada asset restaurado la primera vez que lo abre su dueño: sha256, imagen válida y derechos vigentes. Si lo supera vuelve a `ready`; si no, se descarta.
+- `db:restore:verify` compara la tabla por claves y los assets por su manifiesto.
+
+### Pruebas
+
+- `pnpm test`: `tests/cover-assets.test.ts` (claves, derechos, política de red con DNS y transporte simulados, validación de imágenes con sharp y coherencia de `BACKUP_ASSET_PROVIDERS`).
+- `pnpm test:db`: `tests/db/cover-assets.sql`, con el sustituto de Storage de `bootstrap.sql`.
+- `pnpm test:scripts`: drift de 0009 (`migrations.test.mjs`), respaldo, restore, verify, purga y argumentos (`cover-assets.test.mjs`).
+- `pnpm test:integration:assets --profile scratch|test [--reuse-build]`: grupo `tests/integration/assets`, también en `test:integration:local`. Usa Postgres, GoTrue, Storage y la app compilada reales, y la red siempre simulada.
+
+Evidencia: [O11/dat-10](validacion/2026-10-24/O11/dat-10/informe.md).
