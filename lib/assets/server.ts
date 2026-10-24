@@ -13,7 +13,7 @@ import { fetchProviderCover } from "@/lib/assets/fetch-policy"
 import { fixtureCoverBytes } from "@/lib/assets/image-validation"
 import { createSupabaseAssetStorage, purgeCoverAssets, type AssetStorage, type PurgeReport } from "@/lib/assets/repository"
 
-// Cableado de servidor de las portadas privadas (U-DAT-10). El proceso Next no tiene `service_role`
+// Cableado de servidor de las portadas privadas (U-DAT-10). El proceso Next no tiene la credencial administrativa
 // (U-OPS-04): los objetos se leen, suben y retiran con la sesión del dueño, y las políticas de
 // storage.objects de 0009 son la segunda barrera tras las comprobaciones del servidor. La purga global
 // la hace un script administrativo fuera de Next (`pnpm assets:purge:local`).
