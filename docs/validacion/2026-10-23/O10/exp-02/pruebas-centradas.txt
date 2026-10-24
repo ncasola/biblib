@@ -1,0 +1,18 @@
+Comando: node tests/scripts/saved-views.test.mjs
+Salida del proceso: 0
+
+✔ el inspector conserva los hechos sellados de respaldos anteriores a 0007 (5648.9975ms)
+✔ views: scratch y test explícitos, rechazo de perfiles o argumentos ajenos (0.7321ms)
+✔ vistas restaurables: un destino con preferencias no está vacío (0.3206ms)
+✔ 0007 detecta drift de cuota, validación, RLS, versión e índices con expresión y dirección (21.0766ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 10168.0912
+
+Esta ejecución directa solo acredita estas cuatro pruebas de scripts.
+Las puertas completas y el estado de Docker constan por separado en informe.md.

@@ -1,0 +1,11 @@
+{
+  "observedAt": "2026-10-24T01:23:06.793Z",
+  "holaerp": {
+    "verified": false,
+    "reason": "Docker no pudo completar la consulta de metadatos en 60 segundos; no se acredita identidad final."
+  },
+  "scratch": {
+    "verified": false,
+    "reason": "Docker no pudo completar el inventario del perfil; la parada no está acreditada."
+  }
+}
