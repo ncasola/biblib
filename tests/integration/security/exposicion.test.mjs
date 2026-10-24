@@ -14,7 +14,10 @@ before(async () => {
 after(() => ctx?.close())
 
 /** Funciones SECURITY DEFINER que authenticated puede ejecutar; el resto solo las usa el servidor. */
-const AUTHENTICATED_DEFINERS = ["library_job_control", "library_job_create", "lock_library"]
+// Funciones SECURITY DEFINER que `authenticated` puede ejecutar; todas toman el dueño de auth.uid() y fijan search_path.
+// U-DAT-02 (0006) añade las de versiones anteriores: capturar en la transacción de la operación, comprobar IDs
+// ocupados al restaurar y borrar con versión.
+const AUTHENTICATED_DEFINERS = ["library_job_control", "library_job_create", "library_snapshot_capture", "library_snapshot_delete", "library_snapshot_foreign_ids", "lock_library"]
 
 function rest(route, { bearer, profile, method = "GET" } = {}) {
   const headers = { apikey: ctx.env.SUPABASE_ANON_KEY, Authorization: `Bearer ${bearer ?? ctx.env.SUPABASE_ANON_KEY}` }
