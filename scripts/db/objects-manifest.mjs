@@ -149,7 +149,7 @@ export const MANIFEST = Object.freeze({
     { table: "copies", name: "copies_owner_edition_fk", type: "f", columns: ["user_id", "edition_id"], references: "biblib.editions", refColumns: ["user_id", "id"], onDelete: "r", since: M10 },
     { table: "copies", name: "copies_owner_shelf_fk", type: "f", columns: ["user_id", "shelf_id"], references: "biblib.shelves", refColumns: ["user_id", "id"], onDelete: "r", since: M10 },
     { table: "works", name: "works_title_check", type: "c", columns: ["title"], tokens: ["length(btrim(title))", ">=1", "<=500"], since: M10 },
-    { table: "editions", name: "editions_isbn13_check", type: "c", columns: ["isbn13"], tokens: ["isbn13 is null", "biblib.isbn13_normalize(isbn13)isnotdistinctfromisbn13"], since: M10 },
+    { table: "editions", name: "editions_isbn13_check", type: "c", columns: ["isbn13"], tokens: ["isbn13 is null", "not biblib.isbn13_normalize(isbn13) is distinct from isbn13"], since: M10 },
     { table: "editions", name: "editions_title_check", type: "c", columns: ["title"], tokens: ["length(btrim(title))", ">=1", "<=500"], since: M10 },
     { table: "editions", name: "editions_pages_check", type: "c", columns: ["number_of_pages"], tokens: [">=0", "<=100000"], since: M10 },
     { table: "editions", name: "editions_language_check", type: "c", columns: ["language"], tokens: ["language is null"], since: M10 },
