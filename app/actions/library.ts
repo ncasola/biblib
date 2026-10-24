@@ -8,24 +8,9 @@ import { ensureDefaultShelf, mapRowToBook } from "@/lib/db/library"
 import { getRequiredUserId } from "@/lib/server-user"
 import { DomainError } from "@/lib/domain-errors"
 import { normalizeIsbn } from "@/lib/isbn"
-import type { LibraryData } from "@/lib/types"
 
-export async function getLibraryDataAction(): Promise<LibraryData> {
-  const userId = await getRequiredUserId()
-  return withRlsContext(userId, async (tx) => {
-    await ensureDefaultShelf(tx, userId)
-    const userShelves = await tx.select().from(shelves).where(eq(shelves.userId, userId)).orderBy(asc(shelves.createdAt), asc(shelves.id))
-    const bookRows = await tx.select({ book: books, shelfTitle: shelves.title }).from(books)
-      .innerJoin(shelves, and(eq(books.shelfId, shelves.id), eq(shelves.userId, userId)))
-      .where(eq(books.userId, userId)).orderBy(asc(books.title), asc(books.id))
-    const counts = new Map<string, number>()
-    for (const { book } of bookRows) counts.set(book.shelfId, (counts.get(book.shelfId) ?? 0) + 1)
-    return {
-      shelves: userShelves.map((shelf) => ({ id: shelf.id, title: shelf.title, isDefault: shelf.isDefault, book_count: counts.get(shelf.id) ?? 0 })),
-      books: bookRows.map(mapRowToBook),
-    }
-  })
-}
+// La lectura completa de la colección (getLibraryDataAction) se retiró con U-DAT-04 (tarea T1):
+// Ajustes usa recuentos y la copia por partes se genera en el servidor (lib/library-export-server.ts).
 
 export async function getLibrarySummaryAction() {
   const userId = await getRequiredUserId()
