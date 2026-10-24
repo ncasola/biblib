@@ -47,5 +47,6 @@ export function mapRowToBook(row: { book: typeof books.$inferSelect; shelfTitle:
     cover: { small: row.book.coverSmall, medium: row.book.coverMedium, large: row.book.coverLarge },
     status: row.book.status, shelf_id: row.book.shelfId, shelf_name: row.shelfTitle,
     catalogue: row.book.catalogue,
+    ...(row.book.coverAssetId ? { coverAssetId: row.book.coverAssetId } : {}),
   }
 }
