@@ -117,7 +117,7 @@ test("cerrar sesión elimina la vista privada, también con una copia antigua de
   const withStale = await get(s.app, "/books?status=read", { cookies: stale })
   assert.equal(withStale.status, 307, "GoTrue ya no reconoce la sesión cerrada.")
   assert.equal(redirectTarget(withStale.location), "/books?status=read")
-  const action = await callAction(s.app, "getLibraryDataAction", [], { cookies: stale })
+  const action = await callAction(s.app, "listBooksAction", [{ pageSize: 100 }], { cookies: stale })
   assert.equal(action.status, 307)
   assert.equal(action.value, undefined)
   assert.ok((await anonClient(s.ctx).auth.getUser(staleSession.access_token)).error, "El access token de la sesión cerrada se rechaza.")

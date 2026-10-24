@@ -27,7 +27,9 @@ export const savedBookViews = biblibSchema.table("saved_book_views", {
 }, (table) => [
   uniqueIndex("saved_book_views_user_name_unique").on(table.userId, sql`lower(${table.name})`),
   index("saved_book_views_user_updated_idx").on(table.userId, table.updatedAt.desc().nullsFirst()),
-  check("saved_book_views_name_check", sql`length(btrim(${table.name})) between 1 and 80 and ${table.name} = btrim(${table.name})`),
+  // Conjunción plana (0008): con `between … and … and` Postgres anidaba el AND y tras pg_dump quedaba
+  // aplanado, de modo que db:restore:verify veía una restricción distinta del origen.
+  check("saved_book_views_name_check", sql`length(btrim(${table.name})) >= 1 and length(btrim(${table.name})) <= 80 and ${table.name} = btrim(${table.name})`),
   check("saved_book_views_filters_check", sql`biblib.saved_view_filters_valid(${table.filters})`),
   pgPolicy("saved_book_views_select_own", { for: "select", to: authenticatedRole, using: ownRow(table.userId) }),
   pgPolicy("saved_book_views_insert_own", { for: "insert", to: authenticatedRole, withCheck: ownRow(table.userId) }),
@@ -225,7 +227,7 @@ export const libraryOperations = biblibSchema.table(
     userId: uuid("user_id")
       .notNull()
       .references(() => authUsers.id, { onDelete: "cascade" }),
-    operation: text("operation").$type<"import.confirm" | "snapshot.restore">().notNull(),
+    operation: text("operation").$type<"import.confirm" | "snapshot.restore" | "restore.commit">().notNull(),
     idempotencyKey: text("idempotency_key").notNull(),
     inputDigest: text("input_digest").notNull(),
     previewId: uuid("preview_id"),
@@ -238,7 +240,7 @@ export const libraryOperations = biblibSchema.table(
     uniqueIndex("library_operations_preview_unique").on(table.userId, table.previewId).where(sql`${table.previewId} is not null`),
     // Destino de la FK con propietario de las versiones anteriores (U-DAT-02).
     uniqueIndex("library_operations_user_id_id_unique").on(table.userId, table.id),
-    check("library_operations_operation_check", sql`${table.operation} in ('import.confirm', 'snapshot.restore')`),
+    check("library_operations_operation_check", sql`${table.operation} in ('import.confirm', 'snapshot.restore', 'restore.commit')`),
     check("library_operations_status_check", sql`${table.status} in ('committed')`),
     check("library_operations_key_check", sql`length(${table.idempotencyKey}) between 16 and 128`),
     check("library_operations_digest_check", sql`${table.inputDigest} ~ '^[0-9a-f]{64}$'`),
@@ -602,5 +604,157 @@ export const librarySnapshotChunks = biblibSchema.table(
       to: authenticatedRole,
       using: ownRow(table.userId),
     }),
+  ],
+).enableRLS()
+
+/*
+ * Restauración de conjuntos de partes (U-DAT-04). Una sesión privada recibe las partes de un respaldo
+ * en trozos de hasta 256 KiB, las comprueba contra el manifest (`bundleVersion: 1`) y deja sus filas
+ * en staging; la colección activa solo cambia en la transacción final de publicación. El dueño
+ * escribe sus filas con RLS y la guarda de 0008 ata cada trozo y fila nuevos a una sesión propia que
+ * sigue recibiendo y no ha caducado. Las sesiones abandonadas caducan a los 7 días.
+ */
+export type RestoreSessionState = "receiving" | "validated" | "prepared" | "committed" | "rejected"
+export interface RestoreSessionTotals { books: number; shelves: number }
+
+const bytea = customType<{ data: Buffer; driverData: Buffer }>({ dataType: () => "bytea" })
+const sessionStates = sql`('receiving', 'validated', 'prepared', 'committed', 'rejected')`
+
+export const importSessions = biblibSchema.table(
+  "import_sessions",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => authUsers.id, { onDelete: "cascade" }),
+    state: text("state").$type<RestoreSessionState>().notNull().default("receiving"),
+    // `manifest`: lo trae el respaldo; `loose`: partes sueltas cuyo manifest genera el servidor al inspeccionarlas.
+    source: text("source").$type<"manifest" | "loose">().notNull(),
+    exportSetId: uuid("export_set_id").notNull(),
+    payloadFormatVersion: integer("payload_format_version"),
+    manifest: jsonb("manifest").$type<Record<string, unknown>>().notNull(),
+    // Hash global: sha256 del manifest canónico que validó el servidor.
+    manifestDigest: text("manifest_digest").notNull(),
+    baseRevision: uuid("base_revision").notNull(),
+    rulesVersion: integer("rules_version").notNull(),
+    partCount: integer("part_count").notNull(),
+    totalBytes: bigint("total_bytes", { mode: "number" }).notNull(),
+    receivedBytes: bigint("received_bytes", { mode: "number" }).notNull().default(0),
+    validatedParts: integer("validated_parts").notNull().default(0),
+    totals: jsonb("totals").$type<RestoreSessionTotals>(),
+    previewId: uuid("preview_id"),
+    previewRevision: uuid("preview_revision"),
+    previewExpiresAt: timestamp("preview_expires_at", { withTimezone: true }),
+    plan: jsonb("plan").$type<ImportPlan>(),
+    operationId: uuid("operation_id"),
+    errorCode: text("error_code"),
+    version: uuid("version").notNull().defaultRandom(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("import_sessions_user_id_id_unique").on(table.userId, table.id),
+    index("import_sessions_user_created_idx").on(table.userId, table.createdAt.desc().nullsFirst(), table.id.desc().nullsFirst()),
+    index("import_sessions_expires_at_idx").on(table.expiresAt),
+    check("import_sessions_state_check", sql`${table.state} in ${sessionStates}`),
+    check("import_sessions_source_check", sql`${table.source} in ('manifest', 'loose')`),
+    check("import_sessions_format_check", sql`${table.payloadFormatVersion} is null or ${table.payloadFormatVersion} in (1, 2)`),
+    check("import_sessions_digest_check", sql`${table.manifestDigest} ~ '^[0-9a-f]{64}$'`),
+    check("import_sessions_parts_check", sql`${table.partCount} >= 1 and ${table.partCount} <= 50 and ${table.validatedParts} >= 0 and ${table.validatedParts} <= ${table.partCount}`),
+    check("import_sessions_bytes_check", sql`${table.totalBytes} >= 1 and ${table.totalBytes} <= 83886080 and ${table.receivedBytes} >= 0 and ${table.receivedBytes} <= ${table.totalBytes}`),
+    // Una vista previa se guarda completa (ID, revisión, caducidad y plan) o no se guarda.
+    check("import_sessions_preview_check", sql`(${table.previewId} is null) = (${table.previewRevision} is null) and (${table.previewId} is null) = (${table.previewExpiresAt} is null) and (${table.previewId} is null) = (${table.plan} is null)`),
+    check("import_sessions_prepared_check", sql`${table.state} not in ('prepared', 'committed') or ${table.previewId} is not null`),
+    check("import_sessions_committed_check", sql`(${table.state} = 'committed') = (${table.operationId} is not null)`),
+    check("import_sessions_expiry_check", sql`${table.expiresAt} > ${table.createdAt}`),
+    pgPolicy("import_sessions_select_own", { for: "select", to: authenticatedRole, using: ownRow(table.userId) }),
+    pgPolicy("import_sessions_insert_own", { for: "insert", to: authenticatedRole, withCheck: ownRow(table.userId) }),
+    pgPolicy("import_sessions_update_own", { for: "update", to: authenticatedRole, using: ownRow(table.userId), withCheck: ownRow(table.userId) }),
+    pgPolicy("import_sessions_delete_own", { for: "delete", to: authenticatedRole, using: ownRow(table.userId) }),
+  ],
+).enableRLS()
+
+/** Parte esperada de una sesión: tamaño y hash exactos del archivo, trozos y recuentos comprobados. */
+export const importSessionParts = biblibSchema.table(
+  "import_session_parts",
+  {
+    sessionId: uuid("session_id").notNull(),
+    userId: uuid("user_id").notNull(),
+    partId: text("part_id").notNull(),
+    partIndex: integer("part_index").notNull(),
+    byteLength: integer("byte_length").notNull(),
+    sha256: text("sha256").notNull(),
+    totalChunks: integer("total_chunks").notNull(),
+    state: text("state").$type<"pending" | "received" | "validated">().notNull().default("pending"),
+    formatVersion: integer("format_version"),
+    exportedAt: text("exported_at"),
+    counts: jsonb("counts").$type<Record<string, number>>(),
+  },
+  (table) => [
+    primaryKey({ name: "import_session_parts_pkey", columns: [table.sessionId, table.partId] }),
+    uniqueIndex("import_session_parts_index_unique").on(table.sessionId, table.partIndex),
+    uniqueIndex("import_session_parts_owner_unique").on(table.userId, table.sessionId, table.partId),
+    foreignKey({ name: "import_session_parts_owner_session_fk", columns: [table.userId, table.sessionId], foreignColumns: [importSessions.userId, importSessions.id] }).onDelete("cascade"),
+    check("import_session_parts_id_check", sql`${table.partId} ~ '^[A-Za-z0-9_-]{1,64}$'`),
+    check("import_session_parts_index_check", sql`${table.partIndex} >= 0 and ${table.partIndex} < 50`),
+    check("import_session_parts_size_check", sql`${table.byteLength} >= 1 and ${table.byteLength} <= 8388608 and ${table.totalChunks} = (${table.byteLength} + 262143) / 262144`),
+    check("import_session_parts_sha_check", sql`${table.sha256} ~ '^[0-9a-f]{64}$'`),
+    check("import_session_parts_state_check", sql`${table.state} in ('pending', 'received', 'validated')`),
+    check("import_session_parts_format_check", sql`${table.formatVersion} is null or ${table.formatVersion} in (1, 2)`),
+    pgPolicy("import_session_parts_select_own", { for: "select", to: authenticatedRole, using: ownRow(table.userId) }),
+    pgPolicy("import_session_parts_insert_own", { for: "insert", to: authenticatedRole, withCheck: ownRow(table.userId) }),
+    pgPolicy("import_session_parts_update_own", { for: "update", to: authenticatedRole, using: ownRow(table.userId), withCheck: ownRow(table.userId) }),
+    pgPolicy("import_session_parts_delete_own", { for: "delete", to: authenticatedRole, using: ownRow(table.userId) }),
+  ],
+).enableRLS()
+
+/** Trozo de los bytes originales de una parte: inmutable y con su hash comprobado por Postgres. */
+export const importSessionChunks = biblibSchema.table(
+  "import_session_chunks",
+  {
+    sessionId: uuid("session_id").notNull(),
+    userId: uuid("user_id").notNull(),
+    partId: text("part_id").notNull(),
+    ordinal: integer("ordinal").notNull(),
+    byteLength: integer("byte_length").notNull(),
+    sha256: text("sha256").notNull(),
+    bytes: bytea("bytes").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    primaryKey({ name: "import_session_chunks_pkey", columns: [table.sessionId, table.partId, table.ordinal] }),
+    foreignKey({ name: "import_session_chunks_owner_part_fk", columns: [table.userId, table.sessionId, table.partId], foreignColumns: [importSessionParts.userId, importSessionParts.sessionId, importSessionParts.partId] }).onDelete("cascade"),
+    check("import_session_chunks_ordinal_check", sql`${table.ordinal} >= 0 and ${table.ordinal} < 32`),
+    check("import_session_chunks_size_check", sql`${table.byteLength} >= 1 and ${table.byteLength} <= 262144 and octet_length(${table.bytes}) = ${table.byteLength}`),
+    check("import_session_chunks_sha_check", sql`${table.sha256} = encode(sha256(${table.bytes}), 'hex')`),
+    pgPolicy("import_session_chunks_select_own", { for: "select", to: authenticatedRole, using: ownRow(table.userId) }),
+    pgPolicy("import_session_chunks_insert_own", { for: "insert", to: authenticatedRole, withCheck: ownRow(table.userId) }),
+    pgPolicy("import_session_chunks_delete_own", { for: "delete", to: authenticatedRole, using: ownRow(table.userId) }),
+  ],
+).enableRLS()
+
+/** Fila validada de una parte (libro o estantería ya normalizados), con clave estable por sesión. */
+export const importSessionRows = biblibSchema.table(
+  "import_session_rows",
+  {
+    sessionId: uuid("session_id").notNull(),
+    userId: uuid("user_id").notNull(),
+    kind: text("kind").$type<"book" | "shelf">().notNull(),
+    rowKey: text("row_key").notNull(),
+    partIndex: integer("part_index").notNull(),
+    position: integer("position").notNull(),
+    data: jsonb("data").$type<Record<string, unknown>>().notNull(),
+  },
+  (table) => [
+    primaryKey({ name: "import_session_rows_pkey", columns: [table.sessionId, table.kind, table.rowKey] }),
+    index("import_session_rows_order_idx").on(table.sessionId, table.kind, table.partIndex, table.position),
+    foreignKey({ name: "import_session_rows_owner_session_fk", columns: [table.userId, table.sessionId], foreignColumns: [importSessions.userId, importSessions.id] }).onDelete("cascade"),
+    check("import_session_rows_kind_check", sql`${table.kind} in ('book', 'shelf')`),
+    check("import_session_rows_key_check", sql`length(${table.rowKey}) between 1 and 200`),
+    check("import_session_rows_data_check", sql`jsonb_typeof(${table.data}) = 'object'`),
+    pgPolicy("import_session_rows_select_own", { for: "select", to: authenticatedRole, using: ownRow(table.userId) }),
+    pgPolicy("import_session_rows_insert_own", { for: "insert", to: authenticatedRole, withCheck: ownRow(table.userId) }),
+    pgPolicy("import_session_rows_delete_own", { for: "delete", to: authenticatedRole, using: ownRow(table.userId) }),
   ],
 ).enableRLS()

@@ -68,7 +68,7 @@ test("con Auth y Storage inaccesibles no se sirven datos privados ni objetos, y 
     assert.equal(target.pathname, "/login")
     assert.equal(target.searchParams.get("redirect"), "/books?status=read")
     assert.equal(target.searchParams.get("error"), "session", "El acceso indica un fallo de sesión.")
-    const action = await callAction(s.app, "getLibraryDataAction", [], { cookies })
+    const action = await callAction(s.app, "listBooksAction", [{ pageSize: 100 }], { cookies })
     assert.equal(action.value, undefined, "Sin Auth no hay datos de dominio.")
     const api = await postJson(s.app, "/api/books/add", { title: runTitle("Durante la caída"), isbn: "", authors: [], number_of_pages: 1, publish_date: "", status: "unread" }, { cookies })
     assert.equal(api.status, 401)

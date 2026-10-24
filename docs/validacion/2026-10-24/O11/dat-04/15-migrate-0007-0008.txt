@@ -1,0 +1,2 @@
+Migración · biblib-scratch · aplicado: 0007_saved_views → 0008_restore_sessions
+Head anterior: 0006_library_snapshots · head actual: 0008_restore_sessions

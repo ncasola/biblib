@@ -58,7 +58,7 @@ test("misma URL de HTML como A, B y anónimo: sin datos de A fuera de A y sin ca
 test("misma acción en la misma ruta como A, B y anónimo: cada sesión recibe solo lo suyo", async () => {
   const markersA = markersOf(dataA, dataB)
   const markersB = markersOf(dataB, dataA)
-  for (const name of ["getLibraryDataAction", "getLibrarySummaryAction", "getShelvesAction", "listBooksAction"]) {
+  for (const name of ["getLibraryCountsAction", "getLibrarySummaryAction", "getShelvesAction", "listBooksAction"]) {
     const responses = []
     for (const [who, cookies] of [["a", a], ["b", b], ["anon", []], ["a", a], ["b", b]]) responses.push([who, await ctx.action(name, [], { cookies, route: "/books" })])
     for (const [who, response] of responses) {
@@ -74,7 +74,7 @@ test("misma acción en la misma ruta como A, B y anónimo: cada sesión recibe s
       assert.deepEqual(leaked(response.text, foreign), [], `${name} como ${who} no contiene datos de la otra cuenta`)
     }
     const own = responses.find(([who]) => who === "a")[1]
-    if (name !== "getLibrarySummaryAction") assert.ok(leaked(own.text, markersA).length > 0, `${name} como A devuelve datos de A (la prueba no es vacía)`)
+    if (name !== "getLibrarySummaryAction" && name !== "getLibraryCountsAction") assert.ok(leaked(own.text, markersA).length > 0, `${name} como A devuelve datos de A (la prueba no es vacía)`)
   }
 })
 

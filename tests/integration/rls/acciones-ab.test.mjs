@@ -26,15 +26,24 @@ async function snapshotB() {
   return s.sql`select id, title, status, shelf_id, version, user_id from biblib.books where user_id = ${lib.b.userId} order by id`
 }
 
+/** Biblioteca de la sesión con acciones acotadas (U-DAT-04 retiró la lectura completa): una página de 100 y sus estanterías. */
+async function ownLibrary(cookies) {
+  const page = await callAction(s.app, "listBooksAction", [{ pageSize: 100 }], { cookies })
+  const shelves = await callAction(s.app, "getShelvesAction", [], { cookies })
+  assert.equal(page.status, 200)
+  assert.equal(shelves.status, 200)
+  assert.ok(page.value.total <= page.value.pageSize, "La biblioteca ficticia cabe en una página: la comprobación ve todas sus fichas.")
+  return { books: page.value.books, shelves: shelves.value }
+}
+
 test("cada cuenta solo recibe su biblioteca desde las acciones", async () => {
   for (const [key, cookies] of [["a", a], ["b", b]]) {
     const other = key === "a" ? "b" : "a"
-    const data = await callAction(s.app, "getLibraryDataAction", [], { cookies })
-    assert.equal(data.status, 200)
-    const ids = data.value.books.map((book) => book.id)
+    const data = await ownLibrary(cookies)
+    const ids = data.books.map((book) => book.id)
     assert.ok(lib[key].fixtureBooks.every((id) => ids.includes(id)), `Faltan libros propios de ${key.toUpperCase()}.`)
     assert.ok(!ids.some((id) => lib[other].books.some((row) => row.id === id)), `${key.toUpperCase()} recibió libros ajenos.`)
-    assert.ok(!data.value.shelves.some((shelf) => lib[other].shelves.some((row) => row.id === shelf.id)))
+    assert.ok(!data.shelves.some((shelf) => lib[other].shelves.some((row) => row.id === shelf.id)))
   }
 })
 
@@ -69,7 +78,7 @@ test("A no lee, modifica, mueve ni borra recursos de B manipulando IDs", async (
 })
 
 test("anónimo no obtiene datos: el proxy redirige las acciones y la API responde 401", async () => {
-  const action = await callAction(s.app, "getLibraryDataAction", [])
+  const action = await callAction(s.app, "listBooksAction", [{ pageSize: 100 }])
   assert.equal(action.status, 307)
   assert.match(action.location, /^\/login\?redirect=/)
   assert.equal(action.value, undefined)
@@ -117,8 +126,8 @@ test("la estantería predeterminada no se borra ni se renombra desde la app", as
 
 test("la conexión de la app no arrastra claims: A, B, fallo de A y B otra vez", async () => {
   const owners = async (cookies) => {
-    const data = await callAction(s.app, "getLibraryDataAction", [], { cookies })
-    return [...new Set(data.value.books.map((book) => lib.a.books.some((row) => row.id === book.id) ? "a" : lib.b.books.some((row) => row.id === book.id) ? "b" : "?"))]
+    const data = await ownLibrary(cookies)
+    return [...new Set(data.books.map((book) => lib.a.books.some((row) => row.id === book.id) ? "a" : lib.b.books.some((row) => row.id === book.id) ? "b" : "?"))]
   }
   assert.deepEqual(await owners(a), ["a"])
   assert.deepEqual(await owners(b), ["b"])

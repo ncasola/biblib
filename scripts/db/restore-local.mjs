@@ -107,6 +107,31 @@ export async function verifyRestoredSnapshots(tx) {
   return classifySnapshots(rows.map((row) => ({ state: row.state, expired: row.expired, chunks: row.chunks, chunksOk: row.chunks_ok, digestOk: row.digest_ok })))
 }
 
+// Sesiones de restauración por partes (U-DAT-04, 0008): staging privado de la cuenta, no caché
+// regenerable. Se restauran tal cual con el volcado de dominio (un destino con sesiones no está vacío)
+// y se comprueba en Postgres el tamaño y el hash de cada trozo. Una sesión sin publicar no se puede
+// confirmar después del restore: su vista previa cita una revisión que la rotación invalida, así que
+// exige revisar de nuevo; se informa y caduca a los 7 días (import_session_purge_expired).
+export const RESTORE_SESSION_TABLES = Object.freeze(["import_sessions", "import_session_parts", "import_session_chunks", "import_session_rows"])
+
+/** Hechos agregados del staging restaurado (sin IDs ni contenido): trozos dañados abortan; sesiones abiertas se revisan. */
+export function classifyRestoreSessions({ sessions, open, chunks, damaged }) {
+  if (damaged) fail(EXIT.VERIFICATION_FAILED, `${damaged} trozo(s) de restauraciones por partes no superan su tamaño o hash: el respaldo está dañado o alterado.`, "rotate")
+  const review = open ? [{ table: "biblib.import_sessions", message: `${open} restauración(es) por partes sin publicar: su revisión ya no coincide y exigirán revisar de nuevo; descártalas o deja que caduquen.` }] : []
+  return { sessions, open, chunks, review }
+}
+
+/** Lee los hechos del staging restaurado dentro de la transacción del llamador. */
+export async function verifyRestoredSessions(tx) {
+  const [present] = await tx`select to_regclass('biblib.import_sessions') is not null as found`
+  if (!present.found) return { sessions: 0, open: 0, chunks: 0, review: [] }
+  const [row] = await tx`select count(*)::integer as sessions, (count(*) filter (where state in ('receiving', 'validated', 'prepared')))::integer as open,
+      (select count(*)::integer from biblib.import_session_chunks) as chunks,
+      (select count(*)::integer from biblib.import_session_chunks where octet_length(bytes) <> byte_length or sha256 <> encode(sha256(bytes), 'hex')) as damaged
+    from biblib.import_sessions`
+  return classifyRestoreSessions(row)
+}
+
 /**
  * Destino vacío o recién reseteado: solo puede contener las cuentas, bibliotecas y el objeto
  * del censo de fixtures que vuelve a crear `db:reset:local`, más filas de tablas derivadas.
@@ -261,7 +286,8 @@ export async function runRestore(options, deps = {}) {
     const rotation = await sql.begin(async (tx) => {
       const rotated = await rotateRestoredTokens(tx)
       const snapshots = await verifyRestoredSnapshots(tx)
-      return { ...rotated, snapshots, review: [...rotated.review, ...snapshots.review] }
+      const restoreSessions = await verifyRestoredSessions(tx)
+      return { ...rotated, snapshots, restoreSessions, review: [...rotated.review, ...snapshots.review, ...restoreSessions.review] }
     })
     if (rotation.staleWriteRejected === false) fail(EXIT.VERIFICATION_FAILED, "Una escritura condicional con una versión del respaldo siguió aplicando tras la rotación.", "rotate")
     save("rotate", "passed", rotation)

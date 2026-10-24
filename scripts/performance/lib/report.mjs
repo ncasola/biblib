@@ -51,8 +51,9 @@ export function budgetRows(all) {
   }
   const scene = pick(result, "estanteria-3d-pagina-48")
   if (scene) rows.push(["Vista 3D: libros por página", `≤ ${BUDGET.sceneRows}`, `${scene.filas.max}`, verdict(scene.filas.max <= BUDGET.sceneRows)])
-  const full = pick(result, "exportacion-lectura-completa")
-  if (full) rows.push(["Navegación ordinaria sin consultas sin límite (Ajustes carga la colección completa)", "ninguna consulta sin LIMIT que crezca con la colección", `getLibraryDataAction devuelve ${full.filas.max} fichas (${Math.round(full.bytes.p50 / 1024)} KiB) al abrir /settings`, verdict(full.filas.max <= BUDGET.pageRows)])
+  // Tarea T1: abrir Ajustes ya no lee la colección; solo recuentos (respuesta de tamaño constante).
+  const counts = pick(result, "ajustes-recuentos")
+  if (counts) rows.push(["Navegación ordinaria sin consultas sin límite (Ajustes al abrirse)", "ninguna consulta sin LIMIT que crezca con la colección", `getLibraryCountsAction responde ${counts.bytes.p50} B al abrir /settings`, verdict(counts.bytes.p50 <= 1024)])
   const quota = all.cuota?.distintos
   if (quota) rows.push(["Paso de worker: no retener conexión mientras se espera la cuota", "sin transacción abierta durante la espera", `transacción más larga ${quota.conexiones.transaccionMasLargaMs} ms; «idle in transaction» máx. ${quota.conexiones.enTransaccionInactivaMaximas}; conexiones máx. ${quota.conexiones.conexionesMaximas} (2 procesos)`, verdict(quota.conexiones.enTransaccionInactivaMaximas === 0)])
   for (const [profileKey, web] of Object.entries(result.web ?? {})) {
@@ -74,7 +75,7 @@ export function writeTables(dir, { manifest, all }) {
       lines.push("### Acciones (Server Actions reales, caliente)", "", "`Auth` es la duración de `GET /user` en GoTrue (registro del servidor); `SQL` es el tiempo de ejecución real de las sentencias de la acción (pg_stat_statements), solo con 1 sesión.", "",
         table(["escenario", "sesiones", "n", "acción p50", "acción p95", "máx.", "SQL p50 / p95", "Auth p50 / p95", "Auth/petición", "filas máx.", "KiB p50", "pool máx.", "errores", "peticiones/s"], actionRows(result)), "")
       lines.push("### Frío (primera llamada tras arrancar la app)", "", table(["escenario", "acción", "SQL", "Auth (GoTrue)"], (result.frio ?? []).map((c) => [c.escenario, ms(c.accionMs), ms(c.sqlMs), c.authServidorMs.join(" + ")])), "")
-      if (result.exportacion) lines.push("### Exportación por partes (código real del formato 1)", "", `Lectura completa: ${Math.round(result.exportacion.lecturaCompletaBytes / 1024)} KiB. Formato ${result.exportacion.formato}, ${result.exportacion.partes} partes (${result.exportacion.fichasPorParte.join(" + ")} fichas; ${result.exportacion.bytesPorParte.map((b) => Math.round(b / 1024)).join(" + ")} KiB). Particionado en Node (5 repeticiones): p50 ${result.exportacion.particionadoNodeMs.p50} ms, p95 ${result.exportacion.particionadoNodeMs.p95} ms.`, "")
+      if (result.exportacion) lines.push("### Exportación por partes (generada en el servidor)", "", `Respuesta de la acción (manifiesto y enlaces): ${Math.round(result.exportacion.accionBytes / 1024)} KiB. Formato ${result.exportacion.formato}, ${result.exportacion.partes} partes (${result.exportacion.fichasPorParte.join(" + ")} fichas; ${result.exportacion.bytesPorParte.map((b) => Math.round(b / 1024)).join(" + ")} KiB). Descarga de las partes desde la app: p50 ${result.exportacion.descargaMs.p50} ms por parte.`, "")
     }
     if (result.consultas) lines.push("### Consultas principales (EXPLAIN ANALYZE, rol authenticated, 30 ejecuciones)", "", table(["consulta", "acción", "ejecución p50 / p95", "planificación p50", "nodos", "LIMIT"], result.consultas.map((q) => [q.id, q.accion, pair(q.ejecucionMs), ms(q.planificacionMs.p50), q.nodos.slice(0, 4).join(" › "), q.limite ? "sí" : "**no**"])), "")
     if (result.indices) {

@@ -91,6 +91,17 @@ estanterías; para conservar vistas hay que usar el respaldo administrativo.
 Desactivar el panel de vistas conserva tanto sus filas como la navegación por parámetros URL.
 La migración `0007_saved_views` es aditiva; la recuperación no elimina la tabla ni sus datos.
 
+#### Restauraciones por partes (U-DAT-04)
+
+`biblib.import_sessions`, `import_session_parts`, `import_session_chunks` e `import_session_rows` son el staging privado de las restauraciones por partes (`RESTORE_SESSION_TABLES` en `scripts/db/restore-local.mjs`). Contienen los bytes de copias subidas por la persona, así que son **datos de la cuenta**, no caché:
+
+- **Se respaldan y se restauran tal cual** con el volcado de dominio. Un destino con sesiones no está vacío y el restore sale con **6**.
+- **Se comprueba cada trozo** en la fase `rotate`: tamaño y sha256 de sus bytes, en Postgres. Un trozo que no cuadra indica un respaldo dañado o alterado y el restore sale con **11**. Las restricciones de 0008 ya lo exigen al cargar el volcado.
+- **Una sesión sin publicar no se aplica sola.** Su vista previa cita una revisión de colección, y la rotación del restore la invalida: confirmarla da `REVISION_CONFLICT` y hay que revisar de nuevo. El restore informa de cuántas hay en `review`, sin IDs. Caducan a los 7 días (`import_session_purge_expired` desde el servidor) o se descartan desde Ajustes.
+- Una restauración publicada ya está en la colección y en «Versiones anteriores» (U-DAT-02); su sesión solo guarda el resumen, sin staging.
+
+Desactivar la publicación (`BIBLIB_RESTORE_SESSIONS_PUBLISH=false`) deja validar y revisar, conserva las descargas por partes y no toca la colección. Una restauración ya publicada se deshace desde «Versiones anteriores» o con el respaldo administrativo, nunca con SQL inverso.
+
 ### Verificación (`db:restore:verify`)
 
 Comprueba los archivos del respaldo; que hay un restore completado de ese respaldo; el ledger idéntico; el manifest de objetos de U-INF-04 (RLS, políticas, grants, FK, índices, columnas, función y trigger de versión) y los hechos de catálogo idénticos al origen; cantidades, claves y contenido por tabla (dominio y ledger completos salvo el token rotado; Auth y Storage por cantidad y claves); que ningún token coincide con el respaldo; la muestra de fichas; sesiones GoTrue reales de A y B con `tests/integration/support/session.mjs`, sus IDs restaurados y RLS con sus claims (solo ven lo suyo, actualizar lo ajeno afecta 0 filas); buckets y cada objeto Storage con su sha256. Escribe el informe en `<respaldo>/rehearsals/` con duración del restore, de la verificación y total, discrepancias y la ventana de datos perdidos, y lo enlaza desde el recibo. Cualquier discrepancia sale con **11**.
