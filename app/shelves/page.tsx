@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { LoadingState } from "@/components/loading-state"
 import { ShelfCard } from "@/components/shelf-card"
@@ -11,14 +11,45 @@ import type { Shelf } from "@/lib/types"
 import { Plus } from "lucide-react"
 import { unwrapAction } from "@/lib/action-result"
 
+// Estado del diálogo aislado: abrirlo o escribir no vuelve a renderizar todas las tarjetas.
+function NewShelfDialog({ onCreated }: { onCreated: () => Promise<void> }) {
+  const [name, setName] = useState("")
+  const [open, setOpen] = useState(false)
+  const [pending, setPending] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const create = async () => {
+    if (!name.trim() || pending) return
+    setPending(true)
+    setError(null)
+    try {
+      unwrapAction(await createShelfAction(name.trim()))
+      await onCreated()
+      setName("")
+      setOpen(false)
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "No se pudo crear la estantería.")
+    } finally { setPending(false) }
+  }
+
+  return <Dialog open={open} onOpenChange={(next) => { if (!pending) { setOpen(next); setError(null) } }}>
+    <DialogTrigger asChild><Button className="rounded-xl bg-primary px-6 py-3 font-semibold text-primary-foreground shadow-lg shadow-primary/30"><Plus aria-hidden="true" className="h-4 w-4" />Nueva estantería</Button></DialogTrigger>
+    <DialogContent>
+      <DialogHeader><DialogTitle>Crear nueva estantería</DialogTitle><DialogDescription>Elige un nombre para organizar tus libros.</DialogDescription></DialogHeader>
+      <form onSubmit={(event) => { event.preventDefault(); void create() }} className="space-y-4" aria-busy={pending}>
+        <label htmlFor="new-shelf-name" className="block text-sm font-medium">Nombre de la estantería</label>
+        <Input id="new-shelf-name" placeholder="Ej.: Ciencia ficción, Favoritos" maxLength={100} required value={name} disabled={pending} onChange={(event) => setName(event.target.value)} className="border-border bg-surface" />
+        {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+        <div className="flex flex-wrap justify-end gap-2"><Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={pending}>Cancelar</Button><Button type="submit" disabled={pending || !name.trim()}>{pending ? "Creando…" : "Crear estantería"}</Button></div>
+      </form>
+    </DialogContent>
+  </Dialog>
+}
+
 export default function ShelvesPage() {
   const [shelves, setShelves] = useState<Shelf[]>([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(false)
-  const [newShelfName, setNewShelfName] = useState("")
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [mutationPending, setMutationPending] = useState(false)
-  const [mutationError, setMutationError] = useState<string | null>(null)
 
   const refreshShelves = async () => {
     try {
@@ -44,22 +75,6 @@ export default function ShelvesPage() {
     const timer = window.setTimeout(() => { void loadShelves() }, 0)
     return () => window.clearTimeout(timer)
   }, [loadShelves])
-
-  const handleCreateShelf = async () => {
-    if (!newShelfName.trim() || mutationPending) return
-    setMutationPending(true)
-    setMutationError(null)
-    try {
-      unwrapAction(await createShelfAction(newShelfName.trim()))
-      await refreshShelves()
-      setNewShelfName("")
-      setIsDialogOpen(false)
-    } catch (error) {
-      setMutationError(error instanceof Error ? error.message : "No se pudo crear la estantería.")
-    } finally {
-      setMutationPending(false)
-    }
-  }
 
   const handleDeleteShelf = async (shelfId: string) => {
     unwrapAction(await deleteShelfAction(shelfId))
@@ -91,23 +106,13 @@ export default function ShelvesPage() {
                 <h1 className="mb-2 text-3xl font-bold heading-vintage md:text-4xl">Tus estanterías</h1>
                 <p className="text-base text-muted-foreground md:text-lg">Organiza tus libros en estanterías personalizadas</p>
               </div>
-              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogTrigger asChild><Button className="rounded-xl bg-primary px-6 py-3 font-semibold text-primary-foreground shadow-lg shadow-primary/30 transition-all hover:scale-105"><Plus aria-hidden="true" className="h-4 w-4" />Nueva estantería</Button></DialogTrigger>
-                <DialogContent>
-                  <DialogHeader><DialogTitle>Crear nueva estantería</DialogTitle></DialogHeader>
-                  <div className="space-y-4">
-                    <Input aria-label="Nombre de la estantería" placeholder="Nombre (ej.: Ciencia ficción, Favoritos)" value={newShelfName} onChange={(event) => setNewShelfName(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") void handleCreateShelf() }} className="border-border bg-surface" />
-                    <div className="flex justify-end gap-2"><Button variant="outline" onClick={() => setIsDialogOpen(false)} disabled={mutationPending}>Cancelar</Button><Button onClick={() => void handleCreateShelf()} disabled={mutationPending || !newShelfName.trim()}>{mutationPending ? "Creando…" : "Crear estantería"}</Button></div>
-                  </div>
-                  {mutationError && <p role="alert" className="text-sm text-destructive">{mutationError}</p>}
-                </DialogContent>
-              </Dialog>
+              <NewShelfDialog onCreated={refreshShelves} />
             </div>
 
             {shelves.length === 0 ? (
               <div className="rounded-2xl border border-border bg-card p-12 text-center shadow-xl"><p className="mb-4 text-muted-foreground">Aún no has creado estanterías.</p><p className="text-sm text-muted-foreground">Crea una estantería para organizar tus libros.</p></div>
             ) : (
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">{shelves.map((shelf) => <ShelfCard key={shelf.id} shelf={shelf} bookCount={shelf.book_count} onUpdate={handleUpdateShelf} onDelete={handleDeleteShelf} isDefault={shelf.isDefault ?? false} />)}</div>
+              <div className="shelves-grid grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">{shelves.map((shelf) => <ShelfCard key={shelf.id} shelf={shelf} bookCount={shelf.book_count} onUpdate={handleUpdateShelf} onDelete={handleDeleteShelf} isDefault={shelf.isDefault ?? false} />)}</div>
             )}
           </>
         )}

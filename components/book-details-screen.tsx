@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { ArrowLeft, Edit2, Loader2, RefreshCw, Trash2 } from "lucide-react"
@@ -41,6 +41,17 @@ export function BookDetailsScreen({ bookId, returnPath }: BookDetailsScreenProps
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [targetShelf, setTargetShelf] = useState("")
   const [attempt, setAttempt] = useState(0)
+  const editButton = useRef<HTMLButtonElement>(null)
+  const wasEditing = useRef(false)
+
+  useEffect(() => {
+    if (editing) {
+      document.querySelector<HTMLInputElement>('form input[required]')?.focus()
+    } else if (wasEditing.current) {
+      editButton.current?.focus()
+    }
+    wasEditing.current = editing
+  }, [editing])
 
   useEffect(() => {
     let active = true
@@ -111,9 +122,9 @@ export function BookDetailsScreen({ bookId, returnPath }: BookDetailsScreenProps
             <p className="text-xs text-muted-foreground">{normalizeIsbn(book.isbn) ? "Busca y sustituye la portada con la disponible en Open Library." : "Añade un ISBN válido al editar la ficha para buscar su portada."}</p>
           </aside>
           <div className="space-y-5 min-w-0">
-            <div className="flex flex-col sm:flex-row items-start justify-between gap-4"><div className="min-w-0"><h1 className="text-3xl sm:text-4xl font-bold heading-vintage break-words">{book.title}</h1>{book.subtitle && <p className="text-lg text-muted-foreground mt-2">{book.subtitle}</p>}</div><Button variant="outline" disabled={Boolean(pending)} onClick={() => { setEditing(true); setError(""); setMessage("") }}><Edit2 aria-hidden="true" className="w-4 h-4 mr-2" />Editar ficha</Button></div>
+            <div className="flex flex-col sm:flex-row items-start justify-between gap-4"><div className="min-w-0"><h1 className="text-3xl sm:text-4xl font-bold heading-vintage break-words">{book.title}</h1>{book.subtitle && <p className="text-lg text-muted-foreground mt-2">{book.subtitle}</p>}</div><Button ref={editButton} variant="outline" disabled={Boolean(pending)} onClick={() => { setEditing(true); setError(""); setMessage("") }}><Edit2 aria-hidden="true" className="w-4 h-4 mr-2" />Editar ficha</Button></div>
             {message && <p role="status" className="rounded-xl border border-border bg-muted/40 p-3 text-sm">{message}</p>}
-            {error && <div role="alert" className="rounded-xl border border-destructive/30 p-3 text-sm text-destructive space-y-2"><p>{error}</p><Button variant="outline" onClick={() => { setError(""); setAttempt((current) => current + 1) }}>Recargar ficha</Button></div>}
+            {error && !deleteOpen && <div role="alert" className="rounded-xl border border-destructive/30 p-3 text-sm text-destructive space-y-2"><p>{error}</p><Button variant="outline" onClick={() => { setError(""); setAttempt((current) => current + 1) }}>Recargar ficha</Button></div>}
             <dl className="rounded-2xl border border-border bg-card/80 p-5 shadow-lg grid gap-4 sm:grid-cols-2">
               <div className="sm:col-span-2"><dt className="text-sm text-muted-foreground font-semibold">Autores</dt><dd className="mt-1">{book.authors.length ? book.authors.map((author) => author.name).join("; ") : "Desconocidos"}</dd></div>
               <div><dt className="text-sm text-muted-foreground font-semibold">Editoriales</dt><dd className="mt-1">{book.publishers?.length ? book.publishers.map((publisher) => publisher.name).join("; ") : "Desconocidas"}</dd></div>
@@ -124,7 +135,7 @@ export function BookDetailsScreen({ bookId, returnPath }: BookDetailsScreenProps
             </dl>
             <section className="rounded-2xl border border-border bg-card/80 p-5 shadow-lg"><BookStatusForm currentStatus={book.status} onStatusChange={changeStatus} disabled={Boolean(pending)} /></section>
             <section className="rounded-2xl border border-border bg-card/80 p-5 shadow-lg space-y-3"><label htmlFor="book-shelf" className="text-sm font-semibold">Estantería</label><div className="flex flex-col sm:flex-row gap-3"><select id="book-shelf" value={targetShelf} disabled={Boolean(pending)} onChange={(event) => setTargetShelf(event.target.value)} className="min-w-0 flex-1 rounded-lg border border-input bg-background p-2 text-foreground">{shelves.map((shelf) => <option key={shelf.id} value={shelf.id}>{shelf.title}{shelf.isDefault ? " (predeterminada)" : ""}</option>)}</select><Button type="button" disabled={Boolean(pending) || targetShelf === book.shelf_id} onClick={() => void changeShelf()}>{pending === "shelf" ? "Moviendo..." : "Mover libro"}</Button></div></section>
-            <AlertDialog open={deleteOpen} onOpenChange={(open) => { if (pending !== "delete") { setDeleteOpen(open); if (open) setError("") } }}>
+            <AlertDialog open={deleteOpen} onOpenChange={(open) => { if (pending !== "delete") { setDeleteOpen(open); setError("") } }}>
               <AlertDialogTrigger asChild><Button variant="outline" disabled={Boolean(pending)} className="text-destructive border-destructive/40"><Trash2 aria-hidden="true" className="w-4 h-4 mr-2" />Eliminar libro</Button></AlertDialogTrigger>
               <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>¿Eliminar este libro?</AlertDialogTitle><AlertDialogDescription>Se eliminará «{book.title}» de tu biblioteca. Esta acción no se puede deshacer.</AlertDialogDescription></AlertDialogHeader>
                 {error && <p role="alert" className="text-sm text-destructive">{error}</p>}

@@ -49,14 +49,14 @@ export function ShelfCard({ shelf, bookCount, onUpdate, onDelete, isDefault }: S
   }
 
   return (
-    <div className="rounded-2xl border border-border bg-card backdrop-blur-md p-6 shadow-xl flex flex-col gap-4 relative hover:shadow-2xl transition-shadow">
+    <div className="rounded-2xl border border-border bg-card p-6 shadow-xl flex flex-col gap-4 relative hover:shadow-2xl transition-shadow">
       {isDefault && (
         <div className="absolute top-3 right-3 bg-primary text-white text-xs px-2 py-1 rounded">Predeterminada</div>
       )}
 
       <div className="flex items-start justify-between gap-4 pr-12">
         <div className="flex-1">
-          <h3 className="mb-1 text-lg font-bold text-foreground"><Link href={`/books?shelf=${encodeURIComponent(shelf.id)}`} className="rounded-sm underline-offset-4 hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">{shelf.title}</Link></h3>
+          <h2 className="mb-1 text-lg font-bold text-foreground"><Link href={`/books?shelf=${encodeURIComponent(shelf.id)}`} className="rounded-sm underline-offset-4 hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">{shelf.title}</Link></h2>
           <div className="flex items-center gap-2 text-muted-foreground text-sm">
             <BookOpen className="w-4 h-4" />
             <span>
