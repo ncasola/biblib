@@ -1,0 +1,8 @@
+Plan de migración · biblib-scratch · estado pending
+Head aplicado: 0008_restore_sessions · pendientes: 0009_cover_assets
+[ok] prerequisite.auth.users: auth.users lo proporciona la plataforma.
+[ok] prerequisite.auth.uid(): auth.uid() lo proporciona la plataforma.
+[ok] prerequisite.role:authenticated: role:authenticated lo proporciona la plataforma.
+[ok] prerequisite.role:anon: role:anon lo proporciona la plataforma.
+Plan migrate guardado en .biblib\plans\dat10-0008-0009.json (caduca 2026-10-24T15:27:57.098Z).
+Para aplicarlo: pnpm db:migrate:local --plan .biblib\plans\dat10-0008-0009.json --expect-project biblib-scratch --expect-plan d99811648bc0e6f0eb7b844aa20f9dc81be577378168b4e0d67ace36be1a0201
