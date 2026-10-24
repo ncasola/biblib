@@ -34,3 +34,11 @@ test("trozos dañados abortan el restore; sesiones sin publicar quedan para revi
   assert.equal(open.review[0].table, "biblib.import_sessions")
   assert.throws(() => classifyRestoreSessions({ sessions: 1, open: 1, chunks: 3, damaged: 1 }), { code: 11 })
 })
+
+test("perf:restore: perfiles scratch o test, escalas 100/1000/10000 y repeticiones acotadas", async () => {
+  const { parseArgs: benchArgs } = await import("../../scripts/performance/restore-bench.mjs")
+  assert.deepEqual(benchArgs([]).scales, [100, 1000, 10000])
+  assert.deepEqual(benchArgs(["--scale", "10000", "--scale", "100"]).scales, [100, 10000])
+  assert.equal(benchArgs(["--profile", "test", "--repeat", "5"]).repeat, 5)
+  for (const args of [["--profile", "main"], ["--scale", "500"], ["--repeat", "9"], ["--db-url", "x"]]) assert.throws(() => benchArgs(args), { code: 2 })
+})
