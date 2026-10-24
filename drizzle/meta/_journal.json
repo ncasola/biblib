@@ -71,6 +71,13 @@
       "when": 1792851547262,
       "tag": "0009_cover_assets",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1792879191311,
+      "tag": "0010_works_editions_copies",
+      "breakpoints": true
     }
   ]
 }

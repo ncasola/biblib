@@ -1,0 +1,4971 @@
+{
+  "id": "812e4fc8-e5f0-4cf5-841f-598f54bcaa8e",
+  "prevId": "169b5bd2-b0c1-46a1-819d-e100388b1ecb",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "biblib.account_lifecycle": {
+      "name": "account_lifecycle",
+      "schema": "biblib",
+      "columns": {
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "state": {
+          "name": "state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'active'"
+        },
+        "changed_at": {
+          "name": "changed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "account_lifecycle_user_id_users_id_fk": {
+          "name": "account_lifecycle_user_id_users_id_fk",
+          "tableFrom": "account_lifecycle",
+          "tableTo": "users",
+          "schemaTo": "auth",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "account_lifecycle_select_own": {
+          "name": "account_lifecycle_select_own",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select auth.uid() = \"biblib\".\"account_lifecycle\".\"user_id\")"
+        }
+      },
+      "checkConstraints": {
+        "account_lifecycle_state_check": {
+          "name": "account_lifecycle_state_check",
+          "value": "\"biblib\".\"account_lifecycle\".\"state\" in ('active', 'blocked')"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "biblib.books": {
+      "name": "books",
+      "schema": "biblib",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "version": {
+          "name": "version",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "isbn": {
+          "name": "isbn",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "subtitle": {
+          "name": "subtitle",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "authors": {
+          "name": "authors",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'[]'::jsonb"
+        },
+        "publishers": {
+          "name": "publishers",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'[]'::jsonb"
+        },
+        "catalogue": {
+          "name": "catalogue",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{\"source\":\"import\",\"isbnVerified\":false}'::jsonb"
+        },
+        "number_of_pages": {
+          "name": "number_of_pages",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "publish_date": {
+          "name": "publish_date",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "cover_small": {
+          "name": "cover_small",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'/default-book-cover.webp'"
+        },
+        "cover_medium": {
+          "name": "cover_medium",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'/default-book-cover.webp'"
+        },
+        "cover_large": {
+          "name": "cover_large",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'/default-book-cover.webp'"
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'unread'"
+        },
+        "shelf_id": {
+          "name": "shelf_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cover_asset_id": {
+          "name": "cover_asset_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "books_user_id_isbn_unique": {
+          "name": "books_user_id_isbn_unique",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "isbn",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "books_cover_asset_idx": {
+          "name": "books_cover_asset_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "cover_asset_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "where": "\"biblib\".\"books\".\"cover_asset_id\" is not null",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "books_user_id_id_unique": {
+          "name": "books_user_id_id_unique",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "books_user_id_idx": {
+          "name": "books_user_id_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "books_shelf_id_idx": {
+          "name": "books_shelf_id_idx",
+          "columns": [
+            {
+              "expression": "shelf_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "books_user_title_idx": {
+          "name": "books_user_title_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "title",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "books_user_shelf_title_idx": {
+          "name": "books_user_shelf_title_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "shelf_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "title",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "books_user_created_idx": {
+          "name": "books_user_created_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "first"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "first"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "books_user_id_users_id_fk": {
+          "name": "books_user_id_users_id_fk",
+          "tableFrom": "books",
+          "tableTo": "users",
+          "schemaTo": "auth",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "books_owner_cover_asset_fk": {
+          "name": "books_owner_cover_asset_fk",
+          "tableFrom": "books",
+          "tableTo": "cover_assets",
+          "schemaTo": "biblib",
+          "columnsFrom": [
+            "user_id",
+            "cover_asset_id"
+          ],
+          "columnsTo": [
+            "user_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "books_owner_shelf_fk": {
+          "name": "books_owner_shelf_fk",
+          "tableFrom": "books",
+          "tableTo": "shelves",
+          "schemaTo": "biblib",
+          "columnsFrom": [
+            "user_id",
+            "shelf_id"
+          ],
+          "columnsTo": [
+            "user_id",
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "books_select_own": {
+          "name": "books_select_own",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select auth.uid() = \"biblib\".\"books\".\"user_id\")"
+        },
+        "books_insert_own": {
+          "name": "books_insert_own",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "(select auth.uid() = \"biblib\".\"books\".\"user_id\")"
+        },
+        "books_update_own": {
+          "name": "books_update_own",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select auth.uid() = \"biblib\".\"books\".\"user_id\")",
+          "withCheck": "(select auth.uid() = \"biblib\".\"books\".\"user_id\")"
+        },
+        "books_delete_own": {
+          "name": "books_delete_own",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select auth.uid() = \"biblib\".\"books\".\"user_id\")"
+        }
+      },
+      "checkConstraints": {
+        "books_status_check": {
+          "name": "books_status_check",
+          "value": "\"biblib\".\"books\".\"status\" in ('read', 'reading', 'unread', 'to-read')"
+        },
+        "books_pages_check": {
+          "name": "books_pages_check",
+          "value": "\"biblib\".\"books\".\"number_of_pages\" between 0 and 100000"
+        },
+        "books_title_check": {
+          "name": "books_title_check",
+          "value": "length(btrim(\"biblib\".\"books\".\"title\")) between 1 and 500"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "biblib.catalogue_cache": {
+      "name": "catalogue_cache",
+      "schema": "biblib",
+      "columns": {
+        "provider": {
+          "name": "provider",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "policy_version": {
+          "name": "policy_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "credential_scope": {
+          "name": "credential_scope",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "schema_version": {
+          "name": "schema_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "operation": {
+          "name": "operation",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "canonical_key": {
+          "name": "canonical_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "payload": {
+          "name": "payload",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "provenance": {
+          "name": "provenance",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::jsonb"
+        },
+        "fence": {
+          "name": "fence",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fetched_at": {
+          "name": "fetched_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "catalogue_cache_expires_at_idx": {
+          "name": "catalogue_cache_expires_at_idx",
+          "columns": [
+            {
+              "expression": "expires_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "catalogue_cache_pkey": {
+          "name": "catalogue_cache_pkey",
+          "columns": [
+            "provider",
+            "policy_version",
+            "credential_scope",
+            "schema_version",
+            "operation",
+            "canonical_key"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "catalogue_cache_provider_check": {
+          "name": "catalogue_cache_provider_check",
+          "value": "\"biblib\".\"catalogue_cache\".\"provider\" in ('open-library', 'bne', 'google-books')"
+        },
+        "catalogue_cache_operation_check": {
+          "name": "catalogue_cache_operation_check",
+          "value": "\"biblib\".\"catalogue_cache\".\"operation\" in ('lookupISBN', 'resolveEditions', 'getCover')"
+        },
+        "catalogue_cache_status_check": {
+          "name": "catalogue_cache_status_check",
+          "value": "\"biblib\".\"catalogue_cache\".\"status\" in ('found', 'notFound')"
+        },
+        "catalogue_cache_key_check": {
+          "name": "catalogue_cache_key_check",
+          "value": "length(\"biblib\".\"catalogue_cache\".\"canonical_key\") between 1 and 200"
+        },
+        "catalogue_cache_payload_check": {
+          "name": "catalogue_cache_payload_check",
+          "value": "jsonb_typeof(\"biblib\".\"catalogue_cache\".\"payload\") = 'array'"
+        },
+        "catalogue_cache_expiry_check": {
+          "name": "catalogue_cache_expiry_check",
+          "value": "\"biblib\".\"catalogue_cache\".\"expires_at\" > \"biblib\".\"catalogue_cache\".\"fetched_at\""
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "biblib.catalogue_inflight": {
+      "name": "catalogue_inflight",
+      "schema": "biblib",
+      "columns": {
+        "provider": {
+          "name": "provider",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "policy_version": {
+          "name": "policy_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "credential_scope": {
+          "name": "credential_scope",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "schema_version": {
+          "name": "schema_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "operation": {
+          "name": "operation",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "canonical_key": {
+          "name": "canonical_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fence": {
+          "name": "fence",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "lease_expires_at": {
+          "name": "lease_expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "catalogue_inflight_fence_unique": {
+          "name": "catalogue_inflight_fence_unique",
+          "columns": [
+            {
+              "expression": "fence",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "catalogue_inflight_pkey": {
+          "name": "catalogue_inflight_pkey",
+          "columns": [
+            "provider",
+            "policy_version",
+            "credential_scope",
+            "schema_version",
+            "operation",
+            "canonical_key"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "catalogue_inflight_provider_check": {
+          "name": "catalogue_inflight_provider_check",
+          "value": "\"biblib\".\"catalogue_inflight\".\"provider\" in ('open-library', 'bne', 'google-books')"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "biblib.catalogue_private_cache": {
+      "name": "catalogue_private_cache",
+      "schema": "biblib",
+      "columns": {
+        "owner_id": {
+          "name": "owner_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "provider": {
+          "name": "provider",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "policy_version": {
+          "name": "policy_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "credential_scope": {
+          "name": "credential_scope",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "schema_version": {
+          "name": "schema_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "operation": {
+          "name": "operation",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "key_hmac": {
+          "name": "key_hmac",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "payload": {
+          "name": "payload",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fetched_at": {
+          "name": "fetched_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "catalogue_private_cache_expires_at_idx": {
+          "name": "catalogue_private_cache_expires_at_idx",
+          "columns": [
+            {
+              "expression": "owner_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "expires_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "catalogue_private_cache_owner_id_users_id_fk": {
+          "name": "catalogue_private_cache_owner_id_users_id_fk",
+          "tableFrom": "catalogue_private_cache",
+          "tableTo": "users",
+          "schemaTo": "auth",
+          "columnsFrom": [
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "catalogue_private_cache_pkey": {
+          "name": "catalogue_private_cache_pkey",
+          "columns": [
+            "owner_id",
+            "provider",
+            "policy_version",
+            "credential_scope",
+            "schema_version",
+            "operation",
+            "key_hmac"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "catalogue_private_cache_select_own": {
+          "name": "catalogue_private_cache_select_own",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select auth.uid() = \"biblib\".\"catalogue_private_cache\".\"owner_id\")"
+        },
+        "catalogue_private_cache_delete_own": {
+          "name": "catalogue_private_cache_delete_own",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select auth.uid() = \"biblib\".\"catalogue_private_cache\".\"owner_id\")"
+        }
+      },
+      "checkConstraints": {
+        "catalogue_private_cache_provider_check": {
+          "name": "catalogue_private_cache_provider_check",
+          "value": "\"biblib\".\"catalogue_private_cache\".\"provider\" in ('open-library', 'bne', 'google-books')"
+        },
+        "catalogue_private_cache_operation_check": {
+          "name": "catalogue_private_cache_operation_check",
+          "value": "\"biblib\".\"catalogue_private_cache\".\"operation\" in ('searchTitleAuthor')"
+        },
+        "catalogue_private_cache_status_check": {
+          "name": "catalogue_private_cache_status_check",
+          "value": "\"biblib\".\"catalogue_private_cache\".\"status\" in ('found', 'notFound')"
+        },
+        "catalogue_private_cache_key_check": {
+          "name": "catalogue_private_cache_key_check",
+          "value": "\"biblib\".\"catalogue_private_cache\".\"key_hmac\" ~ '^[0-9a-f]{64}$'"
+        },
+        "catalogue_private_cache_payload_check": {
+          "name": "catalogue_private_cache_payload_check",
+          "value": "jsonb_typeof(\"biblib\".\"catalogue_private_cache\".\"payload\") = 'array'"
+        },
+        "catalogue_private_cache_expiry_check": {
+          "name": "catalogue_private_cache_expiry_check",
+          "value": "\"biblib\".\"catalogue_private_cache\".\"expires_at\" > \"biblib\".\"catalogue_private_cache\".\"fetched_at\""
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "biblib.catalogue_quota_buckets": {
+      "name": "catalogue_quota_buckets",
+      "schema": "biblib",
+      "columns": {
+        "provider": {
+          "name": "provider",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "credential_scope": {
+          "name": "credential_scope",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "interval_ms": {
+          "name": "interval_ms",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "next_slot_at": {
+          "name": "next_slot_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cooldown_until": {
+          "name": "cooldown_until",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "catalogue_quota_buckets_pkey": {
+          "name": "catalogue_quota_buckets_pkey",
+          "columns": [
+            "provider",
+            "credential_scope"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "catalogue_quota_buckets_provider_check": {
+          "name": "catalogue_quota_buckets_provider_check",
+          "value": "\"biblib\".\"catalogue_quota_buckets\".\"provider\" in ('open-library', 'bne', 'google-books')"
+        },
+        "catalogue_quota_buckets_interval_check": {
+          "name": "catalogue_quota_buckets_interval_check",
+          "value": "\"biblib\".\"catalogue_quota_buckets\".\"interval_ms\" between 1 and 3600000"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "biblib.catalogue_quota_reservations": {
+      "name": "catalogue_quota_reservations",
+      "schema": "biblib",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "provider": {
+          "name": "provider",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "credential_scope": {
+          "name": "credential_scope",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "owner_id": {
+          "name": "owner_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "purpose": {
+          "name": "purpose",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fence": {
+          "name": "fence",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slot_at": {
+          "name": "slot_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "released_at": {
+          "name": "released_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "catalogue_quota_reservations_fence_unique": {
+          "name": "catalogue_quota_reservations_fence_unique",
+          "columns": [
+            {
+              "expression": "fence",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "catalogue_quota_reservations_active_idx": {
+          "name": "catalogue_quota_reservations_active_idx",
+          "columns": [
+            {
+              "expression": "provider",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "credential_scope",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "owner_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "purpose",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "where": "\"biblib\".\"catalogue_quota_reservations\".\"released_at\" is null",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "catalogue_quota_reservations_expires_at_idx": {
+          "name": "catalogue_quota_reservations_expires_at_idx",
+          "columns": [
+            {
+              "expression": "provider",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "credential_scope",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "expires_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "catalogue_quota_reservations_owner_id_users_id_fk": {
+          "name": "catalogue_quota_reservations_owner_id_users_id_fk",
+          "tableFrom": "catalogue_quota_reservations",
+          "tableTo": "users",
+          "schemaTo": "auth",
+          "columnsFrom": [
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "catalogue_quota_reservations_bucket_fk": {
+          "name": "catalogue_quota_reservations_bucket_fk",
+          "tableFrom": "catalogue_quota_reservations",
+          "tableTo": "catalogue_quota_buckets",
+          "schemaTo": "biblib",
+          "columnsFrom": [
+            "provider",
+            "credential_scope"
+          ],
+          "columnsTo": [
+            "provider",
+            "credential_scope"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "catalogue_quota_reservations_purpose_check": {
+          "name": "catalogue_quota_reservations_purpose_check",
+          "value": "\"biblib\".\"catalogue_quota_reservations\".\"purpose\" in ('interactive', 'batch')"
+        },
+        "catalogue_quota_reservations_expiry_check": {
+          "name": "catalogue_quota_reservations_expiry_check",
+          "value": "\"biblib\".\"catalogue_quota_reservations\".\"expires_at\" > \"biblib\".\"catalogue_quota_reservations\".\"slot_at\""
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "biblib.copies": {
+      "name": "copies",
+      "schema": "biblib",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "edition_id": {
+          "name": "edition_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'unread'"
+        },
+        "shelf_id": {
+          "name": "shelf_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "edition_verification": {
+          "name": "edition_verification",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{\"isbnVerified\":false}'::jsonb"
+        },
+        "legacy_identifier": {
+          "name": "legacy_identifier",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "version": {
+          "name": "version",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "copies_user_id_id_unique": {
+          "name": "copies_user_id_id_unique",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "copies_user_legacy_identifier_unique": {
+          "name": "copies_user_legacy_identifier_unique",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "legacy_identifier",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"biblib\".\"copies\".\"legacy_identifier\" is not null",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "copies_user_edition_idx": {
+          "name": "copies_user_edition_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "edition_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "copies_user_shelf_idx": {
+          "name": "copies_user_shelf_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "shelf_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "copies_user_created_idx": {
+          "name": "copies_user_created_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "first"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "first"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "copies_user_id_users_id_fk": {
+          "name": "copies_user_id_users_id_fk",
+          "tableFrom": "copies",
+          "tableTo": "users",
+          "schemaTo": "auth",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "copies_owner_edition_fk": {
+          "name": "copies_owner_edition_fk",
+          "tableFrom": "copies",
+          "tableTo": "editions",
+          "schemaTo": "biblib",
+          "columnsFrom": [
+            "user_id",
+            "edition_id"
+          ],
+          "columnsTo": [
+            "user_id",
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "copies_owner_shelf_fk": {
+          "name": "copies_owner_shelf_fk",
+          "tableFrom": "copies",
+          "tableTo": "shelves",
+          "schemaTo": "biblib",
+          "columnsFrom": [
+            "user_id",
+            "shelf_id"
+          ],
+          "columnsTo": [
+            "user_id",
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "copies_select_own": {
+          "name": "copies_select_own",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select auth.uid() = \"biblib\".\"copies\".\"user_id\")"
+        },
+        "copies_insert_own": {
+          "name": "copies_insert_own",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "(select auth.uid() = \"biblib\".\"copies\".\"user_id\")"
+        },
+        "copies_update_own": {
+          "name": "copies_update_own",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select auth.uid() = \"biblib\".\"copies\".\"user_id\")",
+          "withCheck": "(select auth.uid() = \"biblib\".\"copies\".\"user_id\")"
+        },
+        "copies_delete_own": {
+          "name": "copies_delete_own",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select auth.uid() = \"biblib\".\"copies\".\"user_id\")"
+        }
+      },
+      "checkConstraints": {
+        "copies_status_check": {
+          "name": "copies_status_check",
+          "value": "\"biblib\".\"copies\".\"status\" in ('read', 'reading', 'unread', 'to-read')"
+        },
+        "copies_verification_check": {
+          "name": "copies_verification_check",
+          "value": "jsonb_typeof(\"biblib\".\"copies\".\"edition_verification\") = 'object' and jsonb_typeof(\"biblib\".\"copies\".\"edition_verification\"->'isbnVerified') = 'boolean'"
+        },
+        "copies_legacy_identifier_check": {
+          "name": "copies_legacy_identifier_check",
+          "value": "\"biblib\".\"copies\".\"legacy_identifier\" is null or length(btrim(\"biblib\".\"copies\".\"legacy_identifier\")) between 1 and 100"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "biblib.cover_assets": {
+      "name": "cover_assets",
+      "schema": "biblib",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "storage_key": {
+          "name": "storage_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sha256": {
+          "name": "sha256",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "mime": {
+          "name": "mime",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "width": {
+          "name": "width",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "height": {
+          "name": "height",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "bytes": {
+          "name": "bytes",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "state": {
+          "name": "state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'quarantine'"
+        },
+        "source_kind": {
+          "name": "source_kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source_ref": {
+          "name": "source_ref",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "rights_policy_version": {
+          "name": "rights_policy_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "attribution": {
+          "name": "attribution",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "upload_token": {
+          "name": "upload_token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "job_id": {
+          "name": "job_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "attach_book_id": {
+          "name": "attach_book_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "attach_book_version": {
+          "name": "attach_book_version",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "version": {
+          "name": "version",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "cover_assets_user_id_id_unique": {
+          "name": "cover_assets_user_id_id_unique",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "cover_assets_user_sha_unique": {
+          "name": "cover_assets_user_sha_unique",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "sha256",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"biblib\".\"cover_assets\".\"state\" in ('ready', 'restored')",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "cover_assets_job_unique": {
+          "name": "cover_assets_job_unique",
+          "columns": [
+            {
+              "expression": "job_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"biblib\".\"cover_assets\".\"job_id\" is not null",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "cover_assets_user_created_idx": {
+          "name": "cover_assets_user_created_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "first"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "cover_assets_expires_at_idx": {
+          "name": "cover_assets_expires_at_idx",
+          "columns": [
+            {
+              "expression": "expires_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "where": "\"biblib\".\"cover_assets\".\"expires_at\" is not null",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "cover_assets_user_id_users_id_fk": {
+          "name": "cover_assets_user_id_users_id_fk",
+          "tableFrom": "cover_assets",
+          "tableTo": "users",
+          "schemaTo": "auth",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "cover_assets_owner_job_fk": {
+          "name": "cover_assets_owner_job_fk",
+          "tableFrom": "cover_assets",
+          "tableTo": "library_jobs",
+          "schemaTo": "biblib",
+          "columnsFrom": [
+            "user_id",
+            "job_id"
+          ],
+          "columnsTo": [
+            "user_id",
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "cover_assets_select_own": {
+          "name": "cover_assets_select_own",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select auth.uid() = \"biblib\".\"cover_assets\".\"user_id\")"
+        }
+      },
+      "checkConstraints": {
+        "cover_assets_state_check": {
+          "name": "cover_assets_state_check",
+          "value": "\"biblib\".\"cover_assets\".\"state\" in ('quarantine', 'ready', 'restored')"
+        },
+        "cover_assets_source_kind_check": {
+          "name": "cover_assets_source_kind_check",
+          "value": "\"biblib\".\"cover_assets\".\"source_kind\" in ('provider', 'upload')"
+        },
+        "cover_assets_source_ref_check": {
+          "name": "cover_assets_source_ref_check",
+          "value": "(\"biblib\".\"cover_assets\".\"source_kind\" = 'upload' and \"biblib\".\"cover_assets\".\"source_ref\" = 'upload') or (\"biblib\".\"cover_assets\".\"source_kind\" = 'provider' and \"biblib\".\"cover_assets\".\"source_ref\" ~ '^(open-library|bne):[a-z]{2,8}:[A-Za-z0-9-]{1,40}$')"
+        },
+        "cover_assets_sha_check": {
+          "name": "cover_assets_sha_check",
+          "value": "\"biblib\".\"cover_assets\".\"sha256\" is null or \"biblib\".\"cover_assets\".\"sha256\" ~ '^[0-9a-f]{64}$'"
+        },
+        "cover_assets_key_check": {
+          "name": "cover_assets_key_check",
+          "value": "\"biblib\".\"cover_assets\".\"storage_key\" is null or \"biblib\".\"cover_assets\".\"storage_key\" ~ '^[0-9a-f-]{36}/[0-9a-f-]{36}/[A-Za-z0-9_-]{1,64}[.]webp$'"
+        },
+        "cover_assets_token_check": {
+          "name": "cover_assets_token_check",
+          "value": "\"biblib\".\"cover_assets\".\"upload_token\" is null or \"biblib\".\"cover_assets\".\"upload_token\" ~ '^[A-Za-z0-9_-]{1,64}$'"
+        },
+        "cover_assets_size_check": {
+          "name": "cover_assets_size_check",
+          "value": "(\"biblib\".\"cover_assets\".\"bytes\" is null or (\"biblib\".\"cover_assets\".\"bytes\" >= 1 and \"biblib\".\"cover_assets\".\"bytes\" <= 5242880)) and (\"biblib\".\"cover_assets\".\"width\" is null or (\"biblib\".\"cover_assets\".\"width\" >= 1 and \"biblib\".\"cover_assets\".\"width\" <= 10000)) and (\"biblib\".\"cover_assets\".\"height\" is null or (\"biblib\".\"cover_assets\".\"height\" >= 1 and \"biblib\".\"cover_assets\".\"height\" <= 10000))"
+        },
+        "cover_assets_ready_check": {
+          "name": "cover_assets_ready_check",
+          "value": "\"biblib\".\"cover_assets\".\"state\" = 'quarantine' or (\"biblib\".\"cover_assets\".\"storage_key\" is not null and \"biblib\".\"cover_assets\".\"sha256\" is not null and \"biblib\".\"cover_assets\".\"mime\" = 'image/webp' and \"biblib\".\"cover_assets\".\"width\" is not null and \"biblib\".\"cover_assets\".\"height\" is not null and \"biblib\".\"cover_assets\".\"bytes\" is not null)"
+        },
+        "cover_assets_quarantine_check": {
+          "name": "cover_assets_quarantine_check",
+          "value": "\"biblib\".\"cover_assets\".\"state\" <> 'quarantine' or \"biblib\".\"cover_assets\".\"expires_at\" is not null"
+        },
+        "cover_assets_attach_check": {
+          "name": "cover_assets_attach_check",
+          "value": "(\"biblib\".\"cover_assets\".\"attach_book_id\" is null) = (\"biblib\".\"cover_assets\".\"attach_book_version\" is null)"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "biblib.editions": {
+      "name": "editions",
+      "schema": "biblib",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "work_id": {
+          "name": "work_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "isbn13": {
+          "name": "isbn13",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "subtitle": {
+          "name": "subtitle",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "authors": {
+          "name": "authors",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'[]'::jsonb"
+        },
+        "publishers": {
+          "name": "publishers",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'[]'::jsonb"
+        },
+        "publish_date": {
+          "name": "publish_date",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "number_of_pages": {
+          "name": "number_of_pages",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "language": {
+          "name": "language",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "identifiers": {
+          "name": "identifiers",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::jsonb"
+        },
+        "catalogue": {
+          "name": "catalogue",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{\"source\":\"import\"}'::jsonb"
+        },
+        "cover_small": {
+          "name": "cover_small",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'/default-book-cover.webp'"
+        },
+        "cover_medium": {
+          "name": "cover_medium",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'/default-book-cover.webp'"
+        },
+        "cover_large": {
+          "name": "cover_large",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'/default-book-cover.webp'"
+        },
+        "cover_asset_id": {
+          "name": "cover_asset_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "search_text": {
+          "name": "search_text",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "generated": {
+            "as": "translate(lower(title || ' ' || coalesce(subtitle, '') || ' ' || authors::text || ' ' || coalesce(isbn13, '')), 'áéíóúüñ', 'aeiouun')",
+            "type": "stored"
+          }
+        },
+        "version": {
+          "name": "version",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "editions_user_id_id_unique": {
+          "name": "editions_user_id_id_unique",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "editions_user_isbn13_unique": {
+          "name": "editions_user_isbn13_unique",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "isbn13",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"biblib\".\"editions\".\"isbn13\" is not null",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "editions_user_title_idx": {
+          "name": "editions_user_title_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "title",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "editions_user_work_idx": {
+          "name": "editions_user_work_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "work_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "where": "\"biblib\".\"editions\".\"work_id\" is not null",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "editions_cover_asset_idx": {
+          "name": "editions_cover_asset_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "cover_asset_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "where": "\"biblib\".\"editions\".\"cover_asset_id\" is not null",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "editions_user_id_users_id_fk": {
+          "name": "editions_user_id_users_id_fk",
+          "tableFrom": "editions",
+          "tableTo": "users",
+          "schemaTo": "auth",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "editions_owner_work_fk": {
+          "name": "editions_owner_work_fk",
+          "tableFrom": "editions",
+          "tableTo": "works",
+          "schemaTo": "biblib",
+          "columnsFrom": [
+            "user_id",
+            "work_id"
+          ],
+          "columnsTo": [
+            "user_id",
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "editions_owner_cover_asset_fk": {
+          "name": "editions_owner_cover_asset_fk",
+          "tableFrom": "editions",
+          "tableTo": "cover_assets",
+          "schemaTo": "biblib",
+          "columnsFrom": [
+            "user_id",
+            "cover_asset_id"
+          ],
+          "columnsTo": [
+            "user_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "editions_select_own": {
+          "name": "editions_select_own",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select auth.uid() = \"biblib\".\"editions\".\"user_id\")"
+        },
+        "editions_insert_own": {
+          "name": "editions_insert_own",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "(select auth.uid() = \"biblib\".\"editions\".\"user_id\")"
+        },
+        "editions_update_own": {
+          "name": "editions_update_own",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select auth.uid() = \"biblib\".\"editions\".\"user_id\")",
+          "withCheck": "(select auth.uid() = \"biblib\".\"editions\".\"user_id\")"
+        },
+        "editions_delete_own": {
+          "name": "editions_delete_own",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select auth.uid() = \"biblib\".\"editions\".\"user_id\")"
+        }
+      },
+      "checkConstraints": {
+        "editions_isbn13_check": {
+          "name": "editions_isbn13_check",
+          "value": "\"biblib\".\"editions\".\"isbn13\" is null or biblib.isbn13_normalize(\"biblib\".\"editions\".\"isbn13\") is not distinct from \"biblib\".\"editions\".\"isbn13\""
+        },
+        "editions_title_check": {
+          "name": "editions_title_check",
+          "value": "length(btrim(\"biblib\".\"editions\".\"title\")) between 1 and 500"
+        },
+        "editions_pages_check": {
+          "name": "editions_pages_check",
+          "value": "\"biblib\".\"editions\".\"number_of_pages\" between 0 and 100000"
+        },
+        "editions_language_check": {
+          "name": "editions_language_check",
+          "value": "\"biblib\".\"editions\".\"language\" is null or \"biblib\".\"editions\".\"language\" ~ '^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$'"
+        },
+        "editions_identifiers_check": {
+          "name": "editions_identifiers_check",
+          "value": "jsonb_typeof(\"biblib\".\"editions\".\"identifiers\") = 'object'"
+        },
+        "editions_catalogue_check": {
+          "name": "editions_catalogue_check",
+          "value": "jsonb_typeof(\"biblib\".\"editions\".\"catalogue\") = 'object' and not \"biblib\".\"editions\".\"catalogue\" ? 'isbnVerified'"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "biblib.import_previews": {
+      "name": "import_previews",
+      "schema": "biblib",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "revision": {
+          "name": "revision",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "input_digest": {
+          "name": "input_digest",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "mode": {
+          "name": "mode",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "rules_version": {
+          "name": "rules_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "plan": {
+          "name": "plan",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "payload": {
+          "name": "payload",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "snapshot_id": {
+          "name": "snapshot_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "import_previews_user_id_id_unique": {
+          "name": "import_previews_user_id_id_unique",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "import_previews_user_id_expires_at_idx": {
+          "name": "import_previews_user_id_expires_at_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "expires_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "import_previews_snapshot_id_idx": {
+          "name": "import_previews_snapshot_id_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "snapshot_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "where": "\"biblib\".\"import_previews\".\"snapshot_id\" is not null",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "import_previews_user_id_users_id_fk": {
+          "name": "import_previews_user_id_users_id_fk",
+          "tableFrom": "import_previews",
+          "tableTo": "users",
+          "schemaTo": "auth",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "import_previews_owner_snapshot_fk": {
+          "name": "import_previews_owner_snapshot_fk",
+          "tableFrom": "import_previews",
+          "tableTo": "library_snapshots",
+          "schemaTo": "biblib",
+          "columnsFrom": [
+            "user_id",
+            "snapshot_id"
+          ],
+          "columnsTo": [
+            "user_id",
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "import_previews_select_own": {
+          "name": "import_previews_select_own",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select auth.uid() = \"biblib\".\"import_previews\".\"user_id\")"
+        },
+        "import_previews_insert_own": {
+          "name": "import_previews_insert_own",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "(select auth.uid() = \"biblib\".\"import_previews\".\"user_id\")"
+        },
+        "import_previews_delete_own": {
+          "name": "import_previews_delete_own",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select auth.uid() = \"biblib\".\"import_previews\".\"user_id\")"
+        }
+      },
+      "checkConstraints": {
+        "import_previews_mode_check": {
+          "name": "import_previews_mode_check",
+          "value": "\"biblib\".\"import_previews\".\"mode\" in ('merge', 'replace')"
+        },
+        "import_previews_digest_check": {
+          "name": "import_previews_digest_check",
+          "value": "\"biblib\".\"import_previews\".\"input_digest\" ~ '^[0-9a-f]{64}$'"
+        },
+        "import_previews_source_check": {
+          "name": "import_previews_source_check",
+          "value": "(\"biblib\".\"import_previews\".\"payload\" is null) <> (\"biblib\".\"import_previews\".\"snapshot_id\" is null)"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "biblib.import_session_chunks": {
+      "name": "import_session_chunks",
+      "schema": "biblib",
+      "columns": {
+        "session_id": {
+          "name": "session_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "part_id": {
+          "name": "part_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ordinal": {
+          "name": "ordinal",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "byte_length": {
+          "name": "byte_length",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sha256": {
+          "name": "sha256",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "bytes": {
+          "name": "bytes",
+          "type": "bytea",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "import_session_chunks_owner_part_fk": {
+          "name": "import_session_chunks_owner_part_fk",
+          "tableFrom": "import_session_chunks",
+          "tableTo": "import_session_parts",
+          "schemaTo": "biblib",
+          "columnsFrom": [
+            "user_id",
+            "session_id",
+            "part_id"
+          ],
+          "columnsTo": [
+            "user_id",
+            "session_id",
+            "part_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "import_session_chunks_pkey": {
+          "name": "import_session_chunks_pkey",
+          "columns": [
+            "session_id",
+            "part_id",
+            "ordinal"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "import_session_chunks_select_own": {
+          "name": "import_session_chunks_select_own",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select auth.uid() = \"biblib\".\"import_session_chunks\".\"user_id\")"
+        },
+        "import_session_chunks_insert_own": {
+          "name": "import_session_chunks_insert_own",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "(select auth.uid() = \"biblib\".\"import_session_chunks\".\"user_id\")"
+        },
+        "import_session_chunks_delete_own": {
+          "name": "import_session_chunks_delete_own",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select auth.uid() = \"biblib\".\"import_session_chunks\".\"user_id\")"
+        }
+      },
+      "checkConstraints": {
+        "import_session_chunks_ordinal_check": {
+          "name": "import_session_chunks_ordinal_check",
+          "value": "\"biblib\".\"import_session_chunks\".\"ordinal\" >= 0 and \"biblib\".\"import_session_chunks\".\"ordinal\" < 32"
+        },
+        "import_session_chunks_size_check": {
+          "name": "import_session_chunks_size_check",
+          "value": "\"biblib\".\"import_session_chunks\".\"byte_length\" >= 1 and \"biblib\".\"import_session_chunks\".\"byte_length\" <= 262144 and octet_length(\"biblib\".\"import_session_chunks\".\"bytes\") = \"biblib\".\"import_session_chunks\".\"byte_length\""
+        },
+        "import_session_chunks_sha_check": {
+          "name": "import_session_chunks_sha_check",
+          "value": "\"biblib\".\"import_session_chunks\".\"sha256\" = encode(sha256(\"biblib\".\"import_session_chunks\".\"bytes\"), 'hex')"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "biblib.import_session_parts": {
+      "name": "import_session_parts",
+      "schema": "biblib",
+      "columns": {
+        "session_id": {
+          "name": "session_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "part_id": {
+          "name": "part_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "part_index": {
+          "name": "part_index",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "byte_length": {
+          "name": "byte_length",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sha256": {
+          "name": "sha256",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "total_chunks": {
+          "name": "total_chunks",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "state": {
+          "name": "state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pending'"
+        },
+        "format_version": {
+          "name": "format_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "exported_at": {
+          "name": "exported_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "counts": {
+          "name": "counts",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "import_session_parts_index_unique": {
+          "name": "import_session_parts_index_unique",
+          "columns": [
+            {
+              "expression": "session_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "part_index",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "import_session_parts_owner_unique": {
+          "name": "import_session_parts_owner_unique",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "session_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "part_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "import_session_parts_owner_session_fk": {
+          "name": "import_session_parts_owner_session_fk",
+          "tableFrom": "import_session_parts",
+          "tableTo": "import_sessions",
+          "schemaTo": "biblib",
+          "columnsFrom": [
+            "user_id",
+            "session_id"
+          ],
+          "columnsTo": [
+            "user_id",
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "import_session_parts_pkey": {
+          "name": "import_session_parts_pkey",
+          "columns": [
+            "session_id",
+            "part_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "import_session_parts_select_own": {
+          "name": "import_session_parts_select_own",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select auth.uid() = \"biblib\".\"import_session_parts\".\"user_id\")"
+        },
+        "import_session_parts_insert_own": {
+          "name": "import_session_parts_insert_own",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "(select auth.uid() = \"biblib\".\"import_session_parts\".\"user_id\")"
+        },
+        "import_session_parts_update_own": {
+          "name": "import_session_parts_update_own",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select auth.uid() = \"biblib\".\"import_session_parts\".\"user_id\")",
+          "withCheck": "(select auth.uid() = \"biblib\".\"import_session_parts\".\"user_id\")"
+        },
+        "import_session_parts_delete_own": {
+          "name": "import_session_parts_delete_own",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select auth.uid() = \"biblib\".\"import_session_parts\".\"user_id\")"
+        }
+      },
+      "checkConstraints": {
+        "import_session_parts_id_check": {
+          "name": "import_session_parts_id_check",
+          "value": "\"biblib\".\"import_session_parts\".\"part_id\" ~ '^[A-Za-z0-9_-]{1,64}$'"
+        },
+        "import_session_parts_index_check": {
+          "name": "import_session_parts_index_check",
+          "value": "\"biblib\".\"import_session_parts\".\"part_index\" >= 0 and \"biblib\".\"import_session_parts\".\"part_index\" < 50"
+        },
+        "import_session_parts_size_check": {
+          "name": "import_session_parts_size_check",
+          "value": "\"biblib\".\"import_session_parts\".\"byte_length\" >= 1 and \"biblib\".\"import_session_parts\".\"byte_length\" <= 8388608 and \"biblib\".\"import_session_parts\".\"total_chunks\" = (\"biblib\".\"import_session_parts\".\"byte_length\" + 262143) / 262144"
+        },
+        "import_session_parts_sha_check": {
+          "name": "import_session_parts_sha_check",
+          "value": "\"biblib\".\"import_session_parts\".\"sha256\" ~ '^[0-9a-f]{64}$'"
+        },
+        "import_session_parts_state_check": {
+          "name": "import_session_parts_state_check",
+          "value": "\"biblib\".\"import_session_parts\".\"state\" in ('pending', 'received', 'validated')"
+        },
+        "import_session_parts_format_check": {
+          "name": "import_session_parts_format_check",
+          "value": "\"biblib\".\"import_session_parts\".\"format_version\" is null or \"biblib\".\"import_session_parts\".\"format_version\" in (1, 2)"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "biblib.import_session_rows": {
+      "name": "import_session_rows",
+      "schema": "biblib",
+      "columns": {
+        "session_id": {
+          "name": "session_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "kind": {
+          "name": "kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "row_key": {
+          "name": "row_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "part_index": {
+          "name": "part_index",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "position": {
+          "name": "position",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "data": {
+          "name": "data",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "import_session_rows_order_idx": {
+          "name": "import_session_rows_order_idx",
+          "columns": [
+            {
+              "expression": "session_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "kind",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "part_index",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "position",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "import_session_rows_owner_session_fk": {
+          "name": "import_session_rows_owner_session_fk",
+          "tableFrom": "import_session_rows",
+          "tableTo": "import_sessions",
+          "schemaTo": "biblib",
+          "columnsFrom": [
+            "user_id",
+            "session_id"
+          ],
+          "columnsTo": [
+            "user_id",
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "import_session_rows_pkey": {
+          "name": "import_session_rows_pkey",
+          "columns": [
+            "session_id",
+            "kind",
+            "row_key"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "import_session_rows_select_own": {
+          "name": "import_session_rows_select_own",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select auth.uid() = \"biblib\".\"import_session_rows\".\"user_id\")"
+        },
+        "import_session_rows_insert_own": {
+          "name": "import_session_rows_insert_own",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "(select auth.uid() = \"biblib\".\"import_session_rows\".\"user_id\")"
+        },
+        "import_session_rows_delete_own": {
+          "name": "import_session_rows_delete_own",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select auth.uid() = \"biblib\".\"import_session_rows\".\"user_id\")"
+        }
+      },
+      "checkConstraints": {
+        "import_session_rows_kind_check": {
+          "name": "import_session_rows_kind_check",
+          "value": "\"biblib\".\"import_session_rows\".\"kind\" in ('book', 'shelf')"
+        },
+        "import_session_rows_key_check": {
+          "name": "import_session_rows_key_check",
+          "value": "length(\"biblib\".\"import_session_rows\".\"row_key\") between 1 and 200"
+        },
+        "import_session_rows_data_check": {
+          "name": "import_session_rows_data_check",
+          "value": "jsonb_typeof(\"biblib\".\"import_session_rows\".\"data\") = 'object'"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "biblib.import_sessions": {
+      "name": "import_sessions",
+      "schema": "biblib",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "state": {
+          "name": "state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'receiving'"
+        },
+        "source": {
+          "name": "source",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "export_set_id": {
+          "name": "export_set_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "payload_format_version": {
+          "name": "payload_format_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "manifest": {
+          "name": "manifest",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "manifest_digest": {
+          "name": "manifest_digest",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "base_revision": {
+          "name": "base_revision",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "rules_version": {
+          "name": "rules_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "part_count": {
+          "name": "part_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "total_bytes": {
+          "name": "total_bytes",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "received_bytes": {
+          "name": "received_bytes",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "validated_parts": {
+          "name": "validated_parts",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "totals": {
+          "name": "totals",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "preview_id": {
+          "name": "preview_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "preview_revision": {
+          "name": "preview_revision",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "preview_expires_at": {
+          "name": "preview_expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "plan": {
+          "name": "plan",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "operation_id": {
+          "name": "operation_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "error_code": {
+          "name": "error_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "version": {
+          "name": "version",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "import_sessions_user_id_id_unique": {
+          "name": "import_sessions_user_id_id_unique",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "import_sessions_user_created_idx": {
+          "name": "import_sessions_user_created_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "first"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "first"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "import_sessions_expires_at_idx": {
+          "name": "import_sessions_expires_at_idx",
+          "columns": [
+            {
+              "expression": "expires_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "import_sessions_user_id_users_id_fk": {
+          "name": "import_sessions_user_id_users_id_fk",
+          "tableFrom": "import_sessions",
+          "tableTo": "users",
+          "schemaTo": "auth",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "import_sessions_select_own": {
+          "name": "import_sessions_select_own",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select auth.uid() = \"biblib\".\"import_sessions\".\"user_id\")"
+        },
+        "import_sessions_insert_own": {
+          "name": "import_sessions_insert_own",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "(select auth.uid() = \"biblib\".\"import_sessions\".\"user_id\")"
+        },
+        "import_sessions_update_own": {
+          "name": "import_sessions_update_own",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select auth.uid() = \"biblib\".\"import_sessions\".\"user_id\")",
+          "withCheck": "(select auth.uid() = \"biblib\".\"import_sessions\".\"user_id\")"
+        },
+        "import_sessions_delete_own": {
+          "name": "import_sessions_delete_own",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select auth.uid() = \"biblib\".\"import_sessions\".\"user_id\")"
+        }
+      },
+      "checkConstraints": {
+        "import_sessions_state_check": {
+          "name": "import_sessions_state_check",
+          "value": "\"biblib\".\"import_sessions\".\"state\" in ('receiving', 'validated', 'prepared', 'committed', 'rejected')"
+        },
+        "import_sessions_source_check": {
+          "name": "import_sessions_source_check",
+          "value": "\"biblib\".\"import_sessions\".\"source\" in ('manifest', 'loose')"
+        },
+        "import_sessions_format_check": {
+          "name": "import_sessions_format_check",
+          "value": "\"biblib\".\"import_sessions\".\"payload_format_version\" is null or \"biblib\".\"import_sessions\".\"payload_format_version\" in (1, 2)"
+        },
+        "import_sessions_digest_check": {
+          "name": "import_sessions_digest_check",
+          "value": "\"biblib\".\"import_sessions\".\"manifest_digest\" ~ '^[0-9a-f]{64}$'"
+        },
+        "import_sessions_parts_check": {
+          "name": "import_sessions_parts_check",
+          "value": "\"biblib\".\"import_sessions\".\"part_count\" >= 1 and \"biblib\".\"import_sessions\".\"part_count\" <= 50 and \"biblib\".\"import_sessions\".\"validated_parts\" >= 0 and \"biblib\".\"import_sessions\".\"validated_parts\" <= \"biblib\".\"import_sessions\".\"part_count\""
+        },
+        "import_sessions_bytes_check": {
+          "name": "import_sessions_bytes_check",
+          "value": "\"biblib\".\"import_sessions\".\"total_bytes\" >= 1 and \"biblib\".\"import_sessions\".\"total_bytes\" <= 83886080 and \"biblib\".\"import_sessions\".\"received_bytes\" >= 0 and \"biblib\".\"import_sessions\".\"received_bytes\" <= \"biblib\".\"import_sessions\".\"total_bytes\""
+        },
+        "import_sessions_preview_check": {
+          "name": "import_sessions_preview_check",
+          "value": "(\"biblib\".\"import_sessions\".\"preview_id\" is null) = (\"biblib\".\"import_sessions\".\"preview_revision\" is null) and (\"biblib\".\"import_sessions\".\"preview_id\" is null) = (\"biblib\".\"import_sessions\".\"preview_expires_at\" is null) and (\"biblib\".\"import_sessions\".\"preview_id\" is null) = (\"biblib\".\"import_sessions\".\"plan\" is null)"
+        },
+        "import_sessions_prepared_check": {
+          "name": "import_sessions_prepared_check",
+          "value": "\"biblib\".\"import_sessions\".\"state\" not in ('prepared', 'committed') or \"biblib\".\"import_sessions\".\"preview_id\" is not null"
+        },
+        "import_sessions_committed_check": {
+          "name": "import_sessions_committed_check",
+          "value": "(\"biblib\".\"import_sessions\".\"state\" = 'committed') = (\"biblib\".\"import_sessions\".\"operation_id\" is not null)"
+        },
+        "import_sessions_expiry_check": {
+          "name": "import_sessions_expiry_check",
+          "value": "\"biblib\".\"import_sessions\".\"expires_at\" > \"biblib\".\"import_sessions\".\"created_at\""
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "biblib.library_job_items": {
+      "name": "library_job_items",
+      "schema": "biblib",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "job_id": {
+          "name": "job_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "item_key": {
+          "name": "item_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "phase": {
+          "name": "phase",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "state": {
+          "name": "state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pending'"
+        },
+        "target_version": {
+          "name": "target_version",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "attempts": {
+          "name": "attempts",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "next_attempt_at": {
+          "name": "next_attempt_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "result": {
+          "name": "result",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "error_code": {
+          "name": "error_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "fencing_number": {
+          "name": "fencing_number",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "library_job_items_job_item_phase_unique": {
+          "name": "library_job_items_job_item_phase_unique",
+          "columns": [
+            {
+              "expression": "job_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "item_key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "phase",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "library_job_items_due_idx": {
+          "name": "library_job_items_due_idx",
+          "columns": [
+            {
+              "expression": "job_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "state",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "next_attempt_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "library_job_items_owner_job_fk": {
+          "name": "library_job_items_owner_job_fk",
+          "tableFrom": "library_job_items",
+          "tableTo": "library_jobs",
+          "schemaTo": "biblib",
+          "columnsFrom": [
+            "user_id",
+            "job_id"
+          ],
+          "columnsTo": [
+            "user_id",
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "library_job_items_select_own": {
+          "name": "library_job_items_select_own",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select auth.uid() = \"biblib\".\"library_job_items\".\"user_id\")"
+        }
+      },
+      "checkConstraints": {
+        "library_job_items_phase_check": {
+          "name": "library_job_items_phase_check",
+          "value": "\"biblib\".\"library_job_items\".\"phase\" in ('covers')"
+        },
+        "library_job_items_state_check": {
+          "name": "library_job_items_state_check",
+          "value": "\"biblib\".\"library_job_items\".\"state\" in ('pending', 'waiting_retry', 'succeeded', 'not_found', 'skipped', 'failed')"
+        },
+        "library_job_items_key_check": {
+          "name": "library_job_items_key_check",
+          "value": "length(\"biblib\".\"library_job_items\".\"item_key\") between 1 and 200"
+        },
+        "library_job_items_attempts_check": {
+          "name": "library_job_items_attempts_check",
+          "value": "\"biblib\".\"library_job_items\".\"attempts\" >= 0"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "biblib.library_jobs": {
+      "name": "library_jobs",
+      "schema": "biblib",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "kind": {
+          "name": "kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "contract_version": {
+          "name": "contract_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "idempotency_key": {
+          "name": "idempotency_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "input_digest": {
+          "name": "input_digest",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "preview_id": {
+          "name": "preview_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "expected_revision": {
+          "name": "expected_revision",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "state": {
+          "name": "state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'queued'"
+        },
+        "phase": {
+          "name": "phase",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cursor": {
+          "name": "cursor",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "counts": {
+          "name": "counts",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::jsonb"
+        },
+        "result": {
+          "name": "result",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "error_code": {
+          "name": "error_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "attempts": {
+          "name": "attempts",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "next_attempt_at": {
+          "name": "next_attempt_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "lease_until": {
+          "name": "lease_until",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "lease_token": {
+          "name": "lease_token",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "fencing_number": {
+          "name": "fencing_number",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "0"
+        },
+        "published_at": {
+          "name": "published_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "version": {
+          "name": "version",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "finished_at": {
+          "name": "finished_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "library_jobs_key_unique": {
+          "name": "library_jobs_key_unique",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "kind",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "idempotency_key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "library_jobs_user_id_id_unique": {
+          "name": "library_jobs_user_id_id_unique",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "library_jobs_user_id_created_at_idx": {
+          "name": "library_jobs_user_id_created_at_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "library_jobs_due_idx": {
+          "name": "library_jobs_due_idx",
+          "columns": [
+            {
+              "expression": "next_attempt_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "where": "\"biblib\".\"library_jobs\".\"state\" in ('queued', 'running', 'waiting_retry')",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "library_jobs_user_id_users_id_fk": {
+          "name": "library_jobs_user_id_users_id_fk",
+          "tableFrom": "library_jobs",
+          "tableTo": "users",
+          "schemaTo": "auth",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "library_jobs_select_own": {
+          "name": "library_jobs_select_own",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select auth.uid() = \"biblib\".\"library_jobs\".\"user_id\")"
+        }
+      },
+      "checkConstraints": {
+        "library_jobs_kind_check": {
+          "name": "library_jobs_kind_check",
+          "value": "\"biblib\".\"library_jobs\".\"kind\" in ('import', 'covers', 'cover_asset')"
+        },
+        "library_jobs_state_check": {
+          "name": "library_jobs_state_check",
+          "value": "\"biblib\".\"library_jobs\".\"state\" in ('queued', 'running', 'waiting_retry', 'needs_review', 'paused', 'succeeded', 'partially_succeeded', 'failed', 'cancelled', 'expired')"
+        },
+        "library_jobs_phase_check": {
+          "name": "library_jobs_phase_check",
+          "value": "\"biblib\".\"library_jobs\".\"phase\" in ('publish', 'covers', 'asset', 'done')"
+        },
+        "library_jobs_key_check": {
+          "name": "library_jobs_key_check",
+          "value": "length(\"biblib\".\"library_jobs\".\"idempotency_key\") between 16 and 128"
+        },
+        "library_jobs_digest_check": {
+          "name": "library_jobs_digest_check",
+          "value": "\"biblib\".\"library_jobs\".\"input_digest\" ~ '^[0-9a-f]{64}$'"
+        },
+        "library_jobs_import_check": {
+          "name": "library_jobs_import_check",
+          "value": "\"biblib\".\"library_jobs\".\"kind\" <> 'import' or (\"biblib\".\"library_jobs\".\"preview_id\" is not null and \"biblib\".\"library_jobs\".\"expected_revision\" is not null)"
+        },
+        "library_jobs_lease_check": {
+          "name": "library_jobs_lease_check",
+          "value": "(\"biblib\".\"library_jobs\".\"state\" = 'running') = (\"biblib\".\"library_jobs\".\"lease_token\" is not null and \"biblib\".\"library_jobs\".\"lease_until\" is not null)"
+        },
+        "library_jobs_counts_check": {
+          "name": "library_jobs_counts_check",
+          "value": "jsonb_typeof(\"biblib\".\"library_jobs\".\"counts\") = 'object'"
+        },
+        "library_jobs_attempts_check": {
+          "name": "library_jobs_attempts_check",
+          "value": "\"biblib\".\"library_jobs\".\"attempts\" >= 0 and \"biblib\".\"library_jobs\".\"fencing_number\" >= 0"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "biblib.library_operations": {
+      "name": "library_operations",
+      "schema": "biblib",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "operation": {
+          "name": "operation",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "idempotency_key": {
+          "name": "idempotency_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "input_digest": {
+          "name": "input_digest",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "preview_id": {
+          "name": "preview_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "result": {
+          "name": "result",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "library_operations_key_unique": {
+          "name": "library_operations_key_unique",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "operation",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "idempotency_key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "library_operations_preview_unique": {
+          "name": "library_operations_preview_unique",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "preview_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"biblib\".\"library_operations\".\"preview_id\" is not null",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "library_operations_user_id_id_unique": {
+          "name": "library_operations_user_id_id_unique",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "library_operations_user_id_users_id_fk": {
+          "name": "library_operations_user_id_users_id_fk",
+          "tableFrom": "library_operations",
+          "tableTo": "users",
+          "schemaTo": "auth",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "library_operations_select_own": {
+          "name": "library_operations_select_own",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select auth.uid() = \"biblib\".\"library_operations\".\"user_id\")"
+        },
+        "library_operations_insert_own": {
+          "name": "library_operations_insert_own",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "(select auth.uid() = \"biblib\".\"library_operations\".\"user_id\")"
+        }
+      },
+      "checkConstraints": {
+        "library_operations_operation_check": {
+          "name": "library_operations_operation_check",
+          "value": "\"biblib\".\"library_operations\".\"operation\" in ('import.confirm', 'snapshot.restore', 'restore.commit')"
+        },
+        "library_operations_status_check": {
+          "name": "library_operations_status_check",
+          "value": "\"biblib\".\"library_operations\".\"status\" in ('committed')"
+        },
+        "library_operations_key_check": {
+          "name": "library_operations_key_check",
+          "value": "length(\"biblib\".\"library_operations\".\"idempotency_key\") between 16 and 128"
+        },
+        "library_operations_digest_check": {
+          "name": "library_operations_digest_check",
+          "value": "\"biblib\".\"library_operations\".\"input_digest\" ~ '^[0-9a-f]{64}$'"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "biblib.library_snapshot_chunks": {
+      "name": "library_snapshot_chunks",
+      "schema": "biblib",
+      "columns": {
+        "snapshot_id": {
+          "name": "snapshot_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "seq": {
+          "name": "seq",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "kind": {
+          "name": "kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "item_count": {
+          "name": "item_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "payload": {
+          "name": "payload",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "digest": {
+          "name": "digest",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "library_snapshot_chunks_owner_snapshot_fk": {
+          "name": "library_snapshot_chunks_owner_snapshot_fk",
+          "tableFrom": "library_snapshot_chunks",
+          "tableTo": "library_snapshots",
+          "schemaTo": "biblib",
+          "columnsFrom": [
+            "user_id",
+            "snapshot_id"
+          ],
+          "columnsTo": [
+            "user_id",
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "library_snapshot_chunks_pkey": {
+          "name": "library_snapshot_chunks_pkey",
+          "columns": [
+            "snapshot_id",
+            "seq"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "library_snapshot_chunks_select_own": {
+          "name": "library_snapshot_chunks_select_own",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select auth.uid() = \"biblib\".\"library_snapshot_chunks\".\"user_id\")"
+        }
+      },
+      "checkConstraints": {
+        "library_snapshot_chunks_kind_check": {
+          "name": "library_snapshot_chunks_kind_check",
+          "value": "\"biblib\".\"library_snapshot_chunks\".\"kind\" in ('shelves', 'books')"
+        },
+        "library_snapshot_chunks_seq_check": {
+          "name": "library_snapshot_chunks_seq_check",
+          "value": "\"biblib\".\"library_snapshot_chunks\".\"seq\" >= 0"
+        },
+        "library_snapshot_chunks_size_check": {
+          "name": "library_snapshot_chunks_size_check",
+          "value": "\"biblib\".\"library_snapshot_chunks\".\"item_count\" >= 1 and \"biblib\".\"library_snapshot_chunks\".\"item_count\" <= 200 and jsonb_typeof(\"biblib\".\"library_snapshot_chunks\".\"payload\") = 'array' and jsonb_array_length(\"biblib\".\"library_snapshot_chunks\".\"payload\") = \"biblib\".\"library_snapshot_chunks\".\"item_count\""
+        },
+        "library_snapshot_chunks_digest_check": {
+          "name": "library_snapshot_chunks_digest_check",
+          "value": "\"biblib\".\"library_snapshot_chunks\".\"digest\" ~ '^[0-9a-f]{64}$'"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "biblib.library_snapshots": {
+      "name": "library_snapshots",
+      "schema": "biblib",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source_operation_id": {
+          "name": "source_operation_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "reason": {
+          "name": "reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "captured_revision": {
+          "name": "captured_revision",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "schema_version": {
+          "name": "schema_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "state": {
+          "name": "state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'capturing'"
+        },
+        "counts": {
+          "name": "counts",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{\"books\":0,\"shelves\":0,\"chunks\":0,\"bytes\":0}'::jsonb"
+        },
+        "digest": {
+          "name": "digest",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "version": {
+          "name": "version",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "library_snapshots_user_id_id_unique": {
+          "name": "library_snapshots_user_id_id_unique",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "library_snapshots_operation_unique": {
+          "name": "library_snapshots_operation_unique",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "source_operation_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "library_snapshots_user_id_created_at_idx": {
+          "name": "library_snapshots_user_id_created_at_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "first"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "first"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "library_snapshots_expires_at_idx": {
+          "name": "library_snapshots_expires_at_idx",
+          "columns": [
+            {
+              "expression": "expires_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "library_snapshots_user_id_users_id_fk": {
+          "name": "library_snapshots_user_id_users_id_fk",
+          "tableFrom": "library_snapshots",
+          "tableTo": "users",
+          "schemaTo": "auth",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "library_snapshots_owner_operation_fk": {
+          "name": "library_snapshots_owner_operation_fk",
+          "tableFrom": "library_snapshots",
+          "tableTo": "library_operations",
+          "schemaTo": "biblib",
+          "columnsFrom": [
+            "user_id",
+            "source_operation_id"
+          ],
+          "columnsTo": [
+            "user_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "library_snapshots_select_own": {
+          "name": "library_snapshots_select_own",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select auth.uid() = \"biblib\".\"library_snapshots\".\"user_id\")"
+        }
+      },
+      "checkConstraints": {
+        "library_snapshots_reason_check": {
+          "name": "library_snapshots_reason_check",
+          "value": "\"biblib\".\"library_snapshots\".\"reason\" in ('import.replace', 'snapshot.restore')"
+        },
+        "library_snapshots_state_check": {
+          "name": "library_snapshots_state_check",
+          "value": "\"biblib\".\"library_snapshots\".\"state\" in ('capturing', 'ready')"
+        },
+        "library_snapshots_digest_check": {
+          "name": "library_snapshots_digest_check",
+          "value": "\"biblib\".\"library_snapshots\".\"digest\" is null or \"biblib\".\"library_snapshots\".\"digest\" ~ '^[0-9a-f]{64}$'"
+        },
+        "library_snapshots_ready_check": {
+          "name": "library_snapshots_ready_check",
+          "value": "\"biblib\".\"library_snapshots\".\"state\" <> 'ready' or \"biblib\".\"library_snapshots\".\"digest\" is not null"
+        },
+        "library_snapshots_counts_check": {
+          "name": "library_snapshots_counts_check",
+          "value": "jsonb_typeof(\"biblib\".\"library_snapshots\".\"counts\") = 'object'"
+        },
+        "library_snapshots_schema_version_check": {
+          "name": "library_snapshots_schema_version_check",
+          "value": "\"biblib\".\"library_snapshots\".\"schema_version\" >= 1"
+        },
+        "library_snapshots_expiry_check": {
+          "name": "library_snapshots_expiry_check",
+          "value": "\"biblib\".\"library_snapshots\".\"expires_at\" > \"biblib\".\"library_snapshots\".\"created_at\""
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "biblib.library_state": {
+      "name": "library_state",
+      "schema": "biblib",
+      "columns": {
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "revision": {
+          "name": "revision",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "rotated_xact": {
+          "name": "rotated_xact",
+          "type": "xid8",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "library_state_user_id_users_id_fk": {
+          "name": "library_state_user_id_users_id_fk",
+          "tableFrom": "library_state",
+          "tableTo": "users",
+          "schemaTo": "auth",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "library_state_select_own": {
+          "name": "library_state_select_own",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select auth.uid() = \"biblib\".\"library_state\".\"user_id\")"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "biblib.model_migration_report": {
+      "name": "model_migration_report",
+      "schema": "biblib",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "migration": {
+          "name": "migration",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "kind": {
+          "name": "kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "copy_id": {
+          "name": "copy_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "other_copy_id": {
+          "name": "other_copy_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "details": {
+          "name": "details",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::jsonb"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "model_migration_report_user_idx": {
+          "name": "model_migration_report_user_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "migration",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "kind",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "model_migration_report_user_id_users_id_fk": {
+          "name": "model_migration_report_user_id_users_id_fk",
+          "tableFrom": "model_migration_report",
+          "tableTo": "users",
+          "schemaTo": "auth",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "model_migration_report_select_own": {
+          "name": "model_migration_report_select_own",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select auth.uid() = \"biblib\".\"model_migration_report\".\"user_id\")"
+        }
+      },
+      "checkConstraints": {
+        "model_migration_report_kind_check": {
+          "name": "model_migration_report_kind_check",
+          "value": "\"biblib\".\"model_migration_report\".\"kind\" in ('summary', 'normalized', 'invalid', 'conflict', 'grouped')"
+        },
+        "model_migration_report_details_check": {
+          "name": "model_migration_report_details_check",
+          "value": "jsonb_typeof(\"biblib\".\"model_migration_report\".\"details\") = 'object'"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "biblib.saved_book_views": {
+      "name": "saved_book_views",
+      "schema": "biblib",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "filters": {
+          "name": "filters",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "version": {
+          "name": "version",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        }
+      },
+      "indexes": {
+        "saved_book_views_user_name_unique": {
+          "name": "saved_book_views_user_name_unique",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "lower(\"name\")",
+              "asc": true,
+              "isExpression": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "saved_book_views_user_updated_idx": {
+          "name": "saved_book_views_user_updated_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "updated_at",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "first"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "saved_book_views_user_id_users_id_fk": {
+          "name": "saved_book_views_user_id_users_id_fk",
+          "tableFrom": "saved_book_views",
+          "tableTo": "users",
+          "schemaTo": "auth",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "saved_book_views_select_own": {
+          "name": "saved_book_views_select_own",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select auth.uid() = \"biblib\".\"saved_book_views\".\"user_id\")"
+        },
+        "saved_book_views_insert_own": {
+          "name": "saved_book_views_insert_own",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "(select auth.uid() = \"biblib\".\"saved_book_views\".\"user_id\")"
+        },
+        "saved_book_views_update_own": {
+          "name": "saved_book_views_update_own",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select auth.uid() = \"biblib\".\"saved_book_views\".\"user_id\")",
+          "withCheck": "(select auth.uid() = \"biblib\".\"saved_book_views\".\"user_id\")"
+        },
+        "saved_book_views_delete_own": {
+          "name": "saved_book_views_delete_own",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select auth.uid() = \"biblib\".\"saved_book_views\".\"user_id\")"
+        }
+      },
+      "checkConstraints": {
+        "saved_book_views_name_check": {
+          "name": "saved_book_views_name_check",
+          "value": "length(btrim(\"biblib\".\"saved_book_views\".\"name\")) >= 1 and length(btrim(\"biblib\".\"saved_book_views\".\"name\")) <= 80 and \"biblib\".\"saved_book_views\".\"name\" = btrim(\"biblib\".\"saved_book_views\".\"name\")"
+        },
+        "saved_book_views_filters_check": {
+          "name": "saved_book_views_filters_check",
+          "value": "biblib.saved_view_filters_valid(\"biblib\".\"saved_book_views\".\"filters\")"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "biblib.shelves": {
+      "name": "shelves",
+      "schema": "biblib",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_default": {
+          "name": "is_default",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "shelves_user_id_title_unique": {
+          "name": "shelves_user_id_title_unique",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "title",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "shelves_user_id_id_unique": {
+          "name": "shelves_user_id_id_unique",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "shelves_user_id_default_unique": {
+          "name": "shelves_user_id_default_unique",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "is_default",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"biblib\".\"shelves\".\"is_default\" = true",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "shelves_user_id_users_id_fk": {
+          "name": "shelves_user_id_users_id_fk",
+          "tableFrom": "shelves",
+          "tableTo": "users",
+          "schemaTo": "auth",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "shelves_select_own": {
+          "name": "shelves_select_own",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select auth.uid() = \"biblib\".\"shelves\".\"user_id\")"
+        },
+        "shelves_insert_own": {
+          "name": "shelves_insert_own",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "(select auth.uid() = \"biblib\".\"shelves\".\"user_id\")"
+        },
+        "shelves_update_own": {
+          "name": "shelves_update_own",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select auth.uid() = \"biblib\".\"shelves\".\"user_id\") and not \"biblib\".\"shelves\".\"is_default\"",
+          "withCheck": "(select auth.uid() = \"biblib\".\"shelves\".\"user_id\") and not \"biblib\".\"shelves\".\"is_default\""
+        },
+        "shelves_delete_own": {
+          "name": "shelves_delete_own",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select auth.uid() = \"biblib\".\"shelves\".\"user_id\") and not \"biblib\".\"shelves\".\"is_default\""
+        }
+      },
+      "checkConstraints": {
+        "shelves_title_check": {
+          "name": "shelves_title_check",
+          "value": "length(btrim(\"biblib\".\"shelves\".\"title\")) between 1 and 120"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "biblib.works": {
+      "name": "works",
+      "schema": "biblib",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version": {
+          "name": "version",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "works_user_id_id_unique": {
+          "name": "works_user_id_id_unique",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "works_user_id_users_id_fk": {
+          "name": "works_user_id_users_id_fk",
+          "tableFrom": "works",
+          "tableTo": "users",
+          "schemaTo": "auth",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "works_select_own": {
+          "name": "works_select_own",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select auth.uid() = \"biblib\".\"works\".\"user_id\")"
+        },
+        "works_insert_own": {
+          "name": "works_insert_own",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "(select auth.uid() = \"biblib\".\"works\".\"user_id\")"
+        },
+        "works_update_own": {
+          "name": "works_update_own",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select auth.uid() = \"biblib\".\"works\".\"user_id\")",
+          "withCheck": "(select auth.uid() = \"biblib\".\"works\".\"user_id\")"
+        },
+        "works_delete_own": {
+          "name": "works_delete_own",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select auth.uid() = \"biblib\".\"works\".\"user_id\")"
+        }
+      },
+      "checkConstraints": {
+        "works_title_check": {
+          "name": "works_title_check",
+          "value": "length(btrim(\"biblib\".\"works\".\"title\")) between 1 and 500"
+        }
+      },
+      "isRLSEnabled": true
+    }
+  },
+  "enums": {},
+  "schemas": {
+    "biblib": "biblib"
+  },
+  "sequences": {
+    "biblib.catalogue_fence_seq": {
+      "name": "catalogue_fence_seq",
+      "schema": "biblib",
+      "increment": "1",
+      "startWith": "1",
+      "minValue": "1",
+      "maxValue": "9223372036854775807",
+      "cache": "1",
+      "cycle": false
+    },
+    "biblib.library_job_fence_seq": {
+      "name": "library_job_fence_seq",
+      "schema": "biblib",
+      "increment": "1",
+      "startWith": "1",
+      "minValue": "1",
+      "maxValue": "9223372036854775807",
+      "cache": "1",
+      "cycle": false
+    }
+  },
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

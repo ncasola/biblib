@@ -48,6 +48,39 @@ export interface CatalogueAttributionV2 {
 
 export type CatalogueMetadata = CatalogueMetadataV1 | CatalogueAttributionV2
 
+/**
+ * Procedencia bibliográfica de una edición (U-DAT-06): la de `catalogue` sin la comprobación física,
+ * que pertenece a cada ejemplar. `isbnChecksumValid` se conserva si venía, pero siempre se deriva al leer.
+ */
+export type EditionCatalogue =
+  | Omit<CatalogueMetadataV1, "isbnVerified">
+  | Omit<CatalogueAttributionV2, "isbnVerified">
+
+/** Comprobación humana del ISBN frente a un ejemplar concreto. Ningún proveedor ni checksum la activa. */
+export interface CopyVerification {
+  isbnVerified: boolean
+  /** Momento de la comprobación (ISO 8601), si se registró. */
+  checkedAt?: string
+  /** Referencias opacas a la evidencia (p. ej. una foto propia); nunca URL firmadas. */
+  evidenceRefs?: string[]
+}
+
+/** Identificadores externos de una edición por esquema (`openLibrary`, `bne`, `oclc`…); el ISBN-13 va aparte. */
+export type EditionIdentifiers = Record<string, string[]>
+
+/** Edición a la que pertenece un ejemplar (U-DAT-06). En una importación, `id` es la clave de agrupación del archivo. */
+export interface BookEdition {
+  id: string
+  /** Token de la edición; ausente en archivos importados. Autoriza solo los campos bibliográficos. */
+  version?: string
+  /** Ejemplares de la cuenta que comparten esta edición (incluido este). */
+  copies?: number
+  workId?: string
+  workTitle?: string
+  language?: string
+  identifiers?: EditionIdentifiers
+}
+
 export interface Book {
   id: string
   /** Token de edición de la ficha persistida; ausente en catálogos y respaldos antiguos. */

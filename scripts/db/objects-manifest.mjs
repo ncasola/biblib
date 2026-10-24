@@ -4,8 +4,8 @@ import { EXIT } from "../lib/exit-codes.mjs"
 // Manifest de objetos deliberados de BibLib. Se comprueba con metadatos de pg_catalog e
 // information_schema y con expresiones normalizadas, nunca comparando el pretty-print.
 // `since`/`until` indican la migración que introduce o retira cada objeto.
-const M0 = "0000_biblib_init", M1 = "0001_library_integrity", M2 = "0002_book_versions", M3 = "0003_library_revision", M4 = "0004_catalogue_coordination", M5 = "0005_library_jobs", M6 = "0006_library_snapshots", M7 = "0007_saved_views", M8 = "0008_restore_sessions", M9 = "0009_cover_assets"
-export const MANIFEST_MIGRATIONS = [M0, M1, M2, M3, M4, M5, M6, M7, M8, M9]
+const M0 = "0000_biblib_init", M1 = "0001_library_integrity", M2 = "0002_book_versions", M3 = "0003_library_revision", M4 = "0004_catalogue_coordination", M5 = "0005_library_jobs", M6 = "0006_library_snapshots", M7 = "0007_saved_views", M8 = "0008_restore_sessions", M9 = "0009_cover_assets", M10 = "0010_works_editions_copies"
+export const MANIFEST_MIGRATIONS = [M0, M1, M2, M3, M4, M5, M6, M7, M8, M9, M10]
 
 const own = "user_id=auth.uid"
 const ownNotDefault = "user_id=auth.uidandnotis_default"
@@ -81,10 +81,16 @@ const assetFunction = (name, returns, args, authenticated = true, securityDefine
 const COVERS_BUCKET = "biblib-covers"
 const coversCondition = (action) => normalizeExpression(`bucket_id = '${COVERS_BUCKET}' and biblib.cover_object_access(name, '${action}')`)
 const storagePolicy = (name, cmd, action) => ({ name, cmd, roles: ["authenticated"], using: cmd === "INSERT" ? null : coversCondition(action), check: cmd === "INSERT" ? coversCondition(action) : null, since: M9 })
+// Obra, edición y ejemplar (0010, U-DAT-06): el dueño escribe con RLS; el informe del backfill solo se lee.
+// La sincronización desde books y la comparación solo las ejecuta la migración o el servidor.
+const MODEL = migrationBodies(M10)
+const modelTables = ["works", "editions", "copies"]
+const modelFunction = (name, returns, args, { authenticated = false, securityDefiner = false, since = M10 } = {}) => ({ name, language: "plpgsql", returns, args, searchPath: "search_path=pg_catalog", securityDefiner, body: MODEL[name], execute: { authenticated, anon: false }, since })
+const modelTrigger = (table, name, fn, timing, events, level, tgtype) => ({ table, name, function: `biblib.${fn}`, timing, events, level, tgtype, since: M10 })
 const jobStateTokens = ["'queued'", "'running'", "'waiting_retry'", "'needs_review'", "'paused'", "'succeeded'", "'partially_succeeded'", "'failed'", "'cancelled'", "'expired'"]
 
 export const MANIFEST = Object.freeze({
-  tables: [{ name: "shelves", since: M0 }, { name: "books", since: M0 }, { name: "library_state", since: M3 }, { name: "import_previews", since: M3 }, { name: "library_operations", since: M3 }, ...catalogueTables.map((name) => ({ name, since: M4 })), ...jobTables.map((name) => ({ name, since: M5 })), ...snapshotTables.map((name) => ({ name, since: M6 })), { name: "saved_book_views", since: M7 }, ...restoreTables.map((name) => ({ name, since: M8 })), { name: "cover_assets", since: M9 }],
+  tables: [{ name: "shelves", since: M0 }, { name: "books", since: M0 }, { name: "library_state", since: M3 }, { name: "import_previews", since: M3 }, { name: "library_operations", since: M3 }, ...catalogueTables.map((name) => ({ name, since: M4 })), ...jobTables.map((name) => ({ name, since: M5 })), ...snapshotTables.map((name) => ({ name, since: M6 })), { name: "saved_book_views", since: M7 }, ...restoreTables.map((name) => ({ name, since: M8 })), { name: "cover_assets", since: M9 }, ...[...modelTables, "model_migration_report"].map((name) => ({ name, since: M10 }))],
   policies: [
     policy("shelves", "shelves_select_own", "SELECT", own, null),
     policy("shelves", "shelves_insert_own", "INSERT", null, own),
@@ -115,15 +121,45 @@ export const MANIFEST = Object.freeze({
       policy(table, `${table}_delete_own`, "DELETE", ownSelect(table), null, M8),
     ]),
     policy("cover_assets", "cover_assets_select_own", "SELECT", ownSelect("cover_assets"), null, M9),
+    ...modelTables.flatMap((table) => [
+      policy(table, `${table}_select_own`, "SELECT", ownSelect(table), null, M10),
+      policy(table, `${table}_insert_own`, "INSERT", null, ownSelect(table), M10),
+      policy(table, `${table}_update_own`, "UPDATE", ownSelect(table), ownSelect(table), M10),
+      policy(table, `${table}_delete_own`, "DELETE", ownSelect(table), null, M10),
+    ]),
+    policy("model_migration_report", "model_migration_report_select_own", "SELECT", ownSelect("model_migration_report"), null, M10),
   ],
   // library_state solo se lee: la revisión cambia por lock_library()/triggers, nunca por escritura directa.
   // La caché compartida, las consultas en vuelo y las cuotas no tienen ningún privilegio de cliente.
   grants: {
     authenticated: { shelves: ["DELETE", "INSERT", "SELECT", "UPDATE"], books: ["DELETE", "INSERT", "SELECT", "UPDATE"], library_state: ["SELECT"], import_previews: ["DELETE", "INSERT", "SELECT"], library_operations: ["INSERT", "SELECT"], catalogue_cache: [], catalogue_inflight: [], catalogue_quota_buckets: [], catalogue_quota_reservations: [], catalogue_private_cache: ["DELETE", "SELECT"], library_jobs: ["SELECT"], library_job_items: ["SELECT"], account_lifecycle: ["SELECT"], library_snapshots: ["SELECT"], library_snapshot_chunks: ["SELECT"], saved_book_views: ["DELETE", "INSERT", "SELECT", "UPDATE"],
-      ...Object.fromEntries(restoreFullTables.map((name) => [name, ["DELETE", "INSERT", "SELECT", "UPDATE"]])), ...Object.fromEntries(restoreImmutableTables.map((name) => [name, ["DELETE", "INSERT", "SELECT"]])), cover_assets: ["SELECT"] },
-    anon: { shelves: [], books: [], library_state: [], import_previews: [], library_operations: [], ...Object.fromEntries([...catalogueTables, ...jobTables, ...snapshotTables, "saved_book_views", ...restoreTables, "cover_assets"].map((name) => [name, []])) },
+      ...Object.fromEntries(restoreFullTables.map((name) => [name, ["DELETE", "INSERT", "SELECT", "UPDATE"]])), ...Object.fromEntries(restoreImmutableTables.map((name) => [name, ["DELETE", "INSERT", "SELECT"]])), cover_assets: ["SELECT"],
+      ...Object.fromEntries(modelTables.map((name) => [name, ["DELETE", "INSERT", "SELECT", "UPDATE"]])), model_migration_report: ["SELECT"] },
+    anon: { shelves: [], books: [], library_state: [], import_previews: [], library_operations: [], ...Object.fromEntries([...catalogueTables, ...jobTables, ...snapshotTables, "saved_book_views", ...restoreTables, "cover_assets", ...modelTables, "model_migration_report"].map((name) => [name, []])) },
   },
   constraints: [
+    // Obra, edición y ejemplar (0010): FK con propietario, ISBN-13 canónico opcional y la comprobación física fuera de la edición.
+    ...[...modelTables, "model_migration_report"].flatMap((table) => [
+      { table, name: `${table}_pkey`, type: "p", columns: ["id"], since: M10 },
+      { table, name: `${table}_user_id_users_id_fk`, type: "f", columns: ["user_id"], references: "auth.users", refColumns: ["id"], onDelete: "c", since: M10 },
+    ]),
+    // Borrar una obra deja sus ediciones sin obra (ON DELETE SET NULL ("work_id")): el dueño y la edición permanecen.
+    { table: "editions", name: "editions_owner_work_fk", type: "f", columns: ["user_id", "work_id"], references: "biblib.works", refColumns: ["user_id", "id"], onDelete: "n", since: M10 },
+    { table: "editions", name: "editions_owner_cover_asset_fk", type: "f", columns: ["user_id", "cover_asset_id"], references: "biblib.cover_assets", refColumns: ["user_id", "id"], onDelete: "a", since: M10 },
+    { table: "copies", name: "copies_owner_edition_fk", type: "f", columns: ["user_id", "edition_id"], references: "biblib.editions", refColumns: ["user_id", "id"], onDelete: "r", since: M10 },
+    { table: "copies", name: "copies_owner_shelf_fk", type: "f", columns: ["user_id", "shelf_id"], references: "biblib.shelves", refColumns: ["user_id", "id"], onDelete: "r", since: M10 },
+    { table: "works", name: "works_title_check", type: "c", columns: ["title"], tokens: ["length(btrim(title))", ">=1", "<=500"], since: M10 },
+    { table: "editions", name: "editions_isbn13_check", type: "c", columns: ["isbn13"], tokens: ["isbn13 is null", "biblib.isbn13_normalize(isbn13)isnotdistinctfromisbn13"], since: M10 },
+    { table: "editions", name: "editions_title_check", type: "c", columns: ["title"], tokens: ["length(btrim(title))", ">=1", "<=500"], since: M10 },
+    { table: "editions", name: "editions_pages_check", type: "c", columns: ["number_of_pages"], tokens: [">=0", "<=100000"], since: M10 },
+    { table: "editions", name: "editions_language_check", type: "c", columns: ["language"], tokens: ["language is null"], since: M10 },
+    { table: "editions", name: "editions_identifiers_check", type: "c", columns: ["identifiers"], tokens: ["jsonb_typeof(identifiers)='object'"], since: M10 },
+    { table: "editions", name: "editions_catalogue_check", type: "c", columns: ["catalogue"], tokens: ["jsonb_typeof(catalogue)='object'", "catalogue?'isbnVerified'"], since: M10 },
+    { table: "copies", name: "copies_status_check", type: "c", columns: ["status"], tokens: ["'read'", "'reading'", "'unread'", "'to-read'"], since: M10 },
+    { table: "copies", name: "copies_verification_check", type: "c", columns: ["edition_verification"], tokens: ["'boolean'"], since: M10 },
+    { table: "copies", name: "copies_legacy_identifier_check", type: "c", columns: ["legacy_identifier"], tokens: ["legacy_identifier is null", ">=1", "<=100"], since: M10 },
+    { table: "model_migration_report", name: "model_migration_report_kind_check", type: "c", columns: ["kind"], tokens: ["'summary'", "'normalized'", "'invalid'", "'conflict'", "'grouped'"], since: M10 },
+    { table: "model_migration_report", name: "model_migration_report_details_check", type: "c", columns: ["details"], tokens: ["jsonb_typeof(details)='object'"], since: M10 },
     // Portadas privadas (0009): FK con propietario, Google excluido por Postgres, asset utilizable completo.
     { table: "cover_assets", name: "cover_assets_pkey", type: "p", columns: ["id"], since: M9 },
     { table: "cover_assets", name: "cover_assets_user_id_users_id_fk", type: "f", columns: ["user_id"], references: "auth.users", refColumns: ["id"], onDelete: "c", since: M9 },
@@ -256,6 +292,19 @@ export const MANIFEST = Object.freeze({
     { table: "library_snapshot_chunks", name: "library_snapshot_chunks_digest_check", type: "c", columns: ["digest"], tokens: ["'^[0-9a-f]{64}$'"], since: M6 },
   ],
   indexes: [
+    // T7: igualdad indexada por (dueño, ISBN-13) y una sola edición canónica por ISBN; listado por título; T8 sobre ejemplares.
+    { table: "works", name: "works_user_id_id_unique", unique: true, columns: ["user_id", "id"], partial: false, since: M10 },
+    { table: "editions", name: "editions_user_id_id_unique", unique: true, columns: ["user_id", "id"], partial: false, since: M10 },
+    { table: "editions", name: "editions_user_isbn13_unique", unique: true, columns: ["user_id", "isbn13"], partial: true, since: M10 },
+    { table: "editions", name: "editions_user_title_idx", unique: false, columns: ["user_id", "title", "id"], partial: false, since: M10 },
+    { table: "editions", name: "editions_user_work_idx", unique: false, columns: ["user_id", "work_id"], partial: true, since: M10 },
+    { table: "editions", name: "editions_cover_asset_idx", unique: false, columns: ["user_id", "cover_asset_id"], partial: true, since: M10 },
+    { table: "copies", name: "copies_user_id_id_unique", unique: true, columns: ["user_id", "id"], partial: false, since: M10 },
+    { table: "copies", name: "copies_user_legacy_identifier_unique", unique: true, columns: ["user_id", "legacy_identifier"], partial: true, since: M10 },
+    { table: "copies", name: "copies_user_edition_idx", unique: false, columns: ["user_id", "edition_id"], partial: false, since: M10 },
+    { table: "copies", name: "copies_user_shelf_idx", unique: false, columns: ["user_id", "shelf_id"], partial: false, since: M10 },
+    { table: "copies", name: "copies_user_created_idx", unique: false, columns: ["user_id", "created_at", "id"], partial: false, since: M10 },
+    { table: "model_migration_report", name: "model_migration_report_user_idx", unique: false, columns: ["user_id", "migration", "kind"], partial: false, since: M10 },
     { table: "cover_assets", name: "cover_assets_user_id_id_unique", unique: true, columns: ["user_id", "id"], partial: false, since: M9 },
     { table: "cover_assets", name: "cover_assets_user_sha_unique", unique: true, columns: ["user_id", "sha256"], partial: true, since: M9 },
     { table: "cover_assets", name: "cover_assets_job_unique", unique: true, columns: ["job_id"], partial: true, since: M9 },
@@ -306,6 +355,16 @@ export const MANIFEST = Object.freeze({
     { table: "library_snapshots", name: "library_snapshots_expires_at_idx", unique: false, columns: ["expires_at"], partial: false, since: M6 },
   ],
   columns: [
+    { table: "editions", name: "isbn13", type: "text", notNull: false, since: M10 },
+    { table: "editions", name: "work_id", type: "uuid", notNull: false, since: M10 },
+    { table: "editions", name: "catalogue", type: "jsonb", notNull: true, since: M10 },
+    { table: "editions", name: "identifiers", type: "jsonb", notNull: true, since: M10 },
+    { table: "editions", name: "cover_asset_id", type: "uuid", notNull: false, since: M10 },
+    { table: "editions", name: "search_text", type: "text", notNull: false, since: M10 },
+    { table: "copies", name: "edition_id", type: "uuid", notNull: true, since: M10 },
+    { table: "copies", name: "edition_verification", type: "jsonb", notNull: true, defaultTokens: ["isbnVerified"], since: M10 },
+    { table: "copies", name: "legacy_identifier", type: "text", notNull: false, since: M10 },
+    ...modelTables.map((table) => ({ table, name: "version", type: "uuid", notNull: true, defaultTokens: ["gen_random_uuid()"], since: M10 })),
     { table: "books", name: "cover_asset_id", type: "uuid", notNull: false, since: M9 },
     { table: "cover_assets", name: "state", type: "text", notNull: true, defaultTokens: ["'quarantine'"], since: M9 },
     { table: "cover_assets", name: "storage_key", type: "text", notNull: false, since: M9 },
@@ -353,6 +412,12 @@ export const MANIFEST = Object.freeze({
     { table: "library_snapshot_chunks", name: "digest", type: "text", notNull: true, since: M6 },
   ],
   functions: [
+    modelFunction("isbn13_normalize", "text", 1, { authenticated: true }),
+    modelFunction("prune_orphan_editions", "trigger", 0),
+    modelFunction("prune_orphan_works", "trigger", 0),
+    modelFunction("edition_requires_copy", "trigger", 0),
+    modelFunction("model_sync_book", "trigger", 0, { securityDefiner: true }),
+    modelFunction("model_compare", "jsonb", 1, { securityDefiner: true }),
     { name: "saved_view_filters_valid", language: "plpgsql", returns: "boolean", args: 1, searchPath: "search_path=pg_catalog", securityDefiner: false, body: VIEWS.saved_view_filters_valid, execute: { authenticated: true, anon: false }, since: M7 },
     { name: "guard_saved_book_view", language: "plpgsql", returns: "trigger", args: 0, searchPath: "search_path=pg_catalog", securityDefiner: true, body: VIEWS.guard_saved_book_view, execute: { authenticated: false, anon: false }, since: M7 },
     { name: "rotate_book_version", language: "plpgsql", returns: "trigger", args: 0, searchPath: "search_path=pg_catalog", securityDefiner: false, body: "beginnew.version:=gen_random_uuid();returnnew;end;", since: M2 },
@@ -406,6 +471,18 @@ export const MANIFEST = Object.freeze({
     { table: "import_session_rows", name: "import_session_rows_guard", function: "biblib.guard_import_staging", timing: "BEFORE", events: ["INSERT"], level: "ROW", tgtype: 7, since: M8 },
     // BEFORE UPDATE FOR EACH ROW = 19.
     { table: "books", name: "books_guard_cover_asset", function: "biblib.guard_book_cover_asset", timing: "BEFORE", events: ["UPDATE"], level: "ROW", tgtype: 19, since: M9 },
+    // Obra, edición y ejemplar (0010). Por sentencia: AFTER DELETE = 8, AFTER UPDATE = 16; restricción diferida AFTER INSERT FOR EACH ROW = 5.
+    ...modelTables.flatMap((table) => [
+      modelTrigger(table, `${table}_rotate_version`, "rotate_book_version", "BEFORE", ["INSERT", "UPDATE"], "ROW", 23),
+      modelTrigger(table, `${table}_rotate_library_revision`, "rotate_library_revision", "AFTER", ["INSERT", "UPDATE", "DELETE"], "ROW", 29),
+    ]),
+    modelTrigger("editions", "editions_guard_cover_asset", "guard_book_cover_asset", "BEFORE", ["UPDATE"], "ROW", 19),
+    modelTrigger("copies", "copies_prune_editions_delete", "prune_orphan_editions", "AFTER", ["DELETE"], "STATEMENT", 8),
+    modelTrigger("copies", "copies_prune_editions_update", "prune_orphan_editions", "AFTER", ["UPDATE"], "STATEMENT", 16),
+    modelTrigger("editions", "editions_prune_works_delete", "prune_orphan_works", "AFTER", ["DELETE"], "STATEMENT", 8),
+    modelTrigger("editions", "editions_prune_works_update", "prune_orphan_works", "AFTER", ["UPDATE"], "STATEMENT", 16),
+    modelTrigger("editions", "editions_require_copy", "edition_requires_copy", "AFTER", ["INSERT"], "ROW", 5),
+    modelTrigger("books", "books_model_sync", "model_sync_book", "AFTER", ["INSERT", "UPDATE", "DELETE"], "ROW", 29),
   ],
   // Bucket privado de portadas y sus políticas en storage.objects (0009). Fuera del esquema biblib, pero
   // del dominio: se comprueban igual y una política biblib_* no declarada es drift.
