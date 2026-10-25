@@ -1,8 +1,8 @@
 import "server-only"
 import { and, eq, sql } from "drizzle-orm"
-import { shelves, books } from "./schema"
+import { shelves, books, type bookFields } from "./schema"
 import type { DatabaseTransaction } from "./client"
-import type { Book } from "../types"
+import type { Book, CatalogueMetadata } from "../types"
 
 /**
  * Bloqueo de colección (U-DAT-01): fila del propietario en `biblib.library_state`, tomada con
@@ -38,7 +38,8 @@ export async function ensureDefaultShelf(tx: DatabaseTransaction, userId: string
   throw new Error("No se pudo crear la estantería predeterminada.")
 }
 
-export type BookRow = typeof books.$inferSelect
+/** Fila de `bookFields`; el recuento de ejemplares de la edición solo llega cuando la consulta lo pide (ficha). */
+export type BookRow = Pick<typeof books.$inferSelect, keyof typeof bookFields> & { editionCopies?: number }
 
 /** Fila de la vista plana `books` (ejemplar + edición, U-DAT-06) en el DTO de la interfaz. */
 export function mapRowToBook(row: { book: BookRow; shelfTitle: string }): Book {
@@ -54,10 +55,11 @@ export function mapRowToBook(row: { book: BookRow; shelfTitle: string }): Book {
     publishers: book.publishers,
     cover: { small: book.coverSmall, medium: book.coverMedium, large: book.coverLarge },
     status: book.status, shelf_id: book.shelfId, shelf_name: row.shelfTitle,
-    catalogue: book.catalogue,
+    // La comprobación física es del ejemplar; la procedencia, de la edición.
+    catalogue: { ...book.editionCatalogue, isbnVerified: book.editionVerification.isbnVerified } as CatalogueMetadata,
     ...(book.coverAssetId ? { coverAssetId: book.coverAssetId } : {}),
     edition: {
-      id: book.editionId, version: book.editionVersion, copies: book.editionCopies,
+      id: book.editionId, version: book.editionVersion, ...(book.editionCopies !== undefined ? { copies: book.editionCopies } : {}),
       ...(book.workId ? { workId: book.workId, ...(book.workTitle ? { workTitle: book.workTitle } : {}) } : {}),
       ...(book.language ? { language: book.language } : {}),
       ...(Object.keys(book.identifiers).length ? { identifiers: book.identifiers } : {}),

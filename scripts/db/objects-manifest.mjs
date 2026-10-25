@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs"
+import { existsSync, readFileSync } from "node:fs"
 import { EXIT } from "../lib/exit-codes.mjs"
 
 // Manifest de objetos deliberados de BibLib. Se comprueba con metadatos de pg_catalog e
@@ -51,7 +51,10 @@ END;
 // Cuerpos de 0004 leídos de la propia migración versionada (su hash lo protege el journal), para no
 // duplicar ~150 líneas de plpgsql; se comparan normalizados igual que los de 0003.
 function migrationBodies(tag) {
-  const source = readFileSync(new URL(`../../drizzle/${tag}.sql`, import.meta.url), "utf8")
+  // Una migración posterior que no está en esta copia del repo no aporta cuerpos: sus objetos solo se exigen si está aplicada.
+  const file = new URL(`../../drizzle/${tag}.sql`, import.meta.url)
+  if (!existsSync(file)) return {}
+  const source = readFileSync(file, "utf8")
   return Object.fromEntries([...source.matchAll(/CREATE (?:OR REPLACE )?FUNCTION "biblib"\."(\w+)"\([^)]*\) RETURNS [\s\S]*?AS \$\$([\s\S]*?)\$\$;/g)].map(([, name, body]) => [name, normalizeBody(body)]))
 }
 const CATALOGUE = migrationBodies(M4)
@@ -85,6 +88,8 @@ const storagePolicy = (name, cmd, action) => ({ name, cmd, roles: ["authenticate
 // La sincronización desde books y la comparación solo las ejecuta la migración o el servidor.
 const MODEL = migrationBodies(M10)
 const modelTables = ["works", "editions", "copies"]
+// `user_id = (select auth.uid())` (0010): el uid es un InitPlan, no una subconsulta por fila.
+const ownModel = "user_id=selectauth.uid"
 const modelFunction = (name, returns, args, { authenticated = false, securityDefiner = false, since = M10 } = {}) => ({ name, language: "plpgsql", returns, args, searchPath: "search_path=pg_catalog", securityDefiner, body: MODEL[name], execute: { authenticated, anon: false }, since })
 const modelTrigger = (table, name, fn, timing, events, level, tgtype) => ({ table, name, function: `biblib.${fn}`, timing, events, level, tgtype, since: M10 })
 // Cambio de lecturas y escrituras (0011): books pasa a ser la vista plana con triggers INSTEAD OF; la tabla anterior
@@ -128,12 +133,12 @@ export const MANIFEST = Object.freeze({
     ]),
     policy("cover_assets", "cover_assets_select_own", "SELECT", ownSelect("cover_assets"), null, M9),
     ...modelTables.flatMap((table) => [
-      policy(table, `${table}_select_own`, "SELECT", ownSelect(table), null, M10),
-      policy(table, `${table}_insert_own`, "INSERT", null, ownSelect(table), M10),
-      policy(table, `${table}_update_own`, "UPDATE", ownSelect(table), ownSelect(table), M10),
-      policy(table, `${table}_delete_own`, "DELETE", ownSelect(table), null, M10),
+      policy(table, `${table}_select_own`, "SELECT", ownModel, null, M10),
+      policy(table, `${table}_insert_own`, "INSERT", null, ownModel, M10),
+      policy(table, `${table}_update_own`, "UPDATE", ownModel, ownModel, M10),
+      policy(table, `${table}_delete_own`, "DELETE", ownModel, null, M10),
     ]),
-    policy("model_migration_report", "model_migration_report_select_own", "SELECT", ownSelect("model_migration_report"), null, M10),
+    policy("model_migration_report", "model_migration_report_select_own", "SELECT", ownModel, null, M10),
   ],
   // library_state solo se lee: la revisión cambia por lock_library()/triggers, nunca por escritura directa.
   // La caché compartida, las consultas en vuelo y las cuotas no tienen ningún privilegio de cliente.

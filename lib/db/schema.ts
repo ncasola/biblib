@@ -128,11 +128,13 @@ export const booksLegacy = biblibSchema.table(
  * legacy, al ejemplar. Una obra solo existe con evidencia explícita (archivo v2 o una decisión de la
  * persona): la migración no la deduce de títulos parecidos.
  */
+// `user_id = (select auth.uid())`: el uid se evalúa una vez (InitPlan) y no por fila, en las tablas que crecen con la colección.
+const ownCopyRow = (userIdColumn: AnyPgColumn) => sql`${userIdColumn} = (select auth.uid())`
 const ownPolicies = (name: string, userIdColumn: AnyPgColumn) => [
-  pgPolicy(`${name}_select_own`, { for: "select", to: authenticatedRole, using: ownRow(userIdColumn) }),
-  pgPolicy(`${name}_insert_own`, { for: "insert", to: authenticatedRole, withCheck: ownRow(userIdColumn) }),
-  pgPolicy(`${name}_update_own`, { for: "update", to: authenticatedRole, using: ownRow(userIdColumn), withCheck: ownRow(userIdColumn) }),
-  pgPolicy(`${name}_delete_own`, { for: "delete", to: authenticatedRole, using: ownRow(userIdColumn) }),
+  pgPolicy(`${name}_select_own`, { for: "select", to: authenticatedRole, using: ownCopyRow(userIdColumn) }),
+  pgPolicy(`${name}_insert_own`, { for: "insert", to: authenticatedRole, withCheck: ownCopyRow(userIdColumn) }),
+  pgPolicy(`${name}_update_own`, { for: "update", to: authenticatedRole, using: ownCopyRow(userIdColumn), withCheck: ownCopyRow(userIdColumn) }),
+  pgPolicy(`${name}_delete_own`, { for: "delete", to: authenticatedRole, using: ownCopyRow(userIdColumn) }),
 ]
 
 export const works = biblibSchema.table("works", {
@@ -257,10 +259,24 @@ export const books = biblibSchema.view("books", {
   identifiers: jsonb("identifiers").$type<EditionIdentifiers>().notNull(),
   searchText: text("search_text"),
   editionCopies: integer("edition_copies").notNull(),
+  editionCatalogue: jsonb("edition_catalogue").$type<EditionCatalogue>().notNull(),
 }).existing()
 
-/** Columnas de la vista para seleccionarla anidada (`select({ book: bookFields, … })`). */
-export const bookFields = getViewSelectedFields(books)
+const viewFields = getViewSelectedFields(books)
+/**
+ * Columnas que la aplicación lee de la vista (`select({ book: bookFields, … })`): sin el recuento de ejemplares
+ * de la edición (subconsulta por fila; lo pide aparte la ficha), sin el texto de búsqueda y con la procedencia de
+ * la edición en lugar de la plana (que se recompone en el mapper sin calcularla en Postgres para cada fila).
+ */
+export const bookFields = {
+  id: viewFields.id, version: viewFields.version, userId: viewFields.userId, title: viewFields.title, subtitle: viewFields.subtitle,
+  authors: viewFields.authors, publishers: viewFields.publishers, numberOfPages: viewFields.numberOfPages, publishDate: viewFields.publishDate,
+  coverSmall: viewFields.coverSmall, coverMedium: viewFields.coverMedium, coverLarge: viewFields.coverLarge, status: viewFields.status, shelfId: viewFields.shelfId,
+  coverAssetId: viewFields.coverAssetId, createdAt: viewFields.createdAt, updatedAt: viewFields.updatedAt, editionId: viewFields.editionId,
+  copyVersion: viewFields.copyVersion, editionVersion: viewFields.editionVersion, isbn13: viewFields.isbn13, legacyIdentifier: viewFields.legacyIdentifier,
+  editionVerification: viewFields.editionVerification, workId: viewFields.workId, workTitle: viewFields.workTitle, language: viewFields.language,
+  identifiers: viewFields.identifiers, editionCatalogue: viewFields.editionCatalogue,
+}
 
 export type ModelMigrationReportKind = "summary" | "normalized" | "invalid" | "conflict" | "grouped"
 
@@ -282,7 +298,7 @@ export const modelMigrationReport = biblibSchema.table("model_migration_report",
   index("model_migration_report_user_idx").on(table.userId, table.migration, table.kind),
   check("model_migration_report_kind_check", sql`${table.kind} in ('summary', 'normalized', 'invalid', 'conflict', 'grouped')`),
   check("model_migration_report_details_check", sql`jsonb_typeof(${table.details}) = 'object'`),
-  pgPolicy("model_migration_report_select_own", { for: "select", to: authenticatedRole, using: ownRow(table.userId) }),
+  pgPolicy("model_migration_report_select_own", { for: "select", to: authenticatedRole, using: ownCopyRow(table.userId) }),
 ]).enableRLS()
 
 const xid8 = customType<{ data: string; driverData: string }>({ dataType: () => "xid8" })

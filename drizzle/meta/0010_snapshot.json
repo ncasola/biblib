@@ -1402,7 +1402,7 @@
           "to": [
             "authenticated"
           ],
-          "using": "(select auth.uid() = \"biblib\".\"copies\".\"user_id\")"
+          "using": "\"biblib\".\"copies\".\"user_id\" = (select auth.uid())"
         },
         "copies_insert_own": {
           "name": "copies_insert_own",
@@ -1411,7 +1411,7 @@
           "to": [
             "authenticated"
           ],
-          "withCheck": "(select auth.uid() = \"biblib\".\"copies\".\"user_id\")"
+          "withCheck": "\"biblib\".\"copies\".\"user_id\" = (select auth.uid())"
         },
         "copies_update_own": {
           "name": "copies_update_own",
@@ -1420,8 +1420,8 @@
           "to": [
             "authenticated"
           ],
-          "using": "(select auth.uid() = \"biblib\".\"copies\".\"user_id\")",
-          "withCheck": "(select auth.uid() = \"biblib\".\"copies\".\"user_id\")"
+          "using": "\"biblib\".\"copies\".\"user_id\" = (select auth.uid())",
+          "withCheck": "\"biblib\".\"copies\".\"user_id\" = (select auth.uid())"
         },
         "copies_delete_own": {
           "name": "copies_delete_own",
@@ -1430,7 +1430,7 @@
           "to": [
             "authenticated"
           ],
-          "using": "(select auth.uid() = \"biblib\".\"copies\".\"user_id\")"
+          "using": "\"biblib\".\"copies\".\"user_id\" = (select auth.uid())"
         }
       },
       "checkConstraints": {
@@ -2094,7 +2094,7 @@
           "to": [
             "authenticated"
           ],
-          "using": "(select auth.uid() = \"biblib\".\"editions\".\"user_id\")"
+          "using": "\"biblib\".\"editions\".\"user_id\" = (select auth.uid())"
         },
         "editions_insert_own": {
           "name": "editions_insert_own",
@@ -2103,7 +2103,7 @@
           "to": [
             "authenticated"
           ],
-          "withCheck": "(select auth.uid() = \"biblib\".\"editions\".\"user_id\")"
+          "withCheck": "\"biblib\".\"editions\".\"user_id\" = (select auth.uid())"
         },
         "editions_update_own": {
           "name": "editions_update_own",
@@ -2112,8 +2112,8 @@
           "to": [
             "authenticated"
           ],
-          "using": "(select auth.uid() = \"biblib\".\"editions\".\"user_id\")",
-          "withCheck": "(select auth.uid() = \"biblib\".\"editions\".\"user_id\")"
+          "using": "\"biblib\".\"editions\".\"user_id\" = (select auth.uid())",
+          "withCheck": "\"biblib\".\"editions\".\"user_id\" = (select auth.uid())"
         },
         "editions_delete_own": {
           "name": "editions_delete_own",
@@ -2122,7 +2122,7 @@
           "to": [
             "authenticated"
           ],
-          "using": "(select auth.uid() = \"biblib\".\"editions\".\"user_id\")"
+          "using": "\"biblib\".\"editions\".\"user_id\" = (select auth.uid())"
         }
       },
       "checkConstraints": {
@@ -4445,7 +4445,7 @@
           "to": [
             "authenticated"
           ],
-          "using": "(select auth.uid() = \"biblib\".\"model_migration_report\".\"user_id\")"
+          "using": "\"biblib\".\"model_migration_report\".\"user_id\" = (select auth.uid())"
         }
       },
       "checkConstraints": {
@@ -4894,7 +4894,7 @@
           "to": [
             "authenticated"
           ],
-          "using": "(select auth.uid() = \"biblib\".\"works\".\"user_id\")"
+          "using": "\"biblib\".\"works\".\"user_id\" = (select auth.uid())"
         },
         "works_insert_own": {
           "name": "works_insert_own",
@@ -4903,7 +4903,7 @@
           "to": [
             "authenticated"
           ],
-          "withCheck": "(select auth.uid() = \"biblib\".\"works\".\"user_id\")"
+          "withCheck": "\"biblib\".\"works\".\"user_id\" = (select auth.uid())"
         },
         "works_update_own": {
           "name": "works_update_own",
@@ -4912,8 +4912,8 @@
           "to": [
             "authenticated"
           ],
-          "using": "(select auth.uid() = \"biblib\".\"works\".\"user_id\")",
-          "withCheck": "(select auth.uid() = \"biblib\".\"works\".\"user_id\")"
+          "using": "\"biblib\".\"works\".\"user_id\" = (select auth.uid())",
+          "withCheck": "\"biblib\".\"works\".\"user_id\" = (select auth.uid())"
         },
         "works_delete_own": {
           "name": "works_delete_own",
@@ -4922,7 +4922,7 @@
           "to": [
             "authenticated"
           ],
-          "using": "(select auth.uid() = \"biblib\".\"works\".\"user_id\")"
+          "using": "\"biblib\".\"works\".\"user_id\" = (select auth.uid())"
         }
       },
       "checkConstraints": {

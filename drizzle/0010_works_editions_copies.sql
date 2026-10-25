@@ -131,19 +131,19 @@ ALTER TABLE "biblib"."editions" ADD CONSTRAINT "editions_owner_work_fk" FOREIGN 
 ALTER TABLE "biblib"."editions" ADD CONSTRAINT "editions_owner_cover_asset_fk" FOREIGN KEY ("user_id","cover_asset_id") REFERENCES "biblib"."cover_assets"("user_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "biblib"."model_migration_report" ADD CONSTRAINT "model_migration_report_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "biblib"."works" ADD CONSTRAINT "works_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-CREATE POLICY "copies_select_own" ON "biblib"."copies" AS PERMISSIVE FOR SELECT TO "authenticated" USING ((select auth.uid() = "biblib"."copies"."user_id"));--> statement-breakpoint
-CREATE POLICY "copies_insert_own" ON "biblib"."copies" AS PERMISSIVE FOR INSERT TO "authenticated" WITH CHECK ((select auth.uid() = "biblib"."copies"."user_id"));--> statement-breakpoint
-CREATE POLICY "copies_update_own" ON "biblib"."copies" AS PERMISSIVE FOR UPDATE TO "authenticated" USING ((select auth.uid() = "biblib"."copies"."user_id")) WITH CHECK ((select auth.uid() = "biblib"."copies"."user_id"));--> statement-breakpoint
-CREATE POLICY "copies_delete_own" ON "biblib"."copies" AS PERMISSIVE FOR DELETE TO "authenticated" USING ((select auth.uid() = "biblib"."copies"."user_id"));--> statement-breakpoint
-CREATE POLICY "editions_select_own" ON "biblib"."editions" AS PERMISSIVE FOR SELECT TO "authenticated" USING ((select auth.uid() = "biblib"."editions"."user_id"));--> statement-breakpoint
-CREATE POLICY "editions_insert_own" ON "biblib"."editions" AS PERMISSIVE FOR INSERT TO "authenticated" WITH CHECK ((select auth.uid() = "biblib"."editions"."user_id"));--> statement-breakpoint
-CREATE POLICY "editions_update_own" ON "biblib"."editions" AS PERMISSIVE FOR UPDATE TO "authenticated" USING ((select auth.uid() = "biblib"."editions"."user_id")) WITH CHECK ((select auth.uid() = "biblib"."editions"."user_id"));--> statement-breakpoint
-CREATE POLICY "editions_delete_own" ON "biblib"."editions" AS PERMISSIVE FOR DELETE TO "authenticated" USING ((select auth.uid() = "biblib"."editions"."user_id"));--> statement-breakpoint
-CREATE POLICY "model_migration_report_select_own" ON "biblib"."model_migration_report" AS PERMISSIVE FOR SELECT TO "authenticated" USING ((select auth.uid() = "biblib"."model_migration_report"."user_id"));--> statement-breakpoint
-CREATE POLICY "works_select_own" ON "biblib"."works" AS PERMISSIVE FOR SELECT TO "authenticated" USING ((select auth.uid() = "biblib"."works"."user_id"));--> statement-breakpoint
-CREATE POLICY "works_insert_own" ON "biblib"."works" AS PERMISSIVE FOR INSERT TO "authenticated" WITH CHECK ((select auth.uid() = "biblib"."works"."user_id"));--> statement-breakpoint
-CREATE POLICY "works_update_own" ON "biblib"."works" AS PERMISSIVE FOR UPDATE TO "authenticated" USING ((select auth.uid() = "biblib"."works"."user_id")) WITH CHECK ((select auth.uid() = "biblib"."works"."user_id"));--> statement-breakpoint
-CREATE POLICY "works_delete_own" ON "biblib"."works" AS PERMISSIVE FOR DELETE TO "authenticated" USING ((select auth.uid() = "biblib"."works"."user_id"));
+CREATE POLICY "copies_select_own" ON "biblib"."copies" AS PERMISSIVE FOR SELECT TO "authenticated" USING ("biblib"."copies"."user_id" = (select auth.uid()));--> statement-breakpoint
+CREATE POLICY "copies_insert_own" ON "biblib"."copies" AS PERMISSIVE FOR INSERT TO "authenticated" WITH CHECK ("biblib"."copies"."user_id" = (select auth.uid()));--> statement-breakpoint
+CREATE POLICY "copies_update_own" ON "biblib"."copies" AS PERMISSIVE FOR UPDATE TO "authenticated" USING ("biblib"."copies"."user_id" = (select auth.uid())) WITH CHECK ("biblib"."copies"."user_id" = (select auth.uid()));--> statement-breakpoint
+CREATE POLICY "copies_delete_own" ON "biblib"."copies" AS PERMISSIVE FOR DELETE TO "authenticated" USING ("biblib"."copies"."user_id" = (select auth.uid()));--> statement-breakpoint
+CREATE POLICY "editions_select_own" ON "biblib"."editions" AS PERMISSIVE FOR SELECT TO "authenticated" USING ("biblib"."editions"."user_id" = (select auth.uid()));--> statement-breakpoint
+CREATE POLICY "editions_insert_own" ON "biblib"."editions" AS PERMISSIVE FOR INSERT TO "authenticated" WITH CHECK ("biblib"."editions"."user_id" = (select auth.uid()));--> statement-breakpoint
+CREATE POLICY "editions_update_own" ON "biblib"."editions" AS PERMISSIVE FOR UPDATE TO "authenticated" USING ("biblib"."editions"."user_id" = (select auth.uid())) WITH CHECK ("biblib"."editions"."user_id" = (select auth.uid()));--> statement-breakpoint
+CREATE POLICY "editions_delete_own" ON "biblib"."editions" AS PERMISSIVE FOR DELETE TO "authenticated" USING ("biblib"."editions"."user_id" = (select auth.uid()));--> statement-breakpoint
+CREATE POLICY "model_migration_report_select_own" ON "biblib"."model_migration_report" AS PERMISSIVE FOR SELECT TO "authenticated" USING ("biblib"."model_migration_report"."user_id" = (select auth.uid()));--> statement-breakpoint
+CREATE POLICY "works_select_own" ON "biblib"."works" AS PERMISSIVE FOR SELECT TO "authenticated" USING ("biblib"."works"."user_id" = (select auth.uid()));--> statement-breakpoint
+CREATE POLICY "works_insert_own" ON "biblib"."works" AS PERMISSIVE FOR INSERT TO "authenticated" WITH CHECK ("biblib"."works"."user_id" = (select auth.uid()));--> statement-breakpoint
+CREATE POLICY "works_update_own" ON "biblib"."works" AS PERMISSIVE FOR UPDATE TO "authenticated" USING ("biblib"."works"."user_id" = (select auth.uid())) WITH CHECK ("biblib"."works"."user_id" = (select auth.uid()));--> statement-breakpoint
+CREATE POLICY "works_delete_own" ON "biblib"."works" AS PERMISSIVE FOR DELETE TO "authenticated" USING ("biblib"."works"."user_id" = (select auth.uid()));
 --> statement-breakpoint
 -- U-DAT-06: privilegios. El dueño trabaja con RLS sobre obras, ediciones y ejemplares; el informe solo se lee.
 REVOKE ALL ON "biblib"."works", "biblib"."editions", "biblib"."copies", "biblib"."model_migration_report" FROM PUBLIC, anon, authenticated;

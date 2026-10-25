@@ -16,8 +16,9 @@ import type { Book } from "../types"
 
 const sha256 = (text: string) => createHash("sha256").update(text).digest("hex")
 
+/** Ficha de un ejemplar con el número de ejemplares de su edición (una subconsulta para una sola fila). */
 export async function findBook(tx: DatabaseTransaction, userId: string, id: string): Promise<Book | null> {
-  const [row] = await tx.select({ book: bookFields, shelfTitle: shelves.title }).from(books)
+  const [row] = await tx.select({ book: { ...bookFields, editionCopies: books.editionCopies }, shelfTitle: shelves.title }).from(books)
     .innerJoin(shelves, and(eq(books.shelfId, shelves.id), eq(shelves.userId, userId)))
     .where(and(eq(books.id, id), eq(books.userId, userId))).limit(1)
   return row ? mapRowToBook(row) : null
@@ -25,7 +26,7 @@ export async function findBook(tx: DatabaseTransaction, userId: string, id: stri
 
 /** Primer ejemplar de la cuenta con ese ISBN-13 (tarea T7): igualdad indexada por (dueño, ISBN-13). */
 export async function findBookByIsbn(tx: DatabaseTransaction, userId: string, isbn13: string): Promise<Book | null> {
-  const [row] = await tx.select({ book: bookFields, shelfTitle: shelves.title }).from(books)
+  const [row] = await tx.select({ book: { ...bookFields, editionCopies: books.editionCopies }, shelfTitle: shelves.title }).from(books)
     .innerJoin(shelves, and(eq(books.shelfId, shelves.id), eq(shelves.userId, userId)))
     .where(and(eq(books.userId, userId), eq(books.isbn13, isbn13))).orderBy(asc(books.createdAt), asc(books.id)).limit(1)
   return row ? mapRowToBook(row) : null

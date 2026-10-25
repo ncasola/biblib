@@ -144,7 +144,8 @@ SELECT c.id, md5(c.version::text || e.version::text)::uuid AS version, c.user_id
   c.created_at, greatest(c.updated_at, e.updated_at) AS updated_at,
   c.edition_id, c.version AS copy_version, e.version AS edition_version, e.isbn13, c.legacy_identifier, c.edition_verification,
   e.work_id, w.title AS work_title, e.language, e.identifiers, e.search_text,
-  (SELECT count(*)::integer FROM biblib.copies AS s WHERE s.user_id = c.user_id AND s.edition_id = c.edition_id) AS edition_copies
+  (SELECT count(*)::integer FROM biblib.copies AS s WHERE s.user_id = c.user_id AND s.edition_id = c.edition_id) AS edition_copies,
+  e.catalogue AS edition_catalogue
 FROM biblib.copies AS c
 JOIN biblib.editions AS e ON e.user_id = c.user_id AND e.id = c.edition_id
 LEFT JOIN biblib.works AS w ON w.user_id = e.user_id AND w.id = e.work_id;
