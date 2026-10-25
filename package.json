@@ -78,7 +78,8 @@
     "test:integration:model": "node tests/integration/model/run.mjs",
     "account:deletions:local": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/account/deletions-local.mjs",
     "test:integration:account": "node tests/integration/account/run.mjs",
-    "test:integration:product": "node tests/integration/product/run.mjs"
+    "test:integration:product": "node tests/integration/product/run.mjs",
+    "test:integration:personal": "node tests/integration/personal/run.mjs"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "1.1.15",
