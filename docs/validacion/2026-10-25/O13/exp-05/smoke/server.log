@@ -1,0 +1,16 @@
+▲ Next.js 16.4.2
+- Local:         http://127.0.0.1:58795
+- Network:       http://127.0.0.1:58795
+✓ Ready in 304ms
+✓ Running next.config.mjs took 39ms
+{"event":"database.operation_failed","durationMs":18}
+{"event":"import.preview","level":"info","timestamp":"2026-10-25T15:13:18.501Z","fields":{"operation":"import.validate","result":"ok","durationMs":1,"correlationId":"8a98dc26-6f85-410b-97ac-d7102f41535b"}}
+{"event":"import.preview","level":"info","timestamp":"2026-10-25T15:13:18.523Z","fields":{"operation":"import.prepare","result":"ok","durationMs":25,"correlationId":"8a98dc26-6f85-410b-97ac-d7102f41535b"}}
+{"event":"job.started","level":"info","timestamp":"2026-10-25T15:13:18.906Z","fields":{"operation":"job.import.publish","result":"ok","attempt":1,"correlationId":"91e28aad-29cd-412e-b557-3e3b0712dd84"}}
+{"event":"db.operation","level":"info","timestamp":"2026-10-25T15:13:18.963Z","fields":{"operation":"job.import.publish","result":"ok","durationMs":57,"correlationId":"91e28aad-29cd-412e-b557-3e3b0712dd84"}}
+{"event":"import.commit","level":"info","timestamp":"2026-10-25T15:13:18.970Z","fields":{"operation":"import.confirm","result":"ok","durationMs":112,"correlationId":"91e28aad-29cd-412e-b557-3e3b0712dd84"}}
+{"event":"job.started","level":"info","timestamp":"2026-10-25T15:13:18.977Z","fields":{"operation":"job.import.covers","result":"ok","attempt":1,"correlationId":"91e28aad-29cd-412e-b557-3e3b0712dd84"}}
+{"event":"db.operation","level":"info","timestamp":"2026-10-25T15:13:19.004Z","fields":{"operation":"job.import.covers","result":"ok","durationMs":26,"correlationId":"91e28aad-29cd-412e-b557-3e3b0712dd84"}}
+{"event":"job.started","level":"info","timestamp":"2026-10-25T15:13:20.679Z","fields":{"operation":"job.covers.covers","result":"ok","attempt":1,"correlationId":"1fae389a-8f95-4a6a-a356-8716f1d495d5"}}
+{"event":"db.operation","level":"info","timestamp":"2026-10-25T15:13:20.710Z","fields":{"operation":"job.covers.covers","result":"ok","durationMs":31,"correlationId":"1fae389a-8f95-4a6a-a356-8716f1d495d5"}}
+{"event":"database.operation_failed","durationMs":22}
