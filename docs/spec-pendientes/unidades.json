@@ -1220,6 +1220,35 @@
         "Proxy en proceso distinto (p. ej. Vercel) vuelve a 2 llamadas: documentado.",
         "Ajustes y previews >1 s con 5–10 sesiones: T1/U-DAT-04."
       ]
+    },
+    {
+      "id": "U-UX-01",
+      "title": "Sistema visual «Biblioteca nocturna»",
+      "phase": "F3",
+      "wave": "O14",
+      "dependsOn": [
+        "U-EXP-03"
+      ],
+      "size": "L",
+      "priority": "P1",
+      "document": "07-rediseno.md",
+      "auditRefs": [],
+      "status": "in-progress"
+    },
+    {
+      "id": "U-UX-02",
+      "title": "Estantería 3D realista",
+      "phase": "F3",
+      "wave": "O14",
+      "dependsOn": [
+        "U-EXP-04",
+        "U-DAT-06"
+      ],
+      "size": "M",
+      "priority": "P1",
+      "document": "07-rediseno.md",
+      "auditRefs": [],
+      "status": "in-progress"
     }
   ]
 }

@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Estantería 3D</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&amp;family=Inter:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#f2d58a}a:hover{color:#fff1c8}
+.bk{all:unset;position:relative;display:block;flex:none;cursor:pointer;transform-style:preserve-3d}
+.bk-move{position:absolute;inset:0;display:block;transform-style:preserve-3d;transition:transform .45s cubic-bezier(.2,.8,.2,1)}
+.bk:hover .bk-move,.bk:focus-visible .bk-move{transform:translateZ(26px) translateY(-6px)}
+.bk:focus-visible .face-spine{outline:3px solid #f2c94c;outline-offset:2px}
+.face{position:absolute;display:block;box-sizing:border-box;backface-visibility:hidden}
+.cab{transition:transform .35s ease-out}
+.pill{all:unset;cursor:pointer;padding:10px 16px;min-height:24px;border-radius:999px;font:500 14px Inter,system-ui,sans-serif;color:#f6eddd;border:1px solid rgba(246,237,221,.25)}
+.pill:hover{background:rgba(246,237,221,.08)}
+.pill:focus-visible{outline:3px solid #f2c94c;outline-offset:2px}
+@media (prefers-reduced-motion: reduce){.bk-move,.cab{transition:none !important}}
+</style>
+</helmet>
+<div style="width: 1280px; height: 920px; box-sizing: border-box; display: flex; background: radial-gradient(ellipse 70% 55% at 38% 18%, #4a3426 0%, #24180f 55%, #120c08 100%); color: #f6eddd; font-family: Inter, system-ui, sans-serif; overflow: hidden">
+  <div style="flex: 1 1 auto; display: flex; flex-direction: column; min-width: 0">
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 24px 32px 0">
+      <div style="display: flex; flex-direction: column; gap: 4px">
+        <span style="font: 500 13px Inter, system-ui, sans-serif; letter-spacing: .12em; text-transform: uppercase; color: #d9c08a">Estantería</span>
+        <h1 style="margin: 0; font: 700 34px Fraunces, Georgia, serif; color: #fbf3e2">Salón</h1>
+      </div>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap">
+        <button class="pill" onClick="{{ resetView }}">Recentrar vista</button>
+        <a class="pill" href="#">Ver como tabla</a>
+      </div>
+    </div>
+    <div onMouseMove="{{ onMove }}" onMouseLeave="{{ onLeave }}" style="position: relative; flex: 1 1 auto; display: flex; align-items: center; justify-content: center; perspective: 1700px; perspective-origin: 50% 30%">
+      <div aria-hidden="true" style="position: absolute; left: 50%; bottom: 34px; width: 820px; height: 70px; margin-left: -410px; border-radius: 50%; background: radial-gradient(ellipse at center, rgba(0,0,0,.65), transparent 70%); filter: blur(6px)"></div>
+      <div class="cab" style="{{ cabinetStyle }}">
+        <div aria-hidden="true" class="face" style="{{ wood.back }}"></div>
+        <sc-for list="{{ backShadows }}" as="s" hint-placeholder-count="3">
+          <div aria-hidden="true" class="face" style="{{ s }}"></div>
+        </sc-for>
+        <div aria-hidden="true" class="face" style="{{ wood.left }}"></div>
+        <div aria-hidden="true" class="face" style="{{ wood.right }}"></div>
+        <div aria-hidden="true" class="face" style="{{ wood.top }}"></div>
+        <sc-for list="{{ boards }}" as="bd" hint-placeholder-count="3">
+          <div aria-hidden="true" class="face" style="{{ bd.surface }}"></div>
+          <div aria-hidden="true" class="face" style="{{ bd.under }}"></div>
+        </sc-for>
+        <sc-for list="{{ rows }}" as="row" hint-placeholder-count="3">
+          <div role="group" aria-label="{{ row.label }}" style="{{ row.style }}">
+            <sc-for list="{{ row.books }}" as="b" hint-placeholder-count="12">
+              <button class="bk" aria-label="{{ b.aria }}" aria-pressed="{{ b.pressed }}" onClick="{{ b.pick }}" style="{{ b.slot }}">
+                <span class="bk-move" style="{{ b.move }}">
+                  <span class="face face-spine" aria-hidden="true" style="{{ b.spine }}">
+                    <span style="{{ b.bandTop }}"></span>
+                    <span style="{{ b.spineTitle }}">{{ b.title }}</span>
+                    <span style="{{ b.bandBottom }}"></span>
+                  </span>
+                  <span class="face" aria-hidden="true" style="{{ b.back }}"></span>
+                  <span class="face" aria-hidden="true" style="{{ b.cover }}">
+                    <span style="{{ b.coverFrame }}">
+                      <span style="font: 700 13px/1.15 Fraunces, Georgia, serif">{{ b.title }}</span>
+                      <span style="display: block; width: 26px; height: 1px; margin: 8px auto; background: currentColor; opacity: .7"></span>
+                      <span style="font: 500 9px/1.3 Inter, system-ui, sans-serif; letter-spacing: .06em; text-transform: uppercase">{{ b.author }}</span>
+                    </span>
+                  </span>
+                  <span class="face" aria-hidden="true" style="{{ b.backCover }}"></span>
+                  <span class="face" aria-hidden="true" style="{{ b.pages }}"></span>
+                </span>
+              </button>
+            </sc-for>
+          </div>
+        </sc-for>
+        <sc-for list="{{ boards }}" as="bd" hint-placeholder-count="3">
+          <div aria-hidden="true" class="face" style="{{ bd.edge }}">
+            <span style="{{ bd.plaque }}">{{ bd.label }}</span>
+          </div>
+        </sc-for>
+        <div aria-hidden="true" class="face" style="{{ wood.stileLeft }}"></div>
+        <div aria-hidden="true" class="face" style="{{ wood.stileRight }}"></div>
+        <div aria-hidden="true" class="face" style="{{ wood.crown }}"></div>
+        <div aria-hidden="true" class="face" style="{{ wood.plinth }}"></div>
+      </div>
+    </div>
+  </div>
+  <aside aria-label="Libro seleccionado" style="flex: 0 0 340px; box-sizing: border-box; margin: 24px 24px 24px 0; padding: 28px; display: flex; flex-direction: column; gap: 20px; border-radius: 20px; background: rgba(20,13,9,.72); border: 1px solid rgba(246,237,221,.14); box-shadow: 0 30px 60px rgba(0,0,0,.45)">
+    <sc-if value="{{ hasSelection }}" hint-placeholder-val="{{ false }}">
+      <div style="display: flex; flex-direction: column; gap: 20px">
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <span style="font: 500 12px Inter, system-ui, sans-serif; letter-spacing: .12em; text-transform: uppercase; color: #d9c08a">{{ sel.shelf }}</span>
+          <h2 style="margin: 0; font: 700 30px/1.1 Fraunces, Georgia, serif; color: #fbf3e2">{{ sel.title }}</h2>
+          <p style="margin: 0; font: 400 16px Inter, system-ui, sans-serif; color: #e3d6bf">{{ sel.author }}</p>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+          <div style="display: flex; flex-direction: column; gap: 4px; padding: 12px; border-radius: 12px; background: rgba(246,237,221,.06)">
+            <span style="font-size: 12px; color: #cdbfa6">Páginas</span>
+            <span style="font: 600 18px Inter, system-ui, sans-serif">{{ sel.pages }}</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 4px; padding: 12px; border-radius: 12px; background: rgba(246,237,221,.06)">
+            <span style="font-size: 12px; color: #cdbfa6">Estado</span>
+            <span style="font: 600 18px Inter, system-ui, sans-serif; color: {{ sel.statusColor }}">{{ sel.status }}</span>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 10px">
+          <a href="#" style="display: flex; align-items: center; justify-content: center; min-height: 48px; border-radius: 12px; background: #c0392b; color: #fffaf0; font: 600 15px Inter, system-ui, sans-serif; text-decoration: none">Abrir ficha</a>
+          <button class="pill" onClick="{{ putBack }}" style="text-align: center; border-radius: 12px">Devolver a la balda</button>
+        </div>
+      </div>
+    </sc-if>
+    <sc-if value="{{ noSelection }}" hint-placeholder-val="{{ true }}">
+      <div style="display: flex; flex-direction: column; gap: 16px">
+        <h2 style="margin: 0; font: 700 26px/1.15 Fraunces, Georgia, serif; color: #fbf3e2">Saca un libro de la balda</h2>
+        <p style="margin: 0; font: 400 15px/1.55 Inter, system-ui, sans-serif; color: #e3d6bf">Pasa el ratón por los lomos o recórrelos con Tab. Al pulsar uno, sale de la estantería y gira para enseñarte la portada.</p>
+        <p style="margin: 0; font: 400 15px/1.55 Inter, system-ui, sans-serif; color: #e3d6bf">Mueve el puntero sobre el mueble para verlo desde otro ángulo.</p>
+        <div style="display: flex; flex-direction: column; gap: 8px; padding-top: 8px; border-top: 1px solid rgba(246,237,221,.14)">
+          <span style="font-size: 13px; color: #cdbfa6">{{ summary }}</span>
+        </div>
+      </div>
+    </sc-if>
+  </aside>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"wood":{"editor":"enum","options":["nogal","roble","ébano"],"default":"nogal","section":"Mueble"},"angle":{"editor":"range","min":-30,"max":30,"step":1,"unit":"°","default":-14,"section":"Mueble"},"$preview":{"width":1280,"height":920}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const st = this.state || {};
+    const W = 760, H = 740, D = 120, BD = 92;
+    const woods = {
+      "nogal": { back: "#2a190f", side: "#4f301c", board: "#6b4326", edge: "#82542f", dark: "#1b100a" },
+      "roble": { back: "#3d2918", side: "#7d5532", board: "#a3713f", edge: "#b98349", dark: "#2a1b0f" },
+      "ébano": { back: "#141012", side: "#2a2125", board: "#3a2f33", edge: "#4a3c41", dark: "#0b0809" }
+    };
+    const w = woods[this.props.wood] || woods["nogal"];
+    const grain = "repeating-linear-gradient(90deg, rgba(0,0,0,.10) 0 2px, rgba(255,255,255,.025) 2px 5px, transparent 5px 11px)";
+    const grainH = "repeating-linear-gradient(0deg, rgba(0,0,0,.10) 0 1px, transparent 1px 6px)";
+    const face = "position:absolute;backface-visibility:visible;";
+    const wood = {
+      back: face + `left:0;top:0;width:${W}px;height:${H}px;transform:translateZ(-${D}px);background:radial-gradient(ellipse 60% 40% at 50% 8%, rgba(255,210,140,.20), transparent 70%), ${grain}, ${w.back};`,
+      left: face + `left:0;top:0;width:${D}px;height:${H}px;transform-origin:left center;transform:rotateY(90deg);background:linear-gradient(90deg, ${w.side}, ${w.dark});`,
+      right: face + `left:${W}px;top:0;width:${D}px;height:${H}px;transform-origin:left center;transform:rotateY(90deg);background:linear-gradient(90deg, ${w.side}, ${w.dark});`,
+      top: face + `left:0;top:20px;width:${W}px;height:${D}px;transform-origin:top center;transform:rotateX(-90deg);background:linear-gradient(0deg, ${w.dark}, ${w.side});`,
+      stileLeft: face + `left:0;top:0;width:22px;height:${H}px;transform:translateZ(1px);background:${grainH}, linear-gradient(90deg, ${w.edge}, ${w.board});box-shadow:inset -2px 0 3px rgba(0,0,0,.35);`,
+      stileRight: face + `left:${W - 22}px;top:0;width:22px;height:${H}px;transform:translateZ(1px);background:${grainH}, linear-gradient(90deg, ${w.board}, ${w.edge});box-shadow:inset 2px 0 3px rgba(0,0,0,.35);`,
+      crown: face + `left:-10px;top:-14px;width:${W + 20}px;height:34px;transform:translateZ(6px);border-radius:3px;background:linear-gradient(180deg, ${w.edge}, ${w.board} 60%, ${w.dark});box-shadow:0 8px 14px rgba(0,0,0,.45);`,
+      plinth: face + `left:-6px;top:${H - 34}px;width:${W + 12}px;height:40px;transform:translateZ(4px);border-radius:2px;background:linear-gradient(180deg, ${w.board}, ${w.dark});`
+    };
+
+    const shelves = [
+      { y: 252, label: "Clásicos españoles" },
+      { y: 486, label: "Novela del XIX" },
+      { y: 706, label: "Epopeya y aventura" }
+    ];
+    const boards = shelves.map((s) => ({
+      label: s.label,
+      surface: face + `left:20px;top:${s.y}px;width:${W - 40}px;height:${D}px;transform-origin:top center;transform:rotateX(-90deg);background:linear-gradient(0deg, ${w.board}, ${w.dark}), ${w.board};`,
+      under: face + `left:20px;top:${s.y + 18}px;width:${W - 40}px;height:${D}px;transform-origin:top center;transform:rotateX(-90deg);background:${w.dark};`,
+      edge: face + `left:0;top:${s.y}px;width:${W}px;height:18px;transform:translateZ(2px);display:flex;align-items:center;justify-content:center;background:${grainH}, linear-gradient(180deg, ${w.edge} 0%, ${w.board} 45%, ${w.dark} 100%);box-shadow:0 6px 10px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,236,200,.25);`,
+      plaque: "display:block;padding:1px 10px;border-radius:2px;font:600 8px/12px Inter,system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#2b1d0c;background:linear-gradient(180deg,#f3dc9a,#c9a24a 55%,#9c7a2e);box-shadow:0 1px 2px rgba(0,0,0,.5);"
+    }));
+    const backShadows = shelves.map((s) => face + `left:0;top:${s.y + 18}px;width:${W}px;height:70px;transform:translateZ(-${D - 1}px);background:linear-gradient(180deg, rgba(0,0,0,.6), transparent);`);
+
+    const palette = ["#7a1f24", "#1f3a5f", "#2f4a2c", "#5b3a29", "#c9b48a", "#3b2a4a", "#a0522d", "#22303a", "#8a6d2f", "#e8dcc4", "#0f3d3e", "#6d1a36"];
+    const light = (c) => ["#c9b48a", "#e8dcc4"].includes(c);
+    const status = { r: ["Leído", "#9fd18b"], l: ["Leyendo", "#f2c94c"], p: ["Por leer", "#b9c7ff"], n: ["Sin leer", "#e3d6bf"] };
+    const data = [
+      [["Don Quijote de la Mancha", "Miguel de Cervantes", 1376, "r"], ["La Regenta", "Leopoldo Alas «Clarín»", 960, "r"], ["Fortunata y Jacinta", "Benito Pérez Galdós", 1100, "l"], ["Niebla", "Miguel de Unamuno", 280, "r"], ["Platero y yo", "Juan Ramón Jiménez", 190, "r"], ["Luces de bohemia", "Ramón del Valle-Inclán", 200, "p"], ["La Celestina", "Fernando de Rojas", 360, "n"], ["Lazarillo de Tormes", "Anónimo", 140, "r"], ["Rimas y leyendas", "Gustavo Adolfo Bécquer", 420, "r"], ["Campos de Castilla", "Antonio Machado", 230, "l"], ["Marianela", "Benito Pérez Galdós", 260, "n"], ["Pepita Jiménez", "Juan Valera", 240, "p"], ["La casa de Bernarda Alba", "Federico García Lorca", 160, "r"], ["Bodas de sangre", "Federico García Lorca", 150, "r"], ["San Manuel Bueno, mártir", "Miguel de Unamuno", 170, "n"], ["El sí de las niñas", "Leandro F. de Moratín", 180, "p"]],
+      [["Moby Dick", "Herman Melville", 720, "p"], ["Orgullo y prejuicio", "Jane Austen", 430, "r"], ["Jane Eyre", "Charlotte Brontë", 560, "r"], ["Cumbres borrascosas", "Emily Brontë", 420, "l"], ["Crimen y castigo", "Fiódor Dostoievski", 680, "r"], ["Ana Karénina", "León Tolstói", 1000, "p"], ["Madame Bovary", "Gustave Flaubert", 470, "n"], ["Los miserables", "Victor Hugo", 1450, "p"], ["Grandes esperanzas", "Charles Dickens", 600, "r"], ["Drácula", "Bram Stoker", 520, "r"], ["Frankenstein", "Mary Shelley", 300, "l"], ["La metamorfosis", "Franz Kafka", 120, "r"], ["Ulises", "James Joyce", 980, "n"]],
+      [["La Odisea", "Homero", 520, "r"], ["La Ilíada", "Homero", 640, "p"], ["La divina comedia", "Dante Alighieri", 800, "n"], ["Hamlet", "William Shakespeare", 260, "r"], ["Fausto", "J. W. von Goethe", 500, "p"], ["Las mil y una noches", "Anónimo", 1200, "l"], ["Robinson Crusoe", "Daniel Defoe", 380, "r"], ["La isla del tesoro", "R. L. Stevenson", 300, "r"], ["Veinte mil leguas de viaje submarino", "Julio Verne", 560, "p"], ["El conde de Montecristo", "Alexandre Dumas", 1300, "n"], ["Alicia en el país de las maravillas", "Lewis Carroll", 180, "r"]]
+    ];
+
+    let n = 0, total = 0;
+    let sel = null;
+    const rows = data.map((list, r) => {
+      const books = list.map((d, i) => {
+        const id = `${r}-${i}`;
+        const k = (n++ * 7 + r * 3) % palette.length;
+        const color = palette[k];
+        const ink = light(color) ? "#2a2118" : "#ecd9a6";
+        const t = Math.round(Math.max(18, Math.min(52, d[2] / 26)));
+        const h = Math.round(r === 0 ? 168 + ((i * 37) % 52) : r === 1 ? 160 + ((i * 29) % 40) : 150 + ((i * 41) % 44));
+        const kind = (i + r) % 3;
+        const selected = st.selected === id;
+        const lean = i === list.length - 1;
+        if (selected) sel = { title: d[0], author: d[1], pages: d[2], status: status[d[3]][0], statusColor: status[d[3]][1], shelf: `Salón · balda ${r + 1} · ${shelves[r].label}` };
+        total++;
+        const shade = "linear-gradient(90deg, rgba(0,0,0,.45) 0%, rgba(255,255,255,.16) 14%, rgba(255,255,255,.05) 34%, rgba(0,0,0,.05) 64%, rgba(0,0,0,.5) 100%)";
+        const band = (pos) => kind === 1 ? "display:none;" : `position:absolute;left:0;right:0;${pos}:14px;height:7px;border-top:1.5px solid ${ink};border-bottom:1.5px solid ${ink};opacity:.75;`;
+        const titleBox = kind === 2
+          ? `position:absolute;left:3px;right:3px;top:30%;bottom:30%;display:flex;align-items:center;justify-content:center;background:#efe4cc;color:#2a2118;writing-mode:vertical-rl;font:600 ${t < 26 ? 9 : 10}px/1.1 Fraunces,Georgia,serif;overflow:hidden;border-radius:1px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.25);`
+          : `position:absolute;left:0;right:0;top:30px;bottom:30px;display:flex;align-items:center;justify-content:center;writing-mode:vertical-rl;color:${ink};font:600 ${t < 26 ? 9 : 11}px/1.1 Fraunces,Georgia,serif;letter-spacing:.04em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;`;
+        return {
+          title: d[0], author: d[1],
+          aria: `${d[0]}, de ${d[1]}. ${status[d[3]][0]}.`,
+          pressed: selected ? "true" : "false",
+          pick: () => this.setState({ selected: selected ? null : id }),
+          slot: `width:${t}px;height:${h}px;margin-left:${lean ? 34 : 1}px;${lean ? "transform-origin:100% 100%;transform:rotateZ(-9deg);" : ""}`,
+          move: selected ? "transform:translateZ(190px) translateY(-26px) rotateY(76deg);z-index:5;" : "",
+          spine: `left:0;top:0;width:${t}px;height:${h}px;transform:translateZ(${BD / 2}px);background:${shade}, ${color};border-radius:2px;box-shadow:inset 0 2px 0 rgba(255,255,255,.12), inset 0 -2px 0 rgba(0,0,0,.35);overflow:hidden;`,
+          bandTop: band("top"), bandBottom: band("bottom"), spineTitle: titleBox,
+          back: `left:0;top:0;width:${t}px;height:${h}px;transform:rotateY(180deg) translateZ(${BD / 2}px);background:${color};filter:brightness(.6);`,
+          cover: `left:${(t - BD) / 2}px;top:0;width:${BD}px;height:${h}px;transform:rotateY(-90deg) translateZ(${t / 2}px);background:linear-gradient(90deg, rgba(0,0,0,.35), transparent 10%), ${color};color:${ink};padding:10px 8px;`,
+          coverFrame: `display:flex;flex-direction:column;justify-content:center;height:100%;box-sizing:border-box;padding:8px 4px;text-align:center;border:1px solid ${ink};outline:1px solid ${ink};outline-offset:-5px;`,
+          backCover: `left:${(t - BD) / 2}px;top:0;width:${BD}px;height:${h}px;transform:rotateY(90deg) translateZ(${t / 2}px);background:${color};filter:brightness(.75);`,
+          pages: `left:0;top:${(h - BD) / 2}px;width:${t}px;height:${BD}px;transform:rotateX(90deg) translateZ(${h / 2}px);background:repeating-linear-gradient(90deg, #efe6d2 0 1px, #d9ccb0 1px 2px);box-shadow:inset 2px 0 0 ${color}, inset -2px 0 0 ${color};`
+        };
+      });
+      const s = shelves[r];
+      return { label: `Balda ${r + 1}: ${s.label}`, books, style: `position:absolute;left:30px;width:${W - 60}px;top:${s.y - 240}px;height:240px;display:flex;align-items:flex-end;transform-style:preserve-3d;transform:translateZ(-${D / 2}px);` };
+    });
+
+    const ay = (this.props.angle ?? -14) + (st.dx || 0) * 10;
+    const ax = -5 + (st.dy || 0) * -6;
+    return {
+      wood, boards, backShadows, rows,
+      cabinetStyle: `position:relative;width:${W}px;height:${H}px;transform-style:preserve-3d;transform:translateY(10px) rotateX(${ax}deg) rotateY(${ay}deg);`,
+      hasSelection: !!sel, noSelection: !sel,
+      sel: sel || { title: "", author: "", pages: "", status: "", statusColor: "#fff", shelf: "" },
+      summary: `${total} libros en 3 baldas. Los colores y grosores salen del número de páginas.`,
+      putBack: () => this.setState({ selected: null }),
+      resetView: () => this.setState({ dx: 0, dy: 0 }),
+      onMove: (e) => {
+        if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+        const r = e.currentTarget.getBoundingClientRect();
+        this.setState({ dx: (e.clientX - r.left) / r.width - 0.5, dy: (e.clientY - r.top) / r.height - 0.5 });
+      },
+      onLeave: () => this.setState({ dx: 0, dy: 0 })
+    };
+  }
+}
+</script>
+</body>
+</html>
