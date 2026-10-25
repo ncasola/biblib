@@ -48,7 +48,12 @@ export async function modelContext() {
       for (const owner of Object.values(users)) {
         await sql`delete from biblib.copies where user_id = ${owner} and edition_id in (select id from biblib.editions where user_id = ${owner} and title like ${`${prefix}%`})`
         await sql`delete from biblib.shelves where user_id = ${owner} and title like ${`${prefix}%`} and not is_default`
+        // Las importaciones confirmadas dejan trabajo, operación y vista previa: se retiran por su clave dat06-….
+        const previews = (await sql`select preview_id from biblib.library_jobs where user_id = ${owner} and idempotency_key like 'dat06-%' and preview_id is not null
+          union select preview_id from biblib.library_operations where user_id = ${owner} and idempotency_key like 'dat06-%' and preview_id is not null`).map((row) => row.preview_id)
+        await sql`delete from biblib.library_jobs where user_id = ${owner} and idempotency_key like 'dat06-%'`
         await sql`delete from biblib.library_operations where user_id = ${owner} and idempotency_key like 'dat06-%'`
+        if (previews.length) await sql`delete from biblib.import_previews where user_id = ${owner} and id = any(${previews}::uuid[])`
       }
     },
     async close() { await closeConnection(sql) },
