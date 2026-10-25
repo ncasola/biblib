@@ -1,8 +1,7 @@
 import type postgres from "postgres"
-import type { SupabaseClient } from "@supabase/supabase-js"
 
 // U-OPS-03 · Worker administrativo de eliminación de cuentas. Se ejecuta fuera de Next (scripts/account/), con la
-// conexión administrativa y la credencial de servicio del entorno: el proceso Next nunca tiene service_role. Cada paso
+// conexión administrativa y la credencial de servicio del entorno, que el proceso Next nunca recibe. Cada paso
 // es reintentable e idempotente: solo borra, bajo el lease y el fencing de `biblib.account_deletions` (0013), y avanza
 // cuando la base confirma que el paso está vacío. Storage pendiente o un fallo dejan el error visible y reintentable;
 // nunca se afirma que terminó con objetos o filas restantes. Solo usa `import type` y sintaxis borrable, para que
@@ -221,8 +220,8 @@ export async function drainDeletions(deps: DeletionDeps, { owner = null, budgetM
   return reports
 }
 
-// Adaptadores reales. Solo los usa el proceso administrativo: la conexión es la del operador y el cliente Supabase
-// lleva la credencial de servicio del entorno local o del despliegue del worker, nunca la del proceso Next.
+// Adaptador Postgres. Solo lo usa el proceso administrativo, con la conexión del operador; el de GoTrue y Storage está
+// en scripts/account/deletion-services.mjs (la app no contiene código con la credencial de servicio).
 
 type Sql = postgres.Sql
 
@@ -266,31 +265,6 @@ export function createDeletionDatabase(sql: Sql): DeletionDatabase {
     },
     async complete(owner, token, markDays) {
       await single(sql`select biblib.account_deletion_complete(${owner}::uuid, ${token}::uuid, ${markDays}::integer) as result`, "RESIDUE_FOUND")
-    },
-  }
-}
-
-/** Un usuario que GoTrue ya no tiene: el paso se da por hecho (reintento tras borrar la identidad). */
-const missingUser = (error: { status?: number } | null) => error?.status === 404
-
-/** Storage y GoTrue con la credencial de servicio. La duración del bloqueo supera cualquier plazo de la eliminación. */
-export function createSupabaseDeletionServices(admin: SupabaseClient): { storage: DeletionStorage; auth: DeletionAuth } {
-  return {
-    storage: {
-      async remove(bucket, names) {
-        const { error } = await admin.storage.from(bucket).remove(names)
-        if (error) throw error
-      },
-    },
-    auth: {
-      async revokeSessions(owner) {
-        const { error } = await admin.auth.admin.updateUserById(owner, { ban_duration: "876000h" })
-        if (error && !missingUser(error)) throw error
-      },
-      async deleteIdentity(owner) {
-        const { error } = await admin.auth.admin.deleteUser(owner)
-        if (error && !missingUser(error)) throw error
-      },
     },
   }
 }

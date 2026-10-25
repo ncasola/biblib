@@ -6,7 +6,7 @@ import { isRecentSignIn, toDeletionView, type AccountDeletionView } from "@/lib/
 
 // U-OPS-03 · Lado Next de la eliminación de cuenta. Solo usa la sesión del dueño: la solicitud y el estado pasan por las
 // funciones de 0013 con auth.uid(), y el cierre de sesiones es el logout global de GoTrue con el token del propio
-// usuario. El borrado de datos, objetos e identidad lo hace el worker administrativo fuera de Next (sin service_role).
+// usuario. El borrado de datos, objetos e identidad lo hace el worker administrativo fuera de Next, sin credencial de servicio en la app.
 
 async function callOwnerFunction(owner: string, query: ReturnType<typeof sql>): Promise<unknown> {
   return withRlsContext(owner, async (tx) => (await tx.execute<{ result: unknown }>(query))[0]?.result)
@@ -32,7 +32,7 @@ export async function hasRecentSignIn(owner: string, now = Date.now()): Promise<
 }
 
 /**
- * Cierra todas las sesiones de la cuenta con el logout global de GoTrue (token del propio usuario, sin service_role).
+ * Cierra todas las sesiones de la cuenta con el logout global de GoTrue (token del propio usuario, sin credencial de servicio).
  * Si falla, el worker bloquea la cuenta en GoTrue y, mientras tanto, RLS, Storage y el bloqueo de colección rechazan
  * cualquier escritura del JWT antiguo.
  */
