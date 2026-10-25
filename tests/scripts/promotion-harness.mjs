@@ -226,6 +226,8 @@ export async function rehearseRestore(backup, { root = repo } = {}) {
     // Desde 0009 el bucket de portadas y sus políticas de storage.objects se reinstalan tras el volcado
     // de dominio, como hace db:restore:local (el volcado de biblib/drizzle no los contiene).
     copy.psql("DO $$ BEGIN IF to_regprocedure('biblib.cover_storage_install()') IS NOT NULL THEN PERFORM biblib.cover_storage_install(); END IF; END $$;")
+    // Desde 0014, igual con el bucket privado de imágenes (`biblib-media`).
+    copy.psql("DO $$ BEGIN IF to_regprocedure('biblib.media_storage_install()') IS NOT NULL THEN PERFORM biblib.media_storage_install(); END IF; END $$;")
     const sql = adminClient(copy)
     let report
     try {

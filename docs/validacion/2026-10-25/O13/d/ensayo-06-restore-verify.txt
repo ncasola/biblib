@@ -1,0 +1,8 @@
+[ok] suppressions.applied: Supresiones: 1 cuenta(s) suprimida(s) sin identidad, filas ni objetos en el destino.
+[ok] access.a: Cuenta A: sesión GoTrue real con el ID restaurado; ve 4 libro(s) y 3 estantería(s) propias y 0 ajenas; actualizar las ajenas afecta 0 filas.
+[ok] access.b: Cuenta B: sesión GoTrue real con el ID restaurado; ve 4 libro(s) y 3 estantería(s) propias y 0 ajenas; actualizar las ajenas afecta 0 filas.
+[ok] storage.bucket.biblib-covers: Bucket biblib-covers privado con su configuración.
+[ok] storage.bucket.biblib-media: Bucket biblib-media privado con su configuración.
+[ok] storage.bucket.biblib-test-assets: Bucket biblib-test-assets privado con su configuración.
+[ok] storage.objects: 4/4 objeto(s) presentes con su sha256.
+Ensayo de recuperación superado · recuperación 11 s · informe .biblib/backups/20261025T114031Z-scratch-b1ea10/rehearsals/20261025T114157Z-scratch.json

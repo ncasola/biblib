@@ -1,7 +1,10 @@
 import { getViewSelectedFields, sql } from "drizzle-orm"
 import { authenticatedRole } from "drizzle-orm/supabase"
-import { pgSchema, uuid, text, timestamp, boolean, integer, bigint, jsonb, uniqueIndex, index, check, pgPolicy, foreignKey, primaryKey, customType, type AnyPgColumn } from "drizzle-orm/pg-core"
+import { pgSchema, uuid, text, timestamp, boolean, integer, smallint, numeric, bigint, jsonb, uniqueIndex, index, check, pgPolicy, foreignKey, primaryKey, customType, type AnyPgColumn } from "drizzle-orm/pg-core"
 import type { Author, Publisher, Book, CatalogueMetadata, CopyVerification, EditionCatalogue, EditionIdentifiers, LibraryData } from "@/lib/types"
+import type { CopyRating, LocationKind, MediaAssetState, MediaKind } from "@/lib/product/contracts"
+import type { ConfidenceLabel, EvidenceOrigin, EvidenceSourceKind, ReviewDecisionKind, ReviewEntityRef, ReviewReason, ReviewState } from "@/lib/review/contracts"
+import type { CsvMapping, CsvRowIssue } from "@/lib/csv-import/contracts"
 import type { ImportPlan, ImportOperationResult } from "@/lib/import-plan"
 import type { PortableBackupV2 } from "@/lib/backup-v2"
 import type { SavedViewFilters } from "@/lib/saved-views"
@@ -633,9 +636,10 @@ export const accountLifecycle = biblibSchema.table(
  */
 export type AccountDeletionState = "pending" | "running" | "waiting_retry" | "failed" | "completed"
 export type AccountDeletionStep = "sessions" | "storage" | "covers" | "snapshots" | "staging" | "jobs" | "views" | "previews" | "operations"
-  | "private_cache" | "copies" | "editions" | "works" | "shelves" | "state" | "auth" | "verify" | "done"
+  | "private_cache" | "product" | "media" | "copies" | "editions" | "works" | "shelves" | "state" | "auth" | "verify" | "done"
 const deletionStates = sql`('pending', 'running', 'waiting_retry', 'failed', 'completed')`
-const deletionSteps = sql`('sessions', 'storage', 'covers', 'snapshots', 'staging', 'jobs', 'views', 'previews', 'operations', 'private_cache', 'copies', 'editions', 'works', 'shelves', 'state', 'auth', 'verify', 'done')`
+// 0014 (O13): `product` (datos de producto, hijas antes que padres) y `media` (assets privados) antes de los ejemplares.
+const deletionSteps = sql`('sessions', 'storage', 'covers', 'snapshots', 'staging', 'jobs', 'views', 'previews', 'operations', 'private_cache', 'product', 'media', 'copies', 'editions', 'works', 'shelves', 'state', 'auth', 'verify', 'done')`
 
 export const accountDeletions = biblibSchema.table("account_deletions", {
   userId: uuid("user_id").primaryKey(),
@@ -819,7 +823,8 @@ export const librarySnapshotChunks = biblibSchema.table(
     snapshotId: uuid("snapshot_id").notNull(),
     userId: uuid("user_id").notNull(),
     seq: integer("seq").notNull(),
-    kind: text("kind").$type<"shelves" | "books">().notNull(),
+    // 0014 (O13): las etiquetas, ubicaciones y series de la cuenta van en sus propios trozos, después de los libros.
+    kind: text("kind").$type<"shelves" | "books" | "tags" | "locations" | "series">().notNull(),
     itemCount: integer("item_count").notNull(),
     payload: jsonb("payload").$type<Record<string, unknown>[]>().notNull(),
     digest: text("digest").notNull(),
@@ -827,7 +832,7 @@ export const librarySnapshotChunks = biblibSchema.table(
   (table) => [
     primaryKey({ name: "library_snapshot_chunks_pkey", columns: [table.snapshotId, table.seq] }),
     foreignKey({ name: "library_snapshot_chunks_owner_snapshot_fk", columns: [table.userId, table.snapshotId], foreignColumns: [librarySnapshots.userId, librarySnapshots.id] }).onDelete("cascade"),
-    check("library_snapshot_chunks_kind_check", sql`${table.kind} in ('shelves', 'books')`),
+    check("library_snapshot_chunks_kind_check", sql`${table.kind} in ('shelves', 'books', 'tags', 'locations', 'series')`),
     check("library_snapshot_chunks_seq_check", sql`${table.seq} >= 0`),
     check("library_snapshot_chunks_size_check", sql`${table.itemCount} >= 1 and ${table.itemCount} <= 200 and jsonb_typeof(${table.payload}) = 'array' and jsonb_array_length(${table.payload}) = ${table.itemCount}`),
     check("library_snapshot_chunks_digest_check", sql`${table.digest} ~ '^[0-9a-f]{64}$'`),
@@ -860,8 +865,9 @@ export const importSessions = biblibSchema.table(
       .notNull()
       .references(() => authUsers.id, { onDelete: "cascade" }),
     state: text("state").$type<RestoreSessionState>().notNull().default("receiving"),
-    // `manifest`: lo trae el respaldo; `loose`: partes sueltas cuyo manifest genera el servidor al inspeccionarlas.
-    source: text("source").$type<"manifest" | "loose">().notNull(),
+    // `manifest`: lo trae el respaldo; `loose`: partes sueltas cuyo manifest genera el servidor al inspeccionarlas;
+    // `csv` (0014, U-DAT-09): un archivo CSV con su mapeo explícito.
+    source: text("source").$type<"manifest" | "loose" | "csv">().notNull(),
     exportSetId: uuid("export_set_id").notNull(),
     payloadFormatVersion: integer("payload_format_version"),
     manifest: jsonb("manifest").$type<Record<string, unknown>>().notNull(),
@@ -880,17 +886,28 @@ export const importSessions = biblibSchema.table(
     plan: jsonb("plan").$type<ImportPlan>(),
     operationId: uuid("operation_id"),
     errorCode: text("error_code"),
+    // U-DAT-09 (0014): mapeo versionado de una sesión CSV y hashes de la entrada y del mapeo. Un reintento con el
+    // mismo archivo y mapeo vuelve a las mismas filas (`source_row_key`); cambiar el mapeo regenera el plan.
+    csvMapping: jsonb("csv_mapping").$type<CsvMapping>(),
+    csvMappingVersion: integer("csv_mapping_version"),
+    inputSha256: text("input_sha256"),
+    mappingSha256: text("mapping_sha256"),
     version: uuid("version").notNull().defaultRandom(),
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
+    check("import_sessions_csv_mapping_check", sql`(${table.csvMapping} is null) = (${table.csvMappingVersion} is null) and (${table.csvMapping} is null) = (${table.mappingSha256} is null)`),
+    check("import_sessions_csv_mapping_shape_check", sql`${table.csvMapping} is null or (jsonb_typeof(${table.csvMapping}) = 'object' and octet_length(${table.csvMapping}::text) <= 16384 and ${table.csvMappingVersion} >= 1)`),
+    check("import_sessions_csv_hashes_check", sql`(${table.inputSha256} is null or ${table.inputSha256} ~ '^[0-9a-f]{64}$') and (${table.mappingSha256} is null or ${table.mappingSha256} ~ '^[0-9a-f]{64}$')`),
+    // Una sesión CSV conserva siempre el hash de su archivo; las de respaldo no tienen mapeo.
+    check("import_sessions_csv_source_check", sql`(${table.source} = 'csv') = (${table.inputSha256} is not null) and (${table.source} = 'csv' or ${table.csvMapping} is null)`),
     uniqueIndex("import_sessions_user_id_id_unique").on(table.userId, table.id),
     index("import_sessions_user_created_idx").on(table.userId, table.createdAt.desc().nullsFirst(), table.id.desc().nullsFirst()),
     index("import_sessions_expires_at_idx").on(table.expiresAt),
     check("import_sessions_state_check", sql`${table.state} in ${sessionStates}`),
-    check("import_sessions_source_check", sql`${table.source} in ('manifest', 'loose')`),
+    check("import_sessions_source_check", sql`${table.source} in ('manifest', 'loose', 'csv')`),
     check("import_sessions_format_check", sql`${table.payloadFormatVersion} is null or ${table.payloadFormatVersion} in (1, 2)`),
     check("import_sessions_digest_check", sql`${table.manifestDigest} ~ '^[0-9a-f]{64}$'`),
     check("import_sessions_parts_check", sql`${table.partCount} >= 1 and ${table.partCount} <= 50 and ${table.validatedParts} >= 0 and ${table.validatedParts} <= ${table.partCount}`),
@@ -969,23 +986,35 @@ export const importSessionChunks = biblibSchema.table(
   ],
 ).enableRLS()
 
-/** Fila validada de una parte (libro o estantería ya normalizados), con clave estable por sesión. */
+/**
+ * Fila validada de una parte (libro o estantería ya normalizados), con clave estable por sesión. 0014 (O13) añade las
+ * etiquetas, ubicaciones y series de la cuenta de una copia v2 y los registros CSV (`record`, U-DAT-09): estos llevan
+ * su ordinal de registro (no de línea física), una clave durable `source_row_key` y sus incidencias.
+ */
+export type ImportSessionRowKind = "book" | "shelf" | "tag" | "location" | "series" | "record"
+
 export const importSessionRows = biblibSchema.table(
   "import_session_rows",
   {
     sessionId: uuid("session_id").notNull(),
     userId: uuid("user_id").notNull(),
-    kind: text("kind").$type<"book" | "shelf">().notNull(),
+    kind: text("kind").$type<ImportSessionRowKind>().notNull(),
     rowKey: text("row_key").notNull(),
     partIndex: integer("part_index").notNull(),
     position: integer("position").notNull(),
     data: jsonb("data").$type<Record<string, unknown>>().notNull(),
+    sourceOrdinal: integer("source_ordinal"),
+    sourceRowKey: text("source_row_key"),
+    issues: jsonb("issues").$type<CsvRowIssue[]>(),
   },
   (table) => [
     primaryKey({ name: "import_session_rows_pkey", columns: [table.sessionId, table.kind, table.rowKey] }),
     index("import_session_rows_order_idx").on(table.sessionId, table.kind, table.partIndex, table.position),
+    uniqueIndex("import_session_rows_source_key_unique").on(table.sessionId, table.sourceRowKey).where(sql`${table.sourceRowKey} is not null`),
     foreignKey({ name: "import_session_rows_owner_session_fk", columns: [table.userId, table.sessionId], foreignColumns: [importSessions.userId, importSessions.id] }).onDelete("cascade"),
-    check("import_session_rows_kind_check", sql`${table.kind} in ('book', 'shelf')`),
+    check("import_session_rows_kind_check", sql`${table.kind} in ('book', 'shelf', 'tag', 'location', 'series', 'record')`),
+    check("import_session_rows_source_check", sql`(${table.sourceOrdinal} is null) = (${table.sourceRowKey} is null) and (${table.sourceOrdinal} is null or (${table.sourceOrdinal} >= 1 and ${table.sourceOrdinal} <= 1000000 and ${table.sourceRowKey} ~ '^[A-Za-z0-9:_-]{1,128}$'))`),
+    check("import_session_rows_issues_check", sql`${table.issues} is null or (jsonb_typeof(${table.issues}) = 'array' and jsonb_array_length(${table.issues}) <= 50)`),
     check("import_session_rows_key_check", sql`length(${table.rowKey}) between 1 and 200`),
     check("import_session_rows_data_check", sql`jsonb_typeof(${table.data}) = 'object'`),
     pgPolicy("import_session_rows_select_own", { for: "select", to: authenticatedRole, using: ownRow(table.userId) }),
@@ -1054,4 +1083,309 @@ export const coverAssets = biblibSchema.table("cover_assets", {
   check("cover_assets_quarantine_check", sql`${table.state} <> 'quarantine' or ${table.expiresAt} is not null`),
   check("cover_assets_attach_check", sql`(${table.attachBookId} is null) = (${table.attachBookVersion} is null)`),
   pgPolicy("cover_assets_select_own", { for: "select", to: authenticatedRole, using: ownRow(table.userId) }),
+]).enableRLS()
+
+/*
+ * Lote de producto de O13 (0014). Todo privado por cuenta: cada FK entre datos privados incluye al dueño, RLS limita
+ * las filas a `auth.uid()` y toda escritura de cliente exige cuenta activa (políticas RESTRICTIVE de U-OPS-03). Las
+ * tablas que forman parte de la colección (etiquetas, notas, ubicaciones, series y evidencias) rotan la revisión de
+ * colección como libros y estanterías; las de flujo (incidencias, decisiones), el perfil, los assets y los perfiles de
+ * mapeo CSV no. Contrato completo: docs/spec-pendientes/contratos-o13.md.
+ */
+const ownWrites = (name: string, commands: readonly WriteCommand[], userIdColumn: AnyPgColumn) => [
+  pgPolicy(`${name}_select_own`, { for: "select", to: authenticatedRole, using: ownCopyRow(userIdColumn) }),
+  ...commands.map((command) => pgPolicy(`${name}_${command}_own`, {
+    for: command, to: authenticatedRole,
+    ...(command === "insert" ? { withCheck: ownCopyRow(userIdColumn) } : command === "update" ? { using: ownCopyRow(userIdColumn), withCheck: ownCopyRow(userIdColumn) } : { using: ownCopyRow(userIdColumn) }),
+  })),
+  ...activeAccountPolicies(name, commands),
+]
+
+/**
+ * Imagen privada (U-EXP-06 avatar, U-PRO-03 foto de ubicación, U-DAT-07 foto fuente) en el bucket `biblib-media`,
+ * con ruta `{user_id}/{kind}/{id}`. Mismo ciclo que las portadas de U-DAT-10: cuarentena de 15 minutos, objeto
+ * subido con la sesión del dueño y registro tras validar y reencodificar a WebP (sin EXIF ni GPS). El dueño solo
+ * lee sus filas; toda transición pasa por `biblib.media_asset_*`.
+ */
+export const mediaAssets = biblibSchema.table("media_assets", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id").notNull().references(() => authUsers.id, { onDelete: "cascade" }),
+  kind: text("kind").$type<MediaKind>().notNull(),
+  state: text("state").$type<MediaAssetState>().notNull().default("quarantine"),
+  storageKey: text("storage_key").notNull(),
+  sha256: text("sha256"),
+  mime: text("mime"),
+  width: integer("width"),
+  height: integer("height"),
+  bytes: integer("bytes"),
+  // Caducidad de la cuarentena; nula cuando el asset está listo.
+  expiresAt: timestamp("expires_at", { withTimezone: true }),
+  version: uuid("version").notNull().defaultRandom(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  uniqueIndex("media_assets_user_id_id_unique").on(table.userId, table.id),
+  index("media_assets_user_kind_idx").on(table.userId, table.kind, table.createdAt.desc().nullsFirst()),
+  index("media_assets_expires_at_idx").on(table.expiresAt).where(sql`${table.expiresAt} is not null`),
+  check("media_assets_kind_check", sql`${table.kind} in ('avatar', 'location', 'evidence')`),
+  check("media_assets_state_check", sql`${table.state} in ('quarantine', 'ready')`),
+  check("media_assets_key_check", sql`${table.storageKey} = ${table.userId}::text || '/' || ${table.kind} || '/' || ${table.id}::text`),
+  check("media_assets_sha_check", sql`${table.sha256} is null or ${table.sha256} ~ '^[0-9a-f]{64}$'`),
+  check("media_assets_size_check", sql`(${table.bytes} is null or (${table.bytes} >= 1 and ${table.bytes} <= case when ${table.kind} = 'avatar' then 1048576 else 5242880 end)) and (${table.width} is null or (${table.width} >= 1 and ${table.width} <= case when ${table.kind} = 'avatar' then 1024 else 4096 end)) and (${table.height} is null or (${table.height} >= 1 and ${table.height} <= case when ${table.kind} = 'avatar' then 1024 else 4096 end))`),
+  check("media_assets_ready_check", sql`${table.state} = 'quarantine' or (${table.sha256} is not null and ${table.mime} = 'image/webp' and ${table.width} is not null and ${table.height} is not null and ${table.bytes} is not null and ${table.expiresAt} is null)`),
+  check("media_assets_quarantine_check", sql`${table.state} <> 'quarantine' or ${table.expiresAt} is not null`),
+  pgPolicy("media_assets_select_own", { for: "select", to: authenticatedRole, using: ownCopyRow(table.userId) }),
+]).enableRLS()
+
+/** Perfil privado (U-EXP-06): el avatar propio sin tocar la metadata OAuth de Google. Una fila por cuenta. */
+export const profiles = biblibSchema.table("profiles", {
+  userId: uuid("user_id").primaryKey().references(() => authUsers.id, { onDelete: "cascade" }),
+  avatarAssetId: uuid("avatar_asset_id"),
+  version: uuid("version").notNull().defaultRandom(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index("profiles_avatar_idx").on(table.userId, table.avatarAssetId).where(sql`${table.avatarAssetId} is not null`),
+  foreignKey({ name: "profiles_owner_avatar_fk", columns: [table.userId, table.avatarAssetId], foreignColumns: [mediaAssets.userId, mediaAssets.id] }),
+  ...ownWrites("profiles", ALL_WRITES, table.userId),
+]).enableRLS()
+
+/** Etiqueta de la cuenta (U-PRO-01). `normalized_name` la calcula Postgres: mayúsculas y acentos no duplican. */
+export const tags = biblibSchema.table("tags", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id").notNull().references(() => authUsers.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  normalizedName: text("normalized_name").notNull().generatedAlwaysAs(sql`biblib.tag_normalize(name)`),
+  version: uuid("version").notNull().defaultRandom(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  uniqueIndex("tags_user_id_id_unique").on(table.userId, table.id),
+  uniqueIndex("tags_user_normalized_unique").on(table.userId, table.normalizedName),
+  check("tags_name_check", sql`char_length(${table.name}) >= 1 and char_length(${table.name}) <= 40 and ${table.name} = btrim(${table.name}) and ${table.name} !~ '[[:cntrl:]]'`),
+  ...ownWrites("tags", ALL_WRITES, table.userId),
+]).enableRLS()
+
+/** Etiquetas de un ejemplar (hasta 20). Borrar la etiqueta o el ejemplar retira la asociación, nunca el otro. */
+export const copyTags = biblibSchema.table("copy_tags", {
+  userId: uuid("user_id").notNull(),
+  copyId: uuid("copy_id").notNull(),
+  tagId: uuid("tag_id").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  primaryKey({ name: "copy_tags_pkey", columns: [table.userId, table.copyId, table.tagId] }),
+  index("copy_tags_user_tag_idx").on(table.userId, table.tagId),
+  foreignKey({ name: "copy_tags_owner_copy_fk", columns: [table.userId, table.copyId], foreignColumns: [copies.userId, copies.id] }).onDelete("cascade"),
+  foreignKey({ name: "copy_tags_owner_tag_fk", columns: [table.userId, table.tagId], foreignColumns: [tags.userId, tags.id] }).onDelete("cascade"),
+  ...ownWrites("copy_tags", ["insert", "delete"], table.userId),
+]).enableRLS()
+
+/** Nota privada y valoración de un ejemplar (U-PRO-01), nunca en `books_legacy`. Una fila por ejemplar. */
+export const copyAnnotations = biblibSchema.table("copy_annotations", {
+  userId: uuid("user_id").notNull(),
+  copyId: uuid("copy_id").notNull(),
+  notes: text("notes"),
+  rating: smallint("rating").$type<CopyRating>(),
+  version: uuid("version").notNull().defaultRandom(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  primaryKey({ name: "copy_annotations_pkey", columns: [table.userId, table.copyId] }),
+  foreignKey({ name: "copy_annotations_owner_copy_fk", columns: [table.userId, table.copyId], foreignColumns: [copies.userId, copies.id] }).onDelete("cascade"),
+  check("copy_annotations_notes_check", sql`${table.notes} is null or (char_length(${table.notes}) >= 1 and char_length(${table.notes}) <= 4000)`),
+  check("copy_annotations_rating_check", sql`${table.rating} is null or (${table.rating} >= 1 and ${table.rating} <= 5)`),
+  ...ownWrites("copy_annotations", ALL_WRITES, table.userId),
+]).enableRLS()
+
+/**
+ * Ubicación física (U-PRO-03): árbol propio sin ciclos ni más de 8 niveles (`biblib.guard_location_tree`). No se borra
+ * una ubicación con hijas ni con ejemplares. La foto es un asset `location` propio y listo.
+ */
+export const locations = biblibSchema.table("locations", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id").notNull().references(() => authUsers.id, { onDelete: "cascade" }),
+  parentId: uuid("parent_id"),
+  name: text("name").notNull(),
+  kind: text("kind").$type<LocationKind>().notNull(),
+  photoAssetId: uuid("photo_asset_id"),
+  version: uuid("version").notNull().defaultRandom(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  uniqueIndex("locations_user_id_id_unique").on(table.userId, table.id),
+  index("locations_user_parent_idx").on(table.userId, table.parentId),
+  index("locations_photo_idx").on(table.userId, table.photoAssetId).where(sql`${table.photoAssetId} is not null`),
+  foreignKey({ name: "locations_owner_parent_fk", columns: [table.userId, table.parentId], foreignColumns: [table.userId, table.id] }),
+  foreignKey({ name: "locations_owner_photo_fk", columns: [table.userId, table.photoAssetId], foreignColumns: [mediaAssets.userId, mediaAssets.id] }),
+  check("locations_name_check", sql`char_length(${table.name}) >= 1 and char_length(${table.name}) <= 120 and ${table.name} = btrim(${table.name})`),
+  check("locations_kind_check", sql`${table.kind} in ('room', 'bookcase', 'cabinet', 'box', 'shelf', 'other')`),
+  check("locations_parent_check", sql`${table.parentId} is null or ${table.parentId} <> ${table.id}`),
+  ...ownWrites("locations", ALL_WRITES, table.userId),
+]).enableRLS()
+
+/** Ubicación actual de un ejemplar: una como máximo. La estantería lógica no cambia al moverlo. */
+export const copyLocations = biblibSchema.table("copy_locations", {
+  userId: uuid("user_id").notNull(),
+  copyId: uuid("copy_id").notNull(),
+  locationId: uuid("location_id").notNull(),
+  shelfLabel: text("shelf_label"),
+  position: integer("position"),
+  version: uuid("version").notNull().defaultRandom(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  primaryKey({ name: "copy_locations_pkey", columns: [table.userId, table.copyId] }),
+  index("copy_locations_user_location_idx").on(table.userId, table.locationId),
+  foreignKey({ name: "copy_locations_owner_copy_fk", columns: [table.userId, table.copyId], foreignColumns: [copies.userId, copies.id] }).onDelete("cascade"),
+  foreignKey({ name: "copy_locations_owner_location_fk", columns: [table.userId, table.locationId], foreignColumns: [locations.userId, locations.id] }),
+  check("copy_locations_shelf_label_check", sql`${table.shelfLabel} is null or (char_length(${table.shelfLabel}) >= 1 and char_length(${table.shelfLabel}) <= 60 and ${table.shelfLabel} = btrim(${table.shelfLabel}))`),
+  check("copy_locations_position_check", sql`${table.position} is null or (${table.position} >= 1 and ${table.position} <= 100000)`),
+  ...ownWrites("copy_locations", ALL_WRITES, table.userId),
+]).enableRLS()
+
+/** Serie privada (U-PRO-05). Su identidad no sale del ISBN; dos cuentas pueden repetir título. */
+export const series = biblibSchema.table("series", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id").notNull().references(() => authUsers.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  description: text("description"),
+  version: uuid("version").notNull().defaultRandom(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  uniqueIndex("series_user_id_id_unique").on(table.userId, table.id),
+  index("series_user_title_idx").on(table.userId, table.title),
+  check("series_title_check", sql`char_length(${table.title}) >= 1 and char_length(${table.title}) <= 300 and ${table.title} = btrim(${table.title})`),
+  check("series_description_check", sql`${table.description} is null or (char_length(${table.description}) >= 1 and char_length(${table.description}) <= 2000)`),
+  ...ownWrites("series", ALL_WRITES, table.userId),
+]).enableRLS()
+
+/**
+ * Edición en una serie (cero o una por edición). `position` es NUMERIC exacto ≥ 0 con hasta 4 decimales: 1, 1.5 y 2
+ * ordenan sin flotantes; nula si el orden es desconocido. Borrar la serie retira los vínculos, nunca las ediciones.
+ */
+export const seriesEditions = biblibSchema.table("series_editions", {
+  userId: uuid("user_id").notNull(),
+  editionId: uuid("edition_id").notNull(),
+  seriesId: uuid("series_id").notNull(),
+  position: numeric("position"),
+  volumeLabel: text("volume_label"),
+  orderNote: text("order_note"),
+  version: uuid("version").notNull().defaultRandom(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  primaryKey({ name: "series_editions_pkey", columns: [table.userId, table.editionId] }),
+  index("series_editions_order_idx").on(table.userId, table.seriesId, table.position),
+  foreignKey({ name: "series_editions_owner_edition_fk", columns: [table.userId, table.editionId], foreignColumns: [editions.userId, editions.id] }).onDelete("cascade"),
+  foreignKey({ name: "series_editions_owner_series_fk", columns: [table.userId, table.seriesId], foreignColumns: [series.userId, series.id] }).onDelete("cascade"),
+  check("series_editions_position_check", sql`${table.position} is null or (${table.position} >= 0 and ${table.position} < 1000000 and scale(${table.position}) <= 4)`),
+  check("series_editions_volume_label_check", sql`${table.volumeLabel} is null or (char_length(${table.volumeLabel}) >= 1 and char_length(${table.volumeLabel}) <= 40)`),
+  check("series_editions_order_note_check", sql`${table.orderNote} is null or (char_length(${table.orderNote}) >= 1 and char_length(${table.orderNote}) <= 200)`),
+  ...ownWrites("series_editions", ALL_WRITES, table.userId),
+]).enableRLS()
+
+/**
+ * Evidencia bibliográfica (U-DAT-07) de una edición o de un ejemplar (exactamente uno, con FK del mismo dueño). La
+ * confianza es una etiqueta, nunca un porcentaje; `physically_checked` solo en un ejemplar. Sin URL ni foto inventadas.
+ */
+export const bibliographicEvidence = biblibSchema.table("bibliographic_evidence", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id").notNull().references(() => authUsers.id, { onDelete: "cascade" }),
+  editionId: uuid("edition_id"),
+  copyId: uuid("copy_id"),
+  sourceKind: text("source_kind").$type<EvidenceSourceKind>().notNull(),
+  sourceRef: text("source_ref"),
+  sourceUrl: text("source_url"),
+  photoAssetId: uuid("photo_asset_id"),
+  observedAt: timestamp("observed_at", { withTimezone: true }),
+  fieldClaims: jsonb("field_claims").$type<Record<string, unknown>>().notNull().default({}),
+  confidence: text("confidence").$type<ConfidenceLabel>().notNull(),
+  origin: text("origin").$type<EvidenceOrigin>().notNull().default("review"),
+  version: uuid("version").notNull().defaultRandom(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  uniqueIndex("bibliographic_evidence_user_id_id_unique").on(table.userId, table.id),
+  index("bibliographic_evidence_edition_idx").on(table.userId, table.editionId).where(sql`${table.editionId} is not null`),
+  index("bibliographic_evidence_copy_idx").on(table.userId, table.copyId).where(sql`${table.copyId} is not null`),
+  index("bibliographic_evidence_photo_idx").on(table.userId, table.photoAssetId).where(sql`${table.photoAssetId} is not null`),
+  foreignKey({ name: "bibliographic_evidence_owner_edition_fk", columns: [table.userId, table.editionId], foreignColumns: [editions.userId, editions.id] }).onDelete("cascade"),
+  foreignKey({ name: "bibliographic_evidence_owner_copy_fk", columns: [table.userId, table.copyId], foreignColumns: [copies.userId, copies.id] }).onDelete("cascade"),
+  foreignKey({ name: "bibliographic_evidence_owner_photo_fk", columns: [table.userId, table.photoAssetId], foreignColumns: [mediaAssets.userId, mediaAssets.id] }),
+  check("bibliographic_evidence_subject_check", sql`num_nonnulls(${table.editionId}, ${table.copyId}) = 1`),
+  check("bibliographic_evidence_source_kind_check", sql`${table.sourceKind} in ('provider', 'photo', 'manual', 'import')`),
+  check("bibliographic_evidence_confidence_check", sql`${table.confidence} in ('provisional', 'bibliographic_match', 'physically_checked')`),
+  check("bibliographic_evidence_origin_check", sql`${table.origin} in ('backfill', 'review', 'import')`),
+  check("bibliographic_evidence_physical_check", sql`${table.confidence} <> 'physically_checked' or ${table.copyId} is not null`),
+  check("bibliographic_evidence_photo_check", sql`${table.photoAssetId} is null or ${table.sourceKind} = 'photo'`),
+  check("bibliographic_evidence_source_ref_check", sql`${table.sourceRef} is null or ${table.sourceRef} ~ '^[A-Za-z0-9:._-]{1,200}$'`),
+  check("bibliographic_evidence_source_url_check", sql`${table.sourceUrl} is null or (${table.sourceUrl} ~ '^https?://' and char_length(${table.sourceUrl}) <= 2048)`),
+  check("bibliographic_evidence_claims_check", sql`jsonb_typeof(${table.fieldClaims}) = 'object' and octet_length(${table.fieldClaims}::text) <= 16384`),
+  ...ownWrites("bibliographic_evidence", ALL_WRITES, table.userId),
+]).enableRLS()
+
+/** Incidencia de revisión (U-DAT-07): motivo, entidades citadas (solo IDs) y estado. Ignorar no borra evidencias. */
+export const reviewIssues = biblibSchema.table("review_issues", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id").notNull().references(() => authUsers.id, { onDelete: "cascade" }),
+  reason: text("reason").$type<ReviewReason>().notNull(),
+  entityRefs: jsonb("entity_refs").$type<ReviewEntityRef[]>().notNull(),
+  state: text("state").$type<ReviewState>().notNull().default("open"),
+  dedupeKey: text("dedupe_key"),
+  version: uuid("version").notNull().defaultRandom(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+}, (table) => [
+  uniqueIndex("review_issues_user_id_id_unique").on(table.userId, table.id),
+  uniqueIndex("review_issues_open_dedupe_unique").on(table.userId, table.dedupeKey).where(sql`${table.dedupeKey} is not null and ${table.state} = 'open'`),
+  index("review_issues_user_state_idx").on(table.userId, table.state, table.createdAt.desc().nullsFirst(), table.id.desc().nullsFirst()),
+  check("review_issues_reason_check", sql`${table.reason} in ('provisional', 'missing_isbn', 'invalid_isbn', 'missing_cover', 'isbn_conflict', 'duplicate_candidate', 'photo_doubt', 'source_conflict')`),
+  check("review_issues_state_check", sql`${table.state} in ('open', 'resolved', 'ignored')`),
+  check("review_issues_refs_check", sql`jsonb_typeof(${table.entityRefs}) = 'array' and jsonb_array_length(${table.entityRefs}) >= 1 and jsonb_array_length(${table.entityRefs}) <= 50`),
+  check("review_issues_dedupe_check", sql`${table.dedupeKey} is null or ${table.dedupeKey} ~ '^[A-Za-z0-9:._-]{1,200}$'`),
+  check("review_issues_resolved_check", sql`(${table.state} = 'open') = (${table.resolvedAt} is null)`),
+  ...ownWrites("review_issues", ALL_WRITES, table.userId),
+]).enableRLS()
+
+/** Decisión humana sobre una incidencia: solo inserción desde el cliente; desaparece con su incidencia o la cuenta. */
+export const reviewDecisions = biblibSchema.table("review_decisions", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id").notNull().references(() => authUsers.id, { onDelete: "cascade" }),
+  issueId: uuid("issue_id").notNull(),
+  kind: text("kind").$type<ReviewDecisionKind>().notNull(),
+  selectedFields: jsonb("selected_fields").$type<Record<string, unknown>>().notNull().default({}),
+  evidenceRefs: jsonb("evidence_refs").$type<string[]>().notNull().default([]),
+  actor: text("actor").$type<"owner">().notNull().default("owner"),
+  operationId: uuid("operation_id"),
+  decidedAt: timestamp("decided_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  uniqueIndex("review_decisions_user_id_id_unique").on(table.userId, table.id),
+  index("review_decisions_issue_idx").on(table.userId, table.issueId, table.decidedAt),
+  foreignKey({ name: "review_decisions_owner_issue_fk", columns: [table.userId, table.issueId], foreignColumns: [reviewIssues.userId, reviewIssues.id] }).onDelete("cascade"),
+  check("review_decisions_kind_check", sql`${table.kind} in ('accept_fields', 'ignore', 'confirm_physical', 'merge', 'reopen')`),
+  check("review_decisions_fields_check", sql`jsonb_typeof(${table.selectedFields}) = 'object' and octet_length(${table.selectedFields}::text) <= 16384`),
+  check("review_decisions_refs_check", sql`jsonb_typeof(${table.evidenceRefs}) = 'array' and jsonb_array_length(${table.evidenceRefs}) <= 50`),
+  check("review_decisions_actor_check", sql`${table.actor} = 'owner'`),
+  ...ownWrites("review_decisions", ["insert"], table.userId),
+]).enableRLS()
+
+/** Perfil de mapeo CSV guardado a petición (U-DAT-09): privado, versionado y sin muestras de filas. */
+export const csvMappingProfiles = biblibSchema.table("csv_mapping_profiles", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id").notNull().references(() => authUsers.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  mapping: jsonb("mapping").$type<CsvMapping>().notNull(),
+  mappingVersion: integer("mapping_version").notNull().default(1),
+  version: uuid("version").notNull().defaultRandom(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  uniqueIndex("csv_mapping_profiles_user_id_id_unique").on(table.userId, table.id),
+  uniqueIndex("csv_mapping_profiles_user_name_unique").on(table.userId, sql`lower(${table.name})`),
+  check("csv_mapping_profiles_name_check", sql`char_length(${table.name}) >= 1 and char_length(${table.name}) <= 80 and ${table.name} = btrim(${table.name})`),
+  check("csv_mapping_profiles_mapping_check", sql`jsonb_typeof(${table.mapping}) = 'object' and octet_length(${table.mapping}::text) <= 16384`),
+  check("csv_mapping_profiles_version_check", sql`${table.mappingVersion} >= 1`),
+  ...ownWrites("csv_mapping_profiles", ALL_WRITES, table.userId),
 ]).enableRLS()

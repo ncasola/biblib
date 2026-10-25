@@ -1,5 +1,5 @@
 import { createHash, randomUUID } from "node:crypto"
-import { and, asc, eq, inArray, sql } from "drizzle-orm"
+import { and, asc, eq, inArray, ne, sql } from "drizzle-orm"
 import type { DatabaseTransaction } from "./db/client"
 import { books, importSessionParts, importSessions, libraryOperations, librarySnapshots, shelves, type RestoreSessionTotals } from "./db/schema"
 import { DEFAULT_BOOK_COVER } from "./book-covers"
@@ -15,6 +15,8 @@ import {
 } from "./import-manifest"
 import { parseLibraryImport } from "./library-import"
 import { captureSnapshot } from "./library-snapshots"
+import { applyProductData, deleteAccountProduct, readProductTargets } from "./db/product"
+import type { LocationEntry, SeriesEntry, TagEntry } from "./product/contracts"
 import type { Book, LibraryData, Shelf } from "./types"
 
 // Restauración de conjuntos de partes (U-DAT-04) sobre Postgres. Cada función recibe una transacción
@@ -116,7 +118,7 @@ async function readParts(tx: DatabaseTransaction, userId: string, sessionId: str
 
 function view(session: SessionRow, parts: RestorePartView[]): RestoreSessionView {
   return {
-    sessionId: session.id, state: session.state, source: session.source, exportSetId: session.exportSetId,
+    sessionId: session.id, state: session.state, source: session.source === "manifest" ? "manifest" : "loose", exportSetId: session.exportSetId,
     payloadFormatVersion: session.payloadFormatVersion === 1 || session.payloadFormatVersion === 2 ? session.payloadFormatVersion : null,
     manifestDigest: session.manifestDigest, partCount: session.partCount, validatedParts: session.validatedParts,
     receivedBytes: session.receivedBytes, totalBytes: session.totalBytes, totals: session.totals ?? null, errorCode: session.errorCode,
@@ -127,7 +129,8 @@ function view(session: SessionRow, parts: RestorePartView[]): RestoreSessionView
 /** Sesión propia vigente (bloqueada si `forUpdate`), o el error genérico: ajena, inexistente y caducada responden igual. */
 async function loadSession(tx: DatabaseTransaction, userId: string, sessionId: string, { forUpdate = false } = {}): Promise<SessionRow & { expired: boolean; previewExpired: boolean }> {
   const query = tx.select({ session: importSessions, expired: sql<boolean>`${importSessions.expiresAt} <= now()`, previewExpired: sql<boolean>`coalesce(${importSessions.previewExpiresAt} <= now(), false)` })
-    .from(importSessions).where(and(eq(importSessions.id, sessionId), eq(importSessions.userId, userId))).limit(1)
+    // Las sesiones CSV (U-DAT-09, 0014) comparten tabla pero son de otro flujo: aquí no existen.
+    .from(importSessions).where(and(eq(importSessions.id, sessionId), eq(importSessions.userId, userId), ne(importSessions.source, "csv"))).limit(1)
   const [row] = forUpdate ? await query.for("update") : await query
   if (!row) throw sessionUnavailable()
   return { ...row.session, expired: row.expired, previewExpired: row.previewExpired }
@@ -136,7 +139,7 @@ async function loadSession(tx: DatabaseTransaction, userId: string, sessionId: s
 /** Restauraciones a medias del dueño (sin publicar ni caducar), las más recientes primero. */
 export async function listOpenSessions(tx: DatabaseTransaction, userId: string): Promise<RestoreSessionView[]> {
   const rows = await tx.select().from(importSessions)
-    .where(and(eq(importSessions.userId, userId), sql`${importSessions.expiresAt} > now()`, sql`${importSessions.state} in ('receiving', 'validated', 'prepared')`))
+    .where(and(eq(importSessions.userId, userId), ne(importSessions.source, "csv"), sql`${importSessions.expiresAt} > now()`, sql`${importSessions.state} in ('receiving', 'validated', 'prepared')`))
     .orderBy(sql`${importSessions.createdAt} desc`, sql`${importSessions.id} desc`).limit(RESTORE_LIMITS.maxOpenSessions)
   return Promise.all(rows.map(async (row) => view(row, await readParts(tx, userId, row.id))))
 }
@@ -177,7 +180,7 @@ export async function beginSession(tx: DatabaseTransaction, userId: string, inpu
   // Las sesiones vencidas del dueño se retiran al empezar otra; nunca toca la colección activa.
   await tx.delete(importSessions).where(and(eq(importSessions.userId, userId), sql`${importSessions.expiresAt} <= now()`))
   const [{ open }] = await tx.select({ open: sql<number>`count(*)::int` }).from(importSessions)
-    .where(and(eq(importSessions.userId, userId), sql`${importSessions.state} in ('receiving', 'validated', 'prepared')`))
+    .where(and(eq(importSessions.userId, userId), ne(importSessions.source, "csv"), sql`${importSessions.state} in ('receiving', 'validated', 'prepared')`))
   if (open >= RESTORE_LIMITS.maxOpenSessions) {
     throw new DomainError("LIMIT_EXCEEDED", `Ya tienes ${RESTORE_LIMITS.maxOpenSessions} restauraciones a medias. Descarta alguna en Ajustes o espera a que caduquen antes de empezar otra.`)
   }
@@ -280,26 +283,34 @@ async function validatePart(tx: DatabaseTransaction, userId: string, session: Se
   try { library = parseLibraryImport(raw) }
   catch (error) { throw new ManifestError("INVALID_INPUT", `Parte ${part.partIndex + 1}: ${error instanceof Error ? error.message : "no tiene un formato de biblioteca válido."}`) }
 
-  const shelfRows = library.shelves.map((shelf, position) => ({ kind: "shelf" as const, rowKey: shelf.id, position, data: shelfData(shelf) }))
   const bookRows = library.books.map((book, position) => ({ kind: "book" as const, rowKey: book.id, position, data: { ...book, shelf_name: "" } }))
-  for (let offset = 0; offset < shelfRows.length; offset += 200) {
-    const batch = shelfRows.slice(offset, offset + 200)
-    const inserted = await tx.execute<{ row_key: string }>(sql`insert into biblib.import_session_rows (session_id, user_id, kind, row_key, part_index, position, data)
-      select ${session.id}::uuid, ${userId}::uuid, 'shelf', r.key, ${part.partIndex}, r.position, r.data
-      from jsonb_to_recordset(${JSON.stringify(batch.map((row) => ({ key: row.rowKey, position: row.position, data: row.data })))}::jsonb) as r(key text, position integer, data jsonb)
-      on conflict do nothing returning row_key`)
-    const fresh = new Set([...inserted].map((row) => row.row_key))
-    const shared = batch.filter((row) => !fresh.has(row.rowKey))
-    if (!shared.length) continue
-    const previous = await tx.execute<{ row_key: string; data: Record<string, unknown> }>(sql`select row_key, data from biblib.import_session_rows
-      where session_id = ${session.id}::uuid and kind = 'shelf' and row_key in (${sql.join(shared.map((row) => sql`${row.rowKey}`), sql`, `)})`)
-    const stored = new Map([...previous].map((row) => [row.row_key, row.data]))
-    for (const row of shared) {
-      if (canonicalJson(stored.get(row.rowKey)) !== canonicalJson(row.data)) {
-        throw new ManifestError("MANIFEST_MISMATCH", `La estantería «${row.data.title}» aparece con datos distintos en varias partes. Resuelve la contradicción antes de restaurar.`)
+  // Estanterías y, desde 0014, etiquetas, ubicaciones y series de la cuenta: pueden repetirse en varias partes, siempre iguales.
+  const shared = async (kind: "shelf" | "tag" | "location" | "series", items: { id: string; data: Record<string, unknown> }[], conflict: (data: Record<string, unknown>) => string) => {
+    for (let offset = 0; offset < items.length; offset += 200) {
+      const batch = items.slice(offset, offset + 200)
+      const inserted = await tx.execute<{ row_key: string }>(sql`insert into biblib.import_session_rows (session_id, user_id, kind, row_key, part_index, position, data)
+        select ${session.id}::uuid, ${userId}::uuid, ${kind}, r.key, ${part.partIndex}, r.position, r.data
+        from jsonb_to_recordset(${JSON.stringify(batch.map((row, index) => ({ key: row.id, position: offset + index, data: row.data })))}::jsonb) as r(key text, position integer, data jsonb)
+        on conflict do nothing returning row_key`)
+      const fresh = new Set([...inserted].map((row) => row.row_key))
+      const repeated = batch.filter((row) => !fresh.has(row.id))
+      if (!repeated.length) continue
+      const previous = await tx.execute<{ row_key: string; data: Record<string, unknown> }>(sql`select row_key, data from biblib.import_session_rows
+        where session_id = ${session.id}::uuid and kind = ${kind} and row_key in (${sql.join(repeated.map((row) => sql`${row.id}`), sql`, `)})`)
+      const stored = new Map([...previous].map((row) => [row.row_key, row.data]))
+      for (const row of repeated) {
+        if (canonicalJson(stored.get(row.id)) !== canonicalJson(row.data)) throw new ManifestError("MANIFEST_MISMATCH", conflict(row.data))
       }
     }
   }
+  await shared("shelf", library.shelves.map((shelf) => ({ id: shelf.id, data: shelfData(shelf) })),
+    (data) => `La estantería «${data.title}» aparece con datos distintos en varias partes. Resuelve la contradicción antes de restaurar.`)
+  await shared("tag", (library.tags ?? []).map((tag) => ({ id: tag.id, data: { ...tag } })),
+    (data) => `La etiqueta «${data.name}» aparece con datos distintos en varias partes. Resuelve la contradicción antes de restaurar.`)
+  await shared("location", (library.locations ?? []).map((location) => ({ id: location.id, data: { ...location } })),
+    (data) => `La ubicación «${data.name}» aparece con datos distintos en varias partes. Resuelve la contradicción antes de restaurar.`)
+  await shared("series", (library.series ?? []).map((entry) => ({ id: entry.id, data: { ...entry } })),
+    (data) => `La serie «${data.title}» aparece con datos distintos en varias partes. Resuelve la contradicción antes de restaurar.`)
   for (let offset = 0; offset < bookRows.length; offset += 500) {
     const batch = bookRows.slice(offset, offset + 500)
     const [{ inserted }] = await tx.execute<{ inserted: number }>(sql`with added as (insert into biblib.import_session_rows (session_id, user_id, kind, row_key, part_index, position, data)
@@ -318,7 +329,9 @@ async function validatePart(tx: DatabaseTransaction, userId: string, session: Se
 async function crossValidate(tx: DatabaseTransaction, sessionId: string): Promise<RestoreSessionTotals> {
   // U-DAT-06: varias copias de una edición pueden venir en partes distintas; dos ediciones nunca comparten
   // ISBN-13, un identificador legacy es de un solo ejemplar y la misma edición trae los mismos datos en cada parte.
-  const [facts] = await tx.execute<{ books: number; shelves: number; defaults: number; isbn_dupes: number; legacy_dupes: number; edition_conflicts: number; title_dupes: number; orphans: number }>(sql`
+  // 0014: las notas, ubicación y evidencias son del ejemplar (no cuentan para la edición) y dos etiquetas de partes distintas no
+  // pueden ser la misma por nombre normalizado.
+  const [facts] = await tx.execute<{ books: number; shelves: number; defaults: number; isbn_dupes: number; legacy_dupes: number; edition_conflicts: number; title_dupes: number; orphans: number; tag_dupes: number }>(sql`
     select
       (select count(*)::int from biblib.import_session_rows where session_id = ${sessionId}::uuid and kind = 'book') as books,
       (select count(*)::int from biblib.import_session_rows where session_id = ${sessionId}::uuid and kind = 'shelf') as shelves,
@@ -329,13 +342,15 @@ async function crossValidate(tx: DatabaseTransaction, sessionId: string): Promis
         group by data->>'legacyIdentifier' having count(*) > 1) l) as legacy_dupes,
       (select count(*)::int from (select 1 from biblib.import_session_rows where session_id = ${sessionId}::uuid and kind = 'book'
         group by coalesce(data->'edition'->>'id', row_key)
-        having count(distinct (data - 'id' - 'status' - 'shelf_id' - 'shelf_name' - 'legacyIdentifier' - 'verification' - 'catalogue') || jsonb_build_object('catalogue', (data->'catalogue') - 'isbnVerified')) > 1) e) as edition_conflicts,
+        having count(distinct (data - 'id' - 'status' - 'shelf_id' - 'shelf_name' - 'legacyIdentifier' - 'verification' - 'catalogue' - 'personal' - 'location' - 'evidence') || jsonb_build_object('catalogue', (data->'catalogue') - 'isbnVerified')) > 1) e) as edition_conflicts,
+      (select count(*)::int from (select 1 from biblib.import_session_rows where session_id = ${sessionId}::uuid and kind = 'tag' group by biblib.tag_normalize(data->>'name') having count(*) > 1) g) as tag_dupes,
       (select count(*)::int from (select 1 from biblib.import_session_rows where session_id = ${sessionId}::uuid and kind = 'shelf' group by lower(data->>'title') having count(*) > 1) t) as title_dupes,
       (select count(*)::int from biblib.import_session_rows b where b.session_id = ${sessionId}::uuid and b.kind = 'book'
         and not exists (select 1 from biblib.import_session_rows s where s.session_id = b.session_id and s.kind = 'shelf' and s.row_key = b.data->>'shelf_id')) as orphans`)
   if (facts.isbn_dupes || facts.legacy_dupes) throw new ManifestError("MANIFEST_MISMATCH", "Varias partes contienen libros con el mismo ISBN o identificador. No se ha modificado nada.")
   if (facts.edition_conflicts) throw new ManifestError("MANIFEST_MISMATCH", "Una misma edición aparece con datos bibliográficos distintos en varias partes: el conjunto no es coherente. No se ha modificado nada.")
   if (facts.title_dupes) throw new ManifestError("MANIFEST_MISMATCH", "Varias partes contienen estanterías distintas con el mismo nombre. Resuelve la contradicción antes de restaurar.")
+  if (facts.tag_dupes) throw new ManifestError("MANIFEST_MISMATCH", "Varias partes contienen etiquetas distintas que son la misma por mayúsculas o acentos. Resuelve la contradicción antes de restaurar.")
   if (facts.defaults > 1) throw new ManifestError("MANIFEST_MISMATCH", "Las partes tienen más de una estantería predeterminada: no parecen de la misma copia.")
   if (facts.orphans) throw new ManifestError("MANIFEST_MISMATCH", "Hay libros que hacen referencia a una estantería inexistente en el conjunto.")
   assertSetLimits([], { books: facts.books, shelves: facts.shelves })
@@ -435,11 +450,14 @@ export interface PreparedRestore {
 
 /** Contenido validado de la sesión en la forma legacy común, en el orden de sus partes. */
 async function stagedLibrary(tx: DatabaseTransaction, userId: string, sessionId: string): Promise<LibraryData> {
-  const rows = await tx.execute<{ kind: "book" | "shelf"; data: Record<string, unknown> }>(sql`select kind, data from biblib.import_session_rows
-    where session_id = ${sessionId}::uuid and user_id = ${userId}::uuid order by kind desc, part_index, position`)
-  const library: LibraryData = { shelves: [], books: [] }
+  const rows = await tx.execute<{ kind: "book" | "shelf" | "tag" | "location" | "series"; data: Record<string, unknown> }>(sql`select kind, data from biblib.import_session_rows
+    where session_id = ${sessionId}::uuid and user_id = ${userId}::uuid and kind in ('book', 'shelf', 'tag', 'location', 'series') order by kind desc, part_index, position`)
+  const library: Required<LibraryData> = { shelves: [], books: [], tags: [], locations: [], series: [] }
   for (const row of rows) {
     if (row.kind === "shelf") library.shelves.push({ ...(row.data as unknown as Shelf), book_count: 0 })
+    else if (row.kind === "tag") library.tags.push(row.data as unknown as TagEntry)
+    else if (row.kind === "location") library.locations.push(row.data as unknown as LocationEntry)
+    else if (row.kind === "series") library.series.push(row.data as unknown as SeriesEntry)
     else library.books.push(row.data as unknown as Book)
   }
   return library
@@ -539,9 +557,13 @@ export async function publishRestoreSession(tx: DatabaseTransaction, request: Co
   await step(() => tx.insert(libraryOperations).values({ id: operationId, userId, operation: RESTORE_OPERATION, idempotencyKey, inputDigest: digest!, previewId, status: "committed", result }))
   const snapshot = await step(() => captureSnapshot(tx, { operationId, reason: "import.replace" }))
   await hooks.afterCapture?.(snapshot.id)
+  // Datos de producto (0014): el origen es el staging; qué IDs eran del dueño se lee antes de retirar nada.
+  const staged = await step(() => stagedLibrary(tx, userId, sessionId))
+  const productTargets = await step(() => readProductTargets(tx, userId, staged, "replace"))
   // Retirar los ejemplares poda sus ediciones y obras (0010).
   await step(() => tx.execute(sql`delete from biblib.copies where user_id = ${userId}::uuid`))
   await step(() => tx.delete(shelves).where(and(eq(shelves.userId, userId), eq(shelves.isDefault, false))))
+  await step(() => deleteAccountProduct(tx, userId))
   await step(() => tx.execute(sql`insert into biblib.shelves (id, user_id, title, is_default)
     select p.id, s.user_id, p.title, false from biblib.import_sessions s
     cross join lateral jsonb_to_recordset(s.plan->'shelves'->'create') as p(id uuid, title text)
@@ -570,6 +592,7 @@ export async function publishRestoreSession(tx: DatabaseTransaction, request: Co
     ${fromPlan("books,insert", sql`"sourceId" text, id uuid, "shelfId" uuid, "editionId" uuid`)}
     returning 1) select count(*)::int as inserted from added`))
   if (inserted !== plan.books.insert.length || editionsInserted !== plan.editions.create.length || worksInserted !== plan.works.create.length) throw revisionConflict()
+  await step(() => applyProductData(tx, userId, staged, plan, "replace", productTargets, previewAllocator(previewId)))
   await hooks.beforeFinalize?.()
   await step(() => tx.update(importSessions).set({ state: "committed", operationId, updatedAt: sql`now()` }).where(eq(importSessions.id, sessionId)))
   return { operationId, result, replayed: false, snapshotId: snapshot.id }

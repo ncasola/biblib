@@ -21,8 +21,11 @@ const nextConfig = {
         { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
         { key: "X-Frame-Options", value: "DENY" },
         { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
-        // La cámara queda prohibida en todo el sitio; U-EXP-05 la habilitará solo en su ruta.
+        // Por defecto ningún documento puede usar cámara; la excepción exacta se publica debajo.
         { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=(), usb=()" },
+      ] },
+      { source: "/books/add", headers: [
+        { key: "Permissions-Policy", value: "camera=(self), microphone=(), geolocation=(), payment=(), usb=()" },
       ] },
       // HTML, acciones, API y callback dependen de la sesión: nada de caché compartida (CDN o proxy).
       // Quedan fuera los estáticos con hash de Next y los archivos de public/, que no llevan cookies.

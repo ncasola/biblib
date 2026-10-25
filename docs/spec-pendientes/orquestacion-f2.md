@@ -1,6 +1,6 @@
 # Orquestación de F2 con Orca
 
-**Versión:** 1.0 · **Fecha:** 24 de octubre de 2026 · **Estado:** en ejecución: O11 cerrada ([G11](../validacion/2026-10-24/O11/g11-coordinador.md)); O12 en curso.
+**Versión:** 1.0 · **Fecha:** 24 de octubre de 2026 · **Estado:** en ejecución: O11 cerrada ([G11](../validacion/2026-10-24/O11/g11-coordinador.md)), O12 cerrada ([G12](../validacion/2026-10-25/O12/g12-coordinador.md)) y O13 en curso.
 
 Plan operativo de la fase F2, olas O11–O13: restauración conjunta, assets privados, accesibilidad, modelo obra/edición/ejemplar y ciclo de vida de cuenta. Las funciones de producto de O13 se solapan con F3.
 
@@ -21,9 +21,19 @@ Siguen vigentes las reglas de [orquestación de F0](orquestacion-f0.md) (§0 y �
 | O11 | U-DAT-10 Assets privados y portadas seguras | Claude (Opus) | `scratch` | `0009` y `sharp` |
 | O12 | U-DAT-06 Obra, edición y ejemplar; ISBN opcional (+ T5/T7) | Claude (Opus) | `scratch` | `0010`–`0012` |
 | O12 | U-OPS-03 Eliminación de cuenta y retención | Claude (Opus) | `scratch` | `0013` |
-| O13 | U-DAT-07, U-DAT-09, U-EXP-05, U-EXP-06, U-PRO-01, U-PRO-03, U-PRO-05 | Por fijar | — | Un lote de schema revisado (D) |
+| O13 · 1 | O13-D Lote de schema de producto: tags/notas/valoración, ubicaciones físicas y fotos, series, avatar, evidencia/incidencias de revisión y mapeo CSV; v2, snapshots, restore, eliminación y permisos | Claude (Opus) | `scratch` | `0014` (único head de la ola) |
+| O13 · 1 | U-EXP-05 Alta consecutiva y escáner ISBN (dueña de `BookForm` en el paso 1) | OpenCode (glm-5.3) | No | No |
+| O13 · 1→2 | U-DAT-09 CSV con mapeo: fase 1 parser/mapeo/normalización sin escrituras; fase 2 integración tras `0014` | Codex | Fase 2 | Consume `0014` |
+| O13 · 2 | U-DAT-07, U-PRO-01, U-PRO-03, U-PRO-05, U-EXP-06 sobre `docs/spec-pendientes/contratos-o13.md` | Por fijar al integrar `0014` | `scratch`/`test` | Consumen `0014` |
 
 ## Puertas
 
 - **G11:** un conjunto de 2001 registros se publica entero o no se publica; si faltan o se alteran partes, cero cambios activos. Snapshots, IDs y estantería predeterminada coherentes. El banco de pruebas de hasta 10000 cumple el presupuesto o rechaza sin commits parciales. Los assets bloquean SSRF, XML/SVG, archivos inválidos y accesos ajenos. Recorridos a 320, 375, 768 y 1440 px, con teclado, zoom y ambos temas, con evidencia.
 - **G12–G13:** según [05](05-fases-olas-y-trazabilidad.md).
+
+## O13 · Orden
+
+Siguiendo el orden de 05:
+
+1. D publica un único lote `0014` con las tablas y contratos de producto de toda la ola, para no abrir varios heads de Drizzle, y fija el contrato en `contratos-o13.md`. En paralelo, U-EXP-05 (sin schema) y la fase 1 de U-DAT-09 (parseo y fixtures).
+2. Con `0014` integrado, las unidades de producto y revisión implementan acciones y UI sobre el contrato. Nunca editan `BookForm` dos unidades a la vez: U-PRO-01 lo toma después de U-EXP-05.

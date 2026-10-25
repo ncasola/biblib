@@ -16,11 +16,17 @@ import type { Book, Shelf } from "@/lib/types"
 import { ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { entrySearchDeadline, SubmissionGate, type BookEntryDefaults, type SaveAndAddAnother } from "@/lib/book-entry"
+import { DomainError } from "@/lib/domain-errors"
 
 const SEARCH_TIMEOUT_MS = 15_000
 
 /** `reviewEnabled` (BIBLIB_BIBLIOGRAPHY_REVIEW_ENABLED) activa la revisión de candidatos; apagada, la UI no cambia. */
-export function AddBookScreen({ reviewEnabled }: { reviewEnabled: boolean }) {
+export function AddBookScreen({ reviewEnabled, cameraEnabled = false }: { reviewEnabled: boolean; cameraEnabled?: boolean }) {
+  const [entryDefaults, setEntryDefaults] = useState<BookEntryDefaults>()
+  const [previous, setPrevious] = useState<Book | null>(null)
+  const [generation, setGeneration] = useState(0)
+  const entryRegion = useRef<HTMLDivElement>(null)
   const [searchResult, setSearchResult] = useState<Book | null>(null)
   const [review, setReview] = useState<(BibliographyReviewData & { key: number }) | null>(null)
   const requestSeq = useRef(0)
@@ -34,6 +40,7 @@ export function AddBookScreen({ reviewEnabled }: { reviewEnabled: boolean }) {
   const [shelfError, setShelfError] = useState("")
   const [attempt, setAttempt] = useState(0)
   const searchController = useRef<AbortController | null>(null)
+  const searchGate = useRef(new SubmissionGate())
 
   useEffect(() => {
     let active = true
@@ -50,6 +57,20 @@ export function AddBookScreen({ reviewEnabled }: { reviewEnabled: boolean }) {
 
   useEffect(() => () => { searchController.current?.abort(); requestSeq.current++ }, [])
 
+  useEffect(() => {
+    if (generation > 0) entryRegion.current?.querySelector<HTMLInputElement>('[role="tabpanel"][data-state="active"] input')?.focus()
+  }, [generation])
+
+  const savedAnother: SaveAndAddAnother = (book, input) => {
+    searchController.current?.abort(); requestSeq.current++
+    searchGate.current = new SubmissionGate()
+    setIsSearching(false)
+    setPrevious(book)
+    setEntryDefaults({ status: input.status, shelf_id: input.shelf_id ?? book.shelf_id })
+    setSearchResult(null); setReview(null); setExistingBook(false); setLastIsbn(""); setError("")
+    setGeneration((value) => value + 1)
+  }
+
   /** Con la revisión activa: todas las fuentes y portadas, sin escribir nada hasta confirmar. */
   const reviewSearch = async (isbn: string) => {
     // Cada búsqueda invalida las anteriores: un resultado tardío nunca sustituye lo que se está revisando.
@@ -58,8 +79,9 @@ export function AddBookScreen({ reviewEnabled }: { reviewEnabled: boolean }) {
     let timer: ReturnType<typeof setTimeout> | undefined
     const deadline = new Promise<"timeout">((resolve) => { timer = setTimeout(() => resolve("timeout"), SEARCH_TIMEOUT_MS) })
     try {
-      const existing = await getBookByIsbnAction(isbn)
+      const existing = await Promise.race([getBookByIsbnAction(isbn), deadline])
       if (request !== requestSeq.current) return
+      if (existing === "timeout") { setError("La búsqueda ha tardado demasiado. Puedes reintentar o completar la ficha manualmente."); return }
       if (existing) { setSearchResult(existing); setExistingBook(true); return }
       const lookup = await Promise.race([lookupIsbnAction(isbn), deadline])
       if (request !== requestSeq.current) return
@@ -80,51 +102,73 @@ export function AddBookScreen({ reviewEnabled }: { reviewEnabled: boolean }) {
     }
   }
 
-  const saveReviewed = async (input: BookInput) => unwrapAction(await addBookAction(input))
+  const saveReviewed = async (input: BookInput) => {
+    try { return unwrapAction(await addBookAction(input)) }
+    catch (caught) {
+      const found = caught instanceof DomainError && caught.code === "CONFLICT" && input.isbn ? await getBookByIsbnAction(input.isbn).catch(() => null) : null
+      if (found) { setReview(null); setSearchResult(found); setExistingBook(true) }
+      throw caught
+    }
+  }
 
   const handleSearch = async (isbn: string) => {
-    if (isSearching) return
-    if (reviewEnabled) return reviewSearch(isbn)
+    const gate = searchGate.current
+    if (!gate.enter()) return
+    if (reviewEnabled) {
+      try { await reviewSearch(isbn) }
+      finally { gate.leave() }
+      return
+    }
+    const request = ++requestSeq.current
     setIsSearching(true); setError(""); setSearchResult(null); setExistingBook(false); setLastIsbn(isbn)
     const controller = new AbortController()
     searchController.current = controller
-    const timeout = setTimeout(() => controller.abort(), 15_000)
     try {
-      const existing = await getBookByIsbnAction(isbn)
-      if (existing) { setSearchResult(existing); setExistingBook(true); return }
-      const response = await fetch(`/api/books/search?isbn=${encodeURIComponent(isbn)}`, { signal: controller.signal })
-      if (!response.ok) {
-        setError(response.status === 404 ? "Open Library no tiene una ficha para este ISBN." : "No se pudo consultar Open Library. Puedes volver a intentarlo o añadir el libro manualmente.")
+      const result = await entrySearchDeadline(async (signal) => {
+        const existing = await getBookByIsbnAction(isbn)
+        if (signal.aborted) throw new DOMException("Búsqueda cancelada", "AbortError")
+        if (existing) return { existing }
+        const response = await fetch(`/api/books/search?isbn=${encodeURIComponent(isbn)}`, { signal })
+        return response.ok ? { book: await response.json() as Book } : { status: response.status }
+      }, controller)
+      if (request !== requestSeq.current || controller.signal.aborted) return
+      if (result.existing) { setSearchResult(result.existing); setExistingBook(true); return }
+      if (result.status) {
+        setError(result.status === 404 ? "Open Library no tiene una ficha para este ISBN." : "No se pudo consultar Open Library. Puedes volver a intentarlo o añadir el libro manualmente.")
         return
       }
-      setSearchResult(await response.json() as Book)
+      setSearchResult(result.book ?? null)
     } catch (caught) {
-      setError(caught instanceof Error && caught.name === "AbortError" ? "La búsqueda ha tardado demasiado. Vuelve a intentarlo o añade el libro manualmente." : "No se pudo buscar el libro. Comprueba la conexión y vuelve a intentarlo.")
-    } finally { clearTimeout(timeout); searchController.current = null; setIsSearching(false) }
+      if (request === requestSeq.current) setError(caught instanceof Error && caught.name === "AbortError" ? "La búsqueda ha tardado demasiado. Vuelve a intentarlo o añade el libro manualmente." : "No se pudo buscar el libro. Comprueba la conexión y vuelve a intentarlo.")
+    } finally {
+      gate.leave()
+      if (request === requestSeq.current) { searchController.current = null; setIsSearching(false) }
+    }
   }
 
   return <div className="mx-auto max-w-6xl">
       <Button asChild variant="outline" className="mb-5"><Link href="/books"><ArrowLeft aria-hidden="true" className="w-4 h-4 mr-2" />Volver a libros</Link></Button>
       <h1 className="text-3xl sm:text-4xl font-bold heading-vintage mb-2">Agregar nuevo libro</h1>
       <p className="text-muted-foreground mb-8">Busca una edición por ISBN o completa su ficha manualmente.</p>
+      {previous && <div className="mb-6 rounded-xl border border-border bg-card/80 p-4"><p role="status">Se ha guardado «{previous.title}». Puedes añadir el siguiente libro.</p><Link tabIndex={0} className="text-primary underline underline-offset-4" href={`/book/${previous.id}`}>Ver libro guardado</Link></div>}
       {loadingShelves ? <p role="status">Cargando estanterías...</p> : shelfError ? <div role="alert" className="space-y-4"><p className="text-destructive">{shelfError}</p><Button variant="outline" onClick={() => setAttempt((current) => current + 1)}>Reintentar</Button></div> : (
-        <Tabs value={tab} onValueChange={setTab} className="w-full">
+        <div ref={entryRegion}><Tabs value={tab} onValueChange={setTab} className="w-full">
           <TabsList className="grid w-full max-w-md grid-cols-2 mb-6"><TabsTrigger value="isbn">Buscar por ISBN</TabsTrigger><TabsTrigger value="manual">Entrada manual</TabsTrigger></TabsList>
           <TabsContent value="isbn">
             <div className={review ? "grid grid-cols-1 gap-6 items-start" : "grid grid-cols-1 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] gap-6 items-start"}>
               <div className={`rounded-2xl border border-border bg-card/80 backdrop-blur-md p-5 sm:p-6 shadow-xl space-y-5${review ? " lg:max-w-xl" : ""}`}>
                 <h2 className="text-2xl font-bold">Buscar libro</h2>
-                <SearchBookForm onSearch={handleSearch} isLoading={isSearching} />
+                <SearchBookForm key={generation} onSearch={handleSearch} isLoading={isSearching} cameraEnabled={cameraEnabled} />
                 {error && <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 space-y-3"><p role="alert" className="text-destructive">{error}</p><Button type="button" variant="outline" onClick={() => setTab("manual")}>Completar ficha manual con este ISBN</Button></div>}
                 <div className="space-y-2 text-sm text-muted-foreground"><h3 className="font-semibold text-foreground">Dónde encontrar el ISBN</h3><p>Consulta la contraportada o la página de créditos. Comprueba que corresponde a tu edición.</p><p>Por ejemplo: 9780747532699. Se admiten guiones y espacios.</p></div>
               </div>
-              {review ? <BibliographyReview key={review.key} isbn={review.isbn} result={review.result} covers={review.covers} failure={review.failure} shelves={shelves} onSave={saveReviewed} onRetry={() => void handleSearch(review.isbn)} /> : searchResult ? <BookSearchResult key={searchResult.isbn} book={searchResult} shelves={shelves} existing={existingBook} /> : <div className="rounded-2xl border border-border bg-card/80 p-8 text-center space-y-3"><p aria-hidden="true" className="text-4xl">📚</p><h2 className="text-xl font-bold">{isSearching ? "Buscando la edición..." : "Revisa antes de guardar"}</h2><p role={isSearching ? "status" : undefined} className="text-muted-foreground">Aquí podrás corregir los datos encontrados, elegir estado y estantería y guardar el libro.</p></div>}
+              {review ? <BibliographyReview key={review.key} isbn={review.isbn} result={review.result} covers={review.covers} failure={review.failure} shelves={shelves} onSave={saveReviewed} entryDefaults={entryDefaults} onSavedAnother={savedAnother} onRetry={() => void handleSearch(review.isbn)} /> : searchResult ? <BookSearchResult key={searchResult.isbn} book={searchResult} shelves={shelves} existing={existingBook} entryDefaults={entryDefaults} onSavedAnother={savedAnother} /> : <div className="rounded-2xl border border-border bg-card/80 p-8 text-center space-y-3"><p aria-hidden="true" className="text-4xl">📚</p><h2 className="text-xl font-bold">{isSearching ? "Buscando la edición..." : "Revisa antes de guardar"}</h2><p role={isSearching ? "status" : undefined} className="text-muted-foreground">Aquí podrás corregir los datos encontrados, elegir estado y estantería y guardar el libro.</p></div>}
             </div>
           </TabsContent>
           <TabsContent value="manual">
-            <section className="max-w-2xl rounded-2xl border border-border bg-card/80 backdrop-blur-md p-5 sm:p-6 shadow-xl"><h2 className="text-2xl font-bold mb-5">Ficha del libro</h2><ManualBookForm key={lastIsbn || "manual"} shelves={shelves} initialIsbn={lastIsbn} /></section>
+            <section className="max-w-2xl rounded-2xl border border-border bg-card/80 backdrop-blur-md p-5 sm:p-6 shadow-xl"><h2 className="text-2xl font-bold mb-5">Ficha del libro</h2><ManualBookForm key={`${generation}-${lastIsbn || "manual"}`} shelves={shelves} initialIsbn={lastIsbn} entryDefaults={entryDefaults} onSavedAnother={savedAnother} /></section>
           </TabsContent>
-        </Tabs>
+        </Tabs></div>
       )}
   </div>
 }

@@ -68,6 +68,8 @@ export const DELETION_PHASE_TEXT: Readonly<Record<AccountDeletionPhase, string>>
 export const DELETION_SCOPE: readonly string[] = [
   "Tus libros: ejemplares, ediciones y obras, con su estado, estantería y comprobaciones.",
   "Tus estanterías, incluida la predeterminada, y tus vistas guardadas.",
+  "Tus notas, valoraciones y etiquetas, tus ubicaciones físicas y series, y la revisión bibliográfica con sus evidencias.",
+  "Tu foto de perfil propia, las fotos de tus ubicaciones y evidencias, y tus perfiles de importación CSV.",
   "Las portadas privadas que subiste o copiaste y sus imágenes.",
   "Las versiones anteriores de tu biblioteca, las importaciones y restauraciones en curso y sus trabajos.",
   "La caché privada de tus búsquedas por título o autor.",

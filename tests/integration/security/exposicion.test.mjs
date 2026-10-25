@@ -19,7 +19,8 @@ after(() => ctx?.close())
 // ocupados al restaurar y borrar con versión. U-DAT-10 (0009) añade las de portadas privadas (reservar, autorizar,
 // registrar, descartar y revalidar con el dueño de auth.uid()) y la guarda de las políticas de storage.objects.
 // U-OPS-03 (0013): solicitar y consultar la propia eliminación, y la guarda de cuenta activa que llaman las políticas RLS.
-const AUTHENTICATED_DEFINERS = ["account_deletion_request", "account_deletion_status", "account_write_allowed", "cover_asset_authorize", "cover_asset_begin_upload", "cover_asset_discard", "cover_asset_register", "cover_asset_request", "cover_asset_revalidate", "cover_object_access", "library_job_control", "library_job_create", "library_snapshot_capture", "library_snapshot_delete", "library_snapshot_foreign_ids", "lock_library"]
+// O13 (0014): reservar, registrar y descartar imágenes privadas propias y la guarda de las políticas de su bucket.
+const AUTHENTICATED_DEFINERS = ["account_deletion_request", "account_deletion_status", "account_write_allowed", "cover_asset_authorize", "cover_asset_begin_upload", "cover_asset_discard", "cover_asset_register", "cover_asset_request", "cover_asset_revalidate", "cover_object_access", "library_job_control", "library_job_create", "library_snapshot_capture", "library_snapshot_delete", "library_snapshot_foreign_ids", "lock_library", "media_asset_begin_upload", "media_asset_discard", "media_asset_register", "media_object_access"]
 
 function rest(route, { bearer, profile, method = "GET" } = {}) {
   const headers = { apikey: ctx.env.SUPABASE_ANON_KEY, Authorization: `Bearer ${bearer ?? ctx.env.SUPABASE_ANON_KEY}` }

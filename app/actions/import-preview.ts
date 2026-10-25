@@ -12,7 +12,7 @@ import type { ActionResult } from "@/lib/action-result"
 import { domainMutation } from "@/lib/server-action"
 import { DEFAULT_BOOK_COVER } from "@/lib/book-covers"
 import { parseLibraryImport } from "@/lib/library-import"
-import { createBackupV2, type PortableBackupV2 } from "@/lib/backup-v2"
+import { accountProduct, createBackupV2, type PortableBackupV2 } from "@/lib/backup-v2"
 import {
   buildImportPlan, canonicalJson, IMPORT_RULES_VERSION, MAX_ACTIVE_PREVIEWS, previewTtlMinutes,
   type ImportMode, type ImportOperationResult, type ImportPlan,
@@ -74,7 +74,8 @@ async function prepareImport(input: unknown, mode: unknown): Promise<PreparedImp
   const imported = parseInput(input)
   const digest = sha256(canonicalJson(imported))
 
-  const payload: LibraryData = { shelves: imported.shelves, books: imported.books }
+  // Desde 0014 (O13) también las etiquetas, ubicaciones y series de la cuenta que citan los ejemplares.
+  const payload: LibraryData = { shelves: imported.shelves, books: imported.books, ...accountProduct(imported) }
   // Al confirmar se vuelve a leer lo guardado y se exige el mismo plan. Se guarda el payload v2 (U-DAT-06): la forma
   // plana no expresa ediciones compartidas, obras, evidencias, identificadores ni ejemplares sin ISBN-13.
   const storedPayload: PortableBackupV2 = createBackupV2(payload)

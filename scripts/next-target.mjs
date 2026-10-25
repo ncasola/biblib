@@ -27,7 +27,10 @@ export function assertBuildTarget(ctx) {
 
 /** Entorno del proceso de Next: sin service_role (U-OPS-04), ni siquiera desde .env.local. */
 export function nextEnv(ctx, command) {
-  return { ...appEnv(ctx), NODE_ENV: command === "dev" ? "development" : "production" }
+  return { ...appEnv(ctx), NODE_ENV: command === "dev" ? "development" : "production",
+    // Capacidad de UI, sin credenciales: excepción explícita al filtrado de BIBLIB heredadas.
+    BIBLIB_ISBN_CAMERA: process.env.BIBLIB_ISBN_CAMERA === "1" ? "1" : "",
+  }
 }
 
 export async function runNextTarget(args, { cwd = REPO_ROOT, env = process.env } = {}) {

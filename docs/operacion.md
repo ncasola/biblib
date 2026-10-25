@@ -1441,3 +1441,56 @@ Consulta de operación, sin datos de biblioteca: `select state, step, error_code
 - `pnpm test:scripts`: manifest de 0013 con hechos reales (`migrations.test.mjs`), worker CLI, registro de supresiones y verify con supresiones (`account-deletion.test.mjs`).
 - `pnpm test:integration:account --profile scratch|test [--reuse-build]`: grupo `tests/integration/account` (Server Action real, sesiones GoTrue, Data API y Storage con JWT antiguo, bloqueo en GoTrue, trabajo en vuelo, Storage caído, worker interrumpido, ausencia de recursos, B intacto, supresión al restaurar y rotación de trabajos en vuelo). También en `test:integration:local`; las cuentas de Auth terminan como empezaron.
 - Ensayo G12: `docs/validacion/2026-10-25/O12/ops-03/ensayo-supresion.mjs` (backup con la cuenta → eliminación por el worker → reset → restore → verify).
+
+## Lote de producto de O13 · migración `0014` (O13, lote D)
+
+Único lote de schema de O13: etiquetas, notas y valoración por ejemplar (U-PRO-01), ubicaciones físicas (U-PRO-03), series (U-PRO-05), perfil con avatar propio (U-EXP-06), evidencias, incidencias y decisiones de revisión (U-DAT-07) y lo que el CSV persiste sobre el staging de 0008 (U-DAT-09). Contrato para las unidades: [contratos-o13](spec-pendientes/contratos-o13.md). Evidencia: [validación O13/d](validacion/2026-10-25/O13/d/informe.md).
+
+### Esquema
+
+- **Tablas nuevas** (todas con RLS del dueño, FK compuestas `(user_id, …)` y política RESTRICTIVE de cuenta activa en cada escritura de cliente): `tags`, `copy_tags`, `copy_annotations`, `locations`, `copy_locations`, `series`, `series_editions`, `media_assets`, `profiles`, `bibliographic_evidence`, `review_issues`, `review_decisions`, `csv_mapping_profiles`.
+- **Columnas nuevas:** `import_sessions.csv_mapping`, `csv_mapping_version`, `input_sha256`, `mapping_sha256` (fuente `csv`) e `import_session_rows.source_ordinal`, `source_row_key`, `issues` (tipos `record`, `tag`, `location`, `series`).
+- **Storage:** bucket privado `biblib-media` (`<dueño>/<tipo>/<asset>`, solo WebP, 5 MiB) con tres políticas que llaman a `biblib.media_object_access`; lo instala `biblib.media_storage_install()` (la migración y `db:restore:local`).
+- **Funciones:** `tag_normalize` (pura); `media_asset_begin_upload`, `media_asset_register`, `media_asset_discard`, `media_object_access` (definer, `authenticated`); `media_asset_purge_candidates`/`_confirm` y `media_storage_install` (sin `EXECUTE` de cliente); triggers `enforce_row_limit` (BP001), `guard_location_tree` (BL001/BL002) y `guard_media_reference` (BA010). Sustituye `library_snapshot_capture` (schema_version 3), `library_snapshot_foreign_ids` y los pasos de eliminación (`account_deletion_step_tables`, `_advance`, `_purge`).
+- **Backfill:** la procedencia de cada edición pasa a una evidencia `origin = 'backfill'` y cada ejemplar con comprobación humana a una `physically_checked`; sin URL ni foto inventadas.
+
+### Aplicar y recuperar
+
+- **Aplicar:** respaldo ensayado → `pnpm db:plan:local --profile <perfil> --out o13.json` → `pnpm db:migrate:local --plan … --expect-project … --expect-plan …` → `pnpm db:status:local` sin drift. Ensayado 0013 → 0014 con datos en `scratch` y desde vacío con `db:reset:local`.
+- **Funciones desactivables** sin borrar datos: las tablas son aditivas; retirar una pantalla no toca sus filas, que siguen en la exportación v2, las versiones anteriores, el respaldo y la eliminación de cuenta.
+- **Retirar 0014** no está previsto: el backfill y los pasos de eliminación nuevos son parte del contrato. Una corrección se hace hacia delante en una migración nueva.
+- **Respaldo y restore:** `db:backup:local` copia `biblib-media` y comprueba cada imagen lista contra su sha256 y tamaño; `db:restore:local` reinstala sus políticas, admite su bucket en un destino recién reseteado y rota las versiones de todas las tablas nuevas; `db:restore:verify` compara sin esas versiones.
+- **Eliminación de cuenta:** pasos `product` y `media` entre `private_cache` y `copies` (las ubicaciones se retiran de las hojas a la raíz). Inventario en [retención](retencion.md).
+- **Imágenes huérfanas:** `select biblib.media_asset_purge_candidates(null, 100, 86400)` lista cuarentenas vencidas, imágenes que nada cita (ni una versión anterior) y objetos sin fila; `media_asset_purge_confirm` retira las filas que siguen siéndolo y devuelve sus rutas. El script que borra los objetos llega con U-EXP-06/U-PRO-03.
+
+### Pruebas
+
+- `pnpm test`: `tests/product-v2.test.ts` (normalización idéntica a Postgres, posiciones exactas, ida y vuelta v2, archivos anteriores con datos vacíos, rechazos con explicación, partes y planificador de publicación) y `tests/backup-v2.test.ts`.
+- `pnpm test:db`: `tests/db/product-legacy.sql` + `tests/db/product.sql` (backfill, etiquetas, notas, ubicaciones, series, imágenes y Storage, revisión, CSV, versiones anteriores, cuenta en eliminación, pasos `product`/`media` e inventario).
+- `pnpm test:scripts`: manifest de 0014 con hechos reales (`migrations.test.mjs`, `tests/fixtures/migrations/objects-0014.json`) y ensayo de promoción con restauración aislada.
+- `pnpm test:integration:product --profile scratch|test [--reuse-build]`: grupo `tests/integration/product` con cuentas desechables (aislamiento A/B, cuenta en eliminación, FK cruzadas, ciclos y niveles, unicidad normalizada, límites, posición NUMERIC 1/1.5/2, imágenes con Storage real y la ida y vuelta v2 por la app: exportar, reemplazar, versión anterior, otra cuenta y archivo anterior). También corre en `pnpm test:integration:local`.
+
+## Alta consecutiva y cámara ISBN · U-EXP-05 (O13)
+
+`Guardar y añadir otro` está disponible en alta manual, resultado ISBN y revisión bibliográfica. Tras confirmar la escritura muestra el título guardado y un enlace a su ficha, limpia los datos bibliográficos y la comprobación física del ISBN, y conserva estado/estantería durante esa pantalla de alta. Recargar o salir termina esas preferencias en memoria. Un fallo conserva el borrador; un ISBN existente ofrece abrir el ejemplar guardado y añadir otra copia mediante una acción explícita.
+
+La cámara se habilita exclusivamente con **`BIBLIB_ISBN_CAMERA=1`** en el entorno del proceso Next. Ausencia, `0` o cualquier otro valor la mantienen apagada. Los wrappers de Next admiten expresamente esta bandera de capacidad; no se añaden credenciales ni variables públicas. Ejemplo PowerShell para un perfil propio ya autorizado y preparado:
+
+```powershell
+$env:BIBLIB_ISBN_CAMERA = '1'
+pnpm dev:local --profile scratch
+# Para retirar la función, quita la variable y reinicia el proceso de la app.
+Remove-Item Env:BIBLIB_ISBN_CAMERA -ErrorAction SilentlyContinue
+```
+
+La bandera se lee en el servidor por petición, sin crear endpoints. Para cambiar la configuración del proceso en un despliegue, reinicia sus instancias. Apagarla oculta solo el escáner; ISBN escrito y alta manual siguen disponibles y no cambia ningún dato guardado.
+
+`Permissions-Policy` permite `camera=(self)` únicamente en `/books/add`; todas las otras rutas mantienen `camera=()`, y micrófono/geolocalización/payment/USB continúan denegados. La excepción de cabeceras es estable aunque la capacidad esté apagada. Verificación: `pnpm test` revisa las reglas de Next y `pnpm test:scripts` la matriz `scripts/security/headers-matrix.mjs`; el coordinador puede ejecutar `pnpm security:headers:local --profile test` sobre su stack autorizado.
+
+La política pertenece al documento: una transición cliente desde otra ruta conserva la denegación anterior. Si ocurre, pulsar Escanear ofrece abrir `/books/add` en otra pestaña, con una navegación de documento y sin perder el borrador de la pestaña actual. No se relaja la política global para resolverlo.
+
+Se comprueba HTTPS/contexto seguro, `BarcodeDetector` y su formato `ean_13` antes de pedir vídeo. El único permiso se solicita tras pulsar **Escanear ISBN con cámara**. El detector procesa el vídeo localmente, valida longitud/checksum con el normalizador existente y muestra el ISBN canónico para que la persona pulse **Usar este ISBN**; después debe pulsar **Buscar libro**. La detección no marca `isbnVerified`. No hay dependencias nuevas, almacenamiento de fotogramas ni envío de imágenes. Puede pararse; detección válida, cambio de pestaña de formulario, ocultación de la página, desmontaje o 30 segundos de captura liberan las pistas, incluso si el permiso llega tarde.
+
+Sin detector compatible, contexto seguro o permiso, se informa de la alternativa y el formulario permanece disponible. La compatibilidad depende del navegador/plataforma; no se instala un detector alternativo. Referencias de implementación: [Barcode Detection API](https://wicg.github.io/shape-detection-api/#barcode-detection-api), [Permissions Policy](https://www.w3.org/TR/permissions-policy/), [Media Capture and Streams](https://w3c.github.io/mediacapture-main/).
+
+El runner `test:e2e:local` activa la capacidad en su entorno aislado para poder simular permiso denegado, lectura y parada. `tests/e2e/flujos/alta-consecutiva.spec.ts` añade esos recorridos junto a consecutiva, borrador tras error, doble envío y duplicado. No sustituye una prueba con cámara física ni lectores reales. Evidencia y pendientes de integración en [O13/exp-05](validacion/2026-10-25/O13/exp-05/README.md).

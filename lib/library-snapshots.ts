@@ -4,11 +4,14 @@ import { z } from "zod"
 import type { DatabaseTransaction } from "./db/client"
 import { coverAssets, librarySnapshots, shelves, type LibrarySnapshotReason } from "./db/schema"
 import { deleteAllCopies, insertPlannedCopies } from "./db/model"
+import { applyProductData, deleteAccountProduct, readProductTargets } from "./db/product"
 import { DomainError, databaseErrorCode } from "./domain-errors"
 import { editionFingerprint } from "./backup-v2"
 import { canonicalJson, IMPORT_RULES_VERSION, planEditions, type CollectionSnapshot, type IdAllocator, type ImportMode, type ImportPlan } from "./import-plan"
 import { normalizeIsbn } from "./isbn"
-import type { Author, Book, CatalogueMetadata, CopyVerification, EditionIdentifiers, Publisher } from "./types"
+import type { CopyRating, LocationKind } from "./product/contracts"
+import type { ConfidenceLabel, EvidenceEntry, EvidenceOrigin, EvidenceSourceKind } from "./review/contracts"
+import type { Author, Book, CatalogueMetadata, CopyVerification, EditionIdentifiers, LibraryData, Publisher } from "./types"
 
 // Versiones anteriores de la colección (U-DAT-02). Funciones puras (plan de restauración, cursor,
 // límites) y el acceso a Postgres que usan el publicador y las acciones dentro de una transacción
@@ -25,13 +28,33 @@ export const SNAPSHOT_LIMITS = Object.freeze({
   pageSize: 10,
   maxPageSize: 20,
 })
-/** 1: ficha legacy (0006–0010). 2: ejemplar con su edición, obra y comprobación (0011, U-DAT-06). */
-export const SNAPSHOT_SCHEMA_VERSION = 2
+/**
+ * 1: ficha legacy (0006–0010). 2: ejemplar con su edición, obra y comprobación (0011, U-DAT-06). 3 (0014, O13): además
+ * nota, valoración y etiquetas, ubicación, serie de la edición y evidencias, con las etiquetas, ubicaciones y series de la
+ * cuenta en trozos propios tras los libros.
+ */
+export const SNAPSHOT_SCHEMA_VERSION = 3
 
 /** Tablas privadas que la limpieza de cuenta (U-OPS-03) debe incluir; todas cuelgan de `auth.users`. */
 export const SNAPSHOT_INVENTORY = Object.freeze(["biblib.library_snapshots", "biblib.library_snapshot_chunks", "biblib.import_previews (snapshot_id)"])
 
 export interface SnapshotShelfEntry { id: string; title: string; is_default: boolean; created_at: string }
+
+/** Evidencia tal como la guarda una versión anterior (`biblib.evidence_snapshot_item`, 0014). */
+export interface SnapshotEvidenceEntry {
+  id: string
+  source_kind: EvidenceSourceKind
+  source_ref?: string
+  source_url?: string
+  photo_asset_id?: string
+  observed_at?: string
+  field_claims: Record<string, unknown>
+  confidence: ConfidenceLabel
+  origin: EvidenceOrigin
+}
+export interface SnapshotTagEntry { id: string; name: string; created_at: string }
+export interface SnapshotLocationEntry { id: string; parent_id: string | null; name: string; kind: LocationKind; photo_asset_id: string | null; created_at: string }
+export interface SnapshotSeriesEntry { id: string; title: string; description: string | null; created_at: string }
 /**
  * Ejemplar de una versión anterior. En schema_version 2, `isbn` es el ISBN-13 de su edición (o null) y
  * `edition_id` agrupa los ejemplares de una edición; en 1, `isbn` es el texto legacy de la ficha.
@@ -61,8 +84,21 @@ export interface SnapshotBookEntry {
   work_title?: string | null
   language?: string
   identifiers?: EditionIdentifiers
+  /** schema_version 3 (0014): datos de producto del ejemplar y de su edición. */
+  personal?: { notes?: string; rating?: CopyRating; tag_ids?: string[] }
+  location?: { location_id: string; shelf_label?: string; position?: number }
+  series?: { series_id: string; position?: string; volume_label?: string; order_note?: string }
+  evidence?: SnapshotEvidenceEntry[]
+  edition_evidence?: SnapshotEvidenceEntry[]
 }
-export interface SnapshotContent { shelves: SnapshotShelfEntry[]; books: SnapshotBookEntry[] }
+export interface SnapshotContent {
+  shelves: SnapshotShelfEntry[]
+  books: SnapshotBookEntry[]
+  /** schema_version 3 (0014); ausentes o vacíos en versiones anteriores. */
+  tags?: SnapshotTagEntry[]
+  locations?: SnapshotLocationEntry[]
+  series?: SnapshotSeriesEntry[]
+}
 
 export interface SnapshotSummary {
   id: string
@@ -254,7 +290,17 @@ const bookEntrySchema = z.object({
   // schema_version 2 (U-DAT-06): edición, comprobación, identificador legacy, obra, idioma e identificadores.
   edition_id: uuidText.optional(), verification: jsonObject<CopyVerification>().optional(), legacy_identifier: z.string().optional(),
   work_id: uuidText.optional(), work_title: z.string().nullable().optional(), language: z.string().optional(), identifiers: jsonObject<EditionIdentifiers>().optional(),
+  // schema_version 3 (0014): datos de producto; los valida la base al volver a escribirlos.
+  personal: z.object({ notes: z.string().optional(), rating: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5)]).optional(), tag_ids: z.array(uuidText).optional() }).optional(),
+  location: z.object({ location_id: uuidText, shelf_label: z.string().optional(), position: z.number().int().optional() }).optional(),
+  series: z.object({ series_id: uuidText, position: z.string().optional(), volume_label: z.string().optional(), order_note: z.string().optional() }).optional(),
+  evidence: jsonArray<SnapshotEvidenceEntry>().optional(),
+  edition_evidence: jsonArray<SnapshotEvidenceEntry>().optional(),
 })
+const tagEntrySchema = z.object({ id: uuidText, name: z.string(), created_at: z.string() })
+const locationEntrySchema = z.object({ id: uuidText, parent_id: uuidText.nullable(), name: z.string(), kind: z.enum(["room", "bookcase", "cabinet", "box", "shelf", "other"]),
+  photo_asset_id: uuidText.nullable(), created_at: z.string() })
+const seriesEntrySchema = z.object({ id: uuidText, title: z.string(), description: z.string().nullable(), created_at: z.string() })
 
 export interface SnapshotChunkRow { seq: number; kind: string; itemCount: number; digest: string; valid: boolean; payload: unknown }
 
@@ -263,26 +309,32 @@ export interface SnapshotChunkRow { seq: number; kind: string; itemCount: number
  * la secuencia es completa, las cantidades cuadran y el hash final coincide con la cabecera.
  */
 export function assembleSnapshot(header: { digest: string; counts: { books: number; shelves: number } }, chunks: SnapshotChunkRow[]): SnapshotContent {
-  const content: SnapshotContent = { shelves: [], books: [] }
+  const content: Required<SnapshotContent> = { shelves: [], books: [], tags: [], locations: [], series: [] }
+  // Orden de los trozos: estanterías, libros y (schema_version 3) etiquetas, ubicaciones y series.
+  const stages = ["shelves", "books", "tags", "locations", "series"]
   let expectedSeq = 0
+  let stage = 0
+  const take = <T>(schema: z.ZodType<T>, payload: unknown, into: T[]) => {
+    const parsed = z.array(schema).safeParse(payload)
+    if (!parsed.success) throw snapshotDamaged()
+    into.push(...parsed.data)
+  }
   for (const chunk of chunks) {
     if (!chunk.valid || chunk.seq !== expectedSeq++ || !Array.isArray(chunk.payload) || chunk.payload.length !== chunk.itemCount) throw snapshotDamaged()
-    if (chunk.kind === "shelves" && content.books.length === 0) {
-      const parsed = z.array(shelfEntrySchema).safeParse(chunk.payload)
-      if (!parsed.success) throw snapshotDamaged()
-      content.shelves.push(...parsed.data)
-    } else if (chunk.kind === "books") {
-      const parsed = z.array(bookEntrySchema).safeParse(chunk.payload)
-      if (!parsed.success) throw snapshotDamaged()
-      content.books.push(...parsed.data)
-    } else {
-      throw snapshotDamaged()
-    }
+    const position = stages.indexOf(chunk.kind)
+    if (position < stage) throw snapshotDamaged()
+    stage = position
+    if (chunk.kind === "shelves") take(shelfEntrySchema, chunk.payload, content.shelves)
+    else if (chunk.kind === "books") take(bookEntrySchema, chunk.payload, content.books)
+    else if (chunk.kind === "tags") take(tagEntrySchema, chunk.payload, content.tags)
+    else if (chunk.kind === "locations") take(locationEntrySchema, chunk.payload, content.locations)
+    else take(seriesEntrySchema, chunk.payload, content.series)
   }
   if (content.books.length !== header.counts.books || content.shelves.length !== header.counts.shelves) throw snapshotDamaged()
   if (snapshotDigest(header.counts, chunks.map((chunk) => chunk.digest)) !== header.digest) throw snapshotDamaged()
   if (content.shelves.filter((shelf) => shelf.is_default).length !== 1) throw snapshotDamaged()
-  return content
+  const { tags, locations, series, ...base } = content
+  return { ...base, ...(tags.length ? { tags } : {}), ...(locations.length ? { locations } : {}), ...(series.length ? { series } : {}) }
 }
 
 /** Captura el estado vigente para la operación de esta transacción. Un fallo aborta la operación. */
@@ -358,19 +410,58 @@ export function snapshotRows(content: SnapshotContent): Map<string, Book> {
       else if (owner) { legacy = entry.isbn ?? undefined; isbn = null }
       else isbnOwner.set(isbn, { key, fingerprint })
     }
+    const personal = entry.personal ? {
+      ...(entry.personal.notes !== undefined ? { notes: entry.personal.notes } : {}),
+      ...(entry.personal.rating !== undefined ? { rating: entry.personal.rating } : {}),
+      ...(entry.personal.tag_ids?.length ? { tagIds: entry.personal.tag_ids } : {}),
+    } : undefined
+    const series = entry.series ? { seriesId: entry.series.series_id, ...(entry.series.position !== undefined ? { position: entry.series.position } : {}),
+      ...(entry.series.volume_label !== undefined ? { volumeLabel: entry.series.volume_label } : {}), ...(entry.series.order_note !== undefined ? { orderNote: entry.series.order_note } : {}) } : undefined
     rows.set(entry.id, {
       ...book, isbn, ...(legacy ? { legacyIdentifier: legacy } : {}),
       edition: { id: key, ...(entry.work_id ? { workId: entry.work_id, ...(entry.work_title ? { workTitle: entry.work_title } : {}) } : {}),
-        ...(entry.language ? { language: entry.language } : {}), ...(entry.identifiers && Object.keys(entry.identifiers).length ? { identifiers: entry.identifiers } : {}) },
+        ...(entry.language ? { language: entry.language } : {}), ...(entry.identifiers && Object.keys(entry.identifiers).length ? { identifiers: entry.identifiers } : {}),
+        ...(series ? { series } : {}), ...(entry.edition_evidence?.length ? { evidence: entry.edition_evidence.map(snapshotEvidence) } : {}) },
+      ...(personal && Object.keys(personal).length ? { personal } : {}),
+      ...(entry.location ? { location: { locationId: entry.location.location_id, ...(entry.location.shelf_label !== undefined ? { shelfLabel: entry.location.shelf_label } : {}),
+        ...(entry.location.position !== undefined ? { position: entry.location.position } : {}) } } : {}),
+      ...(entry.evidence?.length ? { evidence: entry.evidence.map(snapshotEvidence) } : {}),
     })
   }
   return rows
 }
 
-/** Sustituye la colección por la versión según el plan ya comprobado. Los ejemplares y ediciones reciben versiones nuevas. */
-export async function applyRestorePlan(tx: DatabaseTransaction, userId: string, content: SnapshotContent, plan: ImportPlan): Promise<void> {
+function snapshotEvidence(entry: SnapshotEvidenceEntry): EvidenceEntry {
+  return {
+    id: entry.id, sourceKind: entry.source_kind, ...(entry.source_ref !== undefined ? { sourceRef: entry.source_ref } : {}),
+    ...(entry.source_url !== undefined ? { sourceUrl: entry.source_url } : {}), ...(entry.photo_asset_id !== undefined ? { photo: { assetId: entry.photo_asset_id } } : {}),
+    ...(entry.observed_at !== undefined ? { observedAt: entry.observed_at } : {}), fieldClaims: entry.field_claims, confidence: entry.confidence, origin: entry.origin,
+  }
+}
+
+/** La colección de una versión anterior como origen de la publicación: filas planas y datos de la cuenta (0014). */
+export function snapshotLibrary(content: SnapshotContent): LibraryData {
+  return {
+    books: [...snapshotRows(content).values()], shelves: [],
+    tags: (content.tags ?? []).map((tag) => ({ id: tag.id, name: tag.name, createdAt: tag.created_at })),
+    locations: (content.locations ?? []).map((location) => ({ id: location.id, name: location.name, kind: location.kind, parentId: location.parent_id,
+      ...(location.photo_asset_id ? { photo: { assetId: location.photo_asset_id } } : {}), createdAt: location.created_at })),
+    series: (content.series ?? []).map((entry) => ({ id: entry.id, title: entry.title, ...(entry.description !== null ? { description: entry.description } : {}), createdAt: entry.created_at })),
+  }
+}
+
+/**
+ * Sustituye la colección por la versión según el plan ya comprobado. Los ejemplares y ediciones reciben versiones nuevas.
+ * Desde schema_version 3 también vuelven sus etiquetas, notas, ubicaciones, series y evidencias, con sus IDs salvo los que
+ * hoy usa otra cuenta (`foreign`); una foto citada solo vuelve si su asset sigue siendo del dueño.
+ */
+export async function applyRestorePlan(tx: DatabaseTransaction, userId: string, content: SnapshotContent, plan: ImportPlan,
+  options: { foreign: ReadonlySet<string>; allocateId: IdAllocator }): Promise<void> {
+  const library = snapshotLibrary(content)
+  const targets = await readProductTargets(tx, userId, library, "snapshot", options.foreign)
   await deleteAllCopies(tx, userId)
   await tx.delete(shelves).where(and(eq(shelves.userId, userId), eq(shelves.isDefault, false)))
+  await deleteAccountProduct(tx, userId)
   const shelfSource = new Map(content.shelves.map((shelf) => [shelf.id, shelf]))
   if (plan.shelves.create.length) {
     await tx.insert(shelves).values(plan.shelves.create.map((entry) => ({ id: entry.id, userId, title: entry.title, isDefault: false, createdAt: new Date(shelfSource.get(entry.sourceId)?.created_at ?? Date.now()) })))
@@ -389,6 +480,7 @@ export async function applyRestorePlan(tx: DatabaseTransaction, userId: string, 
       return asset && usable.has(asset) ? asset : null
     },
   })
+  await applyProductData(tx, userId, library, plan, "snapshot", targets, options.allocateId)
 }
 
 /** Títulos afectados por una restauración, acotados para la comparación de la vista previa. */

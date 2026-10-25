@@ -1,19 +1,28 @@
 import { z } from "zod"
 import { catalogueProblem, catalogueRequiresV2, catalogueV1Schema, catalogueV2Schema } from "./catalogue-provenance"
 import { normalizeIsbn } from "./isbn"
-import type { Author, Book, CatalogueMetadata, CopyVerification, EditionIdentifiers, LibraryData, Publisher, Shelf } from "./types"
+import {
+  canonicalSeriesPosition, isValidTagName, LOCATION_KINDS, LOCATION_LIMITS, NOTES_MAX, normalizeTagName, SERIES_LIMITS, TAG_LIMITS,
+  type CopyLocationRef, type CopyPersonal, type EditionSeriesRef, type LocationEntry, type MediaRef, type SeriesEntry, type TagEntry,
+} from "./product/contracts"
+import { CONFIDENCE_LABELS, EVIDENCE_LIMITS, EVIDENCE_ORIGINS, EVIDENCE_SOURCE_KINDS, EVIDENCE_SOURCE_REF_PATTERN, type EvidenceEntry } from "./review/contracts"
+import type { Author, Book, CatalogueMetadata, CopyVerification, EditionIdentifiers, LibraryData, Publisher } from "./types"
 
 // Copia portable `formatVersion: 2` (U-BIB-04, capacidad completa con U-DAT-06): obras, ediciones,
 // ejemplares y estanterías. Cada ejemplar conserva su ID (el de la ficha legacy); varias copias pueden
 // compartir edición y una obra solo aparece con evidencia. La verificación física vive en la copia y las
 // fuentes por campo en la edición. Un payload declara en `requiredCapabilities` lo que usa; el lector
 // rechaza una capacidad desconocida y todo lo que no puede conservar, sin truncarlo.
+// O13 (0014) añade secciones opcionales declaradas: nota, valoración y etiquetas de cada copia, su ubicación
+// física, la serie de cada edición y las evidencias bibliográficas, más las etiquetas, ubicaciones y series de
+// la cuenta. Un archivo anterior no las trae y se importa con esos datos vacíos.
 
 export const BACKUP_V2_FORMAT_VERSION = 2
 
 /** Capacidades que este lector sabe conservar. */
 export const BACKUP_V2_SUPPORTED_CAPABILITIES = [
   "catalogue.provenance-v2", "works.entities", "copies.multiple-per-edition", "copies.verification-evidence", "editions.identifiers",
+  "copies.personal", "copies.locations", "editions.series", "bibliographic.evidence",
 ] as const
 
 export type BackupV2Capability = typeof BACKUP_V2_SUPPORTED_CAPABILITIES[number]
@@ -24,6 +33,10 @@ const capabilityLabels: Record<BackupV2Capability, string> = {
   "copies.multiple-per-edition": "varias copias de una misma edición",
   "copies.verification-evidence": "fecha o evidencias de la comprobación física",
   "editions.identifiers": "identificadores externos o idioma de la edición",
+  "copies.personal": "notas, valoraciones o etiquetas",
+  "copies.locations": "ubicaciones físicas",
+  "editions.series": "series",
+  "bibliographic.evidence": "evidencias bibliográficas",
 }
 
 /** Procedencia bibliográfica de la edición: la de `Book.catalogue` sin la comprobación física. */
@@ -35,6 +48,9 @@ export interface PortableWorkV2 {
   id: string
   title: string
 }
+
+/** Evidencia portable: la referencia a una foto lleva su sha256 y solo se conserva si el asset sigue siendo del dueño. */
+export type PortableEvidenceV2 = Omit<EvidenceEntry, "photo"> & { photo?: Required<MediaRef> }
 
 export interface PortableEditionV2 {
   id: string
@@ -51,6 +67,8 @@ export interface PortableEditionV2 {
   catalogue?: EditionCatalogueV2
   language?: string
   identifiers?: EditionIdentifiers
+  series?: EditionSeriesRef
+  evidence?: PortableEvidenceV2[]
 }
 
 export interface PortableCopyV2 {
@@ -62,6 +80,9 @@ export interface PortableCopyV2 {
   edition_verification: CopyVerification
   /** Identificador legacy (`manual-…` u otro valor que no es un ISBN válido). */
   legacy_identifier: string | null
+  personal?: CopyPersonal
+  location?: CopyLocationRef
+  evidence?: PortableEvidenceV2[]
 }
 
 export interface PortableShelfV2 {
@@ -69,6 +90,8 @@ export interface PortableShelfV2 {
   title: string
   isDefault?: boolean
 }
+
+export type PortableLocationV2 = Omit<LocationEntry, "photo" | "createdAt"> & { photo?: Required<MediaRef> }
 
 export interface PortableBackupV2 {
   formatVersion: 2
@@ -78,6 +101,9 @@ export interface PortableBackupV2 {
   editions: PortableEditionV2[]
   copies: PortableCopyV2[]
   shelves: PortableShelfV2[]
+  tags?: Omit<TagEntry, "createdAt">[]
+  locations?: PortableLocationV2[]
+  series?: Omit<SeriesEntry, "createdAt">[]
 }
 
 export class BackupFormatError extends Error {}
@@ -92,12 +118,34 @@ function editionCatalogue(catalogue: CatalogueMetadata | undefined): EditionCata
 }
 
 const hasEvidence = (book: Book) => Boolean(book.verification?.checkedAt || book.verification?.evidenceRefs?.length)
+const hasPersonal = (personal: CopyPersonal | undefined) => Boolean(personal && (personal.notes !== undefined || personal.rating !== undefined || personal.tagIds?.length))
+
+/** Copia sin claves vacías: una evidencia solo exporta la foto con su sha256 (sin él no es portable). */
+function portableEvidence(entries: readonly EvidenceEntry[] | undefined): PortableEvidenceV2[] | undefined {
+  if (!entries?.length) return undefined
+  return entries.map((entry) => {
+    const { photo, ...rest } = entry
+    return { ...rest, fieldClaims: { ...entry.fieldClaims }, ...(photo?.sha256 ? { photo: { assetId: photo.assetId, sha256: photo.sha256 } } : {}) }
+  })
+}
+
+function portablePersonal(personal: CopyPersonal | undefined): CopyPersonal | undefined {
+  if (!personal || !hasPersonal(personal)) return undefined
+  return {
+    ...(personal.notes !== undefined ? { notes: personal.notes } : {}),
+    ...(personal.rating !== undefined ? { rating: personal.rating } : {}),
+    ...(personal.tagIds?.length ? { tagIds: [...personal.tagIds] } : {}),
+  }
+}
 
 /** Edición y copia de una fila: la edición es la de `book.edition` o, en una ficha legacy, la del propio `book.id`. */
 export function bookToEditionAndCopy(book: Book): { edition: PortableEditionV2; copy: PortableCopyV2 } {
   const isbn13 = book.isbn ? normalizeIsbn(book.isbn) : null
   const catalogue = editionCatalogue(book.catalogue)
   const editionId = book.edition?.id ?? book.id
+  const personal = portablePersonal(book.personal)
+  const editionEvidence = portableEvidence(book.edition?.evidence)
+  const copyEvidence = portableEvidence(book.evidence)
   return {
     edition: {
       id: editionId, work_id: book.edition?.workId ?? null, isbn13, title: book.title,
@@ -108,6 +156,8 @@ export function bookToEditionAndCopy(book: Book): { edition: PortableEditionV2; 
       ...(catalogue ? { catalogue } : {}),
       ...(book.edition?.language ? { language: book.edition.language } : {}),
       ...(book.edition?.identifiers && Object.keys(book.edition.identifiers).length ? { identifiers: book.edition.identifiers } : {}),
+      ...(book.edition?.series ? { series: { ...book.edition.series } } : {}),
+      ...(editionEvidence ? { evidence: editionEvidence } : {}),
     },
     copy: {
       id: book.id, edition_id: editionId, status: book.status, shelf_id: book.shelf_id,
@@ -117,11 +167,17 @@ export function bookToEditionAndCopy(book: Book): { edition: PortableEditionV2; 
         ...(book.verification?.evidenceRefs?.length ? { evidenceRefs: [...book.verification.evidenceRefs] } : {}),
       },
       legacy_identifier: isbn13 ? null : book.legacyIdentifier ?? (book.isbn?.trim() ? book.isbn : null),
+      ...(personal ? { personal } : {}),
+      ...(book.location ? { location: { ...book.location } } : {}),
+      ...(copyEvidence ? { evidence: copyEvidence } : {}),
     },
   }
 }
 
-export function requiredCapabilitiesFor(books: readonly Book[]): BackupV2Capability[] {
+/** Datos de la cuenta (0014) de una colección; vacíos en v1 y en archivos anteriores. */
+export type AccountProduct = Pick<LibraryData, "tags" | "locations" | "series">
+
+export function requiredCapabilitiesFor(books: readonly Book[], product: AccountProduct = {}): BackupV2Capability[] {
   const perEdition = new Map<string, number>()
   for (const book of books) perEdition.set(book.edition?.id ?? book.id, (perEdition.get(book.edition?.id ?? book.id) ?? 0) + 1)
   const used: Record<BackupV2Capability, boolean> = {
@@ -130,8 +186,20 @@ export function requiredCapabilitiesFor(books: readonly Book[]): BackupV2Capabil
     "copies.multiple-per-edition": [...perEdition.values()].some((count) => count > 1),
     "copies.verification-evidence": books.some(hasEvidence),
     "editions.identifiers": books.some((book) => Boolean(book.edition?.language || (book.edition?.identifiers && Object.keys(book.edition.identifiers).length))),
+    "copies.personal": books.some((book) => hasPersonal(book.personal)) || Boolean(product.tags?.length),
+    "copies.locations": books.some((book) => Boolean(book.location)) || Boolean(product.locations?.length),
+    "editions.series": books.some((book) => Boolean(book.edition?.series)) || Boolean(product.series?.length),
+    "bibliographic.evidence": books.some((book) => Boolean(book.evidence?.length || book.edition?.evidence?.length)),
   }
   return BACKUP_V2_SUPPORTED_CAPABILITIES.filter((capability) => used[capability])
+}
+
+function portableLocations(locations: readonly LocationEntry[] | undefined): PortableLocationV2[] | undefined {
+  if (!locations?.length) return undefined
+  return locations.map((location) => ({
+    id: location.id, name: location.name, kind: location.kind, parentId: location.parentId,
+    ...(location.photo?.sha256 ? { photo: { assetId: location.photo.assetId, sha256: location.photo.sha256 } } : {}),
+  }))
 }
 
 /** Escritor canónico. Los tokens de versión no se exportan: no autorizan escrituras al restaurar. */
@@ -145,24 +213,28 @@ export function createBackupV2(data: LibraryData, exportedAt = new Date()): Port
     if (edition.work_id && !works.has(edition.work_id)) works.set(edition.work_id, { id: edition.work_id, title: book.edition?.workTitle ?? book.title })
     copies.push(copy)
   }
+  const locations = portableLocations(data.locations)
   return {
     formatVersion: 2,
     exportedAt: exportedAt.toISOString(),
-    requiredCapabilities: requiredCapabilitiesFor(data.books),
+    requiredCapabilities: requiredCapabilitiesFor(data.books, data),
     works: [...works.values()],
     editions: [...editions.values()],
     copies,
     shelves: data.shelves.map((shelf) => ({ id: shelf.id, title: shelf.title, ...(shelf.isDefault !== undefined ? { isDefault: shelf.isDefault } : {}) })),
+    ...(data.tags?.length ? { tags: data.tags.map((tag) => ({ id: tag.id, name: tag.name })) } : {}),
+    ...(locations ? { locations } : {}),
+    ...(data.series?.length ? { series: data.series.map((entry) => ({ id: entry.id, title: entry.title, ...(entry.description !== undefined ? { description: entry.description } : {}) })) } : {}),
   }
 }
 
 /**
- * Indica si la colección necesita el formato 2: procedencia que v1 no conserva (BNE o fuentes por campo),
- * varias copias de una edición, obras, evidencias de comprobación, identificadores o idioma de edición, o
- * un libro sin ISBN ni identificador legacy (v1 exigiría inventarle uno).
+ * Indica si la colección necesita el formato 2: procedencia que v1 no conserva (BNE o por campo),
+ * varias copias de una edición, obras, evidencias de comprobación, identificadores o idioma de edición,
+ * datos de producto de 0014 o un libro sin ISBN ni identificador legacy (v1 exigiría inventarle uno).
  */
 export function libraryRequiresV2(data: LibraryData): boolean {
-  if (requiredCapabilitiesFor(data.books).some((capability) => capability !== "catalogue.provenance-v2")) return true
+  if (requiredCapabilitiesFor(data.books, data).some((capability) => capability !== "catalogue.provenance-v2")) return true
   return data.books.some((book) => catalogueRequiresV2(book.catalogue) || (!book.isbn && !book.legacyIdentifier))
 }
 
@@ -182,6 +254,48 @@ export const copyVerificationSchema = z.object({
   evidenceRefs: z.array(z.string().regex(/^[A-Za-z0-9:_-]{1,100}$/)).min(1).max(10).optional(),
 }).strict()
 
+// Secciones de 0014: mismos límites que las restricciones y triggers de la base.
+// Longitudes en caracteres (puntos de código), como `char_length` de Postgres; sin espacios en los extremos, como `btrim`.
+const chars = (min: number, max: number) => z.string().refine((value) => { const length = [...value].length; return length >= min && length <= max }, "Longitud no válida.")
+const trimmedText = (max: number) => chars(1, max).refine((value) => !value.startsWith(" ") && !value.endsWith(" "), "Sin espacios en los extremos.")
+const mediaRefSchema = z.object({ assetId: z.uuid(), sha256: z.string().regex(/^[0-9a-f]{64}$/) }).strict()
+const jsonBytes = (value: unknown) => new TextEncoder().encode(JSON.stringify(value)).byteLength
+export const personalSchema = z.object({
+  notes: chars(1, NOTES_MAX).optional(),
+  rating: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5)]).optional(),
+  tagIds: z.array(id).min(1).max(TAG_LIMITS.perCopy).refine((ids) => new Set(ids).size === ids.length, "Etiquetas repetidas.").optional(),
+}).strict()
+export const locationRefSchema = z.object({
+  locationId: id,
+  shelfLabel: trimmedText(LOCATION_LIMITS.shelfLabelMax).optional(),
+  position: z.number().int().min(1).max(LOCATION_LIMITS.positionMax).optional(),
+}).strict()
+export const seriesRefSchema = z.object({
+  seriesId: id,
+  position: z.string().refine((value) => canonicalSeriesPosition(value) === value, "Posición no válida.").optional(),
+  volumeLabel: chars(1, SERIES_LIMITS.volumeLabelMax).optional(),
+  orderNote: chars(1, SERIES_LIMITS.orderNoteMax).optional(),
+}).strict()
+export const evidenceSchema = z.object({
+  id,
+  sourceKind: z.enum(EVIDENCE_SOURCE_KINDS),
+  sourceRef: z.string().regex(EVIDENCE_SOURCE_REF_PATTERN).optional(),
+  sourceUrl: z.string().regex(/^https?:\/\//).max(EVIDENCE_LIMITS.sourceUrlMax).optional(),
+  photo: mediaRefSchema.optional(),
+  observedAt: z.iso.datetime({ offset: true }).optional(),
+  fieldClaims: z.record(z.string().max(100), z.unknown()).refine((value) => jsonBytes(value) <= EVIDENCE_LIMITS.fieldClaimsBytes, "Afirmaciones demasiado grandes."),
+  confidence: z.enum(CONFIDENCE_LABELS),
+  origin: z.enum(EVIDENCE_ORIGINS).optional(),
+}).strict().refine((value) => !value.photo || value.sourceKind === "photo", "Solo una evidencia de foto cita una foto.")
+const evidenceListSchema = z.array(evidenceSchema).min(1).max(EVIDENCE_LIMITS.perSubject)
+const tagEntrySchema = z.object({ id, name: z.string().refine(isValidTagName, "Nombre de etiqueta no válido.") }).strict()
+const locationEntrySchema = z.object({
+  id, name: trimmedText(LOCATION_LIMITS.nameMax), kind: z.enum(LOCATION_KINDS), parentId: id.nullable(), photo: mediaRefSchema.optional(),
+}).strict()
+const seriesEntrySchema = z.object({
+  id, title: trimmedText(SERIES_LIMITS.titleMax), description: chars(1, SERIES_LIMITS.descriptionMax).optional(),
+}).strict()
+
 const workSchema = z.object({ id, title: z.string().trim().min(1).max(500) }).strict()
 
 const editionSchema = z.object({
@@ -197,6 +311,8 @@ const editionSchema = z.object({
   catalogue: editionCatalogueSchema.optional(),
   language: editionLanguageSchema.optional(),
   identifiers: editionIdentifiersSchema.optional(),
+  series: seriesRefSchema.optional(),
+  evidence: evidenceListSchema.optional(),
 }).strict()
 
 const copySchema = z.object({
@@ -205,6 +321,9 @@ const copySchema = z.object({
   shelf_id: id,
   edition_verification: copyVerificationSchema,
   legacy_identifier: z.string().trim().min(1).max(100).nullable(),
+  personal: personalSchema.optional(),
+  location: locationRefSchema.optional(),
+  evidence: evidenceListSchema.optional(),
 }).strict()
 
 const shelfSchema = z.object({ id, title: z.string().trim().min(1).max(120), isDefault: z.boolean().optional() }).strict()
@@ -217,6 +336,9 @@ const envelopeSchema = z.object({
   editions: z.array(z.unknown()),
   copies: z.array(z.unknown()),
   shelves: z.array(z.unknown()),
+  tags: z.array(z.unknown()).max(TAG_LIMITS.perAccount).optional(),
+  locations: z.array(z.unknown()).max(LOCATION_LIMITS.perAccount).optional(),
+  series: z.array(z.unknown()).max(SERIES_LIMITS.perAccount).optional(),
 }).strict()
 
 function unrecognizedKeys(error: z.ZodError): string[] {
@@ -236,15 +358,60 @@ function parseEntry<T>(schema: z.ZodType<T>, value: unknown, label: string): T {
 /** Las filas de una edición comparten estos campos; dos filas de la misma clave con valores distintos no son una edición. */
 export function editionFingerprint(book: Book): string {
   return JSON.stringify([book.isbn ?? null, book.title, book.subtitle ?? null, book.authors, book.publishers ?? [], book.publish_date, book.number_of_pages,
-    book.cover, editionCatalogue(book.catalogue) ?? null, book.edition?.workId ?? null, book.edition?.language ?? null, book.edition?.identifiers ?? null])
+    book.cover, editionCatalogue(book.catalogue) ?? null, book.edition?.workId ?? null, book.edition?.language ?? null, book.edition?.identifiers ?? null,
+    book.edition?.series ?? null, book.edition?.evidence ?? null])
+}
+
+/**
+ * Comprueba que las referencias de ejemplares y ediciones a etiquetas, ubicaciones y series existen en la misma colección
+ * y que el árbol de ubicaciones no tiene ciclos ni más niveles de los admitidos. Lo usan el lector v2 y la validación de
+ * cada parte; lanza `BackupFormatError` con explicación.
+ */
+export function assertProductReferences(books: readonly Book[], product: AccountProduct): void {
+  const unique = <T extends { id: string }>(items: readonly T[] | undefined, label: string) => {
+    const ids = new Set<string>()
+    for (const item of items ?? []) {
+      if (ids.has(item.id)) throw new BackupFormatError(`El archivo contiene ${label} con el mismo identificador.`)
+      ids.add(item.id)
+    }
+    return ids
+  }
+  const tagIds = unique(product.tags, "etiquetas")
+  const names = new Set<string>()
+  for (const tag of product.tags ?? []) {
+    const normalized = normalizeTagName(tag.name)
+    if (names.has(normalized)) throw new BackupFormatError(`El archivo contiene dos etiquetas equivalentes («${tag.name}»): mayúsculas y acentos no distinguen etiquetas.`)
+    names.add(normalized)
+  }
+  const locationIds = unique(product.locations, "ubicaciones")
+  const seriesIds = unique(product.series, "series")
+  const parents = new Map((product.locations ?? []).map((location) => [location.id, location.parentId]))
+  for (const location of product.locations ?? []) {
+    let cursor = location.parentId
+    let depth = 1
+    while (cursor !== null) {
+      if (!parents.has(cursor)) throw new BackupFormatError(`La ubicación «${location.name}» cuelga de una ubicación que no está en el archivo.`)
+      if (cursor === location.id) throw new BackupFormatError(`La ubicación «${location.name}» está dentro de sí misma.`)
+      if (++depth > LOCATION_LIMITS.maxDepth) throw new BackupFormatError(`Las ubicaciones del archivo tienen más de ${LOCATION_LIMITS.maxDepth} niveles o un ciclo.`)
+      cursor = parents.get(cursor) ?? null
+    }
+  }
+  for (const book of books) {
+    for (const tagId of book.personal?.tagIds ?? []) if (!tagIds.has(tagId)) throw new BackupFormatError(`La copia de «${book.title}» cita una etiqueta que no está en el archivo.`)
+    if (book.location && !locationIds.has(book.location.locationId)) throw new BackupFormatError(`La copia de «${book.title}» cita una ubicación que no está en el archivo.`)
+    if (book.edition?.series && !seriesIds.has(book.edition.series.seriesId)) throw new BackupFormatError(`La edición de «${book.title}» cita una serie que no está en el archivo.`)
+    if (book.edition?.evidence?.some((entry) => entry.confidence === "physically_checked")) {
+      throw new BackupFormatError(`La edición de «${book.title}» tiene una comprobación física: solo un ejemplar concreto puede estar comprobado.`)
+    }
+  }
 }
 
 /**
  * Lector v2. Devuelve filas planas (una por ejemplar, con la clave de su edición y su obra) que pasan por
- * las mismas validaciones que v1 (duplicados, estanterías, límites). Rechaza con explicación lo que no
- * puede conservar o no declara, en lugar de truncarlo.
+ * las mismas validaciones que v1 (duplicados, estanterías, límites), y las etiquetas, ubicaciones y series de
+ * la cuenta. Rechaza con explicación lo que no puede conservar o no declara, en lugar de truncarlo.
  */
-export function readBackupV2(input: unknown): { books: Book[]; shelves: Shelf[] } {
+export function readBackupV2(input: unknown): Required<Pick<LibraryData, "books" | "shelves">> & AccountProduct {
   const envelope = envelopeSchema.safeParse(input)
   if (!envelope.success) {
     const keys = unrecognizedKeys(envelope.error)
@@ -261,6 +428,9 @@ export function readBackupV2(input: unknown): { books: Book[]; shelves: Shelf[] 
   const editions = data.editions.map((entry, index) => parseEntry(editionSchema, entry, `La edición ${index + 1}`))
   const copies = data.copies.map((entry, index) => parseEntry(copySchema, entry, `La copia ${index + 1}`))
   const shelves = data.shelves.map((entry, index) => parseEntry(shelfSchema, entry, `La estantería ${index + 1}`))
+  const tags = data.tags?.map((entry, index) => parseEntry(tagEntrySchema, entry, `La etiqueta ${index + 1}`))
+  const locations = data.locations?.map((entry, index) => parseEntry(locationEntrySchema, entry, `La ubicación ${index + 1}`))
+  const series = data.series?.map((entry, index) => parseEntry(seriesEntrySchema, entry, `La serie ${index + 1}`))
 
   const unique = <T extends { id: string }>(items: T[], label: string) => {
     const byId = new Map<string, T>()
@@ -287,6 +457,10 @@ export function readBackupV2(input: unknown): { books: Book[]; shelves: Shelf[] 
     ["copies.multiple-per-edition", [...copiesPerEdition.values()].some((count) => count > 1)],
     ["copies.verification-evidence", copies.some((copy) => copy.edition_verification.checkedAt !== undefined || copy.edition_verification.evidenceRefs !== undefined)],
     ["editions.identifiers", editions.some((edition) => edition.language !== undefined || edition.identifiers !== undefined)],
+    ["copies.personal", copies.some((copy) => copy.personal !== undefined) || tags !== undefined],
+    ["copies.locations", copies.some((copy) => copy.location !== undefined) || locations !== undefined],
+    ["editions.series", editions.some((edition) => edition.series !== undefined) || series !== undefined],
+    ["bibliographic.evidence", editions.some((edition) => edition.evidence !== undefined) || copies.some((copy) => copy.evidence !== undefined)],
   ]
   for (const [capability, used] of uses) {
     if (used && !declared.has(capability)) throw new BackupFormatError(`El archivo usa ${capabilityLabels[capability]} sin declarar la capacidad «${capability}».`)
@@ -315,14 +489,27 @@ export function readBackupV2(input: unknown): { books: Book[]; shelves: Shelf[] 
       status: copy.status, shelf_id: copy.shelf_id, shelf_name: "",
       catalogue: { ...catalogue, isbnVerified } as CatalogueMetadata,
       // Una edición propia de un solo ejemplar con su mismo ID es la forma de una ficha legacy: sin clave explícita.
-      ...(edition.id !== copy.id || work || edition.language || edition.identifiers || (copiesPerEdition.get(edition.id) ?? 0) > 1 ? { edition: {
+      ...(edition.id !== copy.id || work || edition.language || edition.identifiers || edition.series || edition.evidence || (copiesPerEdition.get(edition.id) ?? 0) > 1 ? { edition: {
         id: edition.id,
         ...(work ? { workId: work.id, workTitle: work.title } : {}),
         ...(edition.language ? { language: edition.language } : {}),
         ...(edition.identifiers ? { identifiers: edition.identifiers } : {}),
+        ...(edition.series ? { series: edition.series } : {}),
+        ...(edition.evidence ? { evidence: edition.evidence } : {}),
       } } : {}),
       ...(Object.keys(evidence).length ? { verification: evidence } : {}),
+      ...(copy.personal ? { personal: copy.personal } : {}),
+      ...(copy.location ? { location: copy.location } : {}),
+      ...(copy.evidence ? { evidence: copy.evidence } : {}),
     }
   })
-  return { books, shelves: shelves.map((shelf) => ({ ...shelf, book_count: 0 })) }
+  const product: AccountProduct = { ...(tags ? { tags } : {}), ...(locations ? { locations } : {}), ...(series ? { series } : {}) }
+  assertProductReferences(books, product)
+  return { books, shelves: shelves.map((shelf) => ({ ...shelf, book_count: 0 })), ...product }
 }
+
+/** Secciones de la cuenta de una colección (para escritores y partes): siempre presentes, quizá vacías. */
+export function accountProduct(data: LibraryData): Required<AccountProduct> {
+  return { tags: data.tags ?? [], locations: data.locations ?? [], series: data.series ?? [] }
+}
+

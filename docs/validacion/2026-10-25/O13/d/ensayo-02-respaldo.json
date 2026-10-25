@@ -1,0 +1,30 @@
+{
+ "backupId": "20261025T114031Z-scratch-b1ea10",
+ "head": "0014_product_batch_o13",
+ "buckets": [
+  "biblib-covers",
+  "biblib-media",
+  "biblib-test-assets"
+ ],
+ "objects": {
+  "biblib-media": 3,
+  "biblib-test-assets": 1
+ },
+ "media": 3,
+ "counts": {
+  "biblib.bibliographic_evidence": 6,
+  "biblib.copy_annotations": 1,
+  "biblib.copy_locations": 1,
+  "biblib.copy_tags": 1,
+  "biblib.csv_mapping_profiles": 1,
+  "biblib.import_previews": 0,
+  "biblib.locations": 2,
+  "biblib.media_assets": 3,
+  "biblib.profiles": 1,
+  "biblib.review_decisions": 1,
+  "biblib.review_issues": 1,
+  "biblib.series": 1,
+  "biblib.series_editions": 3,
+  "biblib.tags": 2
+ }
+}
