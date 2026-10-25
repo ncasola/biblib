@@ -1,0 +1,38 @@
+
+> biblib@1.0.0 test:integration:security C:\Users\ncaso\orca\workspaces\biblib\u-qa-01
+> node tests/integration/security/run.mjs "--profile" "test"
+
+Grupo security · perfil test · biblib-test · run e43158d09fe3
+Compilando la app para el perfil test…
+✔ misma URL de HTML como A, B y anónimo: sin datos de A fuera de A y sin caché compartida (2825.3661ms)
+✔ misma acción en la misma ruta como A, B y anónimo: cada sesión recibe solo lo suyo (1735.3416ms)
+✔ ficha de un libro de A: B y anónimo no la obtienen ni por HTML ni por acción (285.3142ms)
+Sonda eval de Zod (explicada) en: /books, /books/add, /books/search, /settings, /book/[id]
+✔ Chrome solo registra las violaciones explicadas de la CSP Report-Only en las pantallas privadas (13634.3711ms)
+✔ el acceso anónimo y la pantalla de login no registran violaciones (868.0765ms)
+✔ una portada externa no prevista se informa como violación de img-src, sin bloquear la página (876.1728ms)
+✔ la Data API solo admite public y graphql_public: biblib y drizzle se rechazan para anónimo y A (847.6968ms)
+✔ anon no tiene uso de biblib ni de drizzle, ni privilegios sobre tablas, secuencias o funciones definer (35.9059ms)
+✔ todas las tablas de biblib tienen RLS y authenticated no toca drizzle ni las secuencias (3.5949ms)
+✔ funciones SECURITY DEFINER: search_path fijado, sin PUBLIC ni anon, y authenticated solo en la lista permitida (4.4359ms)
+✔ GraphQL no publica el esquema de BibLib (15.1055ms)
+✔ una sesión viva escribe con una sola verificación por petición (control) (893.689ms)
+✔ token revocado: ninguna escritura por acciones, ni con una atestación fabricada por el cliente (274.8127ms)
+✔ token revocado: /api (fuera del proxy) verifica con GoTrue y no escribe, con o sin atestación fabricada (328.9509ms)
+✔ una atestación fabricada no cambia el usuario: B con la cabecera de A sigue siendo B (272.8849ms)
+✔ formulario local: GoTrue real, cookies SSR y destino interno conservado (856.3753ms)
+✔ formulario local: credenciales erróneas no fijan cookies ni revelan la cuenta (229.1461ms)
+✔ formulario local: destinos externos, // y /\ vuelven a la portada (454.8534ms)
+✔ renovación: una sesión con el acceso vencido se renueva en el proxy y mantiene identidad y destino (328.4871ms)
+✔ cierre: el logout de GoTrue invalida la sesión y sus cookies vuelven al acceso con el destino (276.7639ms)
+✔ callback PKCE real: GoTrue → /auth/callback con destino interno fija la sesión y redirige (279.1173ms)
+✔ callback PKCE real: destino externo, // y /\ se descartan aunque el código sea válido (3151.9066ms)
+✔ callback sin código o con error del proveedor vuelve al acceso sin sesión (9.6665ms)
+ℹ tests 23
+ℹ suites 0
+ℹ pass 23
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 36796.2671
