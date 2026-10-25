@@ -1,0 +1,24 @@
+# docker ps (holaerp)
+supabase_studio_holaerp	Exited (143) 49 minutes ago	
+supabase_pg_meta_holaerp	Exited (0) 49 minutes ago	
+supabase_edge_runtime_holaerp	Exited (255) 2 days ago	
+supabase_storage_holaerp	Exited (0) 49 minutes ago	
+supabase_rest_holaerp	Exited (0) 49 minutes ago	
+supabase_realtime_holaerp	Exited (137) 49 minutes ago	
+supabase_inbucket_holaerp	Exited (0) 49 minutes ago	
+supabase_auth_holaerp	Exited (0) 49 minutes ago	
+supabase_kong_holaerp	Exited (0) 49 minutes ago	
+supabase_db_holaerp	Exited (0) 49 minutes ago	
+holaerp-local-redis	Exited (0) 37 hours ago	
+# redes
+holaerp-web_holaerp-local-network	bridge
+holaerp-woo_default	bridge
+supabase_network_holaerp	bridge
+# volúmenes
+holaerp-ps_db-data
+holaerp-ps_ps-data
+holaerp-woo_db-data
+holaerp-woo_wp-data
+supabase_db_holaerp
+supabase_edge_runtime_holaerp
+supabase_storage_holaerp
