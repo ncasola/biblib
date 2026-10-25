@@ -1,3 +1,6 @@
+import type { CopyLocationRef, CopyPersonal, EditionSeriesRef, LocationEntry, SeriesEntry, TagEntry } from "./product/contracts"
+import type { EvidenceEntry } from "./review/contracts"
+
 export interface Author {
   name: string
   url?: string
@@ -79,6 +82,10 @@ export interface BookEdition {
   workTitle?: string
   language?: string
   identifiers?: EditionIdentifiers
+  /** Serie de la edición (U-PRO-05, 0014): cero o una, con su posición exacta. */
+  series?: EditionSeriesRef
+  /** Evidencias bibliográficas de la edición (U-DAT-07, 0014). */
+  evidence?: EvidenceEntry[]
 }
 
 /**
@@ -124,6 +131,12 @@ export interface Book {
    * conserva las URL originales, que son las que se editan y exportan.
    */
   coverAssetId?: string
+  /** Nota, valoración y etiquetas del ejemplar (U-PRO-01, 0014); ausente si no tiene ninguna. */
+  personal?: CopyPersonal
+  /** Ubicación física actual del ejemplar (U-PRO-03, 0014); la estantería lógica es `shelf_id`. */
+  location?: CopyLocationRef
+  /** Evidencias bibliográficas del ejemplar, como su comprobación física (U-DAT-07, 0014). */
+  evidence?: EvidenceEntry[]
 }
 
 export interface Shelf {
@@ -137,4 +150,11 @@ export interface Shelf {
 export interface LibraryData {
   books: Book[]
   shelves: Shelf[]
+  /**
+   * Etiquetas, ubicaciones y series de la cuenta (0014). Los ejemplares y ediciones las citan por ID; también se
+   * conservan las que nadie cita. Ausentes en v1 y en archivos anteriores: se importan vacías, sin inventar datos.
+   */
+  tags?: TagEntry[]
+  locations?: LocationEntry[]
+  series?: SeriesEntry[]
 }

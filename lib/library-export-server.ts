@@ -4,6 +4,7 @@ import { and, asc, count, eq, sql } from "drizzle-orm"
 import type { DatabaseTransaction } from "@/lib/db/client"
 import { bookFields, books, libraryState, shelves } from "@/lib/db/schema"
 import { ensureDefaultShelf, mapRowToBook } from "@/lib/db/library"
+import { readProductData } from "@/lib/db/product"
 import { buildBackupSet, type BackupSet } from "@/lib/library-export"
 import type { LibraryData } from "@/lib/types"
 
@@ -40,6 +41,8 @@ export async function readExportLibrary(tx: DatabaseTransaction, userId: string)
   const bookRows = await tx.select({ book: bookFields, shelfTitle: shelves.title }).from(books)
     .innerJoin(shelves, and(eq(books.shelfId, shelves.id), eq(shelves.userId, userId)))
     .where(eq(books.userId, userId)).orderBy(asc(books.title), asc(books.id))
+  // Notas, etiquetas, ubicaciones, series y evidencias (0014) entran en la misma lectura: también rotan la revisión.
+  const product = await readProductData(tx, userId, bookRows.map(mapRowToBook))
   // Una escritura confirmada entre medias rota la revisión: la lectura no sería de un único estado.
   if (await revisionOf(tx, userId) !== before) return null
   const counts = new Map<string, number>()
@@ -48,7 +51,7 @@ export async function readExportLibrary(tx: DatabaseTransaction, userId: string)
     revision: before,
     data: {
       shelves: userShelves.map((shelf) => ({ id: shelf.id, title: shelf.title, isDefault: shelf.isDefault, book_count: counts.get(shelf.id) ?? 0 })),
-      books: bookRows.map(mapRowToBook),
+      ...product,
     },
   }
 }

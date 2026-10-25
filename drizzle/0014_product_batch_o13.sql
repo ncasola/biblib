@@ -871,7 +871,7 @@ BEGIN
           || CASE WHEN cl.location_id IS NULL THEN '{}'::jsonb
             ELSE jsonb_build_object('location', jsonb_strip_nulls(jsonb_build_object('location_id', cl.location_id, 'shelf_label', cl.shelf_label, 'position', cl.position))) END
           || CASE WHEN se.series_id IS NULL THEN '{}'::jsonb
-            ELSE jsonb_build_object('series', jsonb_strip_nulls(jsonb_build_object('series_id', se.series_id, 'position', se.position::text, 'volume_label', se.volume_label, 'order_note', se.order_note))) END
+            ELSE jsonb_build_object('series', jsonb_strip_nulls(jsonb_build_object('series_id', se.series_id, 'position', trim_scale(se.position)::text, 'volume_label', se.volume_label, 'order_note', se.order_note))) END
           || CASE WHEN ce.items IS NULL THEN '{}'::jsonb ELSE jsonb_build_object('evidence', ce.items) END
           || CASE WHEN ee.items IS NULL THEN '{}'::jsonb ELSE jsonb_build_object('edition_evidence', ee.items) END AS item
       FROM biblib.books AS b

@@ -35,10 +35,11 @@ export function normalizeTagName(name: string): string {
     .normalize("NFC")
 }
 
-/** Nombre visible válido: 1–40 caracteres, sin espacios en los extremos ni caracteres de control. */
+/** Nombre visible válido (como `tags_name_check`): 1–40 caracteres, sin espacios en los extremos ni caracteres de control. */
 export function isValidTagName(name: string): boolean {
+  const length = [...name].length
   // eslint-disable-next-line no-control-regex
-  return name === name.trim() && [...name].length >= 1 && [...name].length <= TAG_LIMITS.nameMax && !/[\u0000-\u001f\u007f]/.test(name)
+  return length >= 1 && length <= TAG_LIMITS.nameMax && !name.startsWith(" ") && !name.endsWith(" ") && !/[\u0000-\u001f\u007f-\u009f]/.test(name)
 }
 
 export interface Tag {
@@ -176,10 +177,40 @@ export interface MediaAsset {
   version: string
 }
 
-/** Referencia portable a un asset privado propio: solo se conserva al importar si el mismo asset sigue siendo del dueño. */
+/**
+ * Referencia a un asset privado propio. Al importar o restaurar solo se conserva si ese asset sigue siendo del dueño,
+ * está listo, es del tipo esperado y (si viene `sha256`, siempre en v2) tiene los mismos bytes; si no, la entidad se
+ * importa sin foto. Los bytes nunca viajan en el JSON.
+ */
 export interface MediaRef {
   assetId: string
-  sha256: string
+  sha256?: string
+}
+
+// ── Entradas de la cuenta en la colección portable (LibraryData, v2 y versiones anteriores) ─────────
+
+/** Etiqueta de la cuenta tal como viaja: la forma normalizada la recalcula Postgres. */
+export interface TagEntry {
+  id: string
+  name: string
+  /** Solo en versiones anteriores: fecha de alta que conserva la restauración. */
+  createdAt?: string
+}
+
+export interface LocationEntry {
+  id: string
+  name: string
+  kind: LocationKind
+  parentId: string | null
+  photo?: MediaRef
+  createdAt?: string
+}
+
+export interface SeriesEntry {
+  id: string
+  title: string
+  description?: string
+  createdAt?: string
 }
 
 /** Respuestas de `biblib.media_asset_begin_upload`, `_register` y `_discard` (0014). */
