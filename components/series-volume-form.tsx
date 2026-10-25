@@ -12,7 +12,7 @@ import { SERIES_LIMITS } from "@/lib/product/contracts"
 // «orden desconocido»: nunca se rellena con la fecha de publicación ni con el número de ejemplares.
 
 export const NEW_SERIES = "__new__"
-const selectClass = "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base text-foreground focus-visible:outline-2 focus-visible:outline-ring"
+const selectClass = "flex h-10 w-full rounded-md border border-input bg-input px-3 py-2 text-base text-foreground focus-visible:outline-2 focus-visible:outline-ring"
 
 export interface SeriesVolumeValues {
   /** Serie elegida, o `NEW_SERIES` para crearla con `newTitle`. */

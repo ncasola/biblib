@@ -20,7 +20,7 @@ import { buildLocationTree, formatLocationPath, locationKindLabel, moveTargets, 
 import { LOCATION_KINDS, LOCATION_LIMITS, type LocationKind } from "@/lib/product/contracts"
 import type { Book } from "@/lib/types"
 
-const selectClass = "w-full min-w-0 rounded-lg border border-input bg-background p-2 text-foreground"
+const selectClass = "w-full min-w-0 rounded-md border border-input bg-input px-3 py-2 text-foreground"
 const statusLabels: Record<Book["status"], string> = { unread: "Sin leer", reading: "Leyendo", read: "Leído", "to-read": "Por leer" }
 const messageOf = (caught: unknown, fallback: string) => caught instanceof DomainError ? caught.message : fallback
 const indent = (entry: LocationTreeEntry) => `${"  ".repeat(entry.depth - 1)}${entry.depth > 1 ? "└ " : ""}${entry.name}`
@@ -61,7 +61,7 @@ function CreateLocationForm({ tree, defaultParent, onCreated }: { tree: Location
     finally { setPending(false) }
   }
 
-  return <form aria-labelledby={`${id}-title`} aria-busy={pending} onSubmit={(event) => { event.preventDefault(); void create() }} className="rounded-2xl border border-border bg-card/80 p-5 shadow-xl backdrop-blur-xl space-y-3">
+  return <form aria-labelledby={`${id}-title`} aria-busy={pending} onSubmit={(event) => { event.preventDefault(); void create() }} className="surface-card rounded-2xl p-5 space-y-3">
     <h2 id={`${id}-title`} className="text-lg font-semibold">Nueva ubicación</h2>
     <div className="grid gap-3 sm:grid-cols-2">
       <div className="space-y-1 sm:col-span-2"><label htmlFor={`${id}-name`} className="text-sm font-medium">Nombre</label>
@@ -171,7 +171,7 @@ function LocationDetails({ entry, tree, onChanged, onDeleted }: { entry: Locatio
     finally { setBusy(null) }
   }
 
-  return <section aria-labelledby={`${id}-title`} className="rounded-2xl border border-border bg-card/80 p-5 shadow-xl backdrop-blur-xl space-y-5">
+  return <section aria-labelledby={`${id}-title`} className="surface-card rounded-2xl p-5 space-y-5">
     <div>
       <h2 id={`${id}-title`} className="text-xl font-semibold break-words">{entry.name}</h2>
       <p className="text-sm text-muted-foreground">{locationKindLabel(entry.kind)} · {formatLocationPath(entry.path)} · {contentsLabel(entry)}</p>
@@ -248,16 +248,17 @@ export function LocationManager({ initialLocationId }: { initialLocationId: stri
   }
 
   return <div className="mx-auto max-w-6xl space-y-6">
-    <div className="space-y-2">
-      <h1 className="text-3xl font-bold heading-vintage">Ubicaciones físicas</h1>
-      <p className="text-muted-foreground">Dónde está cada libro en casa: muebles, cajas y baldas. Es independiente de las estanterías de la biblioteca, que no cambian al mover un libro de sitio.</p>
+    <div className="flex max-w-3xl flex-col gap-2">
+      <p className="eyebrow">Organización</p>
+      <h1 className="heading-vintage text-3xl leading-[1.08] md:text-5xl">Ubicaciones físicas</h1>
+      <p className="text-base leading-relaxed text-foreground-light md:text-lg">Dónde está cada libro en casa: muebles, cajas y baldas. Es independiente de las estanterías de la biblioteca, que no cambian al mover un libro de sitio.</p>
     </div>
-    {message && <p role="status" className="rounded-xl border border-border bg-muted/40 p-3 text-sm">{message}</p>}
+    {message && <p role="status" className="rounded-xl border border-l-4 border-border border-l-[var(--status-read)] bg-card p-3 text-sm shadow-sm">{message}</p>}
     {loadError ? <div role="alert" className="space-y-2 text-destructive"><p>{loadError}</p><Button variant="outline" onClick={() => void load()}>Reintentar</Button></div>
       : !locations ? <p className="text-muted-foreground">Cargando ubicaciones…</p>
       : <div className="grid gap-6 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
         <div className="space-y-6">
-          <nav aria-label="Árbol de ubicaciones" className="rounded-2xl border border-border bg-card/80 p-5 shadow-xl backdrop-blur-xl space-y-3">
+          <nav aria-label="Árbol de ubicaciones" className="surface-card rounded-2xl p-5 space-y-3">
             <div className="flex items-center gap-2"><FolderTree aria-hidden="true" className="h-4 w-4 text-primary" /><h2 className="text-lg font-semibold">Tus ubicaciones</h2></div>
             {tree.length === 0 ? <p className="text-sm text-muted-foreground">Aún no hay ubicaciones. Crea la primera, por ejemplo una estantería, y después sus baldas dentro.</p> : (
               <ul className="space-y-1">
