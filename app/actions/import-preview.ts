@@ -12,6 +12,7 @@ import type { ActionResult } from "@/lib/action-result"
 import { domainMutation } from "@/lib/server-action"
 import { DEFAULT_BOOK_COVER } from "@/lib/book-covers"
 import { parseLibraryImport } from "@/lib/library-import"
+import { createBackupV2, libraryRequiresV2, type PortableBackupV2 } from "@/lib/backup-v2"
 import {
   buildImportPlan, canonicalJson, IMPORT_RULES_VERSION, MAX_ACTIVE_PREVIEWS, previewTtlMinutes,
   type ImportMode, type ImportOperationResult, type ImportPlan,
@@ -74,6 +75,10 @@ async function prepareImport(input: unknown, mode: unknown): Promise<PreparedImp
   const digest = sha256(canonicalJson(imported))
 
   const payload: LibraryData = { shelves: imported.shelves, books: imported.books }
+  // Al confirmar se vuelve a leer lo guardado. La forma legacy no expresa ediciones compartidas, obras, evidencias,
+  // identificadores, IDs de edición propios ni libros sin ISBN: en esos casos se guarda el payload v2 (U-DAT-06).
+  const storedPayload: LibraryData | PortableBackupV2 = libraryRequiresV2(payload) || payload.books.some((book) => book.edition)
+    ? createBackupV2(payload) : payload
   const previewId = randomUUID()
   const ttl = previewTtlMinutes(process.env.BIBLIB_IMPORT_PREVIEW_TTL_MINUTES)
 
@@ -95,7 +100,7 @@ async function prepareImport(input: unknown, mode: unknown): Promise<PreparedImp
       if (surplus.length) await tx.delete(importPreviews).where(and(eq(importPreviews.userId, userId), inArray(importPreviews.id, surplus.map((row) => row.id))))
 
       const [stored] = await tx.insert(importPreviews).values({
-        id: previewId, userId, revision, inputDigest: digest, mode: importMode, rulesVersion: IMPORT_RULES_VERSION, plan, payload,
+        id: previewId, userId, revision, inputDigest: digest, mode: importMode, rulesVersion: IMPORT_RULES_VERSION, plan, payload: storedPayload,
         expiresAt: sql`now() + make_interval(mins => ${ttl})`,
       }).returning({ expiresAt: importPreviews.expiresAt })
       return { previewId, revision, digest, expiresAt: stored.expiresAt.toISOString(), plan }

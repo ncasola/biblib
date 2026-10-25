@@ -49,7 +49,7 @@ async function replayed<T>(tx: DatabaseTransaction, userId: string, request: Ide
   const [existing] = await tx.select({ inputDigest: libraryOperations.inputDigest, result: libraryOperations.result }).from(libraryOperations)
     .where(and(eq(libraryOperations.userId, userId), eq(libraryOperations.operation, request.operation), eq(libraryOperations.idempotencyKey, request.key))).limit(1)
   if (!existing) return { digest, result: null }
-  if (existing.inputDigest !== digest) throw idempotencyConflict()
+  if (existing.inputDigest !== digest) throw idempotencyConflict("Esta operación ya se hizo con otros datos. No se ha aplicado nada; vuelve a cargar la ficha e inténtalo de nuevo.")
   return { digest, result: existing.result as T }
 }
 

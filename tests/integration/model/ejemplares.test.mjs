@@ -1,4 +1,5 @@
 import assert from "node:assert/strict"
+import { randomUUID } from "node:crypto"
 import { after, before, test } from "node:test"
 import { errorCode, modelContext, raw, value } from "./lib/context.mjs"
 
@@ -107,6 +108,27 @@ test("un libro sin ISBN: null en la edición, se edita, se exporta en v2 y se re
   assert.deepEqual(inB, { isbn13: null, legacy_identifier: null, title: edited.title })
 })
 
+test("importar un v2 con dos copias de una edición conserva la edición compartida tras la vista previa", async () => {
+  // La vista previa guarda lo leído y lo vuelve a leer al confirmar: no puede perder ediciones compartidas ni evidencias.
+  const shelf = await ctx.defaultShelf(ctx.users.b)
+  const [editionId, firstId, secondId] = [randomUUID(), randomUUID(), randomUUID()]
+  const isbn = ctx.isbn(7)
+  const file = { formatVersion: 2, exportedAt: new Date().toISOString(), requiredCapabilities: ["copies.multiple-per-edition", "copies.verification-evidence"], works: [],
+    shelves: [{ id: shelf, title: "Biblioteca", isDefault: true }],
+    editions: [{ id: editionId, work_id: null, isbn13: isbn, title: ctx.title("Compartida importada"), authors: [{ name: "Autoría de prueba" }], publish_date: "2001", number_of_pages: 90, cover, catalogue: { source: "manual" } }],
+    copies: [
+      { id: firstId, edition_id: editionId, status: "read", shelf_id: shelf, edition_verification: { isbnVerified: true, checkedAt: "2026-10-20T10:00:00.000Z", evidenceRefs: ["foto:lomo"] }, legacy_identifier: null },
+      { id: secondId, edition_id: editionId, status: "to-read", shelf_id: shelf, edition_verification: { isbnVerified: false }, legacy_identifier: null },
+    ] }
+  const preview = value(await ctx.call("prepareImportAction", [file, "merge"], b))
+  value(await ctx.call("confirmImportAction", [{ previewId: preview.previewId, expectedRevision: preview.revision, idempotencyKey: ctx.key("dos-copias") }], b))
+  const rows = await ctx.sql`select c.edition_id, c.status, c.edition_verification as v from biblib.copies c join biblib.editions e on e.id = c.edition_id
+    where c.user_id = ${ctx.users.b} and e.isbn13 = ${isbn} order by c.status`
+  assert.equal(rows.length, 2)
+  assert.equal(new Set(rows.map((row) => row.edition_id)).size, 1, "una edición con dos ejemplares")
+  assert.deepEqual(rows.map((row) => [row.status, row.v.isbnVerified, row.v.evidenceRefs ?? null]), [["read", true, ["foto:lomo"]], ["to-read", false, null]])
+})
+
 test("aislamiento: B no cita ediciones ni ejemplares de A ni fusiona ediciones ajenas", async () => {
   const shelfA = await ctx.defaultShelf(ctx.users.a)
   const shelfB = await ctx.defaultShelf(ctx.users.b)
@@ -162,14 +184,17 @@ test("fusionar ediciones: los ejemplares pasan con su estado y la revisión viej
   const request = { sourceIds: [source.edition.id], targetId: target.edition.id, expectedVersions: { ...versions, [target.edition.id]: refreshed.edition.version } }
   assert.equal(errorCode(await ctx.call("mergeEditionsAction", [{ ...request, expectedRevision: stale, idempotencyKey: ctx.key("fusion-vieja") }], a)), "REVISION_CONFLICT")
   const key = ctx.key("fusion")
-  const merged = value(await ctx.call("mergeEditionsAction", [{ ...request, expectedRevision: await ctx.revision(ctx.users.a), idempotencyKey: key }], a))
+  const sent = await ctx.revision(ctx.users.a)
+  const merged = value(await ctx.call("mergeEditionsAction", [{ ...request, expectedRevision: sent, idempotencyKey: key }], a))
   assert.deepEqual({ moved: merged.moved, mapping: merged.mapping }, { moved: 1, mapping: [{ sourceId: source.edition.id, targetId: target.edition.id }] })
   const moved = raw(await ctx.call("getBookDetailAction", [source.id], a))
   assert.deepEqual([moved.edition.id, moved.status, moved.isbn, moved.edition.copies], [target.edition.id, "read", ctx.isbn(6), 2])
   const [{ gone }] = await ctx.sql`select count(*)::int as gone from biblib.editions where id = ${source.edition.id}`
   assert.equal(gone, 0, "la edición vacía se retira")
-  // Repetir la confirmación con la misma clave recupera el resultado aunque la revisión ya haya cambiado.
-  assert.deepEqual(value(await ctx.call("mergeEditionsAction", [{ ...request, expectedRevision: stale, idempotencyKey: key }], a)).mapping, merged.mapping)
+  // Reintentar la misma petición recupera el resultado aunque la revisión enviada ya no sea la vigente; con otra
+  // entrada y la misma clave es un conflicto, no otra fusión.
+  assert.deepEqual(value(await ctx.call("mergeEditionsAction", [{ ...request, expectedRevision: sent, idempotencyKey: key }], a)).mapping, merged.mapping)
+  assert.equal(errorCode(await ctx.call("mergeEditionsAction", [{ ...request, expectedRevision: stale, idempotencyKey: key }], a)), "IDEMPOTENCY_CONFLICT")
 })
 
 test("ningún proveedor simulado acredita la comprobación física", async () => {

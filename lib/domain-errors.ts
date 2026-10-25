@@ -68,8 +68,8 @@ export function previewExpired(): DomainError {
   return new DomainError("PREVIEW_EXPIRED", "La revisión de la importación ha caducado. Vuelve a prepararla para comprobar los datos actuales.")
 }
 
-export function idempotencyConflict(): DomainError {
-  return new DomainError("IDEMPOTENCY_CONFLICT", "Esta confirmación ya se usó con otro archivo o modo de importación. No se ha aplicado nada; prepara una revisión nueva.")
+export function idempotencyConflict(message = "Esta confirmación ya se usó con otro archivo o modo de importación. No se ha aplicado nada; prepara una revisión nueva."): DomainError {
+  return new DomainError("IDEMPOTENCY_CONFLICT", message)
 }
 
 /** El trabajo cambió de estado o de versión: hay que consultar su estado actual antes de repetir la acción. */

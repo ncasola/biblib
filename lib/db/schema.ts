@@ -3,6 +3,7 @@ import { authenticatedRole } from "drizzle-orm/supabase"
 import { pgSchema, uuid, text, timestamp, boolean, integer, bigint, jsonb, uniqueIndex, index, check, pgPolicy, foreignKey, primaryKey, customType, type AnyPgColumn } from "drizzle-orm/pg-core"
 import type { Author, Publisher, Book, CatalogueMetadata, CopyVerification, EditionCatalogue, EditionIdentifiers, LibraryData } from "@/lib/types"
 import type { ImportPlan, ImportOperationResult } from "@/lib/import-plan"
+import type { PortableBackupV2 } from "@/lib/backup-v2"
 import type { SavedViewFilters } from "@/lib/saved-views"
 
 /**
@@ -345,7 +346,8 @@ export const importPreviews = biblibSchema.table(
     mode: text("mode").$type<"merge" | "replace">().notNull(),
     rulesVersion: integer("rules_version").notNull(),
     plan: jsonb("plan").$type<ImportPlan>().notNull(),
-    payload: jsonb("payload").$type<LibraryData>(),
+    /** Colección leída: forma legacy si no pierde nada; si no, el payload v2 completo (U-DAT-06). */
+    payload: jsonb("payload").$type<LibraryData | PortableBackupV2>(),
     snapshotId: uuid("snapshot_id"),
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
