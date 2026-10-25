@@ -159,7 +159,10 @@ export function parseBackupSetManifest(input: unknown): BackupSetManifest {
   for (const part of manifest.parts) {
     const { books, shelves } = bookAndShelfCounts(part.counts)
     if (books > MAX_IMPORT_BOOKS || shelves > MAX_IMPORT_SHELVES) mismatch("Una parte declara más libros o estanterías de los que admite un archivo.")
-    if ("copies" in part.counts && part.counts.editions !== part.counts.copies) mismatch("Una parte declara un número de ediciones distinto del de copias.")
+    // U-DAT-06: varias copias pueden compartir edición y varias ediciones una obra; nunca al revés.
+    if ("copies" in part.counts && (part.counts.editions > part.counts.copies || part.counts.works > part.counts.editions || (part.counts.copies > 0 && part.counts.editions === 0))) {
+      mismatch("Una parte declara más ediciones que copias o más obras que ediciones.")
+    }
   }
   const sum = manifest.parts.reduce((total, part) => total + bookAndShelfCounts(part.counts).books, 0)
   const totals = bookAndShelfCounts(manifest.totals)
@@ -167,7 +170,15 @@ export function parseBackupSetManifest(input: unknown): BackupSetManifest {
   const shelfMax = Math.max(...manifest.parts.map((part) => bookAndShelfCounts(part.counts).shelves))
   if (totals.books !== sum) mismatch("El total de libros del manifiesto no coincide con la suma de sus partes.")
   if (totals.shelves > shelfSum || totals.shelves < shelfMax) mismatch("El total de estanterías del manifiesto no es coherente con sus partes.")
-  if ("copies" in manifest.totals && manifest.totals.editions !== manifest.totals.copies) mismatch("El total de ediciones del manifiesto no coincide con el de copias.")
+  if ("copies" in manifest.totals) {
+    // Una edición con copias en varias partes aparece en cada una: el total está entre el máximo y la suma de las partes.
+    const v2Parts = manifest.parts.map((part) => part.counts as PartCountsV2)
+    const within = (key: "editions" | "works") => {
+      const value = (manifest.totals as PartCountsV2)[key]
+      return value <= v2Parts.reduce((total, part) => total + part[key], 0) && value >= Math.max(...v2Parts.map((part) => part[key]))
+    }
+    if (manifest.totals.editions > manifest.totals.copies || !within("editions") || !within("works")) mismatch("El total de ediciones u obras del manifiesto no coincide con el de sus partes.")
+  }
   return manifest
 }
 

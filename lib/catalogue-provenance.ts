@@ -124,8 +124,8 @@ const hasFields = (catalogue: CatalogueMetadata | undefined): catalogue is Catal
  * Forma canónica para guardar: `isbnVerified` solo con ISBN válido, sin `isbnChecksumValid`
  * (derivado) y sin `fields` vacío. No cambia la fuente ni añade procedencia.
  */
-export function normalizeCatalogue(value: z.output<typeof catalogueSchema>, isbn: string): CatalogueMetadata {
-  const isbnVerified = Boolean(normalizeIsbn(isbn)) && value.isbnVerified
+export function normalizeCatalogue(value: z.output<typeof catalogueSchema>, isbn: string | null): CatalogueMetadata {
+  const isbnVerified = Boolean(normalizeIsbn(isbn ?? "")) && value.isbnVerified
   const sourceUrl = value.sourceUrl ? { sourceUrl: value.sourceUrl } : {}
   if (!("schemaVersion" in value)) return { source: value.source, isbnVerified, ...sourceUrl }
   const fields = Object.fromEntries(PROVENANCE_FIELDS.flatMap((field) => value.fields?.[field] ? [[field, value.fields[field]]] : []))
@@ -146,12 +146,12 @@ export interface CatalogueView {
 }
 
 /** Lector tolerante para mostrar fichas guardadas: deriva el checksum y nunca reclasifica la fuente. */
-export function readCatalogueView(catalogue: unknown, isbn: string): CatalogueView {
+export function readCatalogueView(catalogue: unknown, isbn: string | null): CatalogueView {
   const record = catalogue && typeof catalogue === "object" && !Array.isArray(catalogue) ? catalogue as Record<string, unknown> : {}
   const source = typeof record.source === "string" ? record.source : "import"
   const parsedFields = record.schemaVersion === 2 ? fieldsSchema.safeParse(record.fields ?? {}) : undefined
   const sourceUrl = typeof record.sourceUrl === "string" && httpsUrl.safeParse(record.sourceUrl).success ? record.sourceUrl : undefined
-  const checksum = Boolean(normalizeIsbn(isbn))
+  const checksum = Boolean(normalizeIsbn(isbn ?? ""))
   return {
     schemaVersion: record.schemaVersion === 2 ? 2 : 1,
     source, sourceLabel: provenanceProviderLabel(source), sourceKnown: isKnownProvider(source),
@@ -205,9 +205,9 @@ export function catalogueForCreate(catalogue: CatalogueMetadata, reviewEnabled: 
  * cliente. Los campos cambiados pasan a «manual»; los demás conservan su fuente. Una ficha v2
  * sigue siendo v2 aunque la revisión se apague, para no borrar procedencia.
  */
-export function catalogueForUpdate(current: BookFieldSource & { isbn: string; catalogue?: CatalogueMetadata }, next: BookFieldSource & { isbn: string; catalogue: CatalogueMetadata }, reviewEnabled: boolean): CatalogueMetadata {
+export function catalogueForUpdate(current: BookFieldSource & { isbn: string | null; catalogue?: CatalogueMetadata }, next: BookFieldSource & { isbn: string | null; catalogue: CatalogueMetadata }, reviewEnabled: boolean): CatalogueMetadata {
   const stored = current.catalogue ?? { source: "import" as const, isbnVerified: false }
-  const isbnVerified = Boolean(normalizeIsbn(next.isbn)) && next.catalogue.isbnVerified
+  const isbnVerified = Boolean(normalizeIsbn(next.isbn ?? "")) && next.catalogue.isbnVerified
   const sourceUrl = stored.sourceUrl ? { sourceUrl: stored.sourceUrl } : {}
   const changed = PROVENANCE_FIELDS.filter((field) => provenanceFieldValue(current, field) !== provenanceFieldValue(next, field))
   if (stored.schemaVersion !== 2 && (!reviewEnabled || changed.length === 0)) {

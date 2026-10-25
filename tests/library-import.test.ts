@@ -69,7 +69,10 @@ test("normaliza ISBN equivalentes y detecta duplicados entre ISBN-10 e ISBN-13",
   const second = book({ id: "otro", isbn: "9780804429573" })
   assert.equal(parseLibraryImport(library([first])).books[0].isbn, second.isbn)
   assert.throws(() => parseLibraryImport(library([first, second])), /mismo ISBN/)
-  assert.equal(parseLibraryImport(library([book({ isbn: " manual-ejemplar-1 " })])).books[0].isbn, "manual-ejemplar-1")
+  // U-DAT-06: un identificador manual no es un ISBN; se conserva como identificador legacy del ejemplar.
+  const manual = parseLibraryImport(library([book({ isbn: " manual-ejemplar-1 " })])).books[0]
+  assert.equal(manual.isbn, null)
+  assert.equal(manual.legacyIdentifier, "manual-ejemplar-1")
 })
 
 test("conserva procedencia y verificación y marca como provisionales los archivos antiguos", () => {

@@ -47,7 +47,7 @@ test("fixture: recuperación y búsqueda legacy terminan sin ninguna llamada fet
     "./bibliographic-catalog/server": { bibliographicCatalog: catalog },
     "./observability/server": { withActionCorrelation: (operation: () => unknown) => operation() },
   })
-  assert.equal((await client.searchBookByISBN(book.isbn))?.title, "La isla de papel")
+  assert.equal((await client.searchBookByISBN(book.isbn!))?.title, "La isla de papel")
   assert.equal(await client.searchBookByISBN("9780000000057"), null)
   assert.equal(await client.searchBookByISBN("isbn-inválido"), null)
   await assert.rejects(client.searchBookByISBN("9780000000040"), { code: "PROVIDER_UNAVAILABLE" })
@@ -61,7 +61,7 @@ test("fixture: recuperación y búsqueda legacy terminan sin ninguna llamada fet
   await recovery.recoverMissingCoversAction({ idempotencyKey: "clave-fixture" })
   // El objeto llega desde otro contexto de vm: se compara su contenido, no el prototipo.
   assert.equal(JSON.stringify(started), JSON.stringify([{ scope: "missing", idempotencyKey: "clave-fixture" }]))
-  const cover = await catalog.getCover(book.isbn)
+  const cover = await catalog.getCover(book.isbn!)
   assert.notEqual(cover.status, undefined)
   assert.deepEqual(book, original)
   assert.equal(fetch.mock.callCount(), 0)
@@ -69,7 +69,7 @@ test("fixture: recuperación y búsqueda legacy terminan sin ninguna llamada fet
 
 test("búsqueda HTTP: descarta portadas Google y conserva una portada persistible posterior", async () => {
   const catalog = createConfiguredCatalog(readCatalogConfig({ BIBLIB_TARGET: "test" }))
-  const found = (await catalog.lookupISBN(book.isbn)).candidates[0]
+  const found = (await catalog.lookupISBN(book.isbn!)).candidates[0]
   const google: CoverCandidate = { provider: "google-books", imageUrl: "https://books.google.com/preview.jpg", coverKey: "google", rightsPolicyVersion: "preview-only" }
   const openLibrary: CoverCandidate = { provider: "open-library", imageUrl: "https://covers.openlibrary.org/b/id/1-L.jpg", coverKey: "ol", rightsPolicyVersion: "test" }
   let covers = [google]

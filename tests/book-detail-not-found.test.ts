@@ -56,6 +56,8 @@ test("lector de ficha: un ID inválido devuelve ausencia antes de Auth o de la b
     "@/lib/db/client": { withRlsContext: () => assert.fail("No debe consultar la base") },
     "@/lib/db/library": {},
     "@/lib/db/schema": {},
+    "@/lib/db/model": {},
+    "@/lib/db/editions": {},
     "@/lib/server-user": { getRequiredUserId: () => assert.fail("No debe consultar Auth") },
     "@/lib/server-action": {},
     "@/lib/observability/server": {},

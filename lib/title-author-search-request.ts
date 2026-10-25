@@ -13,8 +13,8 @@ export function createLatestBibliographyRequest() {
     cancel() { current?.abort() },
   }
 }
-/** La entrada manual parte de lo escrito ahora, aunque una consulta anterior siga en vuelo. */
+/** La entrada manual parte de lo escrito ahora, aunque una consulta anterior siga en vuelo; sin ISBN inventado (U-DAT-06). */
 export function manualTitleAuthorDraft(title: string, author: string): Book {
-  return { id: "", isbn: `manual-${crypto.randomUUID()}`, title, authors: author.trim() ? [{ name: author.trim() }] : [], publishers: [], number_of_pages: 0, publish_date: "", status: "unread", shelf_id: "", shelf_name: "", cover: { small: DEFAULT_BOOK_COVER, medium: DEFAULT_BOOK_COVER, large: DEFAULT_BOOK_COVER }, catalogue: { source: "manual", isbnVerified: false } }
+  return { id: "", isbn: null, title, authors: author.trim() ? [{ name: author.trim() }] : [], publishers: [], number_of_pages: 0, publish_date: "", status: "unread", shelf_id: "", shelf_name: "", cover: { small: DEFAULT_BOOK_COVER, medium: DEFAULT_BOOK_COVER, large: DEFAULT_BOOK_COVER }, catalogue: { source: "manual", isbnVerified: false } }
 }
 

@@ -81,11 +81,28 @@ export interface BookEdition {
   identifiers?: EditionIdentifiers
 }
 
+/**
+ * DTO plano de un ejemplar para la interfaz (U-DAT-06): un ejemplar (`copies`) con la descripción de su
+ * edición. `id` es el ID del ejemplar, que conserva el de la ficha legacy. La descripción bibliográfica
+ * pertenece a la edición y puede compartirse entre varios ejemplares; estado, estantería y comprobación
+ * física son de cada ejemplar.
+ */
 export interface Book {
   id: string
-  /** Token de edición de la ficha persistida; ausente en catálogos y respaldos antiguos. */
+  /**
+   * Token plano de la ficha persistida: cambia cuando cambia el ejemplar o su edición. Protege las
+   * operaciones sobre una ficha; nunca autoriza por sí solo cambiar una edición compartida.
+   */
   version?: string
-  isbn: string
+  /** Token del ejemplar: estado, estantería y comprobación física. */
+  copyVersion?: string
+  /** ISBN-13 canónico de la edición, o `null` si el libro no tiene ISBN. Nunca un identificador inventado. */
+  isbn: string | null
+  /** Identificador legacy del ejemplar (`manual-…` u otro valor anterior que no es un ISBN); no se edita. */
+  legacyIdentifier?: string
+  edition?: BookEdition
+  /** Fecha y evidencias de la comprobación física; el indicador está en `catalogue.isbnVerified`. */
+  verification?: Omit<CopyVerification, "isbnVerified">
   title: string
   subtitle?: string
   authors: Author[]
@@ -100,10 +117,11 @@ export interface Book {
   status: "read" | "reading" | "unread" | "to-read"
   shelf_id: string
   shelf_name: string
+  /** Procedencia de la edición; `catalogue.isbnVerified` se deriva del ejemplar, no de la edición compartida. */
   catalogue?: CatalogueMetadata
   /**
-   * Portada privada validada (U-DAT-10). La portada visible es la de `displayCover`; `cover` conserva las
-   * URL originales, que son las que se editan y exportan.
+   * Portada privada validada (U-DAT-10) de la edición. La portada visible es la de `displayCover`; `cover`
+   * conserva las URL originales, que son las que se editan y exportan.
    */
   coverAssetId?: string
 }
@@ -115,6 +133,7 @@ export interface Shelf {
   isDefault?: boolean
 }
 
+/** Colección plana: `books` tiene un elemento por ejemplar (varios pueden compartir `edition.id`). */
 export interface LibraryData {
   books: Book[]
   shelves: Shelf[]

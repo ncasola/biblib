@@ -259,19 +259,20 @@ test("respuesta tardía de búsqueda o ediciones no reemplaza la selección más
   assert.equal(newer.signal.aborted, true)
 })
 
-test("entrada manual conserva título y autor con tildes, manual compatible y exportación/importación", () => {
+test("entrada manual conserva título y autor con tildes, sin ISBN inventado, y exportación/importación", () => {
   const draft = manualTitleAuthorDraft("Árbol de la memoria", "María Núñez")
   assert.equal(draft.title, "Árbol de la memoria")
   assert.deepEqual(draft.authors, [{ name: "María Núñez" }])
-  assert.match(draft.isbn, /^manual-[0-9a-f-]{36}$/)
+  assert.equal(draft.isbn, null, "U-DAT-06: un libro sin ISBN no recibe un identificador manual nuevo")
   assert.equal(draft.catalogue?.isbnVerified, false)
   const parsed = parseBookInput(draft)
-  assert.equal(parsed.isbn, draft.isbn)
+  assert.equal(parsed.isbn, null)
   const shelfId = randomUUID()
   const data = { books: [{ ...draft, id: randomUUID(), shelf_id: shelfId, shelf_name: "Predeterminada" }], shelves: [{ id: shelfId, title: "Predeterminada", book_count: 1, isDefault: true }] }
   const backup = exportLibraryBackup(data)
+  assert.equal(backup.formatVersion, 2, "Sin ISBN ni identificador, v1 tendría que inventar uno: se exige v2")
   const restored = parseLibraryImport(backup.parts[0])
-  assert.equal(restored.books[0].isbn, draft.isbn)
+  assert.equal(restored.books[0].isbn, null)
   assert.equal(restored.books[0].title, draft.title)
   assert.deepEqual(restored.books[0].authors, draft.authors)
 })
