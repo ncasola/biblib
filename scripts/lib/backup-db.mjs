@@ -10,7 +10,8 @@ import { AUTH_TABLES, sha256 } from "./backup-files.mjs"
 const MARK_EXCLUDED = Object.freeze({ "auth.users": ["last_sign_in_at", "updated_at"], "storage.objects": ["last_accessed_at"] })
 // Tokens que restore rota deliberadamente: se excluyen al comparar contenido. Rotar books.version
 // dispara el trigger de 0003, que también renueva rotated_xact y updated_at de library_state.
-export const ROTATING_COLUMNS = Object.freeze({ "biblib.books": ["version"], "biblib.library_state": ["revision", "rotated_xact", "updated_at"] })
+// Desde 0011 (U-DAT-06) los tokens viven en obras, ediciones y ejemplares; books_legacy está congelada y no se rota.
+export const ROTATING_COLUMNS = Object.freeze({ "biblib.books": ["version"], "biblib.works": ["version"], "biblib.editions": ["version"], "biblib.copies": ["version"], "biblib.library_state": ["revision", "rotated_xact", "updated_at"] })
 // Clave natural de cada tabla para comparar presencia cuando el contenido cambia legítimamente.
 export const TABLE_KEYS = Object.freeze({ "storage.objects": ["bucket_id", "name"], "drizzle.__drizzle_migrations": ["hash", "created_at"], "biblib.library_state": ["user_id"] })
 // Auth y Storage se comparan por cantidad y claves: restore reasigna credenciales de fixtures
@@ -90,7 +91,8 @@ export async function tokenHashes(tx) {
 /** Muestra estable de fichas: ID y hash de contenido sin el token rotado. */
 export async function bookSample(tx, limit = 5) {
   if (!(await relationExists(tx, "biblib", "books"))) return []
-  return (await tx`select id::text as id, md5((to_jsonb(b) - array['version'])::text) as digest from biblib.books b order by id limit ${limit}`).map((r) => ({ id: r.id, digest: r.digest }))
+  // La vista plana (0011) expone también los tokens de ejemplar y edición: se excluyen igual que el plano.
+  return (await tx`select id::text as id, md5((to_jsonb(b) - array['version', 'copy_version', 'edition_version'])::text) as digest from biblib.books b order by id limit ${limit}`).map((r) => ({ id: r.id, digest: r.digest }))
 }
 
 export async function fixtureAccounts(tx, census) {
@@ -137,8 +139,14 @@ export async function rotateRestoredTokens(tx) {
 
   if (tables.includes("books")) {
     const [stale] = await tx`select id, version from biblib.books order by id limit 1`
-    const rows = (await tx`update biblib.books set version = gen_random_uuid()`).count
-    result.rotated.push({ token: "biblib.books.version", rows })
+    // Desde 0011 books es la vista plana: su token sale de los de ejemplar y edición, que son los que se rotan.
+    const model = tables.includes("copies")
+    const rows = model ? (await tx`update biblib.copies set version = gen_random_uuid()`).count : (await tx`update biblib.books set version = gen_random_uuid()`).count
+    if (model) {
+      result.rotated.push({ token: "biblib.copies.version", rows })
+      result.rotated.push({ token: "biblib.editions.version", rows: (await tx`update biblib.editions set version = gen_random_uuid()`).count })
+      result.rotated.push({ token: "biblib.works.version", rows: (await tx`update biblib.works set version = gen_random_uuid()`).count })
+    } else result.rotated.push({ token: "biblib.books.version", rows })
     // Una pestaña anterior al respaldo conserva la versión restaurada: su escritura condicional no debe aplicar.
     if (stale) result.staleWriteRejected = (await tx`update biblib.books set status = status where id = ${stale.id} and version = ${stale.version}`).count === 0
   }

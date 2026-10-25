@@ -144,7 +144,10 @@ export async function restoreCoverAssets(tx, manifest) {
   await tx`select biblib.cover_storage_install()`
   const excluded = manifest.assets?.excluded ?? []
   if (excluded.length) {
-    await tx`update biblib.books set cover_asset_id = null where cover_asset_id = any(${excluded}::uuid[])`
+    // Desde 0011 la portada privada es de la edición (U-DAT-06); antes, de la ficha.
+    const model = (await tx`select to_regclass('biblib.editions') is not null as model`)[0]?.model === true
+    if (model) await tx`update biblib.editions set cover_asset_id = null where cover_asset_id = any(${excluded}::uuid[])`
+    else await tx`update biblib.books set cover_asset_id = null where cover_asset_id = any(${excluded}::uuid[])`
     await tx`delete from biblib.cover_assets where id = any(${excluded}::uuid[])`
   }
   const [{ restored }] = await tx`select biblib.cover_asset_quarantine_restored() as restored`

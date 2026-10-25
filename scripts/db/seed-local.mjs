@@ -128,8 +128,28 @@ export async function seedDomain(sql, census, store) {
           shelfIds.set(shelf.fixtureKey, id)
         }
       }
+      // U-DAT-06: con el modelo de ejemplares (0010+) el censo se escribe como edición + ejemplar con el ID de
+      // fixture en los dos namespaces; la vista plana books no admite ON CONFLICT.
+      const model = (await tx`select to_regclass('biblib.copies') is not null as model`)[0]?.model === true
       for (const book of account.books) {
         const id = fixtureId(census.censusId, user, "book", book.fixtureKey)
+        if (model) {
+          const catalogue = { source: book.source, fixtureKey: book.fixtureKey, censusId: census.censusId }
+          const editions = await tx`insert into biblib.editions (id, user_id, isbn13, title, authors, number_of_pages, publish_date, catalogue)
+            values (${id}, ${user}, biblib.isbn13_normalize(${book.isbn}), ${book.title}, ${tx.json(book.authors)}, ${book.number_of_pages}, ${book.publish_date}, ${tx.json(catalogue)})
+            on conflict (id) do update set isbn13 = excluded.isbn13, title = excluded.title, authors = excluded.authors,
+              number_of_pages = excluded.number_of_pages, publish_date = excluded.publish_date, catalogue = excluded.catalogue, updated_at = now()
+            where editions.user_id = excluded.user_id and editions.catalogue->>'fixtureKey' = excluded.catalogue->>'fixtureKey'
+              and editions.catalogue->>'censusId' = excluded.catalogue->>'censusId' returning id`
+          const copies = editions.length ? await tx`insert into biblib.copies (id, user_id, edition_id, status, shelf_id, edition_verification, legacy_identifier)
+            values (${id}, ${user}, ${id}, ${book.status}, ${shelfIds.get(book.shelfKey)}, '{"isbnVerified": false}'::jsonb,
+              case when biblib.isbn13_normalize(${book.isbn}) is null then ${book.isbn} end)
+            on conflict (id) do update set edition_id = excluded.edition_id, status = excluded.status, shelf_id = excluded.shelf_id,
+              edition_verification = excluded.edition_verification, legacy_identifier = excluded.legacy_identifier, updated_at = now()
+            where copies.user_id = excluded.user_id returning id` : []
+          if (!copies.length) fail(EXIT.IDENTITY_MISMATCH, "dominio", "Un ID de libro fixture colisiona con una ficha sin fixtureKey; no se modifica.")
+          continue
+        }
         const catalogue = { source: book.source, isbnVerified: false, fixtureKey: book.fixtureKey, censusId: census.censusId }
         const rows = await tx`insert into biblib.books
           (id, user_id, isbn, title, authors, number_of_pages, publish_date, status, shelf_id, catalogue)

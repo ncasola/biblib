@@ -40,7 +40,10 @@ export function parseScale(value) {
 export async function seedScaleDomain(sql, userId, dataset, census) {
   await sql.begin(async (tx) => {
     const idOf = (kind, key) => fixtureId(DATASET_ID, userId, kind, key)
-    await tx`delete from biblib.books where user_id = ${userId}`
+    const model = (await tx`select to_regclass('biblib.copies') is not null as model`)[0]?.model === true
+    // Desde 0010 los ejemplares se retiran de copies (la poda retira sus ediciones); antes, de books.
+    if (model) await tx`delete from biblib.copies where user_id = ${userId}`
+    else await tx`delete from biblib.books where user_id = ${userId}`
     await tx`delete from biblib.shelves where user_id = ${userId} and not is_default`
     const shelfIds = new Map()
     for (const shelf of dataset.shelves) {
@@ -62,13 +65,29 @@ export async function seedScaleDomain(sql, userId, dataset, census) {
         number_of_pages: book.number_of_pages, publish_date: book.publish_date, status: book.status,
         shelf_id: shelfIds.get(book.shelfKey), created_at: book.createdAt, updated_at: book.updatedAt,
       }))
-      await tx`insert into biblib.books ${tx(rows, "id", "user_id", "isbn", "title", "subtitle", "authors", "publishers", "catalogue", "number_of_pages", "publish_date", "status", "shelf_id", "created_at", "updated_at")}`
+      if (model) {
+        // Una edición por ejemplar con el mismo ID (como el backfill de 0010).
+        const batch = dataset.books.slice(from, from + CHUNK)
+        const editions = rows.map((row, index) => ({ id: row.id, user_id: row.user_id, title: row.title, subtitle: row.subtitle, authors: row.authors, publishers: row.publishers,
+          catalogue: tx.json({ source: batch[index].source, fixtureKey: batch[index].fixtureKey, censusId: census.censusId, datasetId: DATASET_ID }),
+          number_of_pages: row.number_of_pages, publish_date: row.publish_date, created_at: row.created_at, updated_at: row.updated_at }))
+        await tx`insert into biblib.editions ${tx(editions, "id", "user_id", "title", "subtitle", "authors", "publishers", "catalogue", "number_of_pages", "publish_date", "created_at", "updated_at")}`
+        const isbnRows = rows.map((row) => ({ id: row.id, isbn: row.isbn }))
+        await tx`update biblib.editions as e set isbn13 = biblib.isbn13_normalize(v.isbn) from (select * from jsonb_to_recordset(${tx.json(isbnRows)}) as x(id uuid, isbn text)) as v where e.id = v.id and e.user_id = ${userId}`
+        const copies = rows.map((row) => ({ id: row.id, user_id: row.user_id, edition_id: row.id, status: row.status, shelf_id: row.shelf_id, created_at: row.created_at, updated_at: row.updated_at }))
+        await tx`insert into biblib.copies ${tx(copies, "id", "user_id", "edition_id", "status", "shelf_id", "created_at", "updated_at")}`
+        await tx`update biblib.copies as c set legacy_identifier = v.isbn from (select * from jsonb_to_recordset(${tx.json(isbnRows)}) as x(id uuid, isbn text)) as v
+          where c.id = v.id and c.user_id = ${userId} and biblib.isbn13_normalize(v.isbn) is null`
+      } else {
+        await tx`insert into biblib.books ${tx(rows, "id", "user_id", "isbn", "title", "subtitle", "authors", "publishers", "catalogue", "number_of_pages", "publish_date", "status", "shelf_id", "created_at", "updated_at")}`
+      }
     }
     const [{ n }] = await tx`select count(*)::int as n from biblib.books where user_id = ${userId}`
     if (n !== dataset.books.length) fail(EXIT.SEED_FAILED, "dominio", "El recuento de libros de escala no coincide con el dataset; la transacción se revierte.")
   })
   // Estadísticas frescas: las medidas y los EXPLAIN no deben depender del momento del autovacuum.
-  await sql`analyze biblib.books`
+  const model = (await sql`select to_regclass('biblib.copies') is not null as model`)[0]?.model === true
+  if (model) { await sql`analyze biblib.editions`; await sql`analyze biblib.copies` } else await sql`analyze biblib.books`
   await sql`analyze biblib.shelves`
 }
 
@@ -139,7 +158,9 @@ export async function removeScaleAccount({ profile, root = REPO_ROOT, lockHeld =
     if (data?.user && (data.user.email !== SCALE_EMAIL || data.user.user_metadata?.biblib_scale !== DATASET_ID)) fail(EXIT.IDENTITY_MISMATCH, "auth", "El ID registrado no es la cuenta de escala; no se elimina nada.")
     // Primero las fichas y después las estanterías (la FK compuesta es RESTRICT); la cuenta cae al final.
     await sql.begin(async (tx) => {
-      await tx`delete from biblib.books where user_id = ${id}`
+      const model = (await tx`select to_regclass('biblib.copies') is not null as model`)[0]?.model === true
+      if (model) await tx`delete from biblib.copies where user_id = ${id}`
+      else await tx`delete from biblib.books where user_id = ${id}`
       await tx`delete from biblib.shelves where user_id = ${id}`
     })
     if (data?.user) {

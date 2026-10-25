@@ -205,8 +205,10 @@ test("SQL de dominio usa una transacción, scope por propietario y fixtureKey, s
   let transactions = 0
   await seedDomain({ begin: async (fn) => { transactions++; return fn(tx) } }, census, store)
   assert.equal(transactions, 1)
-  assert.equal(queries.length, 14)
-  for (const { query, values } of queries) {
+  // La consulta que detecta el modelo de ejemplares (U-DAT-06) no escribe ni lleva propietario.
+  const domain = queries.filter(({ query }) => !query.includes("to_regclass"))
+  assert.equal(domain.length, 14)
+  for (const { query, values } of domain) {
     assert.doesNotMatch(query, /delete|truncate|auth\.|version\s*=/i)
     assert.match(query, /on conflict/i)
     assert.ok(values.includes(store.accounts.a.id) || values.includes(store.accounts.b.id))
