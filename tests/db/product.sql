@@ -313,8 +313,10 @@ BEGIN
   UPDATE biblib.profiles SET avatar_asset_id = NULL WHERE user_id = owner_a;
   photo := biblib.media_asset_discard(asset_id);
   PERFORM assert_true(photo->>'status' = 'discarded' AND photo->>'storage_key' = key, 'sustituido: se descarta y devuelve su ruta');
+  PERFORM assert_true(biblib.media_object_access(key, 'select'), 'sin fila, el dueño ve su objeto (Storage borra con RETURNING)');
   DELETE FROM storage.objects WHERE name = key;
   PERFORM assert_true(NOT EXISTS (SELECT 1 FROM storage.objects WHERE name = key), 'sin fila, el dueño retira el objeto');
+  PERFORM assert_true(NOT biblib.media_object_access(key, 'insert'), 'y no vuelve a subirlo sin una reserva');
   PERFORM set_config('request.jwt.claim.sub', 'b1400000-0000-4000-8000-0000000000b1', true);
   PERFORM assert_true((SELECT count(*) FROM biblib.media_assets) = 0 AND (SELECT count(*) FROM biblib.profiles) = 0, 'B no ve assets ni perfil de A');
   PERFORM assert_true(NOT biblib.media_object_access(key, 'select') AND NOT biblib.media_object_access(key, 'delete'), 'B no lee ni retira rutas de A');

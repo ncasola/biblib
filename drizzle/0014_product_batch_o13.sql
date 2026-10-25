@@ -566,8 +566,9 @@ BEGIN
   END IF;
   SELECT * INTO asset FROM biblib.media_assets AS a WHERE a.id = parts[3]::uuid AND a.user_id = owner_id AND a.kind = parts[2];
   IF NOT FOUND THEN
-    -- Objeto propio sin fila (subida descartada o asset ya retirado): solo se puede retirar.
-    RETURN p_action = 'delete' AND biblib.account_is_active(owner_id);
+    -- Objeto propio sin fila (subida descartada o asset ya retirado): el dueño lo ve y, con cuenta activa, lo retira
+    -- (la API de Storage borra con RETURNING, que exige verlo). Nunca se sube sin fila.
+    RETURN p_action = 'select' OR (p_action = 'delete' AND biblib.account_is_active(owner_id));
   END IF;
   IF p_action = 'select' THEN
     RETURN true;
