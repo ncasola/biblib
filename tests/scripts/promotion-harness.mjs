@@ -114,7 +114,7 @@ function psql(remote, sql, { database = "postgres" } = {}) {
 }
 
 export function stopRemote(remote) {
-  if (remote?.id) spawnSync("docker", ["rm", "--force", remote.id], { stdio: "ignore", windowsHide: true })
+  if (remote?.id) spawnSync("docker", ["rm", "--force", "--volumes", remote.id], { stdio: "ignore", windowsHide: true })
   if (remote?.workdir) rmSync(remote.workdir, { recursive: true, force: true })
 }
 
