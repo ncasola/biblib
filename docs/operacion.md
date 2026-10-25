@@ -1658,3 +1658,42 @@ Evidencia: [O13/pro-03](validacion/2026-10-25/O13/pro-03/informe.md).
 - `pnpm test:db`: `tests/db/reading-loans-legacy.sql` + `tests/db/reading-loans.sql` (sin backfill, ciclos y relectura, páginas y BR001, préstamos y fechas civiles en varios husos, aislamiento A/B también por las funciones, límites, copia borrada, versiones anteriores, cuenta en eliminación e inventario).
 - `pnpm test:scripts`: manifest de 0015 con hechos reales (`tests/fixtures/migrations/objects-0015.json`).
 - `pnpm test:integration:reading-loans --profile scratch|test [--reuse-build]`: grupo `tests/integration/reading-loans` con cuentas desechables (aislamiento A/B y cuenta en eliminación, dos conexiones que inician o prestan a la vez, relectura, páginas fuera de rango y total desconocido, fechas civiles con varios husos de sesión, copia borrada por la app, ida y vuelta v2 por la app con reemplazo, versión anterior, fusión en otra cuenta y archivo v1, y eliminación con el worker real). También corre en `pnpm test:integration:local`.
+
+## Ciclos, sesiones y progreso de lectura · U-PRO-02 (O14)
+
+Acciones y pantallas sobre el contrato de 0015 ([contratos-o14](spec-pendientes/contratos-o14.md)). Sin migración propia. Evidencia: [O14/pro-02](validacion/2026-10-26/O14/pro-02/informe.md).
+
+### Modelo de uso
+
+- **Ciclo ≠ sesión.** Un ciclo es una lectura o relectura (`reading_cycles`); una entrada es una sesión o un cambio de progreso dentro de un ciclo (`reading_entries`), con su `occurred_at` explícito. La relectura crea el ciclo siguiente y no toca los anteriores.
+- **Independiente del estado actual.** Ninguna acción cambia `copies.status` ni su versión, y cambiar el estado tampoco crea ciclos. Un libro `read` sin ciclos sigue sin fecha: la ficha lo explica y las estadísticas lo cuentan aparte, como legado sin fecha.
+- **Fechas que afirma la persona.** Al empezar, terminar o abandonar se elige «Ahora», otra fecha y hora o «No lo sé (sin fecha)». Sin fecha, el campo queda nulo y nunca se rellena con la actual. Los instantes se guardan en UTC y se presentan en la zona del navegador.
+- **Progreso honesto.** Se calcula con `readingProgress` a partir de la última entrada con página. Sin total conocido, la ficha y «Seguir leyendo» muestran la página sin barra ni porcentaje. Con una página por encima de un total corregido después, tampoco hay porcentaje.
+
+### Acciones (`app/actions/reading.ts`, todas `ActionResult`)
+
+| Acción | Contrato |
+| --- | --- |
+| `getCopyReadingAction(copyId)` | Ciclos (del más reciente al más antiguo) con sus entradas y `totalPages` (null si es desconocido). |
+| `startReadingAction({ copyId, startedAt, expectedLatestCycleId, confirmReread? })` | `reading_cycle_start`. Si ya hay un ciclo abierto devuelve `already-open`, que no es un error. Una relectura exige `confirmReread` y que la última lectura vista coincida (si no, `CONFLICT`). |
+| `pauseReadingAction` / `resumeReadingAction({ cycleId, expectedVersion })` | Cambio de estado con la versión vista. Si el ciclo ya está en el estado pedido, `retry`. |
+| `closeReadingAction({ cycleId, expectedVersion, status, finishedAt, confirm: true })` | `reading_cycle_close`. `already_closed` con el mismo estado y fecha es el propio reintento (`retry`); otro cierre u otra versión, `CONFLICT`. |
+| `reopenReadingAction({ cycleId, expectedVersion, confirm: true })` | Vuelve a «Leyendo» y borra la fecha de fin. Con otra lectura abierta, 23505 → `CONFLICT` («ya hay una lectura en curso»). |
+| `addReadingEntryAction({ cycleId, entryId, occurredAt, pageFrom?, pageTo?, note? })` | El ID lo genera el navegador y se conserva hasta la confirmación: reenviarlo tras un corte de red da `retry` sin duplicar, y el mismo ID con otros datos da `CONFLICT`. |
+| `updateReadingEntryAction` / `deleteReadingEntryAction({ …, expectedVersion })` | Con la versión vista. Repetir la misma corrección, o borrar lo que ya no existe, da `retry`. El borrado exige `confirm: true`. |
+| `getContinueReadingAction()` | Ciclos abiertos reales (primero los que se están leyendo, luego los pausados), con el progreso y la última sesión. |
+| `getReadingStatsAction({ timeZone })` | Sesiones y páginas de los últimos 30 días, y lecturas terminadas del año en curso, en la zona indicada (una zona desconocida se trata como UTC). Incluye los denominadores, los cierres sin fecha y el legado `read` sin ciclos. |
+
+Errores: BR001 y 23514 → `INVALID_INPUT`; 23505 → `CONFLICT`; BP001 → `LIMIT_EXCEEDED`; 23503 → `NOT_FOUND`; BD001 → `ACCOUNT_INACTIVE`. Un ciclo, entrada o ejemplar de otra cuenta responde `NOT_FOUND`, igual que uno inexistente. Las escrituras toman antes el bloqueo de colección, así que dos dispositivos de la misma cuenta se serializan.
+
+### Pantallas
+
+- **Ficha:** `components/reading-panel.tsx` (ciclo actual, acciones con diálogo de confirmación y fecha, historial), `reading-entries.tsx` (registrar, corregir y borrar sesiones) y `reading-progress.tsx` (chip, barra y fechas).
+- **Inicio:** `components/reading-home.tsx` con «Seguir leyendo» (no aparece si no hay ciclos abiertos) y «Tu lectura registrada», con su periodo, fuente y denominador.
+- **Desactivar:** quitar los dos componentes del inicio o el panel de la ficha no toca los datos, que siguen en la exportación v2, las versiones anteriores y el respaldo.
+
+### Pruebas
+
+- `pnpm test`: `tests/reading.test.ts`: progreso sin porcentaje falso, validación de entradas, reintento propio frente a conflicto, traducción de errores, medianoche con horario de verano, días y años según la zona, y estadísticas con cero o varios ciclos.
+- `pnpm test:integration:reading --profile scratch|test [--reuse-build]`: grupo `tests/integration/reading`, por las Server Actions reales con sesiones GoTrue. Cubre dos dispositivos, interrupción de red con reenvíos idénticos, husos horarios (+14:00/−12:00, medianoche UTC y Nochevieja), relectura y fechas cruzadas, copia sin páginas y total corregido a la baja, cero ciclos y legado `read`, aislamiento A/B, anónimo y cuenta en eliminación. También corre en `pnpm test:integration:local`.
+- E2E: `tests/e2e/flujos/lectura.spec.ts` (`pnpm test:e2e:local --grep "lectura:"`, perfil `test`).
