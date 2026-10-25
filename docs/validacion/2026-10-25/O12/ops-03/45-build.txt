@@ -1,0 +1,41 @@
+▲ Next.js 16.4.2 (Turbopack)
+✓ Running next.config.mjs took 38ms
+- Experiments (use with caution):
+  · serverActions
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 3.7s
+  Running TypeScript ...
+  Finished TypeScript in 9.0s ...
+  Collecting page data using 11 workers ...
+  Generating static pages using 11 workers (0/16) ...
+  Generating static pages using 11 workers (4/16) 
+  Generating static pages using 11 workers (8/16) 
+  Generating static pages using 11 workers (12/16) 
+✓ Generating static pages using 11 workers (16/16) in 739ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ƒ /
+├ ƒ /_not-found
+├ ƒ /api/books/add
+├ ƒ /api/books/search
+├ ƒ /api/covers/[assetId]
+├ ƒ /api/internal/jobs/run
+├ ƒ /api/library/export
+├ ƒ /auth/callback
+├ ƒ /book/[id]
+├ ƒ /books
+├ ƒ /books/add
+├ ƒ /books/search
+├ ƒ /login
+├ ƒ /profile
+├ ƒ /settings
+├ ƒ /shelves
+└ ƒ /shelves/3d
+
+
+ƒ Proxy (Middleware)
+
+ƒ  (Dynamic)  server-rendered on demand
+

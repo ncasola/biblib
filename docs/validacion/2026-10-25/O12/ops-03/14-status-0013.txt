@@ -1,0 +1,3 @@
+Estado de migraciones · biblib-scratch · up-to-date
+Head aplicado: 0013_account_deletion · esperado: 0013_account_deletion · pendientes: ninguna
+532 comprobaciones correctas.

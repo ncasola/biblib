@@ -1,0 +1,3 @@
+Estado de migraciones · biblib-scratch · pending
+Head aplicado: 0012_model_account_deletion · esperado: 0013_account_deletion · pendientes: 0013_account_deletion
+467 comprobaciones correctas.

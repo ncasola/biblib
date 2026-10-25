@@ -1,0 +1,2 @@
+Error [verificación] (11): Las migraciones se aplicaron, pero el ledger o el manifest de objetos no coinciden con lo esperado; no reapliques: diagnostica con db:status:local.
+Head anterior: 0012_model_account_deletion · cambio fallido: n/d · resultado: aplicado con verificación fallida

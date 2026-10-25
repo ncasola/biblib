@@ -1,0 +1,1 @@
+{"cuenta":"C","restos":{"rows":0,"tables":{},"account":false,"objects":0},"identidad":false,"marca":{"estado":"completed","paso":"done","plazoDias":90}}

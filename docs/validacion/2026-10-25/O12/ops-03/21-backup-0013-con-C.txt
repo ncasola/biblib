@@ -1,0 +1,1 @@
+Respaldo 20261025T082309Z-scratch-32be67 · scratch (biblib-scratch) · head 0013_account_deletion · 14 archivos · .biblib/backups/20261025T082309Z-scratch-32be67 · recibo .biblib/backups/20261025T082309Z-scratch-32be67/receipt.json (ensayo pendiente: tras db:restore:verify, reemítelo con --receipt-of)

@@ -1,0 +1,4 @@
+Restore 20261025T075116Z-scratch-a87c66 → scratch (biblib-scratch) completado en 3 s; tokens rotados: biblib.copies.version (9), biblib.editions.version (9), biblib.works.version (0), biblib.library_state.revision (2).
+Supresiones aplicadas antes de abrir: 0 cuenta(s) del respaldo eliminadas, 0 objeto(s) retirados, 0 marca(s).
+Migraciones pendientes tras restaurar: 0013_account_deletion (usa db:plan:local y db:migrate:local).
+Siguiente paso: pnpm db:restore:verify --backup .biblib/backups/20261025T075116Z-scratch-a87c66 --profile scratch

@@ -1,0 +1,14 @@
+Grupo views · perfil scratch · biblib-scratch · run c5895b20bcfb
+✔ Chrome real: URL, recarga, atrás/adelante, selección, errores de red y estantería borrada (6763.595ms)
+✔ CRUD por acciones reales: persistencia, versiones y revisión de colección intacta (4455.1686ms)
+✔ A/B: B no ve, renombra, sobrescribe ni borra lo de A por acción, SQL o Data API (392.4091ms)
+✔ servidor y base rechazan nombres largos, duplicados y criterios arbitrarios (500.2816ms)
+✔ límite 100 en servidor y base, incluidas dos altas simultáneas para el último hueco (332.8302ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 16044.6458
