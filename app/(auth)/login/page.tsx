@@ -20,14 +20,14 @@ const LocalPasswordForm = process.env.NEXT_PUBLIC_BIBLIB_LOCAL_LOGIN === "1"
 
 function LoginFallback() {
   return (
-    <div className="flex min-h-screen items-center justify-center p-4">
+    <main id="main-content" className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-md p-8 shadow-2xl">
         <div className="flex items-center justify-center gap-3 text-muted-foreground">
           <Loader2 aria-hidden="true" className="h-5 w-5 animate-spin text-brass-text" />
           <p className="font-medium">Cargando acceso...</p>
         </div>
       </Card>
-    </div>
+    </main>
   )
 }
 
@@ -57,7 +57,7 @@ function LoginContent() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4 py-10">
+    <main id="main-content" className="flex min-h-screen items-center justify-center px-4 py-10">
       <Card className="w-full max-w-md gap-0 px-6 py-8 shadow-2xl sm:px-8">
         <div className="mb-8 flex flex-col items-center">
           {/* Logo completo sin fondo: tinta sobre crema en claro y la variante para fondos oscuros en oscuro. */}
@@ -103,7 +103,7 @@ function LoginContent() {
           </p>
         </div>
       </Card>
-    </div>
+    </main>
   )
 }
 
