@@ -295,7 +295,8 @@ describe("promoción contra un remoto simulado [stack]", { skip }, () => {
       // Migración de fallo tras el head del repositorio, sea cual sea su número.
       const tag = `${String(edited.entries.length).padStart(4, "0")}_u_inf_07_fallo`
       writeFileSync(path.join(dir, `${tag}.sql`), "CREATE TABLE biblib.u_inf_07_probe (id integer);\n--> statement-breakpoint\nALTER TABLE biblib.u_inf_07_probe ADD COLUMN id integer;\n")
-      edited.entries.push({ idx: edited.entries.length, version: "7", when: 1792900000000, tag, breakpoints: true })
+      // Su `when` sigue al del head, que avanza con cada migración nueva.
+      edited.entries.push({ idx: edited.entries.length, version: "7", when: edited.entries.at(-1).when + 1000, tag, breakpoints: true })
       writeFileSync(journalFile, `${JSON.stringify(edited, null, 2)}\n`)
       const planned = await plan("fallo", { migrationsDir: dir })
       assert.deepEqual(planned.plan.pending, [tag])
