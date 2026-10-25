@@ -1,0 +1,4 @@
+Fecha UTC: 2026-10-25T19:14:40.6535722Z
+Perfiles Supabase arrancados por U-DAT-09: ninguno.
+Contenedores con prefijos de test:db/smoke tras terminar: 0
+Redes o volúmenes propios pendientes: ninguno; ambos scripts retiran sus contenedores y volúmenes efímeros por su ID/nombre exacto.
