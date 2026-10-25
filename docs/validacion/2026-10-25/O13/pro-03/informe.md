@@ -51,6 +51,8 @@ Resumen de códigos de salida: `resumen-comandos.txt`. Recursos Docker que queda
 
 ## Pendientes y conflictos para el coordinador
 
+> **Actualización (conciliación con U-EXP-06):** tras integrar `feature/spec-pendientes`, la foto de ubicación usa la API canónica de `lib/media/server.ts` y se lee por `/api/media/:id`. El helper mínimo y la ruta `/api/locations/:id/photo` se retiraron, y la purga la cubre `pnpm media:purge:local`. Detalle y resultados en [concilia/informe.md](concilia/informe.md). Los dos primeros puntos de esta lista quedan resueltos.
+
 - **`lib/media/server.ts` lo crea U-PRO-03** (U-EXP-06 aún no estaba integrado): `beginUpload`, `upload`, `register`, `discard`, `signedUrl`, más `storeImage`, `readImage`, `mediaStorage` y la reexportación de `normalizeMedia` (`lib/media/images.ts`). Conciliar con el de U-EXP-06 al integrar.
 - **Script de purga de `biblib-media`** (sobre `media_asset_purge_candidates`/`_confirm`): no se crea aquí para no duplicar el de U-EXP-06 (pregunta sin respuesta en 10 min; opción conservadora). Los objetos que no se pudieran retirar con la sesión del dueño quedan como candidatos de esa purga.
 - **Archivos compartidos tocados (aditivos):** `components/book-details-screen.tsx` (+2 líneas), `components/header.tsx` (enlace), `lib/auth-navigation.ts` (`/locations` protegida), `tests/integration/run.mjs` (SUITES), `package.json` (script al final), `scripts/security/headers-matrix.mjs`, `docs/operacion.md` (sección propia).
