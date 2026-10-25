@@ -145,7 +145,7 @@ export function SeriesDetailScreen({ seriesId }: { seriesId: string }) {
               <div className="flex items-start gap-4">
                 <BookCover cover={{ small: volume.cover, medium: volume.cover, large: volume.cover }} title={volume.title} className="w-16 shrink-0 sm:w-20" sizes="80px" />
                 <div className="min-w-0 flex-1 space-y-1">
-                  <p className="text-sm font-semibold text-primary"><span className="sr-only">Posición: </span>{volume.position === undefined ? describePosition(undefined) : `Posición ${volume.position}`}{volume.volumeLabel ? ` · ${volume.volumeLabel}` : ""}</p>
+                  <p className="text-sm font-semibold text-primary">{volume.position === undefined ? describePosition(undefined) : `Posición ${volume.position}`}{volume.volumeLabel ? ` · ${volume.volumeLabel}` : ""}</p>
                   <h2 className="break-words text-lg font-bold"><Link href={detailHref(volume.bookId)} className="underline-offset-4 hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">{volume.title}</Link></h2>
                   {volume.subtitle && <p className="text-sm text-muted-foreground">{volume.subtitle}</p>}
                   <p className="text-sm text-muted-foreground">{volume.authors.join("; ") || "Autor desconocido"}{volume.copies > 1 ? ` · ${volume.copies} ejemplares` : ""}</p>

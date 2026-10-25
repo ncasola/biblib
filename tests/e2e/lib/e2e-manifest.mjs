@@ -98,6 +98,7 @@ export async function cleanupE2E({ sql, users, file }) {
     await sql`delete from biblib.library_operations where user_id in ${sql(owners)} and created_at >= ${manifest.startedAt}`
     await sql`delete from biblib.import_previews where user_id in ${sql(owners)} and created_at >= ${manifest.startedAt}`
     await sql`delete from biblib.books where user_id in ${sql(owners)} and title like ${`[${E2E_MARKER} %`}`
+    await sql`delete from biblib.series where user_id in ${sql(owners)} and title like ${`[${E2E_MARKER} %`}`
     await sql`delete from biblib.shelves s where s.user_id in ${sql(owners)} and not s.is_default and s.title like ${`[${E2E_MARKER} %`}
       and not exists (select 1 from biblib.books b where b.user_id = s.user_id and b.shelf_id = s.id)`
     const [{ count }] = await sql`select (select count(*) from biblib.books where user_id in ${sql(owners)} and title like ${`[${E2E_MARKER} %`})
