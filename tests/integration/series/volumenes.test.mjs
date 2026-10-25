@@ -58,8 +58,9 @@ test("el orden es exacto: 1, 1.5 y 2 por posición, con el orden desconocido al 
 })
 
 test("una serie incompleta es válida y un volumen sin posición se muestra como orden desconocido, al final", async () => {
-  const extra = await ctx.library(a.id)
-  const [unknown] = extra.books
+  // Un ejemplar más en la estantería de A: otra ctx.library(a.id) repetiría su estantería predeterminada.
+  const [unknown] = (await ctx.sql`insert into biblib.books (user_id, isbn, title, shelf_id, catalogue) values (${a.id}, ${`manual-${ctx.key("sin-posicion")}`}, ${ctx.label("sin posición")}, ${lib.shelf},
+    ${ctx.sql.json({ source: "open-library", sourceUrl: "https://openlibrary.org/books/OL1M", isbnVerified: false })}) returning id, edition_id as "editionId"`)
   const added = await link(unknown.editionId, saga.id)
   assert.equal(added.ok, true)
   assert.equal(added.value.link.position, undefined)
