@@ -1,0 +1,27 @@
+Grupo product · perfil scratch · biblib-scratch · run fa117026d2cd
+✔ B no lee nada de producto de A y A ve lo suyo (1131.6309ms)
+✔ B no escribe filas a nombre de A ni cita etiquetas, ubicaciones, series, ejemplares o ediciones de A (109.3891ms)
+✔ una cuenta en eliminación no escribe en ninguna tabla de producto ni reserva imágenes (BD001) (59.5213ms)
+✔ etiquetas únicas por nombre normalizado (mayúsculas y acentos) y la ñ distingue (931.94ms)
+✔ hasta 20 etiquetas por ejemplar, también en una sola sentencia; notas de 4000 y valoración 1–5 o nula (43.9351ms)
+✔ ubicaciones: sin ciclos (también en una sentencia), máximo 8 niveles, ocupada o con hijas no se borra, la estantería lógica no cambia (66.9924ms)
+✔ serie: posición NUMERIC exacta 1, 1.5, 2 con orden desconocido al final; una serie por edición; borrar la serie conserva ediciones (35.0352ms)
+✔ el worker retira etiquetas, notas, árbol de ubicaciones, series, evidencias, revisión, perfil, CSV e imágenes, y B sigue intacto (1570.3183ms)
+✔ la exportación v2 declara y lleva etiquetas, notas, ubicaciones, series y evidencias, con fotos por referencia y sha256 (1824.6765ms)
+✔ reemplazar desde la propia copia devuelve los datos de producto exactos, con los mismos IDs y fotos propias (414.6662ms)
+✔ la versión anterior que capturó el reemplazo restaura también sus datos de producto (334.6308ms)
+✔ otra cuenta importa el archivo sin las fotos de A y con IDs propios; los ejemplares ya existentes no reciben datos (500.4789ms)
+✔ un archivo anterior (v2 sin secciones nuevas o v1) se importa con los datos de producto vacíos (221.063ms)
+✔ el bucket es privado, solo WebP y 5 MiB, con las tres políticas del dueño (1149.4219ms)
+✔ avatar propio: subida autorizada, B no lo lee ni lo sustituye, perfil privado y metadata OAuth intacta (178.7028ms)
+✔ sin reserva no se sube; otra ruta del mismo dueño tampoco; un asset en cuarentena no se cita (51.6196ms)
+✔ foto de ubicación: citada no se descarta; sustituida se descarta y su objeto se retira con la sesión del dueño (87.5604ms)
+ℹ tests 17
+ℹ suites 0
+ℹ pass 17
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 19879.4232
+exit=0
