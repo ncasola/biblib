@@ -16,7 +16,10 @@ export const PRODUCT_TOKEN_TABLES = Object.freeze(["tags", "copy_annotations", "
 export const ROTATING_COLUMNS = Object.freeze({ "biblib.books": ["version"], "biblib.works": ["version"], "biblib.editions": ["version"], "biblib.copies": ["version"], "biblib.library_state": ["revision", "rotated_xact", "updated_at"],
   ...Object.fromEntries(PRODUCT_TOKEN_TABLES.map((table) => [`biblib.${table}`, ["version"]])) })
 // Clave natural de cada tabla para comparar presencia cuando el contenido cambia legítimamente.
-export const TABLE_KEYS = Object.freeze({ "storage.objects": ["bucket_id", "name"], "drizzle.__drizzle_migrations": ["hash", "created_at"], "biblib.library_state": ["user_id"] })
+// Las tablas de producto de 0014 sin `id` se identifican por su clave primaria (sin la `version` que rota el restore).
+export const TABLE_KEYS = Object.freeze({ "storage.objects": ["bucket_id", "name"], "drizzle.__drizzle_migrations": ["hash", "created_at"], "biblib.library_state": ["user_id"],
+  "biblib.copy_tags": ["user_id", "copy_id", "tag_id"], "biblib.copy_annotations": ["user_id", "copy_id"], "biblib.copy_locations": ["user_id", "copy_id"],
+  "biblib.series_editions": ["user_id", "edition_id"], "biblib.profiles": ["user_id"] })
 // Auth y Storage se comparan por cantidad y claves: restore reasigna credenciales de fixtures
 // y Storage recrea sus filas al subir los bytes por API.
 export const CONTENT_SCHEMAS = Object.freeze(["biblib", "drizzle"])
