@@ -1295,3 +1295,104 @@ Solo imprime cantidades. El scheduler de F4 lo sustituirá. El borrado de cuenta
 - `pnpm test:integration:assets --profile scratch|test [--reuse-build]`: grupo `tests/integration/assets`, también en `test:integration:local`. Usa Postgres, GoTrue, Storage y la app compilada reales, y la red siempre simulada.
 
 Evidencia: [O11/dat-10](validacion/2026-10-24/O11/dat-10/informe.md).
+
+## Obra, edición y ejemplar con ISBN opcional · U-DAT-06 (O12)
+
+Separa la ficha plana `books` en **obras** (`biblib.works`), **ediciones** (`biblib.editions`) y **ejemplares** (`biblib.copies`), todo privado por cuenta. Especificación: [02 · U-DAT-06](spec-pendientes/02-datos-importacion-y-catalogacion.md#u-dat-06--obra-edición-y-ejemplar-con-isbn-opcional). Evidencia: [O12/dat-06](validacion/2026-10-24/O12/dat-06/informe.md).
+
+### Modelo
+
+| Entidad | Contiene | Claves e índices |
+| --- | --- | --- |
+| Obra | Título. Solo existe con evidencia explícita (archivo v2 o decisión de la persona); la migración no deduce ninguna. Sin ediciones se retira. | PK, `(user_id, id)` único. |
+| Edición | ISBN-13 canónico **opcional** (`isbn13`, null si no hay), título, subtítulo, autoría y editoriales (con su orden), fecha, páginas, idioma, identificadores externos, procedencia (`catalogue`, sin la comprobación física), portada (URL y asset privado) y `search_text` generado. Sin ejemplares se retira. | `(user_id, isbn13)` único donde no es nulo; `(user_id, title, id)`; FK con dueño a obra (`SET NULL (work_id)`) y a portada. |
+| Ejemplar | Estado, estantería, comprobación física (`edition_verification`: `isbnVerified`, `checkedAt`, `evidenceRefs`) e identificador legacy (`manual-…` u otro valor que no es ISBN). Conserva el ID de la ficha: `/book/[id]` es el ejemplar. | `(user_id, legacy_identifier)` único; `(user_id, edition_id)`, `(user_id, shelf_id)`, `(user_id, created_at desc, id desc)`; FK con dueño a edición (`RESTRICT`) y a estantería. |
+
+Decisiones:
+
+- **Portada en la edición.** URL y asset privado (U-DAT-10) describen la edición, como el resto de sus datos bibliográficos. Una foto de un ejemplar concreto (estado, dedicatoria) es de F3 y llegará con su contrato; no se añade una columna de portada al ejemplar sin él.
+- **Comprobación física en el ejemplar.** `isbnVerified` sigue significando que una persona comprobó el ISBN en *ese* ejemplar: una copia nueva de una edición ya comprobada empieza en `false`. Ni un proveedor ni el checksum lo activan. `Book.catalogue.isbnVerified` del DTO plano se deriva del ejemplar.
+- **Toda edición tiene al menos un ejemplar** (restricción diferida `editions_require_copy`); al retirar o mover el último, la poda por sentencia retira la edición y, si queda sin ediciones, la obra.
+- **RLS** en las tres tablas con `user_id = (select auth.uid())` (un InitPlan por consulta) y FK que incluyen al dueño: una referencia a datos de otra cuenta falla aunque se conozca el UUID ([seguridad](seguridad.md#roles-y-grants)).
+- **Versiones y revisión.** Obras, ediciones y ejemplares tienen su token (`rotate_book_version`) y rotan la revisión de colección (`rotate_library_revision`).
+
+### Vista plana `books` y DTO
+
+`biblib.books` es desde 0011 una **vista** (`security_invoker`) de un ejemplar con su edición y su obra, con las columnas de la tabla anterior más las del modelo. Es el modelo de lectura de la aplicación: lista, filtra, ordena y busca sobre ella; las escrituras van a `copies`, `editions` y `works`.
+
+- `version`: token plano, `md5(copia || edición)`. Cambia con cualquiera de los dos; protege las operaciones de una ficha pero **no autoriza por sí solo** cambiar una edición compartida.
+- `isbn`: ISBN-13 de la edición o identificador legacy del ejemplar (compatibilidad); `isbn13` y `legacy_identifier` por separado.
+- Sus triggers INSTEAD OF mantienen compatibles los scripts y pruebas SQL que escribían `books` (alta = edición + ejemplar; baja = ejemplar). Cambiar datos bibliográficos de una edición compartida por esta vía se rechaza (`BM003`): lo hace el contrato de edición.
+- El DTO `Book` (`lib/types.ts`) es un ejemplar: `isbn` es ISBN-13 o `null`, y lleva `legacyIdentifier`, `copyVersion`, `edition` (`id`, `version`, número de ejemplares en la ficha, obra, idioma, identificadores) y `verification` (fecha y evidencias). La aplicación no selecciona de la vista el recuento de ejemplares (solo la ficha lo pide) ni la procedencia plana (la recompone el mapper).
+
+### Contratos (`app/actions/editions.ts`, todos `ActionResult`)
+
+| Acción | Entrada | Comportamiento |
+| --- | --- | --- |
+| `createEditionAction` | `{ isbn13: null \| string, …, placement: { shelfId }, idempotencyKey }` | Edición nueva con su primer ejemplar. Con un ISBN-13 que la cuenta ya tiene responde `CONFLICT` («ya existe»): la interfaz ofrece **abrir el ejemplar** o **añadir otro**, nunca lo hace sola. |
+| `createCopyAction` | `{ editionId, placement: { shelfId }, status, idempotencyKey }` | Un ejemplar más de una edición propia, sin verificar. Una edición o estantería de otra cuenta responde `NOT_FOUND`. |
+| `updateEditionAction` | `{ editionId, expectedVersion, …, confirmCopies, idempotencyKey? }` | Cambia la edición con su versión. Si la comparten varios ejemplares exige `confirmCopies` igual al número vigente; si no, `EDITION_SHARED` (409) con ese número. Devuelve cuántos ejemplares cambiaron. Un ISBN que ya tiene otra edición es un conflicto (se fusionan, no se repite). |
+| `mergeEditionsAction` | `{ sourceIds, targetId, expectedVersions, expectedRevision, idempotencyKey }` | Pasa los ejemplares a la edición de destino (con su estado, estantería y comprobación) y retira las vacías; el destino adopta ISBN-13, obra o portada solo si no tenía y no hay dos distintos. Devuelve el mapeo explícito. ISBN u obras distintas se rechazan. |
+
+Todas toman el bloqueo de colección; las idempotentes guardan su resultado en `library_operations` (`copy.create`, `edition.create`, `edition.update`, `edition.merge`): repetir con la misma entrada recupera el resultado, con otra entrada es `IDEMPOTENCY_CONFLICT`. Altas concurrentes del mismo ISBN no duplican (bloqueo + índice único).
+
+En la interfaz: el alta manual usa `createEditionAction`; la ficha muestra los ejemplares de su edición, permite **añadir otro ejemplar**, editar solo la edición (confirmando cuántos ejemplares cambian) y, para un ejemplar en conflicto de la migración, **unirlo** a la edición equivalente con `mergeEditionsAction`. El editor plano (`updateBookAction`) guarda ejemplar y edición con sus versiones y pide la misma confirmación.
+
+### Migraciones `0010` y `0011` (expandir → backfill → comparar → cambiar)
+
+Dos migraciones porque el patrón lo exige: `0010` es compatible con la aplicación anterior y deja un punto de comparación antes de cambiar escritores; `0011` hace el cambio. Se pueden aplicar juntas (el runner las aplica en una transacción) o por separado.
+
+| Paso | `0010_works_editions_copies` | `0011_copies_cutover` |
+| --- | --- | --- |
+| Esquema | Crea obras, ediciones, ejemplares e informe (`model_migration_report`) con RLS, FK, índices, triggers y `biblib.isbn13_normalize` (mismo cálculo que `normalizeIsbn`). | Congela `books` (bloqueo), la renombra `books_legacy` (sin triggers, políticas, privilegios de cliente ni FK a estanterías/portadas) y crea la vista `books`. Amplía las operaciones idempotentes. |
+| Datos | Backfill: cada ficha conserva su ID como ejemplar **y** como edición, sin obra. `manual-…` y valores no ISBN van a `legacy_identifier`; ISBN válido a `isbn13` canónico. Entre fichas equivalentes (ISBN-10/13 del mismo ISBN-13) gana la forma canónica, luego la más antigua; las demás quedan sin ISBN-13 con su texto original y una fila `conflict`. | Agrupa en la edición canónica solo las equivalencias con **todos** los campos bibliográficos idénticos (`grouped` en el informe); el resto sigue en conflicto, para revisarlo o unirlo. Ninguna fila se descarta. |
+| Ventana | Sincroniza `books` → modelo mientras la aplicación anterior escriba `books`. | Retira la sincronización. Las funciones que leían o escribían `books` (versiones anteriores, IDs ocupados, revalidación y purga de portadas) pasan a ejemplares y ediciones. Rota las revisiones (las vistas previas antiguas se vuelven a preparar). |
+| Comparación | `biblib.model_compare(null)`: ficha a ficha (ID, dueño, identificador o su ISBN-13 equivalente, datos, portadas, estado, estantería, alta, procedencia y comprobación). Una diferencia revierte la migración. | La misma comparación contra `books_legacy`; una diferencia revierte. |
+
+Informe y comparación (solo servidor, sin títulos ni ISBN en los resúmenes):
+
+```sql
+select biblib.model_compare(null);                               -- recuentos y hasta 20 IDs distintos
+select migration, kind, count(*) from biblib.model_migration_report group by 1, 2;
+select details from biblib.model_migration_report where kind = 'summary';   -- por cuenta
+```
+
+Cada dueño lee sus filas del informe (RLS): las de `conflict` citan el ejemplar que conservó el ISBN-13 y el texto original.
+
+**Despliegue.** Respaldo ensayado (`db:backup:local` → `db:restore:verify`) → plan/migrate de `0010` con la aplicación anterior → `model_compare` y revisión del informe → aplicación nueva + `0011`. Antes de `0011`, volver atrás es no seguir: la aplicación anterior funciona sobre `0010`. **Después de admitir varias copias o libros sin ISBN no se promete volver al escritor antiguo**: si algo falla, detener escrituras y corregir hacia delante o restaurar el respaldo ensayado (el de `0009` se restaura con su head y se repite la migración; ver [recuperación](recuperacion.md#obra-edición-y-ejemplar-u-dat-06)).
+
+**Retirada de `books_legacy` (F4).** Se conserva sin uso durante la ventana de verificación de F4: hasta que producción haya pasado al menos un ciclo de respaldo → restauración → verificación con el modelo nuevo y 30 días sin incidencias. Su retirada es una migración de F4 que, tras comprobar `model_compare` y archivar el informe, ejecuta `DROP TABLE biblib.books_legacy` y sustituye `model_compare` por una versión sin ella (o la retira). Mientras exista, se respalda y se borra en cascada con la cuenta (FK a `auth.users`). U-OPS-03 debe incluir `works`, `editions`, `copies`, `model_migration_report` y `books_legacy` en su inventario (todas cuelgan de `auth.users` con `ON DELETE CASCADE`).
+
+### Formatos, versiones anteriores y restauración
+
+- **v2** con capacidad completa (varias copias por edición, obras, evidencias, identificadores e idioma) y `requiredCapabilities`; **v1** solo sin pérdida; el lector v1/legacy crea un ejemplar por fila ([formatos](formatos.md#payload-portable-formatversion-2)). Reglas de importación versión 2: las vistas previas anteriores caducan (`PREVIEW_EXPIRED`).
+- **Versiones anteriores** `schema_version: 2` (un ejemplar con su edición por entrada); las de versión 1 se restauran como el backfill.
+- **Vista previa de importación**: guarda el payload v2 cuando la forma legacy perdería algo (al confirmar se vuelve a leer).
+- **Restauración por partes**: una edición con copias en varias partes debe traer los mismos datos en todas; la publicación crea obras, ediciones y ejemplares por conjuntos.
+- **Respaldo administrativo**: rota los tokens de ejemplares, ediciones y obras; la muestra excluye los tokens de la vista.
+
+### Rendimiento: tareas T5 y T7
+
+Medido con `perf:local --profile scratch --scale 10000` (10 000 fichas, 41 estanterías, sesiones reales) antes (head 0009) y después (head 0011, mismo dataset migrado). Resultados completos en la [evidencia](validacion/2026-10-24/O12/dat-06/informe.md#rendimiento); 0 medidas fuera de presupuesto en ambas.
+
+| Acción (c=1) | Antes p95 acción / SQL | Después p95 acción / SQL |
+| --- | --- | --- |
+| Búsqueda local por texto | 172.9 / 103.7 ms | 105.3 / 30.4 ms |
+| Búsqueda local por ISBN parcial | 210.0 / 141.6 ms | 97.0 / 29.4 ms |
+| Consulta por ISBN exacto (alta, `consulta-isbn-alta`) | 85.9 / 8.36 ms | 66.7 / 0.13 ms |
+| Ordenar por autor / fecha | 119.7 / 17.5 · 111.4 / 31.1 ms | 119.8 / 16.3 · 96.3 / 25.5 ms |
+| Última página | 119.0 / 46.5 ms | 97.3 / 25.5 ms |
+| Listado de 100 filas | 79.7 / 2.2 ms | 93.3 / 13.8 ms |
+| Exportación en el servidor | 492.9 / 101.8 ms | 695.9 / 149.1 ms (medición de la versión con una consulta) |
+
+- **T7 (igualdad de ISBN indexada).** `findBookByIsbn` y `getBookByIsbnAction` comparan `isbn13 = $1` con el índice parcial `(user_id, isbn13)`, en vez de normalizar `books.isbn` fila a fila: SQL p95 8.36 → 0.13 ms.
+- **T5 (texto de búsqueda).** Adoptada la columna generada `editions.search_text` (título, subtítulo, autoría, editoriales e ISBN sin acentos ni mayúsculas), calculada al escribir: la búsqueda por texto pasa de 103.7 a 30.4 ms de SQL. **Trigramas evaluados y no adoptados**: un GIN `gin_trgm_ops` sobre `search_text` (1.8 MiB con 10 000 ediciones) no mejora la búsqueda (recuento p95 14.5 → 12.5 ms, ISBN exacto 14.6 → 17.6 ms; el planificador lo usa pero la colección por cuenta es pequeña) y encarece la escritura masiva un 22 % (282 → 343 ms). Se revisará si una cuenta supera el límite de escala.
+- **Coste del modelo.** La vista une ejemplar, edición, estantería y obra: los recuentos y páginas cortas cuestan unos milisegundos más de SQL, siempre dentro de presupuesto. Dos decisiones lo contienen: la RLS evalúa `auth.uid()` una vez por consulta (InitPlan) y el listado ordena y pagina solo IDs antes de leer las filas de la página. En la exportación ese segundo paso no ahorraba nada (lee todas las filas) y se descartó.
+
+### Pruebas
+
+- `pnpm test`: formatos v2 completos, reglas de importación 2, versiones anteriores v1/v2 y validación sin ISBN inventado.
+- `pnpm test:db`: `tests/db/model-legacy.sql` (estado de 0009 con 111 fichas sintéticas y equivalencias), `model-expand.sql` (backfill, informe, comparación, sincronización, RLS, FK, unicidad, poda) y `model.sql` (vista, agrupación, `books_legacy`, edición compartida, versiones anteriores, portadas).
+- `pnpm test:scripts`: metadatos reales de 0010 y 0011 y drift del modelo (`migrations.test.mjs`).
+- `pnpm test:integration:model --profile scratch|test [--reuse-build]`: grupo `tests/integration/model`, también en `test:integration:local`.
+- Ensayo de migración con datos: `docs/validacion/2026-10-24/O12/dat-06/ensayo-modelo.mjs cargar|comprobar|retirar`.
