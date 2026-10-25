@@ -361,7 +361,8 @@
         "UX-01",
         "UX-05"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O13 · bandeja /books/review con incidencias por dedupe_key, comparación por campo, decisiones y lotes de 50 con preview y versión; grupo review; schema 0014 (O13-D); G13 en docs/validacion/2026-10-25/O13/g13-coordinador.md"
     },
     {
       "id": "U-DAT-08",
@@ -403,7 +404,8 @@
         "IMP-02",
         "IMP-03"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O13 · CSV con parser propio por estados, mapeo versionado, source_row_key durable, informe con fórmulas escapadas; grupo csv; schema 0014 (O13-D); G13 en docs/validacion/2026-10-25/O13/g13-coordinador.md"
     },
     {
       "id": "U-DAT-10",
@@ -544,7 +546,8 @@
         "SEC-03",
         "UI-03"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O13 · Guardar y añadir otro, escáner ISBN con BarcodeDetector tras BIBLIB_ISBN_CAMERA y Permissions-Policy camera=(self) solo en /books/add; schema 0014 (O13-D); G13 en docs/validacion/2026-10-25/O13/g13-coordinador.md"
     },
     {
       "id": "U-EXP-06",
@@ -563,7 +566,8 @@
         "FE-02",
         "OPS-02"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O13 · avatar privado en biblib-media (WebP, sin EXIF), lib/media/server.ts compartido, media:purge:local; grupo media; schema 0014 (O13-D); G13 en docs/validacion/2026-10-25/O13/g13-coordinador.md"
     },
     {
       "id": "U-EXP-07",
@@ -631,7 +635,8 @@
         "UX-01",
         "IMP-03"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O13 · notas, etiquetas normalizadas y valoración por ejemplar; filtros OR/AND; grupo personal; schema 0014 (O13-D); G13 en docs/validacion/2026-10-25/O13/g13-coordinador.md"
     },
     {
       "id": "U-PRO-02",
@@ -669,7 +674,8 @@
         "UX-02",
         "OPS-02"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O13 · /locations en árbol, ubicación por ejemplar con versión y foto privada; grupo locations; schema 0014 (O13-D); G13 en docs/validacion/2026-10-25/O13/g13-coordinador.md"
     },
     {
       "id": "U-PRO-04",
@@ -707,7 +713,8 @@
         "IMP-04",
         "UX-05"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O13 · /series con posición NUMERIC exacta y orden desconocido; grupo series; schema 0014 (O13-D); G13 en docs/validacion/2026-10-25/O13/g13-coordinador.md"
     },
     {
       "id": "U-QA-01",
