@@ -24,11 +24,14 @@ test("media: rechaza SVG, HTML, GIF, tipo falso, truncado y bytes añadidos", as
 })
 test("media: límites por tipo en bytes y dimensiones, sin recorte silencioso", async () => {
   const large = await sharp({ create: { width: 1025, height: 20, channels: 3, background: "red" } }).png().toBuffer()
-  await assert.rejects(normalizeMediaImage("avatar", large), { code: "ASSET_REJECTED" })
+  await assert.rejects(normalizeMediaImage("avatar", large), { code: "ASSET_REJECTED", message: "La imagen supera las dimensiones admitidas (1024 px por lado)." })
   assert.equal((await normalizeMediaImage("location", large)).width, 1025)
   assert.equal((await normalizeMediaImage("evidence", large)).width, 1025)
-  await assert.rejects(normalizeMediaImage("avatar", Buffer.alloc(1_048_577)), { code: "ASSET_REJECTED" })
-  await assert.rejects(normalizeMediaImage("location", Buffer.alloc(5_242_881)), { code: "ASSET_REJECTED" })
+  await assert.rejects(normalizeMediaImage("avatar", Buffer.alloc(1_048_577)), { code: "ASSET_REJECTED", message: "La imagen supera el tamaño máximo de 1 MiB." })
+  await assert.rejects(normalizeMediaImage("location", Buffer.alloc(5_242_881)), { code: "ASSET_REJECTED", message: "La imagen supera el tamaño máximo de 5 MiB." })
+})
+test("media: los rechazos no hablan de portadas", async () => {
+  await assert.rejects(normalizeMediaImage("location", Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"/>')), (error: Error) => !/portada/.test(error.message))
 })
 test("media: reencodificación elimina EXIF y GPS", async () => {
   const input = await image().jpeg().withExif({ IFD0: { Copyright: "privado" }, IFD3: { GPSLatitudeRef: "N", GPSLatitude: "28/1 0/1 0/1" } }).toBuffer()
