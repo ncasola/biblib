@@ -38,6 +38,7 @@ test("CSV real: BOM, Unicode, comillas y saltos; staging no publica, CAS JSON co
   const key = ctx.key("csv-retry")
   const committed = await ctx.confirmCsv(a, prepared, key)
   assert.equal(committed.status, "committed")
+  assert.equal(Number((await ctx.sql`select count(*)::int as n from biblib.library_job_items where job_id=${committed.jobId}`)[0].n), 0, "CSV no enriquece sin elección explícita")
   assert.equal(await count(ownerA.id), before + 2)
   const replay = await ctx.confirmCsv(a, prepared, key)
   assert.equal(replay.operationId, committed.operationId)
@@ -63,12 +64,14 @@ test("CSV real: remap invalida preview anterior, cambia hash y conserva source_r
   const stale = await ctx.call("confirmImportAction", [{ previewId: prepared.previewId, expectedRevision: prepared.revision, idempotencyKey: ctx.key("old-map") }], a)
   assert.ok(failed(stale, "PREVIEW_EXPIRED"))
   assert.equal(await count(ownerA.id), before)
-  const corrected = await ctx.prepareCsv(a, inspected.sessionId)
+  const corrected = await ctx.prepareCsv(a, inspected.sessionId, { enrichCovers: true })
   assert.notEqual(corrected.digest, prepared.digest)
   assert.deepEqual(corrected.plan.books.insert.map((row) => row.id), prepared.plan.books.insert.map((row) => row.id))
   const keys = await ctx.sql`select source_row_key from biblib.import_session_rows where session_id = ${inspected.sessionId}`
   assert.equal(keys[0].source_row_key, "csv:1")
   assert.ok(failed(await ctx.call("setCsvMappingAction", [{ sessionId: inspected.sessionId, expectedVersion: current.version, mappingVersion: second.mappingVersion + 1, mapping: mapping(["title", "authors"]) }], a), "CONFLICT"))
+  const enriched = await ctx.confirmCsv(a, corrected)
+  assert.equal(Number((await ctx.sql`select count(*)::int as n from biblib.library_job_items where job_id=${enriched.jobId}`)[0].n), 1, "El enriquecimiento elegido se entrega al mismo trabajo")
 })
 
 test("CSV real: cambios de colección invalidan confirmación; B y anónimo no acceden a sesión, informe o perfiles", async () => {

@@ -56,7 +56,7 @@ export interface ImportPlan {
   /** Solo cuando la persona elige añadir copias; JSON conserva su política anterior por defecto. */
   duplicatePolicy?: "skip-existing" | "another-copy"
   csv?: {
-    sessionId: string; inputHash: string; mappingHash: string; mappingVersion: number
+    sessionId: string; inputHash: string; mappingHash: string; mappingVersion: number; enrichCovers: boolean
     omittedRows: { sourceRowKey: string; ordinal: number; codes: string[] }[]
   }
   counts: ImportPlanCounts

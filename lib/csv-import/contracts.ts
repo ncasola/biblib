@@ -83,7 +83,7 @@ export interface CsvMappingReceipt {
   sessionId: string; version: string; mappingHash: string; mappingVersion: number; issues: CsvIssue[]; issueCount: number; validRows: number; totalRows: number
 }
 export type CsvDuplicatePolicy = "skip-existing" | "another-copy"
-export interface PrepareCsvImportInput { sessionId: string; mode: ImportMode; duplicatePolicy: CsvDuplicatePolicy; invalidRows?: "block" | "skip-invalid" }
+export interface PrepareCsvImportInput { sessionId: string; mode: ImportMode; duplicatePolicy: CsvDuplicatePolicy; invalidRows?: "block" | "skip-invalid"; enrichCovers?: boolean }
 export interface CsvImportPreview {
   version: string
   sessionId: string; previewId: string; revision: string; digest: string; expiresAt: string; inputHash: string; mappingHash: string

@@ -37,6 +37,8 @@ export interface PublishOutcome {
   replayed: boolean
   /** IDs de los libros insertados por esta publicación (vacío al recuperar un resultado). */
   insertedBookIds: string[]
+  /** CSV: solo se recuperan portadas si la persona lo ha solicitado explícitamente. */
+  skipCoverRecovery?: true
   /** Versión anterior capturada por esta publicación (reemplazo o restauración); null al fusionar o recuperar. */
   snapshotId: string | null
 }
@@ -153,7 +155,9 @@ export async function publishImport(tx: DatabaseTransaction, request: PublishReq
   }
   await applyPlan(tx, userId, payload, plan, previewAllocator(stored.id))
   if (csv) await tx.update(importSessions).set({ state: "committed", operationId, version: randomUUID(), updatedAt: sql`now()` }).where(and(eq(importSessions.id, csv.sessionId), eq(importSessions.userId, userId)))
-  return { operationId, result, replayed: false, insertedBookIds: plan.books.insert.map((entry) => entry.id), snapshotId }
+  return { operationId, result, replayed: false, insertedBookIds: plan.books.insert.map((entry) => entry.id), snapshotId,
+    ...(csv && !csv.enrichCovers ? { skipCoverRecovery: true as const } : {}),
+  }
 }
 
 function rejectConfirmation(code: Extract<ConfirmDecision, { kind: "reject" }>["code"], messages: { notFound: string; alreadyConfirmed: string }): never {

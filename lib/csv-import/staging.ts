@@ -194,7 +194,7 @@ export async function prepareCsv(owner: string, input: PrepareCsvImportInput): P
   let library
   try { library = parseLibraryImport(payload) } catch { throw new DomainError("LIMIT_EXCEEDED", "La salida del CSV supera los límites de importación JSON.") }
   const omittedRows = invalid.map((row) => ({ sourceRowKey: row.sourceRowKey, ordinal: row.ordinal, codes: row.issues.map((issue) => issue.code) }))
-  const binding = { sessionId: session.id, inputHash: session.inputSha256!, mappingHash: session.mappingSha256!, mappingVersion: session.csvMappingVersion!, omittedRows }
+  const binding = { sessionId: session.id, inputHash: session.inputSha256!, mappingHash: session.mappingSha256!, mappingVersion: session.csvMappingVersion!, enrichCovers: input.enrichCovers === true, omittedRows }
   const digest = sha256(canonicalJson({ ...binding, mode: input.mode, duplicatePolicy: input.duplicatePolicy, invalidRows: input.invalidRows ?? "block" }))
   return withRlsContext(owner, async (tx) => {
     const revision = await lockCollection(tx)
@@ -215,7 +215,7 @@ export async function prepareCsv(owner: string, input: PrepareCsvImportInput): P
     const previewId = randomUUID()
     const plan = buildImportPlan({ imported: library, current: await readCollectionSnapshot(tx, owner), mode: input.mode, duplicatePolicy: input.duplicatePolicy, allocateId: previewAllocator(session.id) })
     plan.csv = binding
-    plan.counts.coversPending = plan.books.insert.length
+    plan.counts.coversPending = binding.enrichCovers ? plan.books.insert.length : 0
     const [preview] = await tx.insert(importPreviews).values({ id: previewId, userId: owner, revision, inputDigest: digest, mode: input.mode,
       rulesVersion: IMPORT_RULES_VERSION, plan, payload, expiresAt: sql`now() + make_interval(mins => ${previewTtlMinutes(process.env.BIBLIB_IMPORT_PREVIEW_TTL_MINUTES)})` }).returning()
     const [updated] = await tx.update(importSessions).set({ state: "prepared", previewId, previewRevision: revision, previewExpiresAt: preview.expiresAt, plan, version: randomUUID(), updatedAt: sql`now()` }).where(eq(importSessions.id, session.id)).returning({ version: importSessions.version })

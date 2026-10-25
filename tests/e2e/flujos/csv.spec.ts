@@ -37,6 +37,7 @@ test("CSV: mapeo, estado desconocido y fórmulas, omisión explícita e informe;
   const before = await count(stack)
   try {
     const panel = await openCsv(page, input, { Título: "title", Autor: "authors", Estado: "status" })
+    await expect(panel.getByLabel("Buscar portadas después de importar", { exact: false })).not.toBeChecked()
     expect(await count(stack)).toBe(before)
     await expect(panel.getByRole("region", { name: "Incidencias CSV" })).toContainText("UNKNOWN_STATUS")
     await panel.getByRole("button", { name: "Preparar revisión CSV", exact: true }).click()

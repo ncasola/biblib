@@ -41,6 +41,7 @@ export function CsvImportPanel({ disabled, onCommitted, onJob }: { disabled?: bo
   const [mode, setMode] = useState<"merge" | "replace">("merge")
   const [duplicatePolicy, setDuplicatePolicy] = useState<CsvDuplicatePolicy>("skip-existing")
   const [skipInvalid, setSkipInvalid] = useState(false)
+  const [enrichCovers, setEnrichCovers] = useState(false)
   const [notice, setNotice] = useState("")
   const [error, setError] = useState("")
   const [fileName, setFileName] = useState("")
@@ -75,7 +76,7 @@ export function CsvImportPanel({ disabled, onCommitted, onJob }: { disabled?: bo
   }
   const invalidate = () => { setReceipt(null); setPreview(null); setFinished(false) }
   const open = (inspected: InspectedCsv, name: string) => {
-    setSession(inspected); setFileName(name); setPreview(null); setReceipt(null); setFinished(false); setSkipInvalid(false)
+    setSession(inspected); setFileName(name); setPreview(null); setReceipt(null); setFinished(false); setSkipInvalid(false); setEnrichCovers(false)
     const rules = inspected.mapping ?? defaultMapping(inspected.headers, delimiter)
     setMapping(rules)
     setStates(rules.statusMap ? Object.entries(rules.statusMap).map(([source, status]) => ({ source, status })) : DEFAULT_CSV_STATUS_EQUIVALENCES.map((entry) => ({ ...entry })))
@@ -109,7 +110,7 @@ export function CsvImportPanel({ disabled, onCommitted, onJob }: { disabled?: bo
   })
   const prepare = () => work(async () => {
     if (!session || !receipt) return
-    const result = value(await prepareCsvImportAction({ sessionId: session.sessionId, mode, duplicatePolicy, invalidRows: skipInvalid ? "skip-invalid" : "block" }))
+    const result = value(await prepareCsvImportAction({ sessionId: session.sessionId, mode, duplicatePolicy, invalidRows: skipInvalid ? "skip-invalid" : "block", enrichCovers }))
     setPreview(result); setSession({ ...session, version: result.version }); idempotency.current = crypto.randomUUID()
     setNotice("Revisión CSV preparada. Comprueba las altas, omisiones y eliminaciones antes de confirmar.")
   })
@@ -175,6 +176,7 @@ export function CsvImportPanel({ disabled, onCommitted, onJob }: { disabled?: bo
           <p className="text-sm text-muted-foreground">Otra copia conserva la edición que ya tienes y añade un ejemplar con su estado y estantería. No cambia los datos bibliográficos existentes.</p>
           <p className="text-sm text-muted-foreground">«Omitir existente» también omite ISBN repetidos dentro del CSV. Para importar varias filas del mismo ISBN, elige «Añadir otra copia». Al reemplazar, esta opción regula las repeticiones del archivo; la colección actual se sustituye.</p>
           <label className="flex items-start gap-2 text-sm"><input type="checkbox" checked={skipInvalid} onChange={(event) => { setSkipInvalid(event.target.checked); setPreview(null) }} /><span>Importar solo las filas válidas y omitir las filas con errores</span></label>
+          <label className="flex items-start gap-2 text-sm"><input type="checkbox" checked={enrichCovers} onChange={(event) => { setEnrichCovers(event.target.checked); setPreview(null) }} /><span>Buscar portadas después de importar (se consultarán los ISBN en los catálogos configurados)</span></label>
         </fieldset>
         <Button disabled={locked} onClick={() => void prepare()}>Preparar revisión CSV</Button>
       </div>}

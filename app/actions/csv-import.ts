@@ -18,7 +18,7 @@ const blob = z.custom<Blob>((value) => value instanceof Blob)
 const beginInput = z.object({ byteLength: z.number().int().min(1).max(CSV_LIMITS.maxBytes), sha256: hash, delimiter: z.enum([",", ";", "\t"]) }).strict()
 const inspectInput = sessionInput.extend({ chunk: z.object({ ordinal: z.number().int().min(0).max(31), total: z.number().int().min(1).max(32), sha256: hash, bytes: blob }).strict().optional() })
 const mappingInput = sessionInput.extend({ expectedVersion: z.uuid(), mappingVersion: z.number().int().min(1).max(1_000_000), mapping: storedCsvMappingSchema })
-const prepareInput = sessionInput.extend({ mode: z.enum(["merge", "replace"]), duplicatePolicy: z.enum(["skip-existing", "another-copy"]), invalidRows: z.enum(["block", "skip-invalid"]).optional() })
+const prepareInput = sessionInput.extend({ mode: z.enum(["merge", "replace"]), duplicatePolicy: z.enum(["skip-existing", "another-copy"]), invalidRows: z.enum(["block", "skip-invalid"]).optional(), enrichCovers: z.boolean().optional() })
 
 function parse<T>(schema: z.ZodType<T>, input: unknown): T {
   const result = schema.safeParse(input)
