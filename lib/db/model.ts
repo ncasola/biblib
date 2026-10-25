@@ -11,10 +11,12 @@ import type { Book, CatalogueMetadata, CopyVerification, EditionCatalogue } from
 /** Procedencia de la edición: la del DTO sin la comprobación física, que es del ejemplar. */
 export function editionCatalogue(catalogue: CatalogueMetadata | undefined): EditionCatalogue {
   if (!catalogue) return { source: "import" }
-  const sourceUrl = catalogue.sourceUrl ? { sourceUrl: catalogue.sourceUrl } : {}
-  if (catalogue.schemaVersion !== 2) return { source: catalogue.source, ...sourceUrl }
-  // El checksum se deriva al leer; no se guarda.
-  return { schemaVersion: 2, source: catalogue.source, ...sourceUrl, ...(catalogue.fields && Object.keys(catalogue.fields).length ? { fields: catalogue.fields } : {}) }
+  // Como el backfill de 0010 (`catalogue - 'isbnVerified'`): todo salvo la comprobación y el checksum, que se deriva al
+  // leer. Así una versión anterior se restaura exacta, también con claves internas como las marcas del censo de fixtures
+  // (la importación y los formularios ya rechazan claves desconocidas a la entrada).
+  const entries = Object.entries(catalogue).filter(([key, value]) => value !== undefined && key !== "isbnVerified" && key !== "isbnChecksumValid"
+    && !(key === "fields" && (!value || !Object.keys(value).length)))
+  return Object.fromEntries(entries) as EditionCatalogue
 }
 
 /** Comprobación física de un ejemplar: el indicador del DTO más su fecha y evidencias. */
