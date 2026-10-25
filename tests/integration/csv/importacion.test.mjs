@@ -21,16 +21,17 @@ after(async () => {
 
 test("CSV real: BOM, Unicode, comillas y saltos; staging no publica, CAS JSON confirma y retry no duplica", async () => {
   const before = await count(ownerA.id)
-  const inspected = await ctx.csv(a, '\uFEFFTítulo,Autor,ISBN,Estado\r\n"Libro, con ""comillas""","Apellido, Nombre",9780306406157,Leído\r\n"Poesía\n李白 📚",María,,Leyendo')
-  assert.equal(inspected.recordCount, 2)
+  const inspected = await ctx.csv(a, '\uFEFFTítulo,Autor,ISBN,Estado\r\n"Libro, con ""comillas""","Apellido, Nombre",9780306406157,Leído\r\n"Poesía\n李白 📚",María,,Leyendo\r\n"Libro, con ""comillas""","Apellido, Nombre",9780306406157,Sin leer')
+  assert.equal(inspected.recordCount, 3)
   assert.equal(inspected.sampleRows[1].ordinal, 2)
   assert.equal(inspected.sampleRows[0].cells[1], "Apellido, Nombre")
   const mapped = await ctx.mapCsv(a, inspected, mapping(["title", "authors", "isbn", "status"]))
-  assert.equal(mapped.validRows, 2)
+  assert.equal(mapped.validRows, 3)
   const staged = await ctx.sql`select kind, source_ordinal, source_row_key, data, issues from biblib.import_session_rows where session_id = ${inspected.sessionId} order by source_ordinal`
-  assert.deepEqual(staged.map((row) => [row.kind, row.source_ordinal, row.source_row_key]), [["record", 1, "csv:1"], ["record", 2, "csv:2"]])
+  assert.deepEqual(staged.map((row) => [row.kind, row.source_ordinal, row.source_row_key]), [["record", 1, "csv:1"], ["record", 2, "csv:2"], ["record", 3, "csv:3"]])
   assert.equal(staged[0].data.book.catalogue.isbnVerified, false)
   const prepared = await ctx.prepareCsv(a, inspected.sessionId)
+  assert.equal(prepared.plan.counts.skipped, 1)
   const retryPlan = await ctx.prepareCsv(a, inspected.sessionId)
   assert.equal(retryPlan.previewId, prepared.previewId)
   assert.equal(await count(ownerA.id), before)

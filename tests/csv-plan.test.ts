@@ -1,6 +1,6 @@
 import assert from "node:assert/strict"
 import { test } from "node:test"
-import { buildImportPlan, type CollectionSnapshot } from "../lib/import-plan"
+import { buildImportPlan, type BuildImportPlanInput, type CollectionSnapshot } from "../lib/import-plan"
 import { csvSourceRowKey, type CsvMapping as StoredMapping } from "../lib/csv-import/contracts"
 import { resolveStoredMapping, storedCsvMappingSchema } from "../lib/csv-import/mapping"
 import { normalizeCsv } from "../lib/csv-import/normalization"
@@ -54,6 +54,21 @@ test("CSV O13: mapeos desconocidos, destinos repetidos y reglas de estado ambigu
     { ...stored, columns: [{ sourceColumn: "#1", target: "title" }, { sourceColumn: "#2", target: "title" }] },
     { ...stored, statusMap: { Leído: "read", " LEÍDO ": "unread" } },
   ]) assert.equal(resolveStoredMapping(["Título", "Autor", "ISBN", "Estado"], mapping as StoredMapping).mapping, null)
+})
+
+test("CSV O13: filas repetidas solo crean varias copias con elección explícita; JSON mantiene sus copias declaradas", async () => {
+  const rules = resolveStoredMapping(["Título", "Autor", "ISBN", "Estado"], stored).mapping!
+  const normalized = await normalizeCsv({ sessionId, delimiter: ";", mapping: rules, source: "Título;Autor;ISBN;Estado\nLibro;Ana;9780306406157;Leído\nLibro;Ana;9780306406157;Pendiente" })
+  assert.ok(normalized.library)
+  for (const mode of ["merge", "replace"] as const) {
+    const input: BuildImportPlanInput = { imported: normalized.library, current: { ...current, books: [] }, mode, allocateId: (kind: string, source: string) => `${kind}:${source}` }
+    const skipped = buildImportPlan({ ...input, duplicatePolicy: "skip-existing" })
+    assert.equal(skipped.books.insert.length, 1)
+    assert.equal(skipped.books.skip.length, 1)
+    assert.equal(skipped.books.skip[0].existingId, skipped.books.insert[0].id)
+    assert.equal(buildImportPlan({ ...input, duplicatePolicy: "another-copy" }).books.insert.length, 2)
+    assert.equal(buildImportPlan(input).books.insert.length, 2)
+  }
 })
 
 test("CSV O13: cabeceras excesivas y U+0000 son incidencias explícitas, sin alterar la entrada", () => {

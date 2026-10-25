@@ -54,7 +54,7 @@ export interface ImportPlan {
   rulesVersion: number
   mode: ImportMode
   /** Solo cuando la persona elige añadir copias; JSON conserva su política anterior por defecto. */
-  duplicatePolicy?: "another-copy"
+  duplicatePolicy?: "skip-existing" | "another-copy"
   csv?: {
     sessionId: string; inputHash: string; mappingHash: string; mappingVersion: number
     omittedRows: { sourceRowKey: string; ordinal: number; codes: string[] }[]
@@ -161,7 +161,7 @@ export function planEditions(rows: ReadonlyMap<string, Book>, insert: { sourceId
   return { editions, works, editionOf: (sourceId: string) => editionFor.get(editionKey(rows.get(sourceId)!))! }
 }
 
-export function buildImportPlan({ imported, current, mode, allocateId, covers = { found: 0, pending: 0 }, duplicatePolicy = "skip-existing" }: BuildImportPlanInput): ImportPlan {
+export function buildImportPlan({ imported, current, mode, allocateId, covers = { found: 0, pending: 0 }, duplicatePolicy }: BuildImportPlanInput): ImportPlan {
   const defaultShelf = current.shelves.find((shelf) => shelf.isDefault)
   if (!defaultShelf) throw new Error("La colección actual no tiene estantería predeterminada.")
   // Varios ejemplares actuales pueden compartir identificador (una edición con varias copias).
@@ -198,21 +198,25 @@ export function buildImportPlan({ imported, current, mode, allocateId, covers = 
   const insert: { sourceId: string; id: string; shelfId: string }[] = []
   const skip: ImportPlan["books"]["skip"] = []
   const matched = new Set<string>()
+  const plannedIdentifiers = new Map<string, string>()
   for (const book of imported.books) {
     const shelfId = shelfFor.get(book.shelf_id)
     if (!shelfId) throw new Error("Hay libros con una estantería inexistente.")
     const identity = copyIdentity(book)
+    const planned = identity ? plannedIdentifiers.get(identity) : undefined
+    if (duplicatePolicy === "skip-existing" && planned) { skip.push({ sourceId: book.id, existingId: planned }); continue }
     const candidates = identity ? previousByIdentifier.get(identity) ?? [] : []
     // Un ejemplar sin ISBN ni identificador (U-DAT-06) solo se reconoce por su ID propio de esta cuenta.
     const own = previousById.get(book.id)
     const sameCopy = Boolean(own) && (identity === null ? !own!.isbn?.trim() : candidates.includes(book.id))
-    if (mode === "merge" && (candidates.length || sameCopy) && (duplicatePolicy === "skip-existing" || sameCopy)) { skip.push({ sourceId: book.id, existingId: sameCopy ? book.id : candidates[0] }); continue }
+    if (mode === "merge" && (candidates.length || sameCopy) && (duplicatePolicy !== "another-copy" || sameCopy)) { skip.push({ sourceId: book.id, existingId: sameCopy ? book.id : candidates[0] }); continue }
     // Al reemplazar, el mismo ejemplar conserva su ID; si no, el siguiente libre con ese identificador.
     const previous = mode === "merge" ? undefined : sameCopy && !matched.has(book.id) ? book.id : candidates.find((id) => !matched.has(id))
     const id = previous ?? allocateId("book", book.id)
     if (previous) matched.add(previous)
     if (id !== book.id) reassigned.push({ kind: "book", sourceId: book.id, id })
     insert.push({ sourceId: book.id, id, shelfId })
+    if (identity) plannedIdentifiers.set(identity, id)
   }
 
   // Al reemplazar se conservan los IDs de edición y obra propios que el archivo reconoce: la edición actual de
@@ -252,7 +256,7 @@ export function buildImportPlan({ imported, current, mode, allocateId, covers = 
   return {
     rulesVersion: IMPORT_RULES_VERSION,
     mode,
-    ...(duplicatePolicy === "another-copy" ? { duplicatePolicy } : {}),
+    ...(duplicatePolicy ? { duplicatePolicy } : {}),
     counts: {
       added: insert.length - matched.size,
       kept: mode === "merge" ? current.books.length : matched.size,

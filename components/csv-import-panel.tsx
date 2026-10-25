@@ -109,7 +109,7 @@ export function CsvImportPanel({ disabled, onCommitted, onJob }: { disabled?: bo
   })
   const prepare = () => work(async () => {
     if (!session || !receipt) return
-    const result = value(await prepareCsvImportAction({ sessionId: session.sessionId, mode, duplicatePolicy: mode === "replace" ? "skip-existing" : duplicatePolicy, invalidRows: skipInvalid ? "skip-invalid" : "block" }))
+    const result = value(await prepareCsvImportAction({ sessionId: session.sessionId, mode, duplicatePolicy, invalidRows: skipInvalid ? "skip-invalid" : "block" }))
     setPreview(result); setSession({ ...session, version: result.version }); idempotency.current = crypto.randomUUID()
     setNotice("Revisión CSV preparada. Comprueba las altas, omisiones y eliminaciones antes de confirmar.")
   })
@@ -171,8 +171,9 @@ export function CsvImportPanel({ disabled, onCommitted, onJob }: { disabled?: bo
         <div className="flex flex-wrap items-end gap-2"><label className="text-sm">Nombre del perfil privado<input className={control} value={profileName} maxLength={80} onChange={(event) => setProfileName(event.target.value)} /></label><Button variant="outline" disabled={locked || !profileName.trim()} onClick={() => void work(async () => { value(await saveCsvMappingProfileAction({ sessionId: session.sessionId, name: profileName })); setNotice("Perfil CSV guardado sin muestras de filas."); setProfileName(""); await reload() })}>Guardar perfil CSV</Button></div>
         <fieldset disabled={locked} className="space-y-3"><legend className="font-medium mb-2">Opciones de importación CSV</legend>
           <label className="block text-sm">Modo de importación CSV<select className={control} value={mode} onChange={(event) => { setMode(event.target.value as "merge" | "replace"); setPreview(null) }}><option value="merge">Fusionar con mi biblioteca</option><option value="replace">Reemplazar mi biblioteca</option></select></label>
-          <label className="block text-sm">Libros ya existentes<select className={control} disabled={mode === "replace"} value={duplicatePolicy} onChange={(event) => { setDuplicatePolicy(event.target.value as CsvDuplicatePolicy); setPreview(null) }}><option value="skip-existing">Omitir existente</option><option value="another-copy">Añadir otra copia</option></select></label>
+          <label className="block text-sm">Libros ya existentes<select className={control} value={duplicatePolicy} onChange={(event) => { setDuplicatePolicy(event.target.value as CsvDuplicatePolicy); setPreview(null) }}><option value="skip-existing">Omitir existente</option><option value="another-copy">Añadir otra copia</option></select></label>
           <p className="text-sm text-muted-foreground">Otra copia conserva la edición que ya tienes y añade un ejemplar con su estado y estantería. No cambia los datos bibliográficos existentes.</p>
+          <p className="text-sm text-muted-foreground">«Omitir existente» también omite ISBN repetidos dentro del CSV. Para importar varias filas del mismo ISBN, elige «Añadir otra copia». Al reemplazar, esta opción regula las repeticiones del archivo; la colección actual se sustituye.</p>
           <label className="flex items-start gap-2 text-sm"><input type="checkbox" checked={skipInvalid} onChange={(event) => { setSkipInvalid(event.target.checked); setPreview(null) }} /><span>Importar solo las filas válidas y omitir las filas con errores</span></label>
         </fieldset>
         <Button disabled={locked} onClick={() => void prepare()}>Preparar revisión CSV</Button>
