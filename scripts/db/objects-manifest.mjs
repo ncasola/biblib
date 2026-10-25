@@ -89,7 +89,7 @@ const storagePolicy = (name, cmd, action) => ({ name, cmd, roles: ["authenticate
 const MODEL = migrationBodies(M10)
 const modelTables = ["works", "editions", "copies"]
 // `user_id = (select auth.uid())` (0010): el uid es un InitPlan, no una subconsulta por fila.
-const ownModel = "user_id=selectauth.uid"
+const ownModel = "user_id=selectauth.uidasuid"
 const modelFunction = (name, returns, args, { authenticated = false, securityDefiner = false, since = M10 } = {}) => ({ name, language: "plpgsql", returns, args, searchPath: "search_path=pg_catalog", securityDefiner, body: MODEL[name], execute: { authenticated, anon: false }, since })
 const modelTrigger = (table, name, fn, timing, events, level, tgtype) => ({ table, name, function: `biblib.${fn}`, timing, events, level, tgtype, since: M10 })
 // Cambio de lecturas y escrituras (0011): books pasa a ser la vista plana con triggers INSTEAD OF; la tabla anterior
