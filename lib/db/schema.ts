@@ -1,8 +1,9 @@
 import { getViewSelectedFields, sql } from "drizzle-orm"
 import { authenticatedRole } from "drizzle-orm/supabase"
-import { pgSchema, uuid, text, timestamp, boolean, integer, smallint, numeric, bigint, jsonb, uniqueIndex, index, check, pgPolicy, foreignKey, primaryKey, customType, type AnyPgColumn } from "drizzle-orm/pg-core"
+import { pgSchema, uuid, text, timestamp, date, boolean, integer, smallint, numeric, bigint, jsonb, uniqueIndex, index, check, pgPolicy, foreignKey, primaryKey, customType, type AnyPgColumn } from "drizzle-orm/pg-core"
 import type { Author, Publisher, Book, CatalogueMetadata, CopyVerification, EditionCatalogue, EditionIdentifiers, LibraryData } from "@/lib/types"
 import type { CopyRating, LocationKind, MediaAssetState, MediaKind } from "@/lib/product/contracts"
+import type { ReadingCycleStatus } from "@/lib/product/reading-loans"
 import type { ConfidenceLabel, EvidenceOrigin, EvidenceSourceKind, ReviewDecisionKind, ReviewEntityRef, ReviewReason, ReviewState } from "@/lib/review/contracts"
 import type { CsvMapping, CsvRowIssue } from "@/lib/csv-import/contracts"
 import type { ImportPlan, ImportOperationResult } from "@/lib/import-plan"
@@ -1388,4 +1389,93 @@ export const csvMappingProfiles = biblibSchema.table("csv_mapping_profiles", {
   check("csv_mapping_profiles_mapping_check", sql`jsonb_typeof(${table.mapping}) = 'object' and octet_length(${table.mapping}::text) <= 16384`),
   check("csv_mapping_profiles_version_check", sql`${table.mappingVersion} >= 1`),
   ...ownWrites("csv_mapping_profiles", ALL_WRITES, table.userId),
+]).enableRLS()
+
+/*
+ * Lote de lectura y préstamos de O14 (0015). Mismas reglas que 0014: dueño por RLS, FK compuestas `(user_id, …)` con la
+ * copia, política RESTRICTIVE de cuenta activa en toda escritura, `version` por fila y límites en Postgres. Forman parte
+ * de la colección (exportación v2, versiones anteriores y reemplazo), así que rotan la revisión del dueño. Lectura y
+ * préstamo son independientes entre sí y de `copies.status`. Contrato: docs/spec-pendientes/contratos-o14.md.
+ */
+
+/**
+ * Ciclo de lectura de un ejemplar (U-PRO-02): cada lectura o relectura, numerada por ejemplar. Como mucho un ciclo
+ * abierto (`reading` o `paused`) por ejemplar; uno nuevo nunca sobrescribe los anteriores. Instantes en UTC, nulos si
+ * no constan: el estado `read` legado no se convierte en ciclos ni fechas.
+ */
+export const readingCycles = biblibSchema.table("reading_cycles", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id").notNull().references(() => authUsers.id, { onDelete: "cascade" }),
+  copyId: uuid("copy_id").notNull(),
+  cycleNumber: integer("cycle_number").notNull(),
+  status: text("status").$type<ReadingCycleStatus>().notNull().default("reading"),
+  startedAt: timestamp("started_at", { withTimezone: true }),
+  finishedAt: timestamp("finished_at", { withTimezone: true }),
+  version: uuid("version").notNull().defaultRandom(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  uniqueIndex("reading_cycles_user_id_id_unique").on(table.userId, table.id),
+  uniqueIndex("reading_cycles_copy_number_unique").on(table.userId, table.copyId, table.cycleNumber),
+  uniqueIndex("reading_cycles_open_unique").on(table.userId, table.copyId).where(sql`${table.status} in ('reading', 'paused')`),
+  foreignKey({ name: "reading_cycles_owner_copy_fk", columns: [table.userId, table.copyId], foreignColumns: [copies.userId, copies.id] }).onDelete("cascade"),
+  check("reading_cycles_status_check", sql`${table.status} in ('reading', 'paused', 'finished', 'abandoned')`),
+  check("reading_cycles_number_check", sql`${table.cycleNumber} >= 1 and ${table.cycleNumber} <= 1000`),
+  check("reading_cycles_open_check", sql`${table.status} in ('finished', 'abandoned') or ${table.finishedAt} is null`),
+  check("reading_cycles_dates_check", sql`${table.startedAt} is null or ${table.finishedAt} is null or ${table.finishedAt} >= ${table.startedAt}`),
+  ...ownWrites("reading_cycles", ALL_WRITES, table.userId),
+]).enableRLS()
+
+/**
+ * Entrada de un ciclo (U-PRO-02): una sesión real o un cambio de progreso registrado por la persona, con su instante en
+ * UTC. Páginas ≥ 0, `page_from ≤ page_to` y nunca por encima del total conocido de la edición
+ * (`biblib.guard_reading_entry_pages`, BR001); con el total desconocido (0) se admite sin porcentaje.
+ */
+export const readingEntries = biblibSchema.table("reading_entries", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id").notNull().references(() => authUsers.id, { onDelete: "cascade" }),
+  cycleId: uuid("cycle_id").notNull(),
+  occurredAt: timestamp("occurred_at", { withTimezone: true }).notNull(),
+  pageFrom: integer("page_from"),
+  pageTo: integer("page_to"),
+  note: text("note"),
+  version: uuid("version").notNull().defaultRandom(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  uniqueIndex("reading_entries_user_id_id_unique").on(table.userId, table.id),
+  index("reading_entries_cycle_idx").on(table.userId, table.cycleId, table.occurredAt),
+  foreignKey({ name: "reading_entries_owner_cycle_fk", columns: [table.userId, table.cycleId], foreignColumns: [readingCycles.userId, readingCycles.id] }).onDelete("cascade"),
+  check("reading_entries_pages_check", sql`(${table.pageFrom} is null or (${table.pageFrom} >= 0 and ${table.pageFrom} <= 100000)) and (${table.pageTo} is null or (${table.pageTo} >= 0 and ${table.pageTo} <= 100000)) and (${table.pageFrom} is null or (${table.pageTo} is not null and ${table.pageFrom} <= ${table.pageTo}))`),
+  check("reading_entries_content_check", sql`${table.pageTo} is not null or ${table.note} is not null`),
+  check("reading_entries_note_check", sql`${table.note} is null or (char_length(${table.note}) >= 1 and char_length(${table.note}) <= 1000)`),
+  ...ownWrites("reading_entries", ALL_WRITES, table.userId),
+]).enableRLS()
+
+/**
+ * Préstamo de un ejemplar (U-PRO-04): alias corto de quien lo tiene (nunca correo ni teléfono) y fechas civiles `DATE`
+ * sin conversión UTC. Un préstamo activo (`returned_on` nulo) por ejemplar y cuenta. No hay recordatorios ni estado de
+ * envío. Independiente del estado de lectura.
+ */
+export const loans = biblibSchema.table("loans", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id").notNull().references(() => authUsers.id, { onDelete: "cascade" }),
+  copyId: uuid("copy_id").notNull(),
+  borrowerLabel: text("borrower_label").notNull(),
+  loanedOn: date("loaned_on", { mode: "string" }).notNull(),
+  dueOn: date("due_on", { mode: "string" }),
+  returnedOn: date("returned_on", { mode: "string" }),
+  note: text("note"),
+  version: uuid("version").notNull().defaultRandom(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  uniqueIndex("loans_user_id_id_unique").on(table.userId, table.id),
+  uniqueIndex("loans_active_unique").on(table.userId, table.copyId).where(sql`${table.returnedOn} is null`),
+  index("loans_copy_idx").on(table.userId, table.copyId, table.loanedOn),
+  foreignKey({ name: "loans_owner_copy_fk", columns: [table.userId, table.copyId], foreignColumns: [copies.userId, copies.id] }).onDelete("cascade"),
+  check("loans_borrower_label_check", sql`char_length(${table.borrowerLabel}) >= 1 and char_length(${table.borrowerLabel}) <= 40 and ${table.borrowerLabel} = btrim(${table.borrowerLabel}) and ${table.borrowerLabel} !~ '[[:cntrl:]]' and strpos(${table.borrowerLabel}, '@') = 0 and char_length(regexp_replace(${table.borrowerLabel}, '[^0-9]', '', 'g')) <= 6`),
+  check("loans_dates_check", sql`${table.loanedOn} >= '1900-01-01'::date and ${table.loanedOn} <= '2999-12-31'::date and (${table.dueOn} is null or (${table.dueOn} >= ${table.loanedOn} and ${table.dueOn} <= '2999-12-31'::date)) and (${table.returnedOn} is null or (${table.returnedOn} >= ${table.loanedOn} and ${table.returnedOn} <= '2999-12-31'::date))`),
+  check("loans_note_check", sql`${table.note} is null or (char_length(${table.note}) >= 1 and char_length(${table.note}) <= 500)`),
+  ...ownWrites("loans", ALL_WRITES, table.userId),
 ]).enableRLS()
