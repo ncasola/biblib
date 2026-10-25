@@ -179,7 +179,11 @@ async function readDestination(tx) {
   const books = schema.books ? await tx`select user_id::text as user_id, catalogue->>'censusId' as census, catalogue ? 'fixtureKey' as fixture from biblib.books` : []
   const shelves = schema.shelves ? await tx`select user_id::text as user_id from biblib.shelves` : []
   const otherRows = []
-  for (const t of await tx`select tablename as table from pg_tables where schemaname = 'biblib' and tablename not in ('books', 'shelves')`) {
+  // Desde 0011 (U-DAT-06) books es la vista plana de ejemplares y ediciones: sus filas son las de copies/editions
+  // (toda edición tiene un ejemplar) y se clasifican arriba como libros. Las obras se cuentan aparte.
+  const [view] = await tx`select c.relkind = 'v' as model from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname = 'biblib' and c.relname = 'books'`
+  const flat = view?.model ? ["copies", "editions"] : []
+  for (const t of await tx`select tablename as table from pg_tables where schemaname = 'biblib' and tablename not in ('books', 'shelves') and not (tablename = any(${flat}::text[]))`) {
     const [row] = await tx`select count(*)::integer as rows from ${tx("biblib")}.${tx(t.table)}`
     otherRows.push({ table: t.table, rows: row.rows })
   }
