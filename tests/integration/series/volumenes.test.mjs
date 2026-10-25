@@ -170,6 +170,13 @@ test("el filtro por serie del catálogo devuelve solo las ediciones de esa serie
   const result = await ctx.call("listBooksAction", [{ series: filtered.id, pageSize: 100 }], sessionA)
   assert.deepEqual(result.value.books.map((book) => book.id), [second.id])
   assert.equal(result.value.total, 1)
+  // Serie y etiquetas (U-PRO-01) se combinan: ambas condiciones a la vez.
+  const [tag] = await ctx.sql`insert into biblib.tags (user_id, name) values (${a.id}, ${ctx.label("etiqueta con serie")}) returning id`
+  await ctx.sql`insert into biblib.copy_tags (user_id, copy_id, tag_id) values (${a.id}, ${first.id}, ${tag.id})`
+  const tagged = (extra) => ctx.call("listBooksAction", [{ series: filtered.id, tagIds: [tag.id], pageSize: 100, ...extra }], sessionA)
+  assert.deepEqual((await tagged()).value.books, [], "la etiqueta está en un libro fuera de la serie")
+  await ctx.sql`insert into biblib.copy_tags (user_id, copy_id, tag_id) values (${a.id}, ${second.id}, ${tag.id})`
+  assert.deepEqual((await tagged({ tagMode: "and" })).value.books.map((book) => book.id), [second.id])
   const all = await ctx.call("listBooksAction", [{ pageSize: 100 }], sessionA)
   assert.ok(all.value.books.some((book) => book.id === first.id), "sin filtro, todos los libros")
   const invalid = await ctx.call("listBooksAction", [{ series: "no-es-un-uuid" }], sessionA)
