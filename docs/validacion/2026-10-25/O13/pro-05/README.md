@@ -17,7 +17,7 @@ Commits (en orden): `81bedb9` acciones, `5a19562` rutas, `817a636` sección de l
 | --- | --- |
 | `pnpm lint` | Exit 0, sin avisos: `lint.log`. |
 | `pnpm typecheck` | Exit 0; compila también el E2E nuevo: `typecheck.log`. |
-| `pnpm test` | Exit 0; 393/393, sin omitidas (15 pruebas nuevas en `tests/series.test.ts` y la ruta `/series` en `auth-navigation`): `unit.log`. |
+| `pnpm test` | Exit 0; 393/393, sin omitidas (6 pruebas nuevas en `tests/series.test.ts` y la ruta `/series` en `auth-navigation`): `unit.log`. |
 | `BIBLIB_SKIP_STACK_TESTS=1 pnpm test:scripts` | Exit 0; 252 superadas, 2 de stack omitidas, 0 fallos (254): `scripts.log`. Una primera ejecución falló solo porque la matriz de cabeceras no incluía `/series`; se añadió y quedó en verde. |
 | `pnpm test:db` | Exit 0 (incluye la comprobación de series con `NUMERIC` exacta, una por edición y del mismo dueño): `test-db.log`. Contenedor propio, retirado al terminar. |
 | `pnpm build` | Exit 0, con valores públicos/DB ficticios en loopback puerto 9 (sin archivos de entorno ni conexión); aparecen `/series` y `/series/[id]`: `build.log`. |
