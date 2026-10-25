@@ -65,6 +65,7 @@ export const REQUESTS = Object.freeze([
   { route: "/api/internal/jobs/run", as: "anon", method: "POST", type: "api" },
   { route: "/api/library/export?part=0", as: "anon", type: "api" },
   { route: "/api/covers/:libroA", as: "anon", type: "api" },
+  { route: "/api/media/:libroA", as: "anon", type: "api" },
   { route: "/logo.png", as: "anon", type: "estatico-public" },
   { route: "/default-book-cover.webp", as: "anon", type: "estatico-public" },
   { route: "/manifest.webmanifest", as: "anon", type: "estatico-public" },
