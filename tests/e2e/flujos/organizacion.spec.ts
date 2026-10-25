@@ -8,6 +8,10 @@ function shelfCard(page: Page, title: string) {
   return page.locator("div.rounded-2xl").filter({ has: page.getByRole("heading", { name: title, exact: true }) })
 }
 
+// Desde U-DAT-06 la ficha tiene otro selector «Estantería» en «Añadir otro ejemplar de esta edición»:
+// el de mover el ejemplar es #book-shelf, fuera de ese grupo.
+const moveShelf = (page: import("@playwright/test").Page) => page.locator("#book-shelf")
+
 test("la estantería predeterminada no se puede renombrar ni eliminar", async ({ page }) => {
   await page.goto("/shelves")
   await expect(page).toHaveTitle("Estanterías · BibLib")
@@ -24,7 +28,7 @@ test("movimiento individual y cambio de estado desde la ficha", async ({ page, s
   const [id] = await data.books("a", from, [{ title: `Movimiento ${slug}` }])
 
   await page.goto(`/book/${id}`)
-  await page.getByLabel("Estantería", { exact: true }).selectOption(to)
+  await moveShelf(page).selectOption(to)
   await page.getByRole("button", { name: "Mover libro" }).click()
   await expect(page.getByRole("status")).toHaveText("Ubicación actualizada.")
   await page.getByRole("button", { name: "Leyendo" }).click()
@@ -66,7 +70,7 @@ test("una ficha borrada en otra pestaña muestra el error y no rompe la pantalla
   await second.waitForURL((url) => url.pathname === "/books")
   await second.close()
 
-  await page.getByLabel("Estantería", { exact: true }).selectOption(other)
+  await moveShelf(page).selectOption(other)
   await page.getByRole("button", { name: "Mover libro" }).click()
   await expect(alerts(page)).toBeVisible()
   await page.getByRole("button", { name: "Recargar ficha" }).click()

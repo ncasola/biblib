@@ -12,7 +12,8 @@ test("alta manual: un fallo de red conserva el borrador y no hay éxito antes de
   const slug = data.slug("alta")
   const shelfId = await data.shelf("a", `Catálogo ${slug}`)
   const title = data.marked(`Alta manual ${slug}`)
-  const isAdd = actionRequest(stack, "addBookAction")
+  // Desde U-DAT-06 el alta manual crea edición y ejemplar con createEditionAction.
+  const isAdd = actionRequest(stack, "createEditionAction")
 
   await page.goto("/books/add")
   await expect(page).toHaveTitle("Agregar libro · BibLib")
