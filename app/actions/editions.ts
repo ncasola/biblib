@@ -1,9 +1,12 @@
 "use server"
 
+import { eq } from "drizzle-orm"
 import { z } from "zod"
 import { withRlsContext } from "@/lib/db/client"
 import { lockLibrary } from "@/lib/db/library"
-import { createCopy, createEdition, editionCopies, findBook, mergeEditions, updateEdition, type MergeEditionsResult, type UpdateEditionResult } from "@/lib/db/editions"
+import { libraryState } from "@/lib/db/schema"
+import { normalizeIsbn } from "@/lib/isbn"
+import { createCopy, createEdition, editionCopies, findBook, findBookByIsbn, mergeEditions, updateEdition, type MergeEditionsResult, type UpdateEditionResult } from "@/lib/db/editions"
 import { editionCatalogue } from "@/lib/db/model"
 import { getRequiredUserId } from "@/lib/server-user"
 import { idempotencyKeySchema, parseBookInput, parseUuid, statusSchema, uuidSchema } from "@/lib/book-validation"
@@ -109,5 +112,34 @@ export async function mergeEditionsAction(input: unknown) {
     const request = parse(mergeSchema, input, "Indica las ediciones que se fusionan, la de destino, sus versiones y la revisión de tu biblioteca.")
     try { return await withRlsContext(userId, (tx) => mergeEditions(tx, userId, request)) }
     catch (error) { translateDatabaseError(error) }
+  })
+}
+
+/** Posible edición equivalente de un ejemplar que conservó un ISBN-10/13 como identificador legacy (conflicto de 0010). */
+export interface EditionConflict {
+  /** Ejemplar de la edición que ya tiene ese ISBN-13. */
+  target: Book
+  isbn13: string
+  /** Versiones vistas de las dos ediciones y revisión de colección para fusionarlas. */
+  expectedVersions: Record<string, string>
+  expectedRevision: string
+}
+
+/**
+ * Conflicto de equivalencia ISBN-10/13 del backfill (U-DAT-06): este ejemplar conserva como identificador legacy
+ * un ISBN cuyo ISBN-13 ya tiene otra edición de la cuenta. La persona decide si son la misma edición.
+ */
+export async function getEditionConflictAction(copyId: string): Promise<EditionConflict | null> {
+  let id: string
+  try { id = parseUuid(copyId) } catch { return null }
+  const userId = await getRequiredUserId()
+  return withRlsContext(userId, async (tx) => {
+    const book = await findBook(tx, userId, id)
+    const isbn13 = book?.legacyIdentifier ? normalizeIsbn(book.legacyIdentifier) : null
+    if (!book?.edition?.version || !isbn13) return null
+    const target = await findBookByIsbn(tx, userId, isbn13)
+    if (!target?.edition?.version || target.edition.id === book.edition.id) return null
+    const [state] = await tx.select({ revision: libraryState.revision }).from(libraryState).where(eq(libraryState.userId, userId)).limit(1)
+    return { target, isbn13, expectedVersions: { [book.edition.id]: book.edition.version, [target.edition.id]: target.edition.version }, expectedRevision: state?.revision ?? "" }
   })
 }

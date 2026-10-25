@@ -20,11 +20,13 @@ interface BookFormProps {
   onCancel?: () => void
   onReload?: () => Promise<void>
   submitLabel?: string
+  /** `edition`: solo los datos bibliográficos de la edición (U-DAT-06); estado, estantería y comprobación son del ejemplar. */
+  scope?: "copy" | "edition"
 }
 
 const selectClass = "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base text-foreground focus-visible:outline-2 focus-visible:outline-ring"
 
-export function BookForm({ initialBook, initialIsbn = "", shelves, onSubmit, onCancel, onReload, submitLabel = "Agregar a la biblioteca" }: BookFormProps) {
+export function BookForm({ initialBook, initialIsbn = "", shelves, onSubmit, onCancel, onReload, submitLabel = "Agregar a la biblioteca", scope = "copy" }: BookFormProps) {
   const id = useId()
   const initialCover = initialBook?.cover.large || DEFAULT_BOOK_COVER
   // Una clave por formulario: reintentar el mismo envío no crea dos ediciones (U-DAT-06).
@@ -102,12 +104,12 @@ export function BookForm({ initialBook, initialIsbn = "", shelves, onSubmit, onC
           <div className="space-y-2"><Label htmlFor={`${id}-pages`}>Número de páginas</Label><Input id={`${id}-pages`} type="number" min={0} max={100000} step={1} value={fields.pages} onChange={(event) => update("pages", event.target.value)} placeholder="Desconocido" /></div>
         </div>
         <div className="space-y-3"><div className="space-y-2"><Label htmlFor={`${id}-isbn`}>ISBN</Label><Input id={`${id}-isbn`} maxLength={100} value={fields.isbn} onChange={(event) => update("isbn", event.target.value)} aria-describedby={`${id}-isbn-help`} /><p id={`${id}-isbn-help`} className="text-xs text-muted-foreground">ISBN de 10 o 13 dígitos, con o sin guiones. Déjalo vacío si el ejemplar no tiene ISBN.</p></div>
-          <div className="flex items-start gap-2"><input id={`${id}-verified`} type="checkbox" checked={isbnVerified && Boolean(normalizeIsbn(fields.isbn))} disabled={!normalizeIsbn(fields.isbn)} onChange={(event) => setIsbnVerified(event.target.checked)} className="mt-1 h-4 w-4 accent-primary" aria-describedby={`${id}-verified-help`} /><Label htmlFor={`${id}-verified`} className="leading-6">He comprobado que el ISBN corresponde a mi edición</Label></div><p id={`${id}-verified-help`} className="text-xs text-muted-foreground">Una portada encontrada no confirma la edición. Comprueba el ISBN en tu ejemplar.</p>
+          {scope === "copy" && <><div className="flex items-start gap-2"><input id={`${id}-verified`} type="checkbox" checked={isbnVerified && Boolean(normalizeIsbn(fields.isbn))} disabled={!normalizeIsbn(fields.isbn)} onChange={(event) => setIsbnVerified(event.target.checked)} className="mt-1 h-4 w-4 accent-primary" aria-describedby={`${id}-verified-help`} /><Label htmlFor={`${id}-verified`} className="leading-6">He comprobado que el ISBN corresponde a mi edición</Label></div><p id={`${id}-verified-help`} className="text-xs text-muted-foreground">Una portada encontrada no confirma la edición. Comprueba el ISBN en tu ejemplar.</p></>}
         </div>
-        <div className="grid gap-4 sm:grid-cols-2">
+        {scope === "copy" && <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2"><Label htmlFor={`${id}-status`}>Estado de lectura</Label><select id={`${id}-status`} className={selectClass} value={fields.status} onChange={(event) => update("status", event.target.value as Book["status"])}><option value="unread">Sin leer</option><option value="reading">Leyendo</option><option value="read">Leído</option><option value="to-read">Por leer</option></select></div>
           <div className="space-y-2"><Label htmlFor={`${id}-shelf`}>Estantería</Label><select id={`${id}-shelf`} className={selectClass} value={fields.shelf_id} onChange={(event) => update("shelf_id", event.target.value)}>{shelves.length === 0 && <option value="">Predeterminada</option>}{shelves.map((shelf) => <option key={shelf.id} value={shelf.id}>{shelf.title}{shelf.isDefault ? " (predeterminada)" : ""}</option>)}</select></div>
-        </div>
+        </div>}
         <div className="space-y-2"><Label htmlFor={`${id}-cover`}>URL de la portada</Label><Input id={`${id}-cover`} type="url" maxLength={2048} value={fields.coverUrl} onChange={(event) => update("coverUrl", event.target.value)} placeholder="https://…" aria-describedby={`${id}-cover-help`} /><p id={`${id}-cover-help`} className="text-xs text-muted-foreground">Usa una dirección HTTPS o déjalo vacío para usar la portada predeterminada.</p><BookCover cover={{ large: fields.coverUrl }} title={fields.title || "libro"} className="w-24" sizes="96px" /></div>
       </fieldset>
       {error && <p role="alert" className="text-sm text-destructive">{error}</p>}

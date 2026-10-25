@@ -5,7 +5,7 @@ import { useEffect, useId, useRef, useState } from "react"
 import { CheckCircle, Loader2, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { BookCover } from "@/components/book-cover"
-import { createCopyAction, getEditionCopiesAction } from "@/app/actions/editions"
+import { createCopyAction, getEditionConflictAction, getEditionCopiesAction, mergeEditionsAction, type EditionConflict } from "@/app/actions/editions"
 import { unwrapAction } from "@/lib/action-result"
 import { displayCover } from "@/lib/book-covers"
 import { DomainError } from "@/lib/domain-errors"
@@ -96,6 +96,42 @@ export function EditionCopiesPanel({ book, shelves }: { book: Book; shelves: She
       {others.length > 0 && <ul className="space-y-1 text-sm">{others.map((copy) => <li key={copy.id}><Link className="underline underline-offset-2" href={`/book/${copy.id}`}>Ejemplar en {copy.shelf_name}</Link> · {statusLabels[copy.status]}</li>)}</ul>}
       {added && <p role="status" className="text-sm">Ejemplar añadido en {added.shelf_name}.</p>}
       <AddCopyForm book={book} shelves={shelves} onCreated={setAdded} />
+    </section>
+  )
+}
+
+/**
+ * Conflicto de la migración (U-DAT-06): este ejemplar conserva un ISBN-10/13 equivalente al de otra edición de la
+ * biblioteca. Si la persona confirma que es la misma edición, se fusionan; si no, todo queda como está.
+ */
+export function EditionConflictPanel({ book, onMerged }: { book: Book; onMerged: (target: Book) => void }) {
+  const [conflict, setConflict] = useState<EditionConflict | null>(null)
+  const [pending, setPending] = useState(false)
+  const [error, setError] = useState("")
+  const key = useRef(crypto.randomUUID())
+  useEffect(() => {
+    let active = true
+    if (!book.legacyIdentifier || book.legacyIdentifier.startsWith("manual-")) return
+    getEditionConflictAction(book.id).then((found) => { if (active) setConflict(found) }, () => { /* Sin propuesta: la ficha sigue igual. */ })
+    return () => { active = false }
+  }, [book.id, book.legacyIdentifier, book.version])
+  if (!conflict || !book.edition) return null
+  const merge = async () => {
+    if (pending) return
+    setPending(true); setError("")
+    try {
+      unwrapAction(await mergeEditionsAction({ sourceIds: [book.edition!.id], targetId: conflict.target.edition!.id, expectedVersions: conflict.expectedVersions, expectedRevision: conflict.expectedRevision, idempotencyKey: key.current }))
+      onMerged(conflict.target)
+    } catch (caught) { setError(caught instanceof DomainError ? caught.message : "No se pudieron unir las ediciones. Comprueba la conexión y vuelve a intentarlo.") }
+    finally { setPending(false) }
+  }
+  return (
+    <section className="rounded-2xl border border-border bg-muted/40 p-5 shadow-lg space-y-3" aria-labelledby="edition-conflict-title">
+      <h2 id="edition-conflict-title" className="text-sm font-semibold">¿Es la misma edición que otra de tu biblioteca?</h2>
+      <p className="text-sm">Este ejemplar conserva el identificador anterior <span className="font-mono">{book.legacyIdentifier}</span>, equivalente al ISBN <span className="font-mono">{conflict.isbn13}</span> de «{conflict.target.title}». Al cambiar al modelo de ejemplares no se unieron porque sus datos no coinciden del todo.</p>
+      <p className="text-xs text-muted-foreground">Si los unes, este ejemplar conserva su estado, estantería y comprobación y pasa a usar los datos de esa edición. Si no son la misma edición, no hagas nada.</p>
+      {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+      <div className="flex flex-wrap gap-3"><Button type="button" variant="outline" disabled={pending} onClick={() => void merge()}>{pending ? "Uniendo..." : "Unir a esa edición"}</Button><Button asChild variant="ghost"><Link href={`/book/${conflict.target.id}`}>Ver esa edición</Link></Button></div>
     </section>
   )
 }

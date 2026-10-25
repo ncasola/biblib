@@ -11,7 +11,8 @@ import { BookCoverAssets } from "@/components/book-cover-assets"
 import { displayCover } from "@/lib/book-covers"
 import { BookStatusForm } from "@/components/book-status-form"
 import { CatalogueProvenanceDetails } from "@/components/catalogue-provenance-details"
-import { bookIdentifierLabel, EditionCopiesPanel } from "@/components/edition-copies"
+import { bookIdentifierLabel, EditionConflictPanel, EditionCopiesPanel } from "@/components/edition-copies"
+import { updateEditionAction } from "@/app/actions/editions"
 import { getBookDetailAction, updateBookAction, updateBookStatusAction, deleteBookAction, refreshBookCoverAction, moveBookShelfAction } from "@/app/actions/books"
 import { getShelvesAction } from "@/app/actions/shelves"
 import {
@@ -39,7 +40,7 @@ export function BookDetailsScreen({ bookId, returnPath }: BookDetailsScreenProps
   const [loadError, setLoadError] = useState("")
   const [error, setError] = useState("")
   const [message, setMessage] = useState("")
-  const [editing, setEditing] = useState(false)
+  const [editing, setEditing] = useState<false | "copy" | "edition">(false)
   const [pending, setPending] = useState<"cover" | "delete" | "status" | "shelf" | null>(null)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [targetShelf, setTargetShelf] = useState("")
@@ -53,7 +54,7 @@ export function BookDetailsScreen({ bookId, returnPath }: BookDetailsScreenProps
     } else if (wasEditing.current) {
       editButton.current?.focus()
     }
-    wasEditing.current = editing
+    wasEditing.current = Boolean(editing)
   }, [editing])
 
   useEffect(() => {
@@ -108,7 +109,18 @@ export function BookDetailsScreen({ bookId, returnPath }: BookDetailsScreenProps
   return <div className="mx-auto max-w-5xl">
       <Button asChild variant="outline" className="mb-6"><Link href={backHref}><ArrowLeft aria-hidden="true" className="w-4 h-4 mr-2" />Volver a libros</Link></Button>
       {loading ? <p role="status">Cargando detalles del libro...</p> : loadError ? <div className="space-y-4"><p role="alert" className="text-destructive">{loadError}</p><Button variant="outline" onClick={() => setAttempt((current) => current + 1)}>Reintentar</Button></div> : !book ? <div className="space-y-3"><h1 className="text-2xl font-bold">Libro no encontrado</h1><p className="text-muted-foreground">Este libro ya no está disponible en tu biblioteca.</p></div> : editing ? (
-        <section className="max-w-2xl mx-auto rounded-2xl border border-border bg-card/80 p-5 sm:p-8 shadow-xl"><h1 className="text-3xl font-bold mb-6">Editar ficha</h1><BookForm key={book.version} initialBook={book} onReload={async () => {
+        <section className="max-w-2xl mx-auto rounded-2xl border border-border bg-card/80 p-5 sm:p-8 shadow-xl"><h1 className="text-3xl font-bold mb-6">{editing === "edition" ? "Editar la edición" : "Editar ficha"}</h1>{editing === "edition" ? <BookForm key={book.version} scope="edition" initialBook={book} shelves={shelves} submitLabel="Guardar la edición" onCancel={() => setEditing(false)} onReload={async () => {
+          const latest = await getBookDetailAction(book.id)
+          if (!latest) { setEditing(false); setBook(null); return }
+          setBook(latest)
+        }} onSubmit={async (input) => {
+          // Contrato de edición (U-DAT-06): versión de la edición y confirmación de cuántos ejemplares cambian.
+          const result = unwrapAction(await updateEditionAction({ ...input, editionId: book.edition!.id, expectedVersion: book.edition!.version, confirmCopies: input.confirmSharedCopies }))
+          const latest = await getBookDetailAction(book.id)
+          if (latest) setBook(latest)
+          setEditing(false); setError(""); setMessage(result.copies > 1 ? `Edición actualizada en sus ${result.copies} ejemplares.` : "Edición actualizada.")
+          router.refresh()
+        }} /> : <BookForm key={book.version} initialBook={book} onReload={async () => {
           const latest = await getBookDetailAction(book.id)
           if (!latest) { setEditing(false); setBook(null); return }
           setBook(latest); setTargetShelf(latest.shelf_id)
@@ -116,7 +128,7 @@ export function BookDetailsScreen({ bookId, returnPath }: BookDetailsScreenProps
           const updated = unwrapAction(await updateBookAction(book.id, input))
           setBook(updated); setTargetShelf(updated.shelf_id); setEditing(false); setError(""); setMessage("Ficha actualizada correctamente.")
           router.refresh()
-        }} /></section>
+        }} />}</section>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-[240px_minmax(0,1fr)] gap-6 md:gap-8">
           <aside className="space-y-4">
@@ -126,7 +138,7 @@ export function BookDetailsScreen({ bookId, returnPath }: BookDetailsScreenProps
             <BookCoverAssets book={book} disabled={Boolean(pending)} onBookChange={(updated) => { setBook(updated); setTargetShelf(updated.shelf_id); setError("") }} />
           </aside>
           <div className="space-y-5 min-w-0">
-            <div className="flex flex-col sm:flex-row items-start justify-between gap-4"><div className="min-w-0"><h1 className="text-3xl sm:text-4xl font-bold heading-vintage break-words">{book.title}</h1>{book.subtitle && <p className="text-lg text-muted-foreground mt-2">{book.subtitle}</p>}</div><Button ref={editButton} variant="outline" disabled={Boolean(pending)} onClick={() => { setEditing(true); setError(""); setMessage("") }}><Edit2 aria-hidden="true" className="w-4 h-4 mr-2" />Editar ficha</Button></div>
+            <div className="flex flex-col sm:flex-row items-start justify-between gap-4"><div className="min-w-0"><h1 className="text-3xl sm:text-4xl font-bold heading-vintage break-words">{book.title}</h1>{book.subtitle && <p className="text-lg text-muted-foreground mt-2">{book.subtitle}</p>}</div><div className="flex flex-wrap gap-2"><Button ref={editButton} variant="outline" disabled={Boolean(pending)} onClick={() => { setEditing("copy"); setError(""); setMessage("") }}><Edit2 aria-hidden="true" className="w-4 h-4 mr-2" />Editar ficha</Button>{(book.edition?.copies ?? 1) > 1 && <Button variant="outline" disabled={Boolean(pending)} onClick={() => { setEditing("edition"); setError(""); setMessage("") }}>Editar la edición ({book.edition!.copies} ejemplares)</Button>}</div></div>
             {message && <p role="status" className="rounded-xl border border-border bg-muted/40 p-3 text-sm">{message}</p>}
             {error && !deleteOpen && <div role="alert" className="rounded-xl border border-destructive/30 p-3 text-sm text-destructive space-y-2"><p>{error}</p><Button variant="outline" onClick={() => { setError(""); setAttempt((current) => current + 1) }}>Recargar ficha</Button></div>}
             <dl className="rounded-2xl border border-border bg-card/80 p-5 shadow-lg grid gap-4 sm:grid-cols-2">
@@ -139,6 +151,7 @@ export function BookDetailsScreen({ bookId, returnPath }: BookDetailsScreenProps
             </dl>
             <section className="rounded-2xl border border-border bg-card/80 p-5 shadow-lg"><BookStatusForm currentStatus={book.status} onStatusChange={changeStatus} disabled={Boolean(pending)} /></section>
             <section className="rounded-2xl border border-border bg-card/80 p-5 shadow-lg space-y-3"><label htmlFor="book-shelf" className="text-sm font-semibold">Estantería</label><div className="flex flex-col sm:flex-row gap-3"><select id="book-shelf" value={targetShelf} disabled={Boolean(pending)} onChange={(event) => setTargetShelf(event.target.value)} className="min-w-0 flex-1 rounded-lg border border-input bg-background p-2 text-foreground">{shelves.map((shelf) => <option key={shelf.id} value={shelf.id}>{shelf.title}{shelf.isDefault ? " (predeterminada)" : ""}</option>)}</select><Button type="button" disabled={Boolean(pending) || targetShelf === book.shelf_id} onClick={() => void changeShelf()}>{pending === "shelf" ? "Moviendo..." : "Mover libro"}</Button></div></section>
+            <EditionConflictPanel book={book} onMerged={async () => { const latest = await getBookDetailAction(book.id); if (latest) setBook(latest); setMessage("Ediciones unidas: este ejemplar usa ahora los datos de la otra edición.") }} />
             <EditionCopiesPanel key={book.copyVersion} book={book} shelves={shelves} />
             <AlertDialog open={deleteOpen} onOpenChange={(open) => { if (pending !== "delete") { setDeleteOpen(open); setError("") } }}>
               <AlertDialogTrigger asChild><Button variant="outline" disabled={Boolean(pending)} className="text-destructive border-destructive/40"><Trash2 aria-hidden="true" className="w-4 h-4 mr-2" />Eliminar libro</Button></AlertDialogTrigger>
