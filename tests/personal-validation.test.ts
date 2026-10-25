@@ -3,6 +3,7 @@ import { test } from "node:test"
 import { parsePersonalInput } from "../lib/personal-validation"
 import { normalizeTagName } from "../lib/product/contracts"
 import { parseBookSearchFilters, serializeBookSearchFilters } from "../lib/book-search"
+import { currentViewFilters } from "../lib/saved-views"
 
 test("personal: campos omitidos y null no bloquean altas anteriores", () => {
   assert.deepEqual(parsePersonalInput({}), {})
@@ -41,4 +42,10 @@ test("personal: filtros repetidos OR por defecto, AND explícito y URL reproduci
   assert.equal(parseBookSearchFilters(new URLSearchParams(serialized)).tagMode, "and")
   assert.deepEqual(new URLSearchParams(serialized).getAll("tag"), ids)
   assert.equal(serializeBookSearchFilters({ ...filters, tagIds: [] }, query), "")
+})
+
+test("personal: una vista guardada no omite silenciosamente los filtros de etiquetas", () => {
+  const filters = parseBookSearchFilters(new URLSearchParams("tag=00000000-0000-4000-8000-000000000001"))
+  assert.throws(() => currentViewFilters(filters), /todavía no admiten etiquetas/)
+  assert.doesNotThrow(() => currentViewFilters({ ...filters, tagIds: [] }))
 })
