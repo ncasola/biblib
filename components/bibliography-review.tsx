@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useId, useMemo, useState, type FormEvent } from "react"
+import { useId, useMemo, useRef, useState, type FormEvent } from "react"
 import { CheckCircle, ExternalLink, Loader2, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -20,6 +20,7 @@ import { provenanceFieldLabels, provenanceProviderLabel } from "@/lib/catalogue-
 import { DomainError } from "@/lib/domain-errors"
 import { normalizeIsbn } from "@/lib/isbn"
 import type { Book, FieldProvenance, ProvenanceField, Shelf } from "@/lib/types"
+import { SubmissionGate, type BookEntryDefaults, type SaveAndAddAnother } from "@/lib/book-entry"
 
 export interface BibliographyReviewData {
   /** ISBN canónico buscado. */
@@ -34,6 +35,8 @@ interface BibliographyReviewProps extends BibliographyReviewData {
   shelves: Shelf[]
   onSave: (input: BookInput) => Promise<Book>
   onRetry?: () => void
+  entryDefaults?: BookEntryDefaults
+  onSavedAnother?: SaveAndAddAnother
 }
 
 const catalogNames: Record<string, string> = { "open-library": "Open Library", bne: "BNE", "google-books": "Google Books" }
@@ -61,8 +64,10 @@ function inputText(field: ReviewField, value: ReviewValue): string {
   return value === undefined ? "" : String(value)
 }
 
-export function BibliographyReview({ isbn, result, covers, failure, shelves, onSave, onRetry }: BibliographyReviewProps) {
+export function BibliographyReview({ isbn, result, covers, failure, shelves, onSave, onRetry, entryDefaults, onSavedAnother }: BibliographyReviewProps) {
   const id = useId()
+  const idempotencyKey = useRef(crypto.randomUUID())
+  const gate = useRef(new SubmissionGate())
   const candidates = useMemo(() => result?.candidates ?? [], [result])
   const selectable = useMemo(() => candidates.filter(isSelectableCandidate), [candidates])
   const options = useMemo(() => Object.fromEntries(REVIEW_FIELDS.map((field) => [field, fieldOptions(selectable, field)])) as Record<ReviewField, FieldOption[]>, [selectable])
@@ -79,8 +84,8 @@ export function BibliographyReview({ isbn, result, covers, failure, shelves, onS
   const [manual, setManual] = useState<ReadonlySet<ReviewField>>(new Set())
   const [isbnText, setIsbnText] = useState(isbn)
   const [isbnVerified, setIsbnVerified] = useState(false)
-  const [status, setStatus] = useState<Book["status"]>("unread")
-  const [shelfId, setShelfId] = useState(shelves.find((shelf) => shelf.isDefault)?.id ?? shelves[0]?.id ?? "")
+  const [status, setStatus] = useState<Book["status"]>(entryDefaults?.status ?? "unread")
+  const [shelfId, setShelfId] = useState(entryDefaults && shelves.some((shelf) => shelf.id === entryDefaults.shelf_id) ? entryDefaults.shelf_id : shelves.find((shelf) => shelf.isDefault)?.id ?? shelves[0]?.id ?? "")
   const [coverKey, setCoverKey] = useState("default")
   const [announcement, setAnnouncement] = useState("")
   const [pending, setPending] = useState(false)
@@ -157,7 +162,7 @@ export function BibliographyReview({ isbn, result, covers, failure, shelves, onS
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (pending) return
+    if (!gate.current.enter()) return
     setPending(true); setError("")
     try {
       const value = <F extends "authors" | "publishers">(field: F) => (structured[field] && !manual.has(field) ? structured[field] : lines(draft[field]).map((name) => ({ name }))) as { name: string; url?: string }[]
@@ -166,16 +171,20 @@ export function BibliographyReview({ isbn, result, covers, failure, shelves, onS
       const cover = selectedCover ? coverProvenance(selectedCover) : null
       if (cover) fields.cover = cover
       const input = parseBookInput({
+        idempotencyKey: idempotencyKey.current,
         title: draft.title, subtitle: draft.subtitle, isbn: isbnText.trim(),
         authors: value("authors"), publishers: value("publishers"),
         number_of_pages: draft.number_of_pages.trim() === "" ? 0 : Number(draft.number_of_pages), publish_date: draft.publish_date,
         cover: { small: coverUrl, medium: coverUrl, large: coverUrl }, status, shelf_id: shelfId,
         catalogue: buildReviewedCatalogue(fields, Boolean(normalizeIsbn(isbnText)) && isbnVerified),
       })
-      setSaved(await onSave(input))
+      const another = (event.nativeEvent as SubmitEvent).submitter?.getAttribute("value") === "another"
+      const book = await onSave(input)
+      if (another && onSavedAnother) onSavedAnother(book, input)
+      else setSaved(book)
     } catch (caught) {
       setError(caught instanceof DomainError ? caught.message : "No se pudo guardar el libro. Tus elecciones se conservan; comprueba la conexión y vuelve a intentarlo.")
-    } finally { setPending(false) }
+    } finally { gate.current.leave(); setPending(false) }
   }
 
   if (saved) return (
@@ -304,6 +313,7 @@ export function BibliographyReview({ isbn, result, covers, failure, shelves, onS
         {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
         <div className="flex flex-wrap gap-3">
           <Button type="submit" disabled={pending} className="bg-primary text-primary-foreground">{pending && <Loader2 aria-hidden="true" className="mr-2 h-4 w-4 animate-spin" />}{pending ? "Guardando..." : "Guardar en la biblioteca"}</Button>
+          {onSavedAnother && <Button type="submit" name="intent" value="another" variant="outline" disabled={pending}>Guardar y añadir otro</Button>}
           {mode === "sources" ? <Button type="button" variant="outline" disabled={pending} onClick={() => { setMode("manual"); setAnnouncement("") }}>Completar manualmente</Button>
             : candidates.length > 0 && <Button type="button" variant="outline" disabled={pending} onClick={() => setMode("sources")}>Volver a las fuentes</Button>}
         </div>

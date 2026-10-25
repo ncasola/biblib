@@ -5,13 +5,15 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Search, Loader2 } from "lucide-react"
 import { normalizeIsbn } from "@/lib/isbn"
+import { IsbnScanner } from "@/components/isbn-scanner"
 
 interface SearchBookFormProps {
   onSearch: (isbn: string) => Promise<void>
   isLoading?: boolean
+  cameraEnabled?: boolean
 }
 
-export function SearchBookForm({ onSearch, isLoading = false }: SearchBookFormProps) {
+export function SearchBookForm({ onSearch, isLoading = false, cameraEnabled = false }: SearchBookFormProps) {
   const id = useId()
   const [isbn, setIsbn] = useState("")
   const [error, setError] = useState("")
@@ -24,7 +26,7 @@ export function SearchBookForm({ onSearch, isLoading = false }: SearchBookFormPr
     await onSearch(normalized)
   }
   return (
-    <form onSubmit={handleSubmit} aria-busy={isLoading} className="flex flex-col gap-4">
+    <div className="space-y-4"><form onSubmit={handleSubmit} aria-busy={isLoading} className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
         <label htmlFor={id} className="text-sm font-semibold">Número ISBN</label>
         <Input id={id} type="text" required autoComplete="off" maxLength={40} placeholder="Por ejemplo: 9780747532699" value={isbn} onChange={(event) => { setIsbn(event.target.value); setError("") }} disabled={isLoading} aria-invalid={Boolean(error)} aria-describedby={`${id}-help${error ? ` ${id}-error` : ""}`} />
@@ -34,6 +36,6 @@ export function SearchBookForm({ onSearch, isLoading = false }: SearchBookFormPr
       <Button type="submit" disabled={isLoading || !isbn.trim()} className="w-full bg-primary text-primary-foreground">
         {isLoading ? <Loader2 aria-hidden="true" className="w-4 h-4 mr-2 animate-spin" /> : <Search aria-hidden="true" className="w-4 h-4 mr-2" />}{isLoading ? "Buscando..." : "Buscar libro"}
       </Button>
-    </form>
+    </form>{cameraEnabled && !isLoading && <IsbnScanner onDetected={(value) => { setIsbn(value); setError("") }} />}</div>
   )
 }

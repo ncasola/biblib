@@ -11,6 +11,12 @@ export const GLOBAL_HEADERS = Object.freeze({
   "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=()",
 })
 
+export const ADD_BOOK_PERMISSIONS = "camera=(self), microphone=(), geolocation=(), payment=(), usb=()"
+
+export function permissionsPolicy(route = "") {
+  return route.split("?")[0] === "/books/add" ? ADD_BOOK_PERMISSIONS : GLOBAL_HEADERS["permissions-policy"]
+}
+
 export const PRIVATE = "private, no-store"
 /** Valor propio de Next para la página 404: más estricto que PRIVATE y también sin caché compartida. */
 export const NEXT_NOT_FOUND = "private, no-cache, no-store, max-age=0, must-revalidate"
@@ -73,7 +79,8 @@ export function checkResponse(request, response) {
   const problems = []
   if (!expected.status.includes(response.status)) problems.push(`estado ${response.status}; se esperaba ${expected.status.join(" o ")}`)
   for (const [name, value] of Object.entries(GLOBAL_HEADERS)) {
-    if (header(name) !== value) problems.push(`${name}: ${header(name) ?? "ausente"}; se esperaba ${value}`)
+    const required = name === "permissions-policy" ? permissionsPolicy(request.route) : value
+    if (header(name) !== required) problems.push(`${name}: ${header(name) ?? "ausente"}; se esperaba ${required}`)
   }
   const cache = header("cache-control")
   if (!expected.cache.includes(cache)) problems.push(`cache-control: ${cache ?? "ausente"}; se esperaba ${expected.cache.join(" o ")}`)

@@ -11,12 +11,15 @@ import type { Author, Book, Publisher, Shelf } from "@/lib/types"
 import { Loader2, Plus, X } from "lucide-react"
 import { normalizeIsbn } from "@/lib/isbn"
 import { DomainError } from "@/lib/domain-errors"
+import { SubmissionGate, type BookEntryDefaults } from "@/lib/book-entry"
 
 interface BookFormProps {
   initialBook?: Book
   initialIsbn?: string
   shelves: Shelf[]
   onSubmit: (input: BookInput) => Promise<void>
+  onSaveAndAddAnother?: (input: BookInput) => Promise<void>
+  entryDefaults?: BookEntryDefaults
   onCancel?: () => void
   onReload?: () => Promise<void>
   submitLabel?: string
@@ -26,11 +29,12 @@ interface BookFormProps {
 
 const selectClass = "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base text-foreground focus-visible:outline-2 focus-visible:outline-ring"
 
-export function BookForm({ initialBook, initialIsbn = "", shelves, onSubmit, onCancel, onReload, submitLabel = "Agregar a la biblioteca", scope = "copy" }: BookFormProps) {
+export function BookForm({ initialBook, initialIsbn = "", shelves, onSubmit, onSaveAndAddAnother, entryDefaults, onCancel, onReload, submitLabel = "Agregar a la biblioteca", scope = "copy" }: BookFormProps) {
   const id = useId()
   const initialCover = initialBook?.cover.large || DEFAULT_BOOK_COVER
   // Una clave por formulario: reintentar el mismo envío no crea dos ediciones (U-DAT-06).
   const idempotencyKey = useRef(crypto.randomUUID())
+  const gate = useRef(new SubmissionGate())
   const sharedCopies = initialBook?.version ? initialBook.edition?.copies ?? 1 : 1
   const [confirmShared, setConfirmShared] = useState(false)
   const [fields, setFields] = useState({
@@ -39,9 +43,10 @@ export function BookForm({ initialBook, initialIsbn = "", shelves, onSubmit, onC
     isbn: initialBook ? initialBook.isbn ?? "" : initialIsbn,
     publish_date: initialBook?.publish_date ?? "", pages: initialBook?.number_of_pages ? String(initialBook.number_of_pages) : "",
     coverUrl: initialCover === DEFAULT_BOOK_COVER ? "" : initialCover,
-    status: initialBook?.status ?? "unread" as Book["status"],
-    shelf_id: shelves.some((shelf) => shelf.id === initialBook?.shelf_id)
-      ? initialBook!.shelf_id : shelves.find((shelf) => shelf.isDefault)?.id ?? shelves[0]?.id ?? "",
+    status: entryDefaults?.status ?? initialBook?.status ?? "unread" as Book["status"],
+    shelf_id: entryDefaults && shelves.some((shelf) => shelf.id === entryDefaults.shelf_id) ? entryDefaults.shelf_id
+      : shelves.some((shelf) => shelf.id === initialBook?.shelf_id)
+        ? initialBook!.shelf_id : shelves.find((shelf) => shelf.isDefault)?.id ?? shelves[0]?.id ?? "",
   })
   const [authors, setAuthors] = useState<Author[]>(initialBook?.authors.length ? initialBook.authors.map((author) => ({ ...author })) : [{ name: "" }])
   const [publishers, setPublishers] = useState<Publisher[]>(initialBook?.publishers?.length ? initialBook.publishers.map((publisher) => ({ ...publisher })) : [{ name: "" }])
@@ -57,7 +62,7 @@ export function BookForm({ initialBook, initialIsbn = "", shelves, onSubmit, onC
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (pending) return
+    if (!gate.current.enter()) return
     setPending(true)
     setError("")
     try {
@@ -74,11 +79,12 @@ export function BookForm({ initialBook, initialIsbn = "", shelves, onSubmit, onC
         // Se envía la procedencia tal como se cargó (v1 o v2); al editar, el servidor la recalcula desde la ficha guardada.
         catalogue: { ...(initialBook?.catalogue ?? { source: "manual" as const }), isbnVerified: Boolean(normalizeIsbn(fields.isbn)) && isbnVerified },
       })
-      await onSubmit(input)
+      const another = (event.nativeEvent as SubmitEvent).submitter?.getAttribute("value") === "another"
+      await (another && onSaveAndAddAnother ? onSaveAndAddAnother(input) : onSubmit(input))
     } catch (caught) {
       setConflict(caught instanceof DomainError && caught.code === "CONFLICT")
       setError(caught instanceof DomainError ? caught.message : "No se pudo guardar el libro. Comprueba la conexión y vuelve a intentarlo.")
-    } finally { setPending(false) }
+    } finally { gate.current.leave(); setPending(false) }
   }
 
   return (
@@ -118,7 +124,7 @@ export function BookForm({ initialBook, initialIsbn = "", shelves, onSubmit, onC
         try { await onReload() } catch { setError("No se pudo cargar la ficha actual. Tu formulario se conserva; vuelve a intentarlo.") }
         finally { setPending(false) }
       }}>Descartar formulario y cargar versión actual</Button></div>}
-      <div className="flex flex-wrap gap-3"><Button type="submit" disabled={pending} className="bg-primary text-primary-foreground">{pending && <Loader2 aria-hidden="true" className="mr-2 h-4 w-4 animate-spin" />}{pending ? "Guardando..." : submitLabel}</Button>{onCancel && <Button type="button" variant="outline" disabled={pending} onClick={onCancel}>Cancelar</Button>}</div>
+      <div className="flex flex-wrap gap-3"><Button type="submit" disabled={pending} className="bg-primary text-primary-foreground">{pending && <Loader2 aria-hidden="true" className="mr-2 h-4 w-4 animate-spin" />}{pending ? "Guardando..." : submitLabel}</Button>{onSaveAndAddAnother && <Button type="submit" name="intent" value="another" variant="outline" disabled={pending}>Guardar y añadir otro</Button>}{onCancel && <Button type="button" variant="outline" disabled={pending} onClick={onCancel}>Cancelar</Button>}</div>
     </form>
   )
 }

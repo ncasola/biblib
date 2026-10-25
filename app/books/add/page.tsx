@@ -8,5 +8,5 @@ export default async function AddBookPage() {
   await connection()
   let reviewEnabled = false
   try { reviewEnabled = readCatalogConfig().reviewEnabled } catch { reviewEnabled = false }
-  return <><AddBookScreen reviewEnabled={reviewEnabled} />{reviewEnabled && <TitleAuthorSearch />}</>
+  return <><AddBookScreen reviewEnabled={reviewEnabled} cameraEnabled={process.env.BIBLIB_ISBN_CAMERA === "1"} />{reviewEnabled && <TitleAuthorSearch />}</>
 }

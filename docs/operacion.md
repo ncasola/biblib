@@ -1469,3 +1469,28 @@ Consulta de operación, sin datos de biblioteca: `select state, step, error_code
 - `pnpm test:db`: `tests/db/product-legacy.sql` + `tests/db/product.sql` (backfill, etiquetas, notas, ubicaciones, series, imágenes y Storage, revisión, CSV, versiones anteriores, cuenta en eliminación, pasos `product`/`media` e inventario).
 - `pnpm test:scripts`: manifest de 0014 con hechos reales (`migrations.test.mjs`, `tests/fixtures/migrations/objects-0014.json`) y ensayo de promoción con restauración aislada.
 - `pnpm test:integration:product --profile scratch|test [--reuse-build]`: grupo `tests/integration/product` con cuentas desechables (aislamiento A/B, cuenta en eliminación, FK cruzadas, ciclos y niveles, unicidad normalizada, límites, posición NUMERIC 1/1.5/2, imágenes con Storage real y la ida y vuelta v2 por la app: exportar, reemplazar, versión anterior, otra cuenta y archivo anterior). También corre en `pnpm test:integration:local`.
+
+## Alta consecutiva y cámara ISBN · U-EXP-05 (O13)
+
+`Guardar y añadir otro` está disponible en alta manual, resultado ISBN y revisión bibliográfica. Tras confirmar la escritura muestra el título guardado y un enlace a su ficha, limpia los datos bibliográficos y la comprobación física del ISBN, y conserva estado/estantería durante esa pantalla de alta. Recargar o salir termina esas preferencias en memoria. Un fallo conserva el borrador; un ISBN existente ofrece abrir el ejemplar guardado y añadir otra copia mediante una acción explícita.
+
+La cámara se habilita exclusivamente con **`BIBLIB_ISBN_CAMERA=1`** en el entorno del proceso Next. Ausencia, `0` o cualquier otro valor la mantienen apagada. Los wrappers de Next admiten expresamente esta bandera de capacidad; no se añaden credenciales ni variables públicas. Ejemplo PowerShell para un perfil propio ya autorizado y preparado:
+
+```powershell
+$env:BIBLIB_ISBN_CAMERA = '1'
+pnpm dev:local --profile scratch
+# Para retirar la función, quita la variable y reinicia el proceso de la app.
+Remove-Item Env:BIBLIB_ISBN_CAMERA -ErrorAction SilentlyContinue
+```
+
+La bandera se lee en el servidor por petición, sin crear endpoints. Para cambiar la configuración del proceso en un despliegue, reinicia sus instancias. Apagarla oculta solo el escáner; ISBN escrito y alta manual siguen disponibles y no cambia ningún dato guardado.
+
+`Permissions-Policy` permite `camera=(self)` únicamente en `/books/add`; todas las otras rutas mantienen `camera=()`, y micrófono/geolocalización/payment/USB continúan denegados. La excepción de cabeceras es estable aunque la capacidad esté apagada. Verificación: `pnpm test` revisa las reglas de Next y `pnpm test:scripts` la matriz `scripts/security/headers-matrix.mjs`; el coordinador puede ejecutar `pnpm security:headers:local --profile test` sobre su stack autorizado.
+
+La política pertenece al documento: una transición cliente desde otra ruta conserva la denegación anterior. Si ocurre, pulsar Escanear ofrece abrir `/books/add` en otra pestaña, con una navegación de documento y sin perder el borrador de la pestaña actual. No se relaja la política global para resolverlo.
+
+Se comprueba HTTPS/contexto seguro, `BarcodeDetector` y su formato `ean_13` antes de pedir vídeo. El único permiso se solicita tras pulsar **Escanear ISBN con cámara**. El detector procesa el vídeo localmente, valida longitud/checksum con el normalizador existente y muestra el ISBN canónico para que la persona pulse **Usar este ISBN**; después debe pulsar **Buscar libro**. La detección no marca `isbnVerified`. No hay dependencias nuevas, almacenamiento de fotogramas ni envío de imágenes. Puede pararse; detección válida, cambio de pestaña de formulario, ocultación de la página, desmontaje o 30 segundos de captura liberan las pistas, incluso si el permiso llega tarde.
+
+Sin detector compatible, contexto seguro o permiso, se informa de la alternativa y el formulario permanece disponible. La compatibilidad depende del navegador/plataforma; no se instala un detector alternativo. Referencias de implementación: [Barcode Detection API](https://wicg.github.io/shape-detection-api/#barcode-detection-api), [Permissions Policy](https://www.w3.org/TR/permissions-policy/), [Media Capture and Streams](https://w3c.github.io/mediacapture-main/).
+
+El runner `test:e2e:local` activa la capacidad en su entorno aislado para poder simular permiso denegado, lectura y parada. `tests/e2e/flujos/alta-consecutiva.spec.ts` añade esos recorridos junto a consecutiva, borrador tras error, doble envío y duplicado. No sustituye una prueba con cámara física ni lectores reales. Evidencia y pendientes de integración en [O13/exp-05](validacion/2026-10-25/O13/exp-05/README.md).
