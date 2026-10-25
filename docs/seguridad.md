@@ -67,6 +67,8 @@ Privilegios de `authenticated` por tabla (todas con `relrowsecurity`; las polít
 | `account_lifecycle`, `library_jobs`, `library_job_items`, `library_state` | `SELECT` | 1 |
 | `catalogue_cache`, `catalogue_inflight`, `catalogue_quota_buckets`, `catalogue_quota_reservations` | Ninguno | 0 (solo funciones definer) |
 
+**Obra, edición y ejemplar (0010–0011, U-DAT-06).** `works`, `editions` y `copies` tienen RLS y las cuatro políticas `*_own` con `user_id = (select auth.uid())` (el uid se evalúa una vez por consulta, no por fila); `authenticated` tiene `SELECT, INSERT, UPDATE, DELETE`; `anon`, nada. Toda FK entre ellas, con las estanterías y con las portadas incluye al dueño, así que una referencia a datos de otra cuenta (un ejemplar en la edición o la estantería de B, una fusión cruzada) falla aunque se conozca el UUID. `model_migration_report` solo se lee (`SELECT`, política propia). La vista `books` es `security_invoker`: aplica la RLS de las tablas a quien consulta y `authenticated` tiene sus cuatro privilegios; sus triggers INSTEAD OF se ejecutan con los privilegios de quien escribe. `books_legacy` no tiene políticas ni privilegios de cliente. `model_compare` es `SECURITY DEFINER` sin `EXECUTE` para clientes; `isbn13_normalize` es pura y la ejecuta `authenticated` porque la evalúa la restricción de `editions.isbn13`.
+
 ### Funciones `SECURITY DEFINER` (0003–0005)
 
 Todas son propiedad de `postgres`, fijan `search_path=pg_catalog` y no conceden `EXECUTE` a `PUBLIC` ni a `anon`.
