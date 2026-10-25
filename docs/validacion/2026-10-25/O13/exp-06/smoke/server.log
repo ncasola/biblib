@@ -1,0 +1,15 @@
+▲ Next.js 16.4.2
+- Local:         http://127.0.0.1:49998
+- Network:       http://127.0.0.1:49998
+✓ Ready in 340ms
+✓ Running next.config.mjs took 44ms
+{"event":"database.operation_failed","durationMs":18}
+{"event":"import.preview","level":"info","timestamp":"2026-10-25T18:25:56.624Z","fields":{"operation":"import.validate","result":"ok","durationMs":0,"correlationId":"a9c80513-0a3b-4d5c-b8ba-5bb4468b9f6a"}}
+{"event":"import.preview","level":"info","timestamp":"2026-10-25T18:25:56.655Z","fields":{"operation":"import.prepare","result":"ok","durationMs":35,"correlationId":"a9c80513-0a3b-4d5c-b8ba-5bb4468b9f6a"}}
+{"event":"job.started","level":"info","timestamp":"2026-10-25T18:25:57.139Z","fields":{"operation":"job.import.publish","result":"ok","attempt":1,"correlationId":"8b5cc731-cd42-47e5-aeb5-958b17caaa5b"}}
+{"event":"db.operation","level":"info","timestamp":"2026-10-25T18:25:57.234Z","fields":{"operation":"job.import.publish","result":"ok","durationMs":94,"correlationId":"8b5cc731-cd42-47e5-aeb5-958b17caaa5b"}}
+{"event":"import.commit","level":"info","timestamp":"2026-10-25T18:25:57.241Z","fields":{"operation":"import.confirm","result":"ok","durationMs":191,"correlationId":"8b5cc731-cd42-47e5-aeb5-958b17caaa5b"}}
+{"event":"job.started","level":"info","timestamp":"2026-10-25T18:25:57.249Z","fields":{"operation":"job.import.covers","result":"ok","attempt":1,"correlationId":"8b5cc731-cd42-47e5-aeb5-958b17caaa5b"}}
+{"event":"db.operation","level":"info","timestamp":"2026-10-25T18:25:57.279Z","fields":{"operation":"job.import.covers","result":"ok","durationMs":30,"correlationId":"8b5cc731-cd42-47e5-aeb5-958b17caaa5b"}}
+{"event":"job.started","level":"info","timestamp":"2026-10-25T18:25:59.361Z","fields":{"operation":"job.covers.covers","result":"ok","attempt":1,"correlationId":"c34fd481-7a00-431a-8297-e65daf567dcc"}}
+{"event":"db.operation","level":"info","timestamp":"2026-10-25T18:25:59.407Z","fields":{"operation":"job.covers.covers","result":"ok","durationMs":46,"correlationId":"c34fd481-7a00-431a-8297-e65daf567dcc"}}
