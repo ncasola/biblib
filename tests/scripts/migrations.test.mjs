@@ -15,7 +15,7 @@ import { classify, closeConnection, connect, inspectDatabase, readLedger, resolv
 
 const repo = fileURLToPath(new URL("../../", import.meta.url))
 const drizzleDir = path.join(repo, "drizzle")
-// Metadatos reales capturados de Supabase local: tras 0002 (U-INF-04), tras 0003 (U-DAT-01), tras 0004 (U-DAT-05), tras 0005 (U-DAT-03), tras 0006 (U-DAT-02), tras 0007 (U-EXP-02), tras 0008 (U-DAT-04), tras 0009 (U-DAT-10), tras 0010, 0011 y 0012 (U-DAT-06), tras 0013 (U-OPS-03) y tras 0014 (lote de producto de O13, head actual).
+// Metadatos reales capturados de Supabase local: tras 0002 (U-INF-04), tras 0003 (U-DAT-01), tras 0004 (U-DAT-05), tras 0005 (U-DAT-03), tras 0006 (U-DAT-02), tras 0007 (U-EXP-02), tras 0008 (U-DAT-04), tras 0009 (U-DAT-10), tras 0010, 0011 y 0012 (U-DAT-06), tras 0013 (U-OPS-03), tras 0014 (lote de producto de O13) y tras 0015 (lectura y préstamos de O14, head actual).
 const facts0002 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0002.json"), "utf8"))
 const facts0003 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0003.json"), "utf8"))
 const facts0004 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0004.json"), "utf8"))
@@ -28,7 +28,8 @@ const facts0010 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrat
 const facts0011 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0011.json"), "utf8"))
 const facts0012 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0012.json"), "utf8"))
 const facts0013 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0013.json"), "utf8"))
-const facts = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0014.json"), "utf8"))
+const facts0014 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0014.json"), "utf8"))
+const facts = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0015.json"), "utf8"))
 const HEAD_0010 = MANIFEST_MIGRATIONS.slice(0, 11)
 const named = (list, name) => list.find((item) => item.name === name)
 const temporary = []
@@ -114,7 +115,7 @@ describe("ledger", () => {
     assert.deepEqual(compareLedger(entries, rowsFor(entries)).pending, [])
     const partial = compareLedger(entries, rowsFor(entries, 1))
     assert.equal(partial.appliedHead.tag, "0000_biblib_init")
-    assert.deepEqual(partial.pending, ["0001_library_integrity", "0002_book_versions", "0003_library_revision", "0004_catalogue_coordination", "0005_library_jobs", "0006_library_snapshots", "0007_saved_views", "0008_restore_sessions", "0009_cover_assets", "0010_works_editions_copies", "0011_copies_cutover", "0012_model_account_deletion", "0013_account_deletion", "0014_product_batch_o13"])
+    assert.deepEqual(partial.pending, ["0001_library_integrity", "0002_book_versions", "0003_library_revision", "0004_catalogue_coordination", "0005_library_jobs", "0006_library_snapshots", "0007_saved_views", "0008_restore_sessions", "0009_cover_assets", "0010_works_editions_copies", "0011_copies_cutover", "0012_model_account_deletion", "0013_account_deletion", "0014_product_batch_o13", "0015_reading_and_loans"])
     assert.equal(compareLedger(entries, []).pending.length, entries.length)
   })
 
@@ -426,6 +427,42 @@ describe("manifest de objetos", () => {
     assert.deepEqual(failing(verifyManifest(invoker, MANIFEST_MIGRATIONS)), ["function.prune_orphan_works"])
     const callable = clone(facts); named(callable.functions, "prune_orphan_editions").execute_authenticated = true
     assert.deepEqual(failing(verifyManifest(callable, MANIFEST_MIGRATIONS)), ["function.prune_orphan_editions"])
+  })
+
+  test("0015: lectura y préstamos con RLS del dueño, cuenta activa, FK con la copia, índices de un ciclo abierto y un préstamo activo, funciones invoker", () => {
+    // Los metadatos reales de 0014 cumplen su head; con 0015 faltan las tablas, sus guardas y las funciones nuevas o sustituidas.
+    assert.deepEqual(failing(verifyManifest(facts0014, MANIFEST_MIGRATIONS.slice(0, 15))), [])
+    const behind = failing(verifyManifest(facts0014, MANIFEST_MIGRATIONS))
+    for (const id of ["rls.reading_cycles", "rls.loans", "policy.loans_insert_active", "policy.reading_entries_update_active", "function.reading_cycle_start", "function.loan_return",
+      "function.library_snapshot_capture", "function.library_snapshot_foreign_ids", "function.account_deletion_step_tables", "trigger.reading_entries_guard_pages"]) assert.ok(behind.includes(id), id)
+    // Sin la guarda de cuenta activa un JWT antiguo escribe; una política abierta expone la lectura o los préstamos de otra cuenta.
+    const permissive = clone(facts); named(permissive.policies, "loans_insert_active").permissive = true
+    assert.deepEqual(failing(verifyManifest(permissive, MANIFEST_MIGRATIONS)), ["policy.loans_insert_active"])
+    const open = clone(facts); named(open.policies, "reading_entries_select_own").using = "true"
+    assert.deepEqual(failing(verifyManifest(open, MANIFEST_MIGRATIONS)), ["policy.reading_entries_select_own"])
+    // Un préstamo activo y un ciclo abierto por ejemplar los sostienen índices únicos parciales; sin ellos, dos dispositivos duplican.
+    const noActive = { ...facts, indexes: facts.indexes.filter((index) => index.name !== "loans_active_unique") }
+    assert.deepEqual(failing(verifyManifest(noActive, MANIFEST_MIGRATIONS)), ["index.loans_active_unique"])
+    const notPartial = clone(facts); named(notPartial.indexes, "reading_cycles_open_unique").partial = false
+    assert.deepEqual(failing(verifyManifest(notPartial, MANIFEST_MIGRATIONS)), ["index.reading_cycles_open_unique"])
+    // FK sin cascada con la copia (la copia borrada dejaría historia huérfana o no se podría borrar) es drift.
+    const restrict = clone(facts); named(restrict.constraints, "loans_owner_copy_fk").on_delete = "a"
+    assert.deepEqual(failing(verifyManifest(restrict, MANIFEST_MIGRATIONS)), ["constraint.loans_owner_copy_fk"])
+    // Las funciones de las acciones son invoker (RLS de quien llama) y no las ejecuta anon; la guarda de páginas no es invocable.
+    const definer = clone(facts); named(definer.functions, "loan_open").security_definer = true
+    assert.deepEqual(failing(verifyManifest(definer, MANIFEST_MIGRATIONS)), ["function.loan_open"])
+    const anon = clone(facts); named(anon.functions, "reading_cycle_start").execute_anon = true
+    assert.deepEqual(failing(verifyManifest(anon, MANIFEST_MIGRATIONS)), ["function.reading_cycle_start"])
+    const guard = clone(facts); named(guard.functions, "guard_reading_entry_pages").execute_authenticated = true
+    assert.deepEqual(failing(verifyManifest(guard, MANIFEST_MIGRATIONS)), ["function.guard_reading_entry_pages"])
+    // Fechas civiles como DATE: un timestamptz desplazaría el día por huso.
+    const shifted = clone(facts); shifted.columns.find((column) => column.table === "loans" && column.name === "loaned_on").type = "timestamp with time zone"
+    assert.deepEqual(failing(verifyManifest(shifted, MANIFEST_MIGRATIONS)), ["column.loans.loaned_on"])
+    // Volver a la captura de 0014 (sin lectura ni préstamos) o a los pasos de 0014 es drift.
+    const capture = clone(facts); named(capture.functions, "library_snapshot_capture").body = named(facts0014.functions, "library_snapshot_capture").body
+    assert.deepEqual(failing(verifyManifest(capture, MANIFEST_MIGRATIONS)), ["function.library_snapshot_capture"])
+    const steps = clone(facts); named(steps.functions, "account_deletion_step_tables").body = named(facts0014.functions, "account_deletion_step_tables").body
+    assert.deepEqual(failing(verifyManifest(steps, MANIFEST_MIGRATIONS)), ["function.account_deletion_step_tables"])
   })
 
   test("0014: lote de producto con RLS del dueño, cuenta activa, FK del mismo dueño, imágenes privadas y pasos de eliminación", () => {
