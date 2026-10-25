@@ -336,7 +336,7 @@ BEGIN
 END;
 $$;
 --> statement-breakpoint
--- IDs de una versión propia (ejemplares, sus ediciones y estanterías) que hoy usa otra cuenta.
+-- IDs de una versión propia (ejemplares, sus ediciones y obras y estanterías) que hoy usa otra cuenta.
 CREATE OR REPLACE FUNCTION "biblib"."library_snapshot_foreign_ids"(p_snapshot_id uuid) RETURNS uuid[]
 LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = pg_catalog AS $$
 DECLARE
@@ -347,13 +347,15 @@ BEGIN
     RAISE EXCEPTION 'library_snapshot_foreign_ids requiere una sesión' USING ERRCODE = '42501';
   END IF;
   WITH entry AS (
-    SELECT c.kind, (item->>'id')::uuid AS id, coalesce(item->>'edition_id', item->>'id')::uuid AS edition_id
+    SELECT c.kind, (item->>'id')::uuid AS id, coalesce(item->>'edition_id', item->>'id')::uuid AS edition_id, (item->>'work_id')::uuid AS work_id
     FROM biblib.library_snapshot_chunks AS c CROSS JOIN LATERAL jsonb_array_elements(c.payload) AS item
     WHERE c.snapshot_id = p_snapshot_id AND c.user_id = owner_id
   ), taken AS (
     SELECT entry.id FROM entry WHERE entry.kind = 'books' AND EXISTS (SELECT 1 FROM biblib.copies AS cp WHERE cp.id = entry.id AND cp.user_id <> owner_id)
     UNION
     SELECT entry.edition_id FROM entry WHERE entry.kind = 'books' AND EXISTS (SELECT 1 FROM biblib.editions AS e WHERE e.id = entry.edition_id AND e.user_id <> owner_id)
+    UNION
+    SELECT entry.work_id FROM entry WHERE entry.kind = 'books' AND entry.work_id IS NOT NULL AND EXISTS (SELECT 1 FROM biblib.works AS w WHERE w.id = entry.work_id AND w.user_id <> owner_id)
     UNION
     SELECT entry.id FROM entry WHERE entry.kind = 'shelves' AND EXISTS (SELECT 1 FROM biblib.shelves AS sh WHERE sh.id = entry.id AND sh.user_id <> owner_id)
   )
