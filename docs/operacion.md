@@ -1494,3 +1494,20 @@ Se comprueba HTTPS/contexto seguro, `BarcodeDetector` y su formato `ean_13` ante
 Sin detector compatible, contexto seguro o permiso, se informa de la alternativa y el formulario permanece disponible. La compatibilidad depende del navegador/plataforma; no se instala un detector alternativo. Referencias de implementación: [Barcode Detection API](https://wicg.github.io/shape-detection-api/#barcode-detection-api), [Permissions Policy](https://www.w3.org/TR/permissions-policy/), [Media Capture and Streams](https://w3c.github.io/mediacapture-main/).
 
 El runner `test:e2e:local` activa la capacidad en su entorno aislado para poder simular permiso denegado, lectura y parada. `tests/e2e/flujos/alta-consecutiva.spec.ts` añade esos recorridos junto a consecutiva, borrador tras error, doble envío y duplicado. No sustituye una prueba con cámara física ni lectores reales. Evidencia y pendientes de integración en [O13/exp-05](validacion/2026-10-25/O13/exp-05/README.md).
+
+## Series y orden de volúmenes · U-PRO-05 (O13)
+
+Una **serie** es privada y describe una edición, no un libro: agrupa ediciones (`series_editions`, cero o una serie por edición) con una posición exacta, una etiqueta de volumen y una nota de orden. No hay schema ni migración nuevos: la tabla y sus políticas son las de `0014_product_batch_o13` ([contrato](spec-pendientes/contratos-o13.md#u-pro-05--series)).
+
+- **Rutas.** `/series` (listado y alta) y `/series/[id]` (detalle, edición, borrado y volúmenes). La ficha del libro (`/book/[id]`) tiene la sección «Serie» (`components/edition-series-panel.tsx`) para vincular, cambiar o quitar la serie de la edición; un libro sin serie solo muestra una línea y el botón «Añadir a una serie». En `/books` y `/books/search` aparece el filtro «Serie» solo si la cuenta tiene series (`?series=<uuid>`; sin él, la URL y los filtros no cambian).
+- **Acciones** (`app/actions/series.ts`, todas `ActionResult`, dueño siempre de la sesión): `listSeriesAction`, `getSeriesAction`, `getEditionSeriesAction`, `createSeriesAction`, `updateSeriesAction`, `deleteSeriesAction`, `linkEditionToSeriesAction`, `moveSeriesVolumeAction` y `unlinkEditionFromSeriesAction`. Cada escritura bloquea la colección y compara la `version` del registro (`CONFLICT` si cambió). Una edición o serie de otra cuenta responde «no disponible», igual que un identificador inexistente.
+- **Posición exacta.** Viaja y se lee como **texto decimal** (`SERIES_POSITION_PATTERN`: 0 ≤ p < 1000000, hasta 4 decimales, sin ceros a la izquierda; «1,5» se acepta al escribir y se guarda «1.5»; «01.50», negativos y texto se rechazan). La base usa `NUMERIC`; se lee con `trim_scale(position)::text`. Nunca un `float`.
+- **Orden.** `position asc nulls last`, con título y edición como desempate estable. Un volumen sin posición se muestra como «Orden desconocido» y queda al final: **no se infiere de la fecha de publicación ni del título**. Una serie incompleta (faltan volúmenes o posiciones) es válida.
+- **Borrar.** Borrar una serie retira sus vínculos (cascada de `series_editions`); las ediciones y los ejemplares se conservan. Quitar un volumen solo retira el vínculo. Los vínculos entran en la exportación v2 (`editions.series`), en las versiones anteriores, el respaldo y la eliminación de cuenta con lo ya hecho por el lote D.
+- **Retirada.** Ocultar `/series`, la sección de la ficha y el filtro no borra datos: la relación y la exportación se conservan.
+
+### Pruebas
+
+- `pnpm test`: `tests/series.test.ts` (posiciones 1, 1.5, 2, «01.50», negativas y no numéricas; entradas estrictas; filtro aditivo).
+- `pnpm test:integration:series [--profile scratch|test]` (también dentro de `test:integration:local`): `tests/integration/series/{volumenes,permisos,ida-vuelta}.test.mjs` con GoTrue, Postgres y la app reales — crear/mover/quitar, orden exacto y desconocido al final, título repetido en otra cuenta, borrar la serie, permisos y enlace de una edición ajena (acción y SQL con los claims de B) e ida y vuelta v2.
+- E2E: `tests/e2e/flujos/series.spec.ts` (`pnpm test:e2e:local --grep series`).

@@ -24,7 +24,7 @@ test("evita volver al acceso o callback y normaliza segmentos de la ruta", () =>
 })
 
 test("protege inicio y detalles sin confundir prefijos de rutas ajenas", () => {
-  for (const path of ["/", "/books", "/books/add", "/book/123", "/shelves/3d", "/profile", "/settings"]) {
+  for (const path of ["/", "/books", "/books/add", "/book/123", "/shelves/3d", "/series", "/series/123", "/profile", "/settings"]) {
     assert.equal(isProtectedPath(path), true, path)
   }
   for (const path of ["/login", "/auth/callback", "/api/books/search", "/bookshelf", "/settings-extra", "/logo.png"]) {

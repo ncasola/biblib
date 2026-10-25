@@ -1,0 +1,15 @@
+▲ Next.js 16.4.2
+- Local:         http://127.0.0.1:64735
+- Network:       http://127.0.0.1:64735
+✓ Ready in 311ms
+✓ Running next.config.mjs took 43ms
+{"event":"database.operation_failed","durationMs":19}
+{"event":"import.preview","level":"info","timestamp":"2026-10-25T18:23:47.154Z","fields":{"operation":"import.validate","result":"ok","durationMs":0,"correlationId":"8b28a00e-bcf9-472f-8c37-440d96f4494e"}}
+{"event":"import.preview","level":"info","timestamp":"2026-10-25T18:23:47.177Z","fields":{"operation":"import.prepare","result":"ok","durationMs":26,"correlationId":"8b28a00e-bcf9-472f-8c37-440d96f4494e"}}
+{"event":"job.started","level":"info","timestamp":"2026-10-25T18:23:47.585Z","fields":{"operation":"job.import.publish","result":"ok","attempt":1,"correlationId":"606d6d35-07c5-4b38-bbda-7e64bf760c62"}}
+{"event":"db.operation","level":"info","timestamp":"2026-10-25T18:23:47.682Z","fields":{"operation":"job.import.publish","result":"ok","durationMs":96,"correlationId":"606d6d35-07c5-4b38-bbda-7e64bf760c62"}}
+{"event":"import.commit","level":"info","timestamp":"2026-10-25T18:23:47.691Z","fields":{"operation":"import.confirm","result":"ok","durationMs":172,"correlationId":"606d6d35-07c5-4b38-bbda-7e64bf760c62"}}
+{"event":"job.started","level":"info","timestamp":"2026-10-25T18:23:47.698Z","fields":{"operation":"job.import.covers","result":"ok","attempt":1,"correlationId":"606d6d35-07c5-4b38-bbda-7e64bf760c62"}}
+{"event":"db.operation","level":"info","timestamp":"2026-10-25T18:23:47.726Z","fields":{"operation":"job.import.covers","result":"ok","durationMs":28,"correlationId":"606d6d35-07c5-4b38-bbda-7e64bf760c62"}}
+{"event":"job.started","level":"info","timestamp":"2026-10-25T18:23:49.669Z","fields":{"operation":"job.covers.covers","result":"ok","attempt":1,"correlationId":"03852d7d-1da0-4163-a249-f963985830b5"}}
+{"event":"db.operation","level":"info","timestamp":"2026-10-25T18:23:49.700Z","fields":{"operation":"job.covers.covers","result":"ok","durationMs":31,"correlationId":"03852d7d-1da0-4163-a249-f963985830b5"}}

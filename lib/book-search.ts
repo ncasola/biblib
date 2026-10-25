@@ -10,6 +10,8 @@ export interface BookSearchFilters {
   q: string
   status: BookStatusFilter
   shelf: string
+  /** Serie (U-PRO-05): solo las ediciones de esa serie. Ausente = todas. */
+  series?: string
   sort: BookSort
   page: number
   view: BookView
@@ -30,12 +32,14 @@ export function parseBookSearchFilters(params: URLSearchParams, defaultView: Boo
   const pageValue = Number(params.get("page") ?? "1")
   const pageSize = parseBookPageSize(params.get("pageSize"))
   const shelf = params.get("shelf") ?? "all"
+  const series = params.get("series") ?? "all"
   const viewValue = params.get("view")
 
   return {
     q: (params.get("q") ?? "").slice(0, 500),
     status: statuses.includes(statusValue as BookStatusFilter) ? statusValue as BookStatusFilter : "all",
     shelf: BOOK_SHELF_ID.test(shelf) ? shelf.toLowerCase() : "all",
+    ...(BOOK_SHELF_ID.test(series) ? { series: series.toLowerCase() } : {}),
     sort: sorts.includes(sortValue as BookSort) ? sortValue as BookSort : "title",
     page: Number.isInteger(pageValue) && pageValue > 0 && pageValue <= 100_000 ? pageValue : 1,
     view: viewValue === "table" || viewValue === "grid" ? viewValue : defaultView,
@@ -45,10 +49,11 @@ export function parseBookSearchFilters(params: URLSearchParams, defaultView: Boo
 
 export function serializeBookSearchFilters(filters: BookSearchFilters, currentParams: URLSearchParams, defaultView: BookView = "table"): string {
   const params = new URLSearchParams(currentParams)
-  for (const key of ["q", "status", "shelf", "sort", "page", "view", "pageSize"]) params.delete(key)
+  for (const key of ["q", "status", "shelf", "series", "sort", "page", "view", "pageSize"]) params.delete(key)
   if (filters.q.trim()) params.set("q", filters.q)
   if (filters.status !== "all") params.set("status", filters.status)
   if (filters.shelf !== "all") params.set("shelf", filters.shelf)
+  if (filters.series && filters.series !== "all") params.set("series", filters.series)
   if (filters.sort !== "title") params.set("sort", filters.sort)
   if (filters.page > 1) params.set("page", String(filters.page))
   if (filters.view !== defaultView) params.set("view", filters.view)
