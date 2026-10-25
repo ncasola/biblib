@@ -37,9 +37,12 @@ export async function readExportLibrary(tx: DatabaseTransaction, userId: string)
   await ensureDefaultShelf(tx, userId)
   const before = await revisionOf(tx, userId)
   const userShelves = await tx.select().from(shelves).where(eq(shelves.userId, userId)).orderBy(asc(shelves.createdAt), asc(shelves.id))
-  const bookRows = await tx.select({ book: bookFields, shelfTitle: shelves.title }).from(books)
+  // U-DAT-06: el orden se calcula sobre IDs (estrecho) y las filas de la vista se leen sin ordenar en Postgres.
+  const order = (await tx.select({ id: books.id }).from(books).where(eq(books.userId, userId)).orderBy(asc(books.title), asc(books.id))).map((row) => row.id)
+  const position = new Map(order.map((id, index) => [id, index]))
+  const bookRows = (await tx.select({ book: bookFields, shelfTitle: shelves.title }).from(books)
     .innerJoin(shelves, and(eq(books.shelfId, shelves.id), eq(shelves.userId, userId)))
-    .where(eq(books.userId, userId)).orderBy(asc(books.title), asc(books.id))
+    .where(eq(books.userId, userId))).sort((left, right) => (position.get(left.book.id) ?? 0) - (position.get(right.book.id) ?? 0))
   // Una escritura confirmada entre medias rota la revisión: la lectura no sería de un único estado.
   if (await revisionOf(tx, userId) !== before) return null
   const counts = new Map<string, number>()

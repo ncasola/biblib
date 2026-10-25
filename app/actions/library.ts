@@ -1,6 +1,6 @@
 "use server"
 
-import { and, eq, sql, asc, desc, count } from "drizzle-orm"
+import { and, eq, inArray, sql, asc, desc, count } from "drizzle-orm"
 import { z } from "zod"
 import { withRlsContext } from "@/lib/db/client"
 import { bookFields, books, shelves } from "@/lib/db/schema"
@@ -67,10 +67,16 @@ export async function listBooksAction(input: unknown = {}) {
     const key = filter.sort.replace(/^-/, "")
     const orderColumn = key === "author" ? sql`${books.authors}->0->>'name'` : key === "pages" ? books.numberOfPages
       : key === "date" ? sql`coalesce(substring(${books.publishDate} from '[0-9]{4}'), '0000')` : key === "status" ? books.status : books.title
-    const rows = await tx.select({ book: bookFields, shelfTitle: shelves.title }).from(books)
-      .innerJoin(shelves, and(eq(books.shelfId, shelves.id), eq(shelves.userId, userId))).where(conditions)
+    // U-DAT-06: primero se ordena y pagina solo el ID del ejemplar (sin calcular las columnas de la vista para toda
+    // la colección) y después se leen las filas de la página, como mucho 100, en ese orden.
+    const pageIds = (await tx.select({ id: books.id }).from(books).where(conditions)
       .orderBy(filter.sort.startsWith("-") ? desc(orderColumn) : asc(orderColumn), asc(books.id))
-      .limit(filter.pageSize).offset((page - 1) * filter.pageSize)
-    return { books: rows.map(mapRowToBook), total, page, pageSize: filter.pageSize }
+      .limit(filter.pageSize).offset((page - 1) * filter.pageSize)).map((row) => row.id)
+    const rows = pageIds.length ? await tx.select({ book: bookFields, shelfTitle: shelves.title }).from(books)
+      .innerJoin(shelves, and(eq(books.shelfId, shelves.id), eq(shelves.userId, userId)))
+      .where(and(eq(books.userId, userId), inArray(books.id, pageIds))) : []
+    const position = new Map(pageIds.map((id, index) => [id, index]))
+    const ordered = [...rows].sort((left, right) => position.get(left.book.id)! - position.get(right.book.id)!)
+    return { books: ordered.map(mapRowToBook), total, page, pageSize: filter.pageSize }
   })
 }
