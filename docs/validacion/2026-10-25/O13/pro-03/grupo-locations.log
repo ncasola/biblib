@@ -1,0 +1,34 @@
+Grupo locations · perfil test · biblib-test · run ae041fae9fa6
+Compilando la app para el perfil test…
+✔ B no ve las ubicaciones de A (1913.4821ms)
+✔ B manipula IDs de A en cada acción: responde como si no existieran y A no cambia (858.3219ms)
+✔ la foto de A no se sirve a B ni sin sesión, aunque se conozca la ruta (192.9185ms)
+✔ el anónimo no llega a las acciones ni a la pantalla (5.5214ms)
+✔ crear un mueble y sus baldas; una ubicación vacía se conserva y aparece en la lista (1221.5041ms)
+✔ renombrar con la versión vista; una versión antigua no pisa el cambio (409.4387ms)
+✔ mover con todo lo que contiene; un ciclo (BL001) se rechaza con un mensaje claro y no cambia nada (390.0713ms)
+✔ más de 8 niveles (BL002), también al mover un subárbol, se rechaza con un mensaje claro (812.7935ms)
+✔ borrar: vacía se borra; ocupada exige vaciarla o la elección explícita, y nunca cambia estantería ni estado (688.3543ms)
+✔ el contenido de una ubicación se filtra por texto y estado, y puede incluir las interiores (578.9525ms)
+✔ sin ubicación física la ficha y la ubicación del ejemplar responden igual que antes (1246.2441ms)
+✔ asignar y mover con versión: ruta legible, la versión antigua se rechaza y la estantería y el estado no cambian (285.0514ms)
+✔ la posición es manual: compartirla se avisa y ninguna otra se renumera (505.0056ms)
+✔ quitar la ubicación deja el ejemplar sin ella; con versión antigua se rechaza (191.8705ms)
+✔ borrar el ejemplar retira su ubicación y la ubicación se conserva (70.716ms)
+✔ subir: se guarda un WebP sin EXIF ni GPS, solo en la ruta del dueño, y se lee por la ruta autenticada (1176.2525ms)
+✔ una foto inválida se rechaza sin cambiar la ubicación ni dejar imágenes en cuarentena (486.1293ms)
+✔ sustituir retira la anterior; una sustitución con versión antigua falla y conserva la foto vigente (439.0075ms)
+✔ quitar la foto la descarta; borrar una ubicación con foto también retira su imagen (386.1353ms)
+✔ la exportación v2 declara copies.locations y lleva el árbol (también la caja vacía), la foto por referencia y la ubicación del ejemplar (1758.5632ms)
+✔ reemplazar desde esa copia devuelve el árbol, la ubicación del ejemplar y la foto tras moverlos con las acciones (623.2251ms)
+✔ sustituir una foto que cita una versión anterior la conserva para poder restaurarla (182.5442ms)
+✔ un JSON antiguo (v1) se importa con la ubicación vacía y sin inventar ubicaciones (257.3132ms)
+✔ una cuenta en eliminación no escribe por ninguna acción de ubicaciones (ACCOUNT_INACTIVE) y no cambia nada (499.5478ms)
+ℹ tests 24
+ℹ suites 0
+ℹ pass 24
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 24031.2912
