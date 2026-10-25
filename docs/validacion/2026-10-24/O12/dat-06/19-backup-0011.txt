@@ -1,0 +1,1 @@
+Respaldo 20261025T003316Z-scratch-79b72f · scratch (biblib-scratch) · head 0011_copies_cutover · 5 archivos · .biblib/backups/20261025T003316Z-scratch-79b72f · recibo .biblib/backups/20261025T003316Z-scratch-79b72f/receipt.json (ensayo pendiente: tras db:restore:verify, reemítelo con --receipt-of)

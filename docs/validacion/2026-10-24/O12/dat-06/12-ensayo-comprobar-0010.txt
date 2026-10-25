@@ -1,0 +1,30 @@
+{
+ "etapa": "0010",
+ "fichas": 121,
+ "encontradas": 121,
+ "coinciden": 121,
+ "distintas": [],
+ "ejemplares": 121,
+ "ediciones": 121,
+ "obras": 0,
+ "edicionesCompartidas": [],
+ "portadaPrivada": {
+  "asset": "3d90cc19-78ff-4433-9896-411272df5248",
+  "estado": "restored"
+ },
+ "informe": [
+  "0010_works_editions_copies:conflict=4",
+  "0010_works_editions_copies:invalid=1",
+  "0010_works_editions_copies:normalized=1",
+  "0010_works_editions_copies:summary=1"
+ ],
+ "comparacion": {
+  "books": 121,
+  "works": 0,
+  "copies": 121,
+  "sample": [],
+  "accounts": 1,
+  "editions": 121,
+  "mismatches": 0
+ }
+}

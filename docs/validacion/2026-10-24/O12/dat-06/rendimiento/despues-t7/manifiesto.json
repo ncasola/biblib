@@ -1,0 +1,65 @@
+{
+  "generadoEn": "2026-10-25T00:41:03.157Z",
+  "commit": "72cf2e124ecfec9d731e4a709629e32295254167",
+  "rama": "u-dat-06",
+  "anfitrion": {
+    "sistema": "Windows_NT 10.0.22631 (x64)",
+    "cpu": "AMD Ryzen 5 3600 6-Core Processor",
+    "nucleosLogicos": 12,
+    "ramTotalGiB": 47.9,
+    "ramLibreAlInicioGiB": 8.5
+  },
+  "docker": {
+    "cliente": "29.4.3",
+    "servidor": "29.4.3",
+    "sistemaOperativo": "Docker Desktop",
+    "nucleosAsignados": 12,
+    "ramAsignadaGiB": 19.5,
+    "contenedoresEnMarchaTotales": 17,
+    "contenedoresAjenosEnMarcha": 9,
+    "imagenesDelPerfil": {
+      "auth": "public.ecr.aws/supabase/gotrue:v2.196.0",
+      "db": "public.ecr.aws/supabase/postgres:17.6.1.167",
+      "inbucket": "public.ecr.aws/supabase/mailpit:v1.30.2",
+      "kong": "public.ecr.aws/supabase/kong:2.8.1",
+      "pg_meta": "ghcr.io/supabase/postgres-meta:v0.99.0",
+      "rest": "public.ecr.aws/supabase/postgrest:v16.2",
+      "storage": "public.ecr.aws/supabase/storage-api:v1.72.1",
+      "studio": "public.ecr.aws/supabase/studio:2026.08.24-sha-8ec45b2"
+    }
+  },
+  "postgres": {
+    "version": "PostgreSQL 17.6",
+    "ajustes": {
+      "default_statistics_target": "100",
+      "effective_cache_size": "163848kB",
+      "fsync": "on",
+      "jit": "on",
+      "maintenance_work_mem": "65536kB",
+      "max_connections": "100",
+      "max_parallel_workers_per_gather": "2",
+      "random_page_cost": "4",
+      "shared_buffers": "163848kB",
+      "synchronous_commit": "on",
+      "work_mem": "4096kB"
+    }
+  },
+  "software": {
+    "node": "v24.11.1",
+    "pnpm": "10.32.1",
+    "next": "16.4.2",
+    "react": "19.3.1",
+    "drizzleOrm": "0.45.2",
+    "postgresJs": "3.4.9",
+    "supabaseCli": "2.117.0",
+    "playwright": "1.64.1",
+    "navegador": null
+  },
+  "perfilDeMedicion": {
+    "perfil": "scratch",
+    "app": "next start (build de producción, Turbopack) en 127.0.0.1:3149",
+    "catalogo": "BIBLIB_CATALOGUE_MODE=fixture (sin red)",
+    "pool": "postgres.js max 1 por proceso (lib/db/client.ts)",
+    "sesiones": "GoTrue real, signInWithPassword; 10 sesiones de escala + A + B reutilizadas"
+  }
+}

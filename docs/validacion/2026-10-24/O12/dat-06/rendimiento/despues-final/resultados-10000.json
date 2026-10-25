@@ -1,0 +1,2135 @@
+{
+  "escala": 10000,
+  "dataset": {
+    "id": "biblib-escala-v1",
+    "hash": "6e9b3738de18bd6d695f605e18cefaed384db736596ef61cd71a06188f3d97fe",
+    "libros": 10000,
+    "estanterias": 41,
+    "porEstado": {
+      "read": 3963,
+      "to-read": 3060,
+      "unread": 2179,
+      "reading": 798
+    },
+    "estanteriaMayor": 1534,
+    "isbnManuales": 1420
+  },
+  "frio": [
+    {
+      "escenario": "exportacion-servidor",
+      "accion": "prepareLibraryExportAction",
+      "accionMs": 1005.3,
+      "sqlMs": 143.26,
+      "authServidorMs": [
+        48.84
+      ],
+      "ok": true,
+      "bytes": 5069
+    }
+  ],
+  "exportacion": {
+    "formato": 1,
+    "partes": 5,
+    "fichasPorParte": [
+      2000,
+      2000,
+      2000,
+      2000,
+      2000
+    ],
+    "bytesPorParte": [
+      1089997,
+      1077752,
+      1071352,
+      1083413,
+      1074437
+    ],
+    "accionBytes": 5069,
+    "descargaMs": {
+      "n": 5,
+      "min": 786.8,
+      "p50": 810.7,
+      "p95": 901.6,
+      "p99": 917.8,
+      "max": 921.8,
+      "mean": 828
+    }
+  },
+  "acciones": [
+    {
+      "escenario": "exportacion-servidor",
+      "accion": "prepareLibraryExportAction",
+      "concurrencia": 1,
+      "iteraciones": 12,
+      "accionMs": {
+        "n": 12,
+        "min": 647,
+        "p50": 672,
+        "p95": 737.2,
+        "p99": 760.5,
+        "max": 766.4,
+        "mean": 678.5
+      },
+      "sqlMs": {
+        "n": 12,
+        "min": 126.45,
+        "p50": 132.91,
+        "p95": 156.08,
+        "p99": 162.72,
+        "max": 164.38,
+        "mean": 136.2
+      },
+      "authServidorMs": {
+        "n": 12,
+        "min": 40.11,
+        "p50": 45.09,
+        "p95": 51.61,
+        "p99": 52.67,
+        "max": 52.94,
+        "mean": 45.22
+      },
+      "llamadasAuthPorPeticion": 1,
+      "filas": {
+        "n": 0
+      },
+      "bytes": {
+        "n": 12,
+        "min": 5069,
+        "p50": 5069,
+        "p95": 5069,
+        "p99": 5069,
+        "max": 5069,
+        "mean": 5069
+      },
+      "errores": 0,
+      "peticionesPorSegundo": 1.5,
+      "pool": {
+        "samples": 76,
+        "maxTotal": 1,
+        "maxActive": 1,
+        "byState": {
+          "idle": 40,
+          "active": 19,
+          "idle in transaction": 17
+        },
+        "error": null
+      },
+      "sentencias": [
+        {
+          "query": "select \"books\".\"id\", \"books\".\"version\", \"books\".\"user_id\", \"books\".\"title\", \"books\".\"subtitle\", \"books\".\"authors\", \"books\".\"publishers\", \"books\".\"number_of_pages\", \"books\".\"publish_date\", \"books\".\"cover_small\", \"books\".\"cover_medium\", \"books\".\"cover_large\", \"books\".\"status\", \"books\".\"shelf_id\", \"books\".\"cover_asset_id\", \"books\".\"created_at\", \"books\".\"updated_at\", \"books\".\"edition_id\", \"books\".\"copy_version\", \"books\".\"edition_version\", \"books\".\"isbn13\", \"books\".\"legacy_identifier\", \"books\".\"edition_verification\", \"books\".\"work_id\", \"books\".\"work_title\", \"books\".\"language\", \"books\".\"identifiers\", \"books\".\"edition_catalogue\", \"biblib\".\"shelves\".\"title\" from \"biblib\".\"books\" inner join \"biblib\".\"shelves\" on (\"books\".\"shelf_id\" = \"biblib\".\"shelves\".\"id\" and \"biblib\".\"shelves\".\"user_id\" = $1) where \"books\".\"user_id\" = $2 order by \"books\".\"title\" asc, \"books\".\"id\" asc",
+          "calls": 12,
+          "rowsPerCall": 10000,
+          "meanMs": 135.991,
+          "maxMs": 164.227,
+          "stddevMs": 10.668,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": true
+        },
+        {
+          "query": "select b.oid, b.typarray from pg_catalog.pg_type a left join pg_catalog.pg_type b on b.oid = a.typelem where a.typcategory = $1 group by b.oid, b.typarray order by b.oid",
+          "calls": 1,
+          "rowsPerCall": 369,
+          "meanMs": 0.843,
+          "maxMs": 0.843,
+          "stddevMs": 0,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": true
+        },
+        {
+          "query": "select \"id\", \"user_id\", \"title\", \"is_default\", \"created_at\", \"updated_at\" from \"biblib\".\"shelves\" where \"biblib\".\"shelves\".\"user_id\" = $1 order by \"biblib\".\"shelves\".\"created_at\" asc, \"biblib\".\"shelves\".\"id\" asc",
+          "calls": 12,
+          "rowsPerCall": 41,
+          "meanMs": 0.063,
+          "maxMs": 0.079,
+          "stddevMs": 0.007,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": true
+        },
+        {
+          "query": "select \"revision\" from \"biblib\".\"library_state\" where \"biblib\".\"library_state\".\"user_id\" = $1 limit $2",
+          "calls": 24,
+          "rowsPerCall": 1,
+          "meanMs": 0.019,
+          "maxMs": 0.035,
+          "stddevMs": 0.006,
+          "bufferHitRatio": 1,
+          "hasLimit": true,
+          "selectsRows": true
+        },
+        {
+          "query": "select \"id\" from \"biblib\".\"shelves\" where (\"biblib\".\"shelves\".\"user_id\" = $1 and \"biblib\".\"shelves\".\"is_default\" = $2) limit $3",
+          "calls": 12,
+          "rowsPerCall": 1,
+          "meanMs": 0.02,
+          "maxMs": 0.027,
+          "stddevMs": 0.003,
+          "bufferHitRatio": 1,
+          "hasLimit": true,
+          "selectsRows": true
+        },
+        {
+          "query": "select set_config('request.jwt.claims', $1, true), set_config('request.jwt.claim.sub', $2, true), set_config('role', 'authenticated', true)",
+          "calls": 12,
+          "rowsPerCall": 1,
+          "meanMs": 0.014,
+          "maxMs": 0.019,
+          "stddevMs": 0.002,
+          "bufferHitRatio": null,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "begin",
+          "calls": 12,
+          "rowsPerCall": 0,
+          "meanMs": 0.001,
+          "maxMs": 0.001,
+          "stddevMs": 0,
+          "bufferHitRatio": null,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "commit",
+          "calls": 12,
+          "rowsPerCall": 0,
+          "meanMs": 0.001,
+          "maxMs": 0.001,
+          "stddevMs": 0,
+          "bufferHitRatio": null,
+          "hasLimit": false,
+          "selectsRows": false
+        }
+      ],
+      "pantalla": "Ajustes (exportación por partes)"
+    },
+    {
+      "escenario": "exportacion-servidor",
+      "accion": "prepareLibraryExportAction",
+      "concurrencia": 5,
+      "iteraciones": 3,
+      "accionMs": {
+        "n": 15,
+        "min": 1734.3,
+        "p50": 2350.2,
+        "p95": 4670.5,
+        "p99": 4750.3,
+        "max": 4770.2,
+        "mean": 2697.8
+      },
+      "sqlMs": null,
+      "authServidorMs": {
+        "n": 15,
+        "min": 41.32,
+        "p50": 56.44,
+        "p95": 59.54,
+        "p99": 59.79,
+        "max": 59.86,
+        "mean": 54.85
+      },
+      "llamadasAuthPorPeticion": 1,
+      "filas": {
+        "n": 0
+      },
+      "bytes": {
+        "n": 15,
+        "min": 5069,
+        "p50": 5069,
+        "p95": 5069,
+        "p99": 5069,
+        "max": 5069,
+        "mean": 5069
+      },
+      "errores": 0,
+      "peticionesPorSegundo": 1.7,
+      "pool": {
+        "samples": 81,
+        "maxTotal": 4,
+        "maxActive": 4,
+        "byState": {
+          "idle": 163,
+          "active": 42,
+          "idle in transaction": 116
+        },
+        "error": null
+      },
+      "sentencias": [
+        {
+          "query": "select \"books\".\"id\", \"books\".\"version\", \"books\".\"user_id\", \"books\".\"title\", \"books\".\"subtitle\", \"books\".\"authors\", \"books\".\"publishers\", \"books\".\"number_of_pages\", \"books\".\"publish_date\", \"books\".\"cover_small\", \"books\".\"cover_medium\", \"books\".\"cover_large\", \"books\".\"status\", \"books\".\"shelf_id\", \"books\".\"cover_asset_id\", \"books\".\"created_at\", \"books\".\"updated_at\", \"books\".\"edition_id\", \"books\".\"copy_version\", \"books\".\"edition_version\", \"books\".\"isbn13\", \"books\".\"legacy_identifier\", \"books\".\"edition_verification\", \"books\".\"work_id\", \"books\".\"work_title\", \"books\".\"language\", \"books\".\"identifiers\", \"books\".\"edition_catalogue\", \"biblib\".\"shelves\".\"title\" from \"biblib\".\"books\" inner join \"biblib\".\"shelves\" on (\"books\".\"shelf_id\" = \"biblib\".\"shelves\".\"id\" and \"biblib\".\"shelves\".\"user_id\" = $1) where \"books\".\"user_id\" = $2 order by \"books\".\"title\" asc, \"books\".\"id\" asc",
+          "calls": 15,
+          "rowsPerCall": 10000,
+          "meanMs": 179.731,
+          "maxMs": 208.065,
+          "stddevMs": 18.007,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": true
+        },
+        {
+          "query": "select b.oid, b.typarray from pg_catalog.pg_type a left join pg_catalog.pg_type b on b.oid = a.typelem where a.typcategory = $1 group by b.oid, b.typarray order by b.oid",
+          "calls": 3,
+          "rowsPerCall": 369,
+          "meanMs": 0.712,
+          "maxMs": 0.822,
+          "stddevMs": 0.098,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": true
+        },
+        {
+          "query": "select \"id\", \"user_id\", \"title\", \"is_default\", \"created_at\", \"updated_at\" from \"biblib\".\"shelves\" where \"biblib\".\"shelves\".\"user_id\" = $1 order by \"biblib\".\"shelves\".\"created_at\" asc, \"biblib\".\"shelves\".\"id\" asc",
+          "calls": 15,
+          "rowsPerCall": 41,
+          "meanMs": 0.078,
+          "maxMs": 0.116,
+          "stddevMs": 0.02,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": true
+        },
+        {
+          "query": "select \"revision\" from \"biblib\".\"library_state\" where \"biblib\".\"library_state\".\"user_id\" = $1 limit $2",
+          "calls": 30,
+          "rowsPerCall": 1,
+          "meanMs": 0.017,
+          "maxMs": 0.029,
+          "stddevMs": 0.006,
+          "bufferHitRatio": 1,
+          "hasLimit": true,
+          "selectsRows": true
+        },
+        {
+          "query": "select set_config('request.jwt.claims', $1, true), set_config('request.jwt.claim.sub', $2, true), set_config('role', 'authenticated', true)",
+          "calls": 15,
+          "rowsPerCall": 1,
+          "meanMs": 0.03,
+          "maxMs": 0.125,
+          "stddevMs": 0.033,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "select \"id\" from \"biblib\".\"shelves\" where (\"biblib\".\"shelves\".\"user_id\" = $1 and \"biblib\".\"shelves\".\"is_default\" = $2) limit $3",
+          "calls": 15,
+          "rowsPerCall": 1,
+          "meanMs": 0.02,
+          "maxMs": 0.032,
+          "stddevMs": 0.005,
+          "bufferHitRatio": 1,
+          "hasLimit": true,
+          "selectsRows": true
+        },
+        {
+          "query": "commit",
+          "calls": 15,
+          "rowsPerCall": 0,
+          "meanMs": 0.001,
+          "maxMs": 0.002,
+          "stddevMs": 0,
+          "bufferHitRatio": null,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "begin",
+          "calls": 15,
+          "rowsPerCall": 0,
+          "meanMs": 0.001,
+          "maxMs": 0.001,
+          "stddevMs": 0,
+          "bufferHitRatio": null,
+          "hasLimit": false,
+          "selectsRows": false
+        }
+      ],
+      "pantalla": "Ajustes (exportación por partes)"
+    },
+    {
+      "escenario": "exportacion-servidor",
+      "accion": "prepareLibraryExportAction",
+      "concurrencia": 10,
+      "iteraciones": 2,
+      "accionMs": {
+        "n": 20,
+        "min": 2334,
+        "p50": 4570.2,
+        "p95": 6791.5,
+        "p99": 6792,
+        "max": 6792.1,
+        "mean": 4759.8
+      },
+      "sqlMs": null,
+      "authServidorMs": {
+        "n": 20,
+        "min": 48.74,
+        "p50": 67.59,
+        "p95": 82.48,
+        "p99": 83.24,
+        "max": 83.43,
+        "mean": 66.19
+      },
+      "llamadasAuthPorPeticion": 1,
+      "filas": {
+        "n": 0
+      },
+      "bytes": {
+        "n": 20,
+        "min": 5069,
+        "p50": 5069,
+        "p95": 5069,
+        "p99": 5069,
+        "max": 5069,
+        "mean": 5069
+      },
+      "errores": 0,
+      "peticionesPorSegundo": 1.8,
+      "pool": {
+        "samples": 104,
+        "maxTotal": 4,
+        "maxActive": 4,
+        "byState": {
+          "idle": 179,
+          "active": 60,
+          "idle in transaction": 177
+        },
+        "error": null
+      },
+      "sentencias": [
+        {
+          "query": "select \"books\".\"id\", \"books\".\"version\", \"books\".\"user_id\", \"books\".\"title\", \"books\".\"subtitle\", \"books\".\"authors\", \"books\".\"publishers\", \"books\".\"number_of_pages\", \"books\".\"publish_date\", \"books\".\"cover_small\", \"books\".\"cover_medium\", \"books\".\"cover_large\", \"books\".\"status\", \"books\".\"shelf_id\", \"books\".\"cover_asset_id\", \"books\".\"created_at\", \"books\".\"updated_at\", \"books\".\"edition_id\", \"books\".\"copy_version\", \"books\".\"edition_version\", \"books\".\"isbn13\", \"books\".\"legacy_identifier\", \"books\".\"edition_verification\", \"books\".\"work_id\", \"books\".\"work_title\", \"books\".\"language\", \"books\".\"identifiers\", \"books\".\"edition_catalogue\", \"biblib\".\"shelves\".\"title\" from \"biblib\".\"books\" inner join \"biblib\".\"shelves\" on (\"books\".\"shelf_id\" = \"biblib\".\"shelves\".\"id\" and \"biblib\".\"shelves\".\"user_id\" = $1) where \"books\".\"user_id\" = $2 order by \"books\".\"title\" asc, \"books\".\"id\" asc",
+          "calls": 20,
+          "rowsPerCall": 10000,
+          "meanMs": 180.596,
+          "maxMs": 200.521,
+          "stddevMs": 9.825,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": true
+        },
+        {
+          "query": "select \"id\", \"user_id\", \"title\", \"is_default\", \"created_at\", \"updated_at\" from \"biblib\".\"shelves\" where \"biblib\".\"shelves\".\"user_id\" = $1 order by \"biblib\".\"shelves\".\"created_at\" asc, \"biblib\".\"shelves\".\"id\" asc",
+          "calls": 20,
+          "rowsPerCall": 41,
+          "meanMs": 0.075,
+          "maxMs": 0.109,
+          "stddevMs": 0.011,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": true
+        },
+        {
+          "query": "select \"revision\" from \"biblib\".\"library_state\" where \"biblib\".\"library_state\".\"user_id\" = $1 limit $2",
+          "calls": 40,
+          "rowsPerCall": 1,
+          "meanMs": 0.017,
+          "maxMs": 0.05,
+          "stddevMs": 0.006,
+          "bufferHitRatio": 1,
+          "hasLimit": true,
+          "selectsRows": true
+        },
+        {
+          "query": "select \"id\" from \"biblib\".\"shelves\" where (\"biblib\".\"shelves\".\"user_id\" = $1 and \"biblib\".\"shelves\".\"is_default\" = $2) limit $3",
+          "calls": 20,
+          "rowsPerCall": 1,
+          "meanMs": 0.021,
+          "maxMs": 0.05,
+          "stddevMs": 0.008,
+          "bufferHitRatio": 1,
+          "hasLimit": true,
+          "selectsRows": true
+        },
+        {
+          "query": "select set_config('request.jwt.claims', $1, true), set_config('request.jwt.claim.sub', $2, true), set_config('role', 'authenticated', true)",
+          "calls": 20,
+          "rowsPerCall": 1,
+          "meanMs": 0.012,
+          "maxMs": 0.017,
+          "stddevMs": 0.002,
+          "bufferHitRatio": null,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "begin",
+          "calls": 20,
+          "rowsPerCall": 0,
+          "meanMs": 0.001,
+          "maxMs": 0.002,
+          "stddevMs": 0,
+          "bufferHitRatio": null,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "commit",
+          "calls": 20,
+          "rowsPerCall": 0,
+          "meanMs": 0.001,
+          "maxMs": 0.001,
+          "stddevMs": 0,
+          "bufferHitRatio": null,
+          "hasLimit": false,
+          "selectsRows": false
+        }
+      ],
+      "pantalla": "Ajustes (exportación por partes)"
+    },
+    {
+      "escenario": "preview-importacion-conservar",
+      "accion": "prepareImportAction",
+      "concurrencia": 1,
+      "iteraciones": 10,
+      "accionMs": {
+        "n": 10,
+        "min": 261.9,
+        "p50": 275.5,
+        "p95": 299.7,
+        "p99": 311,
+        "max": 313.8,
+        "mean": 277.3
+      },
+      "sqlMs": {
+        "n": 10,
+        "min": 39.46,
+        "p50": 40.42,
+        "p95": 42.44,
+        "p99": 42.72,
+        "max": 42.79,
+        "mean": 40.72
+      },
+      "authServidorMs": {
+        "n": 11,
+        "min": 39.7,
+        "p50": 44.6,
+        "p95": 51.89,
+        "p99": 51.97,
+        "max": 51.99,
+        "mean": 44.97
+      },
+      "llamadasAuthPorPeticion": 1.1,
+      "filas": {
+        "n": 0
+      },
+      "bytes": {
+        "n": 10,
+        "min": 212664,
+        "p50": 212664,
+        "p95": 212664,
+        "p99": 212664,
+        "max": 212664,
+        "mean": 212664
+      },
+      "errores": 0,
+      "peticionesPorSegundo": 3.4,
+      "pool": {
+        "samples": 27,
+        "maxTotal": 4,
+        "maxActive": 1,
+        "byState": {
+          "idle": 97,
+          "active": 6,
+          "idle in transaction": 5
+        },
+        "error": null
+      },
+      "sentencias": [
+        {
+          "query": "insert into \"biblib\".\"import_previews\" (\"id\", \"user_id\", \"revision\", \"input_digest\", \"mode\", \"rules_version\", \"plan\", \"payload\", \"snapshot_id\", \"expires_at\", \"created_at\") values ($1, $2, $3, $4, $5, $6, $7, $8, default, now() + make_interval(mins => $9), default) returning \"expires_at\"",
+          "calls": 10,
+          "rowsPerCall": 1,
+          "meanMs": 25.973,
+          "maxMs": 26.827,
+          "stddevMs": 0.513,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "select \"id\", \"isbn\", \"edition_id\", \"work_id\" from \"biblib\".\"books\" where \"books\".\"user_id\" = $1 order by \"books\".\"id\" asc",
+          "calls": 10,
+          "rowsPerCall": 10000,
+          "meanMs": 14.332,
+          "maxMs": 16.132,
+          "stddevMs": 0.951,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": true
+        },
+        {
+          "query": "select biblib.lock_library() as revision",
+          "calls": 10,
+          "rowsPerCall": 1,
+          "meanMs": 0.184,
+          "maxMs": 0.409,
+          "stddevMs": 0.076,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "delete from \"biblib\".\"import_previews\" where (\"biblib\".\"import_previews\".\"user_id\" = $1 and \"biblib\".\"import_previews\".\"id\" in ($2))",
+          "calls": 3,
+          "rowsPerCall": 1,
+          "meanMs": 0.3,
+          "maxMs": 0.346,
+          "stddevMs": 0.033,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "select \"id\", \"title\", \"is_default\" from \"biblib\".\"shelves\" where \"biblib\".\"shelves\".\"user_id\" = $1 order by \"biblib\".\"shelves\".\"created_at\" asc, \"biblib\".\"shelves\".\"id\" asc",
+          "calls": 10,
+          "rowsPerCall": 41,
+          "meanMs": 0.039,
+          "maxMs": 0.046,
+          "stddevMs": 0.003,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": true
+        },
+        {
+          "query": "delete from \"biblib\".\"import_previews\" where (\"biblib\".\"import_previews\".\"user_id\" = $1 and \"biblib\".\"import_previews\".\"expires_at\" < now() - interval $2)",
+          "calls": 10,
+          "rowsPerCall": 0,
+          "meanMs": 0.036,
+          "maxMs": 0.065,
+          "stddevMs": 0.014,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "select \"id\" from \"biblib\".\"import_previews\" where \"biblib\".\"import_previews\".\"user_id\" = $1 order by \"biblib\".\"import_previews\".\"created_at\" desc, \"biblib\".\"import_previews\".\"id\" desc offset $2",
+          "calls": 10,
+          "rowsPerCall": 0.3,
+          "meanMs": 0.03,
+          "maxMs": 0.038,
+          "stddevMs": 0.005,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": true
+        },
+        {
+          "query": "select \"id\" from \"biblib\".\"shelves\" where (\"biblib\".\"shelves\".\"user_id\" = $1 and \"biblib\".\"shelves\".\"is_default\" = $2) limit $3",
+          "calls": 10,
+          "rowsPerCall": 1,
+          "meanMs": 0.019,
+          "maxMs": 0.022,
+          "stddevMs": 0.001,
+          "bufferHitRatio": 1,
+          "hasLimit": true,
+          "selectsRows": true
+        },
+        {
+          "query": "select set_config('request.jwt.claims', $1, true), set_config('request.jwt.claim.sub', $2, true), set_config('role', 'authenticated', true)",
+          "calls": 10,
+          "rowsPerCall": 1,
+          "meanMs": 0.014,
+          "maxMs": 0.017,
+          "stddevMs": 0.001,
+          "bufferHitRatio": null,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "begin",
+          "calls": 10,
+          "rowsPerCall": 0,
+          "meanMs": 0.001,
+          "maxMs": 0.002,
+          "stddevMs": 0,
+          "bufferHitRatio": null,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "commit",
+          "calls": 10,
+          "rowsPerCall": 0,
+          "meanMs": 0.001,
+          "maxMs": 0.001,
+          "stddevMs": 0,
+          "bufferHitRatio": null,
+          "hasLimit": false,
+          "selectsRows": false
+        }
+      ],
+      "pantalla": "Ajustes (importación)"
+    },
+    {
+      "escenario": "preview-importacion-conservar",
+      "accion": "prepareImportAction",
+      "concurrencia": 5,
+      "iteraciones": 2,
+      "accionMs": {
+        "n": 10,
+        "min": 720.9,
+        "p50": 927.6,
+        "p95": 1399.8,
+        "p99": 1463.9,
+        "max": 1480,
+        "mean": 982.4
+      },
+      "sqlMs": null,
+      "authServidorMs": {
+        "n": 11,
+        "min": 43.55,
+        "p50": 48.41,
+        "p95": 58.69,
+        "p99": 61.6,
+        "max": 62.32,
+        "mean": 50.23
+      },
+      "llamadasAuthPorPeticion": 1.1,
+      "filas": {
+        "n": 0
+      },
+      "bytes": {
+        "n": 10,
+        "min": 212664,
+        "p50": 212664,
+        "p95": 212664,
+        "p99": 212664,
+        "max": 212664,
+        "mean": 212664
+      },
+      "errores": 0,
+      "peticionesPorSegundo": 4.4,
+      "pool": {
+        "samples": 21,
+        "maxTotal": 4,
+        "maxActive": 4,
+        "byState": {
+          "idle": 29,
+          "active": 48,
+          "idle in transaction": 7
+        },
+        "error": null
+      },
+      "sentencias": [
+        {
+          "query": "select biblib.lock_library() as revision",
+          "calls": 10,
+          "rowsPerCall": 1,
+          "meanMs": 415.545,
+          "maxMs": 599.017,
+          "stddevMs": 191.503,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "insert into \"biblib\".\"import_previews\" (\"id\", \"user_id\", \"revision\", \"input_digest\", \"mode\", \"rules_version\", \"plan\", \"payload\", \"snapshot_id\", \"expires_at\", \"created_at\") values ($1, $2, $3, $4, $5, $6, $7, $8, default, now() + make_interval(mins => $9), default) returning \"expires_at\"",
+          "calls": 10,
+          "rowsPerCall": 1,
+          "meanMs": 27.851,
+          "maxMs": 29.722,
+          "stddevMs": 1.307,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "select \"id\", \"isbn\", \"edition_id\", \"work_id\" from \"biblib\".\"books\" where \"books\".\"user_id\" = $1 order by \"books\".\"id\" asc",
+          "calls": 10,
+          "rowsPerCall": 10000,
+          "meanMs": 17.177,
+          "maxMs": 22.988,
+          "stddevMs": 2.523,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": true
+        },
+        {
+          "query": "delete from \"biblib\".\"import_previews\" where (\"biblib\".\"import_previews\".\"user_id\" = $1 and \"biblib\".\"import_previews\".\"id\" in ($2))",
+          "calls": 3,
+          "rowsPerCall": 1,
+          "meanMs": 0.304,
+          "maxMs": 0.315,
+          "stddevMs": 0.011,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "select \"id\", \"title\", \"is_default\" from \"biblib\".\"shelves\" where \"biblib\".\"shelves\".\"user_id\" = $1 order by \"biblib\".\"shelves\".\"created_at\" asc, \"biblib\".\"shelves\".\"id\" asc",
+          "calls": 10,
+          "rowsPerCall": 41,
+          "meanMs": 0.052,
+          "maxMs": 0.066,
+          "stddevMs": 0.006,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": true
+        },
+        {
+          "query": "select \"id\" from \"biblib\".\"import_previews\" where \"biblib\".\"import_previews\".\"user_id\" = $1 order by \"biblib\".\"import_previews\".\"created_at\" desc, \"biblib\".\"import_previews\".\"id\" desc offset $2",
+          "calls": 10,
+          "rowsPerCall": 0.3,
+          "meanMs": 0.04,
+          "maxMs": 0.093,
+          "stddevMs": 0.018,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": true
+        },
+        {
+          "query": "delete from \"biblib\".\"import_previews\" where (\"biblib\".\"import_previews\".\"user_id\" = $1 and \"biblib\".\"import_previews\".\"expires_at\" < now() - interval $2)",
+          "calls": 10,
+          "rowsPerCall": 0,
+          "meanMs": 0.028,
+          "maxMs": 0.038,
+          "stddevMs": 0.004,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "select \"id\" from \"biblib\".\"shelves\" where (\"biblib\".\"shelves\".\"user_id\" = $1 and \"biblib\".\"shelves\".\"is_default\" = $2) limit $3",
+          "calls": 10,
+          "rowsPerCall": 1,
+          "meanMs": 0.02,
+          "maxMs": 0.025,
+          "stddevMs": 0.004,
+          "bufferHitRatio": 1,
+          "hasLimit": true,
+          "selectsRows": true
+        },
+        {
+          "query": "select set_config('request.jwt.claims', $1, true), set_config('request.jwt.claim.sub', $2, true), set_config('role', 'authenticated', true)",
+          "calls": 10,
+          "rowsPerCall": 1,
+          "meanMs": 0.013,
+          "maxMs": 0.017,
+          "stddevMs": 0.003,
+          "bufferHitRatio": null,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "commit",
+          "calls": 10,
+          "rowsPerCall": 0,
+          "meanMs": 0.001,
+          "maxMs": 0.003,
+          "stddevMs": 0,
+          "bufferHitRatio": null,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "begin",
+          "calls": 10,
+          "rowsPerCall": 0,
+          "meanMs": 0.001,
+          "maxMs": 0.001,
+          "stddevMs": 0,
+          "bufferHitRatio": null,
+          "hasLimit": false,
+          "selectsRows": false
+        }
+      ],
+      "pantalla": "Ajustes (importación)"
+    },
+    {
+      "escenario": "preview-importacion-conservar",
+      "accion": "prepareImportAction",
+      "concurrencia": 10,
+      "iteraciones": 1,
+      "accionMs": {
+        "n": 10,
+        "min": 1233.3,
+        "p50": 1774.2,
+        "p95": 2250.5,
+        "p99": 2286.1,
+        "max": 2294.9,
+        "mean": 1778.6
+      },
+      "sqlMs": null,
+      "authServidorMs": {
+        "n": 11,
+        "min": 42.63,
+        "p50": 76.93,
+        "p95": 89.27,
+        "p99": 90.42,
+        "max": 90.7,
+        "mean": 76.31
+      },
+      "llamadasAuthPorPeticion": 1.1,
+      "filas": {
+        "n": 0
+      },
+      "bytes": {
+        "n": 10,
+        "min": 212664,
+        "p50": 212664,
+        "p95": 212664,
+        "p99": 212664,
+        "max": 212664,
+        "mean": 212664
+      },
+      "errores": 0,
+      "peticionesPorSegundo": 4.2,
+      "pool": {
+        "samples": 21,
+        "maxTotal": 4,
+        "maxActive": 4,
+        "byState": {
+          "idle": 28,
+          "idle in transaction": 19,
+          "active": 37
+        },
+        "error": null
+      },
+      "sentencias": [
+        {
+          "query": "select biblib.lock_library() as revision",
+          "calls": 10,
+          "rowsPerCall": 1,
+          "meanMs": 295.102,
+          "maxMs": 382.537,
+          "stddevMs": 125.834,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "insert into \"biblib\".\"import_previews\" (\"id\", \"user_id\", \"revision\", \"input_digest\", \"mode\", \"rules_version\", \"plan\", \"payload\", \"snapshot_id\", \"expires_at\", \"created_at\") values ($1, $2, $3, $4, $5, $6, $7, $8, default, now() + make_interval(mins => $9), default) returning \"expires_at\"",
+          "calls": 10,
+          "rowsPerCall": 1,
+          "meanMs": 26.083,
+          "maxMs": 27.452,
+          "stddevMs": 0.646,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "select \"id\", \"isbn\", \"edition_id\", \"work_id\" from \"biblib\".\"books\" where \"books\".\"user_id\" = $1 order by \"books\".\"id\" asc",
+          "calls": 10,
+          "rowsPerCall": 10000,
+          "meanMs": 15.939,
+          "maxMs": 21.766,
+          "stddevMs": 2.317,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": true
+        },
+        {
+          "query": "delete from \"biblib\".\"import_previews\" where (\"biblib\".\"import_previews\".\"user_id\" = $1 and \"biblib\".\"import_previews\".\"id\" in ($2))",
+          "calls": 3,
+          "rowsPerCall": 1,
+          "meanMs": 0.263,
+          "maxMs": 0.279,
+          "stddevMs": 0.019,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "select \"id\", \"title\", \"is_default\" from \"biblib\".\"shelves\" where \"biblib\".\"shelves\".\"user_id\" = $1 order by \"biblib\".\"shelves\".\"created_at\" asc, \"biblib\".\"shelves\".\"id\" asc",
+          "calls": 10,
+          "rowsPerCall": 41,
+          "meanMs": 0.049,
+          "maxMs": 0.066,
+          "stddevMs": 0.006,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": true
+        },
+        {
+          "query": "select \"id\" from \"biblib\".\"import_previews\" where \"biblib\".\"import_previews\".\"user_id\" = $1 order by \"biblib\".\"import_previews\".\"created_at\" desc, \"biblib\".\"import_previews\".\"id\" desc offset $2",
+          "calls": 10,
+          "rowsPerCall": 0.3,
+          "meanMs": 0.03,
+          "maxMs": 0.044,
+          "stddevMs": 0.006,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": true
+        },
+        {
+          "query": "delete from \"biblib\".\"import_previews\" where (\"biblib\".\"import_previews\".\"user_id\" = $1 and \"biblib\".\"import_previews\".\"expires_at\" < now() - interval $2)",
+          "calls": 10,
+          "rowsPerCall": 0,
+          "meanMs": 0.027,
+          "maxMs": 0.033,
+          "stddevMs": 0.002,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "select \"id\" from \"biblib\".\"shelves\" where (\"biblib\".\"shelves\".\"user_id\" = $1 and \"biblib\".\"shelves\".\"is_default\" = $2) limit $3",
+          "calls": 10,
+          "rowsPerCall": 1,
+          "meanMs": 0.017,
+          "maxMs": 0.022,
+          "stddevMs": 0.004,
+          "bufferHitRatio": 1,
+          "hasLimit": true,
+          "selectsRows": true
+        },
+        {
+          "query": "select set_config('request.jwt.claims', $1, true), set_config('request.jwt.claim.sub', $2, true), set_config('role', 'authenticated', true)",
+          "calls": 10,
+          "rowsPerCall": 1,
+          "meanMs": 0.013,
+          "maxMs": 0.016,
+          "stddevMs": 0.002,
+          "bufferHitRatio": null,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "commit",
+          "calls": 10,
+          "rowsPerCall": 0,
+          "meanMs": 0.001,
+          "maxMs": 0.002,
+          "stddevMs": 0,
+          "bufferHitRatio": null,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "begin",
+          "calls": 10,
+          "rowsPerCall": 0,
+          "meanMs": 0.001,
+          "maxMs": 0.002,
+          "stddevMs": 0,
+          "bufferHitRatio": null,
+          "hasLimit": false,
+          "selectsRows": false
+        }
+      ],
+      "pantalla": "Ajustes (importación)"
+    },
+    {
+      "escenario": "preview-importacion-nuevos",
+      "accion": "prepareImportAction",
+      "concurrencia": 1,
+      "iteraciones": 10,
+      "accionMs": {
+        "n": 10,
+        "min": 344.8,
+        "p50": 368.4,
+        "p95": 410.5,
+        "p99": 414,
+        "max": 414.9,
+        "mean": 371.4
+      },
+      "sqlMs": {
+        "n": 10,
+        "min": 60.1,
+        "p50": 65.11,
+        "p95": 69.09,
+        "p99": 69.16,
+        "max": 69.18,
+        "mean": 64.84
+      },
+      "authServidorMs": {
+        "n": 11,
+        "min": 38.25,
+        "p50": 44.75,
+        "p95": 48.19,
+        "p99": 49.13,
+        "max": 49.37,
+        "mean": 44.61
+      },
+      "llamadasAuthPorPeticion": 1.1,
+      "filas": {
+        "n": 0
+      },
+      "bytes": {
+        "n": 10,
+        "min": 926668,
+        "p50": 926668,
+        "p95": 926668,
+        "p99": 926668,
+        "max": 926668,
+        "mean": 926668
+      },
+      "errores": 0,
+      "peticionesPorSegundo": 2.6,
+      "pool": {
+        "samples": 37,
+        "maxTotal": 4,
+        "maxActive": 1,
+        "byState": {
+          "idle": 128,
+          "idle in transaction": 7,
+          "active": 13
+        },
+        "error": null
+      },
+      "sentencias": [
+        {
+          "query": "insert into \"biblib\".\"import_previews\" (\"id\", \"user_id\", \"revision\", \"input_digest\", \"mode\", \"rules_version\", \"plan\", \"payload\", \"snapshot_id\", \"expires_at\", \"created_at\") values ($1, $2, $3, $4, $5, $6, $7, $8, default, now() + make_interval(mins => $9), default) returning \"expires_at\"",
+          "calls": 10,
+          "rowsPerCall": 1,
+          "meanMs": 48.01,
+          "maxMs": 52.319,
+          "stddevMs": 3.164,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "select \"id\", \"isbn\", \"edition_id\", \"work_id\" from \"biblib\".\"books\" where \"books\".\"user_id\" = $1 order by \"books\".\"id\" asc",
+          "calls": 10,
+          "rowsPerCall": 10000,
+          "meanMs": 16.355,
+          "maxMs": 18.92,
+          "stddevMs": 1.273,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": true
+        },
+        {
+          "query": "delete from \"biblib\".\"import_previews\" where (\"biblib\".\"import_previews\".\"user_id\" = $1 and \"biblib\".\"import_previews\".\"id\" in ($2))",
+          "calls": 3,
+          "rowsPerCall": 1,
+          "meanMs": 0.521,
+          "maxMs": 0.641,
+          "stddevMs": 0.085,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "select biblib.lock_library() as revision",
+          "calls": 10,
+          "rowsPerCall": 1,
+          "meanMs": 0.149,
+          "maxMs": 0.194,
+          "stddevMs": 0.03,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "select \"id\", \"title\", \"is_default\" from \"biblib\".\"shelves\" where \"biblib\".\"shelves\".\"user_id\" = $1 order by \"biblib\".\"shelves\".\"created_at\" asc, \"biblib\".\"shelves\".\"id\" asc",
+          "calls": 10,
+          "rowsPerCall": 41,
+          "meanMs": 0.043,
+          "maxMs": 0.05,
+          "stddevMs": 0.003,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": true
+        },
+        {
+          "query": "select \"id\" from \"biblib\".\"import_previews\" where \"biblib\".\"import_previews\".\"user_id\" = $1 order by \"biblib\".\"import_previews\".\"created_at\" desc, \"biblib\".\"import_previews\".\"id\" desc offset $2",
+          "calls": 10,
+          "rowsPerCall": 0.3,
+          "meanMs": 0.039,
+          "maxMs": 0.071,
+          "stddevMs": 0.012,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": true
+        },
+        {
+          "query": "delete from \"biblib\".\"import_previews\" where (\"biblib\".\"import_previews\".\"user_id\" = $1 and \"biblib\".\"import_previews\".\"expires_at\" < now() - interval $2)",
+          "calls": 10,
+          "rowsPerCall": 0,
+          "meanMs": 0.033,
+          "maxMs": 0.07,
+          "stddevMs": 0.013,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "select set_config('request.jwt.claims', $1, true), set_config('request.jwt.claim.sub', $2, true), set_config('role', 'authenticated', true)",
+          "calls": 10,
+          "rowsPerCall": 1,
+          "meanMs": 0.027,
+          "maxMs": 0.068,
+          "stddevMs": 0.018,
+          "bufferHitRatio": null,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "select \"id\" from \"biblib\".\"shelves\" where (\"biblib\".\"shelves\".\"user_id\" = $1 and \"biblib\".\"shelves\".\"is_default\" = $2) limit $3",
+          "calls": 10,
+          "rowsPerCall": 1,
+          "meanMs": 0.021,
+          "maxMs": 0.028,
+          "stddevMs": 0.003,
+          "bufferHitRatio": 1,
+          "hasLimit": true,
+          "selectsRows": true
+        },
+        {
+          "query": "commit",
+          "calls": 10,
+          "rowsPerCall": 0,
+          "meanMs": 0.004,
+          "maxMs": 0.026,
+          "stddevMs": 0.008,
+          "bufferHitRatio": null,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "begin",
+          "calls": 10,
+          "rowsPerCall": 0,
+          "meanMs": 0.001,
+          "maxMs": 0.002,
+          "stddevMs": 0,
+          "bufferHitRatio": null,
+          "hasLimit": false,
+          "selectsRows": false
+        }
+      ],
+      "pantalla": "Ajustes (importación)"
+    },
+    {
+      "escenario": "preview-importacion-nuevos",
+      "accion": "prepareImportAction",
+      "concurrencia": 5,
+      "iteraciones": 2,
+      "accionMs": {
+        "n": 10,
+        "min": 870.9,
+        "p50": 1103.4,
+        "p95": 1697.6,
+        "p99": 1777.7,
+        "max": 1797.8,
+        "mean": 1193
+      },
+      "sqlMs": null,
+      "authServidorMs": {
+        "n": 11,
+        "min": 42.7,
+        "p50": 50.54,
+        "p95": 66.79,
+        "p99": 67.1,
+        "max": 67.18,
+        "mean": 54.12
+      },
+      "llamadasAuthPorPeticion": 1.1,
+      "filas": {
+        "n": 0
+      },
+      "bytes": {
+        "n": 10,
+        "min": 926668,
+        "p50": 926668,
+        "p95": 926668,
+        "p99": 926668,
+        "max": 926668,
+        "mean": 926668
+      },
+      "errores": 0,
+      "peticionesPorSegundo": 3.6,
+      "pool": {
+        "samples": 25,
+        "maxTotal": 4,
+        "maxActive": 4,
+        "byState": {
+          "idle": 31,
+          "idle in transaction": 14,
+          "active": 55
+        },
+        "error": null
+      },
+      "sentencias": [
+        {
+          "query": "select biblib.lock_library() as revision",
+          "calls": 10,
+          "rowsPerCall": 1,
+          "meanMs": 497.467,
+          "maxMs": 678.038,
+          "stddevMs": 222.368,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "insert into \"biblib\".\"import_previews\" (\"id\", \"user_id\", \"revision\", \"input_digest\", \"mode\", \"rules_version\", \"plan\", \"payload\", \"snapshot_id\", \"expires_at\", \"created_at\") values ($1, $2, $3, $4, $5, $6, $7, $8, default, now() + make_interval(mins => $9), default) returning \"expires_at\"",
+          "calls": 10,
+          "rowsPerCall": 1,
+          "meanMs": 45.177,
+          "maxMs": 47.438,
+          "stddevMs": 1.409,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "select \"id\", \"isbn\", \"edition_id\", \"work_id\" from \"biblib\".\"books\" where \"books\".\"user_id\" = $1 order by \"books\".\"id\" asc",
+          "calls": 10,
+          "rowsPerCall": 10000,
+          "meanMs": 14.823,
+          "maxMs": 19.1,
+          "stddevMs": 1.58,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": true
+        },
+        {
+          "query": "delete from \"biblib\".\"import_previews\" where (\"biblib\".\"import_previews\".\"user_id\" = $1 and \"biblib\".\"import_previews\".\"id\" in ($2))",
+          "calls": 3,
+          "rowsPerCall": 1,
+          "meanMs": 0.514,
+          "maxMs": 0.554,
+          "stddevMs": 0.044,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "select \"id\", \"title\", \"is_default\" from \"biblib\".\"shelves\" where \"biblib\".\"shelves\".\"user_id\" = $1 order by \"biblib\".\"shelves\".\"created_at\" asc, \"biblib\".\"shelves\".\"id\" asc",
+          "calls": 10,
+          "rowsPerCall": 41,
+          "meanMs": 0.051,
+          "maxMs": 0.063,
+          "stddevMs": 0.007,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": true
+        },
+        {
+          "query": "select \"id\" from \"biblib\".\"import_previews\" where \"biblib\".\"import_previews\".\"user_id\" = $1 order by \"biblib\".\"import_previews\".\"created_at\" desc, \"biblib\".\"import_previews\".\"id\" desc offset $2",
+          "calls": 10,
+          "rowsPerCall": 0.3,
+          "meanMs": 0.038,
+          "maxMs": 0.049,
+          "stddevMs": 0.007,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": true
+        },
+        {
+          "query": "delete from \"biblib\".\"import_previews\" where (\"biblib\".\"import_previews\".\"user_id\" = $1 and \"biblib\".\"import_previews\".\"expires_at\" < now() - interval $2)",
+          "calls": 10,
+          "rowsPerCall": 0,
+          "meanMs": 0.029,
+          "maxMs": 0.039,
+          "stddevMs": 0.004,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "select \"id\" from \"biblib\".\"shelves\" where (\"biblib\".\"shelves\".\"user_id\" = $1 and \"biblib\".\"shelves\".\"is_default\" = $2) limit $3",
+          "calls": 10,
+          "rowsPerCall": 1,
+          "meanMs": 0.015,
+          "maxMs": 0.022,
+          "stddevMs": 0.003,
+          "bufferHitRatio": 1,
+          "hasLimit": true,
+          "selectsRows": true
+        },
+        {
+          "query": "select set_config('request.jwt.claims', $1, true), set_config('request.jwt.claim.sub', $2, true), set_config('role', 'authenticated', true)",
+          "calls": 10,
+          "rowsPerCall": 1,
+          "meanMs": 0.014,
+          "maxMs": 0.018,
+          "stddevMs": 0.002,
+          "bufferHitRatio": null,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "commit",
+          "calls": 10,
+          "rowsPerCall": 0,
+          "meanMs": 0.001,
+          "maxMs": 0.003,
+          "stddevMs": 0,
+          "bufferHitRatio": null,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "begin",
+          "calls": 10,
+          "rowsPerCall": 0,
+          "meanMs": 0.001,
+          "maxMs": 0.002,
+          "stddevMs": 0,
+          "bufferHitRatio": null,
+          "hasLimit": false,
+          "selectsRows": false
+        }
+      ],
+      "pantalla": "Ajustes (importación)"
+    },
+    {
+      "escenario": "preview-importacion-nuevos",
+      "accion": "prepareImportAction",
+      "concurrencia": 10,
+      "iteraciones": 1,
+      "accionMs": {
+        "n": 10,
+        "min": 1298,
+        "p50": 2105,
+        "p95": 2747,
+        "p99": 2807.9,
+        "max": 2823.1,
+        "mean": 2092
+      },
+      "sqlMs": null,
+      "authServidorMs": {
+        "n": 11,
+        "min": 39.81,
+        "p50": 69.75,
+        "p95": 82.43,
+        "p99": 85.93,
+        "max": 86.81,
+        "mean": 69.12
+      },
+      "llamadasAuthPorPeticion": 1.1,
+      "filas": {
+        "n": 0
+      },
+      "bytes": {
+        "n": 10,
+        "min": 926668,
+        "p50": 926668,
+        "p95": 926668,
+        "p99": 926668,
+        "max": 926668,
+        "mean": 926668
+      },
+      "errores": 0,
+      "peticionesPorSegundo": 3.4,
+      "pool": {
+        "samples": 26,
+        "maxTotal": 4,
+        "maxActive": 4,
+        "byState": {
+          "idle": 31,
+          "idle in transaction": 22,
+          "active": 51
+        },
+        "error": null
+      },
+      "sentencias": [
+        {
+          "query": "select biblib.lock_library() as revision",
+          "calls": 10,
+          "rowsPerCall": 1,
+          "meanMs": 425.362,
+          "maxMs": 547.646,
+          "stddevMs": 177.933,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "insert into \"biblib\".\"import_previews\" (\"id\", \"user_id\", \"revision\", \"input_digest\", \"mode\", \"rules_version\", \"plan\", \"payload\", \"snapshot_id\", \"expires_at\", \"created_at\") values ($1, $2, $3, $4, $5, $6, $7, $8, default, now() + make_interval(mins => $9), default) returning \"expires_at\"",
+          "calls": 10,
+          "rowsPerCall": 1,
+          "meanMs": 44.277,
+          "maxMs": 45.966,
+          "stddevMs": 0.737,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "select \"id\", \"isbn\", \"edition_id\", \"work_id\" from \"biblib\".\"books\" where \"books\".\"user_id\" = $1 order by \"books\".\"id\" asc",
+          "calls": 10,
+          "rowsPerCall": 10000,
+          "meanMs": 15.51,
+          "maxMs": 19.436,
+          "stddevMs": 2.168,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": true
+        },
+        {
+          "query": "delete from \"biblib\".\"import_previews\" where (\"biblib\".\"import_previews\".\"user_id\" = $1 and \"biblib\".\"import_previews\".\"id\" in ($2))",
+          "calls": 3,
+          "rowsPerCall": 1,
+          "meanMs": 0.504,
+          "maxMs": 0.595,
+          "stddevMs": 0.065,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "select \"id\", \"title\", \"is_default\" from \"biblib\".\"shelves\" where \"biblib\".\"shelves\".\"user_id\" = $1 order by \"biblib\".\"shelves\".\"created_at\" asc, \"biblib\".\"shelves\".\"id\" asc",
+          "calls": 10,
+          "rowsPerCall": 41,
+          "meanMs": 0.052,
+          "maxMs": 0.07,
+          "stddevMs": 0.009,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": true
+        },
+        {
+          "query": "select \"id\" from \"biblib\".\"import_previews\" where \"biblib\".\"import_previews\".\"user_id\" = $1 order by \"biblib\".\"import_previews\".\"created_at\" desc, \"biblib\".\"import_previews\".\"id\" desc offset $2",
+          "calls": 10,
+          "rowsPerCall": 0.3,
+          "meanMs": 0.034,
+          "maxMs": 0.044,
+          "stddevMs": 0.006,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": true
+        },
+        {
+          "query": "delete from \"biblib\".\"import_previews\" where (\"biblib\".\"import_previews\".\"user_id\" = $1 and \"biblib\".\"import_previews\".\"expires_at\" < now() - interval $2)",
+          "calls": 10,
+          "rowsPerCall": 0,
+          "meanMs": 0.032,
+          "maxMs": 0.047,
+          "stddevMs": 0.007,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "select \"id\" from \"biblib\".\"shelves\" where (\"biblib\".\"shelves\".\"user_id\" = $1 and \"biblib\".\"shelves\".\"is_default\" = $2) limit $3",
+          "calls": 10,
+          "rowsPerCall": 1,
+          "meanMs": 0.016,
+          "maxMs": 0.021,
+          "stddevMs": 0.004,
+          "bufferHitRatio": 1,
+          "hasLimit": true,
+          "selectsRows": true
+        },
+        {
+          "query": "select set_config('request.jwt.claims', $1, true), set_config('request.jwt.claim.sub', $2, true), set_config('role', 'authenticated', true)",
+          "calls": 10,
+          "rowsPerCall": 1,
+          "meanMs": 0.013,
+          "maxMs": 0.017,
+          "stddevMs": 0.002,
+          "bufferHitRatio": null,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "commit",
+          "calls": 10,
+          "rowsPerCall": 0,
+          "meanMs": 0.001,
+          "maxMs": 0.001,
+          "stddevMs": 0,
+          "bufferHitRatio": null,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "begin",
+          "calls": 10,
+          "rowsPerCall": 0,
+          "meanMs": 0.001,
+          "maxMs": 0.002,
+          "stddevMs": 0,
+          "bufferHitRatio": null,
+          "hasLimit": false,
+          "selectsRows": false
+        }
+      ],
+      "pantalla": "Ajustes (importación)"
+    },
+    {
+      "escenario": "preview-importacion-reemplazo",
+      "accion": "prepareImportAction",
+      "concurrencia": 1,
+      "iteraciones": 10,
+      "accionMs": {
+        "n": 10,
+        "min": 320.9,
+        "p50": 352.2,
+        "p95": 367.5,
+        "p99": 368.9,
+        "max": 369.3,
+        "mean": 349.7
+      },
+      "sqlMs": {
+        "n": 10,
+        "min": 57.64,
+        "p50": 59.99,
+        "p95": 64.51,
+        "p99": 64.92,
+        "max": 65.02,
+        "mean": 60.88
+      },
+      "authServidorMs": {
+        "n": 11,
+        "min": 38.41,
+        "p50": 41.04,
+        "p95": 52.58,
+        "p99": 54.5,
+        "max": 54.98,
+        "mean": 43.1
+      },
+      "llamadasAuthPorPeticion": 1.1,
+      "filas": {
+        "n": 0
+      },
+      "bytes": {
+        "n": 10,
+        "min": 1023766,
+        "p50": 1023766,
+        "p95": 1023766,
+        "p99": 1023766,
+        "max": 1023766,
+        "mean": 1023766
+      },
+      "errores": 0,
+      "peticionesPorSegundo": 2.7,
+      "pool": {
+        "samples": 35,
+        "maxTotal": 4,
+        "maxActive": 1,
+        "byState": {
+          "idle": 124,
+          "idle in transaction": 4,
+          "active": 12
+        },
+        "error": null
+      },
+      "sentencias": [
+        {
+          "query": "insert into \"biblib\".\"import_previews\" (\"id\", \"user_id\", \"revision\", \"input_digest\", \"mode\", \"rules_version\", \"plan\", \"payload\", \"snapshot_id\", \"expires_at\", \"created_at\") values ($1, $2, $3, $4, $5, $6, $7, $8, default, now() + make_interval(mins => $9), default) returning \"expires_at\"",
+          "calls": 10,
+          "rowsPerCall": 1,
+          "meanMs": 44.539,
+          "maxMs": 47.176,
+          "stddevMs": 1.014,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "select \"id\", \"isbn\", \"edition_id\", \"work_id\" from \"biblib\".\"books\" where \"books\".\"user_id\" = $1 order by \"books\".\"id\" asc",
+          "calls": 10,
+          "rowsPerCall": 10000,
+          "meanMs": 15.92,
+          "maxMs": 20.088,
+          "stddevMs": 2.188,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": true
+        },
+        {
+          "query": "delete from \"biblib\".\"import_previews\" where (\"biblib\".\"import_previews\".\"user_id\" = $1 and \"biblib\".\"import_previews\".\"id\" in ($2))",
+          "calls": 3,
+          "rowsPerCall": 1,
+          "meanMs": 0.507,
+          "maxMs": 0.528,
+          "stddevMs": 0.024,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "select biblib.lock_library() as revision",
+          "calls": 10,
+          "rowsPerCall": 1,
+          "meanMs": 0.126,
+          "maxMs": 0.149,
+          "stddevMs": 0.015,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "select \"id\", \"title\", \"is_default\" from \"biblib\".\"shelves\" where \"biblib\".\"shelves\".\"user_id\" = $1 order by \"biblib\".\"shelves\".\"created_at\" asc, \"biblib\".\"shelves\".\"id\" asc",
+          "calls": 10,
+          "rowsPerCall": 41,
+          "meanMs": 0.048,
+          "maxMs": 0.095,
+          "stddevMs": 0.016,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": true
+        },
+        {
+          "query": "select \"id\" from \"biblib\".\"import_previews\" where \"biblib\".\"import_previews\".\"user_id\" = $1 order by \"biblib\".\"import_previews\".\"created_at\" desc, \"biblib\".\"import_previews\".\"id\" desc offset $2",
+          "calls": 10,
+          "rowsPerCall": 0.3,
+          "meanMs": 0.033,
+          "maxMs": 0.044,
+          "stddevMs": 0.007,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": true
+        },
+        {
+          "query": "delete from \"biblib\".\"import_previews\" where (\"biblib\".\"import_previews\".\"user_id\" = $1 and \"biblib\".\"import_previews\".\"expires_at\" < now() - interval $2)",
+          "calls": 10,
+          "rowsPerCall": 0,
+          "meanMs": 0.027,
+          "maxMs": 0.03,
+          "stddevMs": 0.001,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "select \"id\" from \"biblib\".\"shelves\" where (\"biblib\".\"shelves\".\"user_id\" = $1 and \"biblib\".\"shelves\".\"is_default\" = $2) limit $3",
+          "calls": 10,
+          "rowsPerCall": 1,
+          "meanMs": 0.02,
+          "maxMs": 0.022,
+          "stddevMs": 0.002,
+          "bufferHitRatio": 1,
+          "hasLimit": true,
+          "selectsRows": true
+        },
+        {
+          "query": "select set_config('request.jwt.claims', $1, true), set_config('request.jwt.claim.sub', $2, true), set_config('role', 'authenticated', true)",
+          "calls": 10,
+          "rowsPerCall": 1,
+          "meanMs": 0.015,
+          "maxMs": 0.018,
+          "stddevMs": 0.002,
+          "bufferHitRatio": null,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "commit",
+          "calls": 10,
+          "rowsPerCall": 0,
+          "meanMs": 0.001,
+          "maxMs": 0.002,
+          "stddevMs": 0,
+          "bufferHitRatio": null,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "begin",
+          "calls": 10,
+          "rowsPerCall": 0,
+          "meanMs": 0.001,
+          "maxMs": 0.002,
+          "stddevMs": 0,
+          "bufferHitRatio": null,
+          "hasLimit": false,
+          "selectsRows": false
+        }
+      ],
+      "pantalla": "Ajustes (importación)"
+    },
+    {
+      "escenario": "preview-importacion-reemplazo",
+      "accion": "prepareImportAction",
+      "concurrencia": 5,
+      "iteraciones": 2,
+      "accionMs": {
+        "n": 10,
+        "min": 741.8,
+        "p50": 1125.5,
+        "p95": 1667.5,
+        "p99": 1756.8,
+        "max": 1779.1,
+        "mean": 1181.3
+      },
+      "sqlMs": null,
+      "authServidorMs": {
+        "n": 11,
+        "min": 44.4,
+        "p50": 49.53,
+        "p95": 57.18,
+        "p99": 57.36,
+        "max": 57.41,
+        "mean": 50.66
+      },
+      "llamadasAuthPorPeticion": 1.1,
+      "filas": {
+        "n": 0
+      },
+      "bytes": {
+        "n": 10,
+        "min": 1023766,
+        "p50": 1023766,
+        "p95": 1023766,
+        "p99": 1023766,
+        "max": 1023766,
+        "mean": 1023766
+      },
+      "errores": 0,
+      "peticionesPorSegundo": 3.6,
+      "pool": {
+        "samples": 25,
+        "maxTotal": 4,
+        "maxActive": 4,
+        "byState": {
+          "idle": 33,
+          "active": 59,
+          "idle in transaction": 8
+        },
+        "error": null
+      },
+      "sentencias": [
+        {
+          "query": "select biblib.lock_library() as revision",
+          "calls": 10,
+          "rowsPerCall": 1,
+          "meanMs": 508.486,
+          "maxMs": 679.955,
+          "stddevMs": 230.451,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "insert into \"biblib\".\"import_previews\" (\"id\", \"user_id\", \"revision\", \"input_digest\", \"mode\", \"rules_version\", \"plan\", \"payload\", \"snapshot_id\", \"expires_at\", \"created_at\") values ($1, $2, $3, $4, $5, $6, $7, $8, default, now() + make_interval(mins => $9), default) returning \"expires_at\"",
+          "calls": 10,
+          "rowsPerCall": 1,
+          "meanMs": 46.508,
+          "maxMs": 50.583,
+          "stddevMs": 1.714,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "select \"id\", \"isbn\", \"edition_id\", \"work_id\" from \"biblib\".\"books\" where \"books\".\"user_id\" = $1 order by \"books\".\"id\" asc",
+          "calls": 10,
+          "rowsPerCall": 10000,
+          "meanMs": 17.16,
+          "maxMs": 23.001,
+          "stddevMs": 2.412,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": true
+        },
+        {
+          "query": "delete from \"biblib\".\"import_previews\" where (\"biblib\".\"import_previews\".\"user_id\" = $1 and \"biblib\".\"import_previews\".\"id\" in ($2))",
+          "calls": 3,
+          "rowsPerCall": 1,
+          "meanMs": 0.596,
+          "maxMs": 0.641,
+          "stddevMs": 0.037,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "select \"id\", \"title\", \"is_default\" from \"biblib\".\"shelves\" where \"biblib\".\"shelves\".\"user_id\" = $1 order by \"biblib\".\"shelves\".\"created_at\" asc, \"biblib\".\"shelves\".\"id\" asc",
+          "calls": 10,
+          "rowsPerCall": 41,
+          "meanMs": 0.061,
+          "maxMs": 0.113,
+          "stddevMs": 0.02,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": true
+        },
+        {
+          "query": "select \"id\" from \"biblib\".\"import_previews\" where \"biblib\".\"import_previews\".\"user_id\" = $1 order by \"biblib\".\"import_previews\".\"created_at\" desc, \"biblib\".\"import_previews\".\"id\" desc offset $2",
+          "calls": 10,
+          "rowsPerCall": 0.3,
+          "meanMs": 0.035,
+          "maxMs": 0.049,
+          "stddevMs": 0.009,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": true
+        },
+        {
+          "query": "delete from \"biblib\".\"import_previews\" where (\"biblib\".\"import_previews\".\"user_id\" = $1 and \"biblib\".\"import_previews\".\"expires_at\" < now() - interval $2)",
+          "calls": 10,
+          "rowsPerCall": 0,
+          "meanMs": 0.033,
+          "maxMs": 0.053,
+          "stddevMs": 0.008,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "select set_config('request.jwt.claims', $1, true), set_config('request.jwt.claim.sub', $2, true), set_config('role', 'authenticated', true)",
+          "calls": 10,
+          "rowsPerCall": 1,
+          "meanMs": 0.027,
+          "maxMs": 0.131,
+          "stddevMs": 0.036,
+          "bufferHitRatio": null,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "select \"id\" from \"biblib\".\"shelves\" where (\"biblib\".\"shelves\".\"user_id\" = $1 and \"biblib\".\"shelves\".\"is_default\" = $2) limit $3",
+          "calls": 10,
+          "rowsPerCall": 1,
+          "meanMs": 0.02,
+          "maxMs": 0.036,
+          "stddevMs": 0.007,
+          "bufferHitRatio": 1,
+          "hasLimit": true,
+          "selectsRows": true
+        },
+        {
+          "query": "commit",
+          "calls": 10,
+          "rowsPerCall": 0,
+          "meanMs": 0.001,
+          "maxMs": 0.002,
+          "stddevMs": 0,
+          "bufferHitRatio": null,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "begin",
+          "calls": 10,
+          "rowsPerCall": 0,
+          "meanMs": 0.001,
+          "maxMs": 0.002,
+          "stddevMs": 0,
+          "bufferHitRatio": null,
+          "hasLimit": false,
+          "selectsRows": false
+        }
+      ],
+      "pantalla": "Ajustes (importación)"
+    },
+    {
+      "escenario": "preview-importacion-reemplazo",
+      "accion": "prepareImportAction",
+      "concurrencia": 10,
+      "iteraciones": 1,
+      "accionMs": {
+        "n": 10,
+        "min": 1332.2,
+        "p50": 2004.1,
+        "p95": 2740.2,
+        "p99": 2791.9,
+        "max": 2804.9,
+        "mean": 2033.9
+      },
+      "sqlMs": null,
+      "authServidorMs": {
+        "n": 11,
+        "min": 44.16,
+        "p50": 88.16,
+        "p95": 101.48,
+        "p99": 101.96,
+        "max": 102.08,
+        "mean": 86.17
+      },
+      "llamadasAuthPorPeticion": 1.1,
+      "filas": {
+        "n": 0
+      },
+      "bytes": {
+        "n": 10,
+        "min": 1023766,
+        "p50": 1023766,
+        "p95": 1023766,
+        "p99": 1023766,
+        "max": 1023766,
+        "mean": 1023766
+      },
+      "errores": 0,
+      "peticionesPorSegundo": 3.5,
+      "pool": {
+        "samples": 25,
+        "maxTotal": 4,
+        "maxActive": 4,
+        "byState": {
+          "idle": 40,
+          "idle in transaction": 12,
+          "active": 48
+        },
+        "error": null
+      },
+      "sentencias": [
+        {
+          "query": "select biblib.lock_library() as revision",
+          "calls": 10,
+          "rowsPerCall": 1,
+          "meanMs": 393.863,
+          "maxMs": 519.455,
+          "stddevMs": 167.82,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "insert into \"biblib\".\"import_previews\" (\"id\", \"user_id\", \"revision\", \"input_digest\", \"mode\", \"rules_version\", \"plan\", \"payload\", \"snapshot_id\", \"expires_at\", \"created_at\") values ($1, $2, $3, $4, $5, $6, $7, $8, default, now() + make_interval(mins => $9), default) returning \"expires_at\"",
+          "calls": 10,
+          "rowsPerCall": 1,
+          "meanMs": 45.151,
+          "maxMs": 56.917,
+          "stddevMs": 3.98,
+          "bufferHitRatio": 0.999,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "select \"id\", \"isbn\", \"edition_id\", \"work_id\" from \"biblib\".\"books\" where \"books\".\"user_id\" = $1 order by \"books\".\"id\" asc",
+          "calls": 10,
+          "rowsPerCall": 10000,
+          "meanMs": 16.655,
+          "maxMs": 22.603,
+          "stddevMs": 2.799,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": true
+        },
+        {
+          "query": "delete from \"biblib\".\"import_previews\" where (\"biblib\".\"import_previews\".\"user_id\" = $1 and \"biblib\".\"import_previews\".\"id\" in ($2))",
+          "calls": 3,
+          "rowsPerCall": 1,
+          "meanMs": 0.435,
+          "maxMs": 0.457,
+          "stddevMs": 0.018,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "select \"id\", \"title\", \"is_default\" from \"biblib\".\"shelves\" where \"biblib\".\"shelves\".\"user_id\" = $1 order by \"biblib\".\"shelves\".\"created_at\" asc, \"biblib\".\"shelves\".\"id\" asc",
+          "calls": 10,
+          "rowsPerCall": 41,
+          "meanMs": 0.052,
+          "maxMs": 0.071,
+          "stddevMs": 0.008,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": true
+        },
+        {
+          "query": "select \"id\" from \"biblib\".\"import_previews\" where \"biblib\".\"import_previews\".\"user_id\" = $1 order by \"biblib\".\"import_previews\".\"created_at\" desc, \"biblib\".\"import_previews\".\"id\" desc offset $2",
+          "calls": 10,
+          "rowsPerCall": 0.3,
+          "meanMs": 0.037,
+          "maxMs": 0.052,
+          "stddevMs": 0.009,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": true
+        },
+        {
+          "query": "delete from \"biblib\".\"import_previews\" where (\"biblib\".\"import_previews\".\"user_id\" = $1 and \"biblib\".\"import_previews\".\"expires_at\" < now() - interval $2)",
+          "calls": 10,
+          "rowsPerCall": 0,
+          "meanMs": 0.033,
+          "maxMs": 0.041,
+          "stddevMs": 0.005,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "select \"id\" from \"biblib\".\"shelves\" where (\"biblib\".\"shelves\".\"user_id\" = $1 and \"biblib\".\"shelves\".\"is_default\" = $2) limit $3",
+          "calls": 10,
+          "rowsPerCall": 1,
+          "meanMs": 0.019,
+          "maxMs": 0.025,
+          "stddevMs": 0.004,
+          "bufferHitRatio": 1,
+          "hasLimit": true,
+          "selectsRows": true
+        },
+        {
+          "query": "select set_config('request.jwt.claims', $1, true), set_config('request.jwt.claim.sub', $2, true), set_config('role', 'authenticated', true)",
+          "calls": 10,
+          "rowsPerCall": 1,
+          "meanMs": 0.013,
+          "maxMs": 0.016,
+          "stddevMs": 0.002,
+          "bufferHitRatio": null,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "commit",
+          "calls": 10,
+          "rowsPerCall": 0,
+          "meanMs": 0.001,
+          "maxMs": 0.002,
+          "stddevMs": 0,
+          "bufferHitRatio": null,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "begin",
+          "calls": 10,
+          "rowsPerCall": 0,
+          "meanMs": 0.001,
+          "maxMs": 0.001,
+          "stddevMs": 0,
+          "bufferHitRatio": null,
+          "hasLimit": false,
+          "selectsRows": false
+        }
+      ],
+      "pantalla": "Ajustes (importación)"
+    }
+  ],
+  "conexiones": {
+    "maxConnections": 100,
+    "total": 11,
+    "porAplicacion": [
+      {
+        "aplicacion": "postgres.js",
+        "rol": "postgres",
+        "estado": "idle",
+        "conexiones": 4
+      },
+      {
+        "aplicacion": "PostgREST 16.2",
+        "rol": "authenticator",
+        "estado": "idle",
+        "conexiones": 2
+      },
+      {
+        "aplicacion": "biblib-perf-sampler",
+        "rol": "postgres",
+        "estado": "idle",
+        "conexiones": 1
+      },
+      {
+        "aplicacion": "(sin nombre)",
+        "rol": "supabase_storage_admin",
+        "estado": "idle",
+        "conexiones": 1
+      },
+      {
+        "aplicacion": "pg_net 0.20.4",
+        "rol": "postgres",
+        "estado": "idle",
+        "conexiones": 1
+      },
+      {
+        "aplicacion": "pg_cron scheduler",
+        "rol": "supabase_admin",
+        "estado": null,
+        "conexiones": 1
+      },
+      {
+        "aplicacion": "biblib-perf",
+        "rol": "postgres",
+        "estado": "active",
+        "conexiones": 1
+      }
+    ]
+  },
+  "redExterna": {
+    "guardCargado": true,
+    "hostsBloqueadosDelServidor": [],
+    "hostsAbortadosDelNavegador": []
+  }
+}

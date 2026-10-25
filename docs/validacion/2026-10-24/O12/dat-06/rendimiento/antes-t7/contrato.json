@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "profile": "scratch",
+  "scale": 10000,
+  "results": [
+    {
+      "scenario": "consulta-isbn-alta",
+      "p50": 72.7,
+      "p95": 85.9,
+      "budget": null,
+      "status": "no-budget",
+      "unit": "ms",
+      "concurrency": 1
+    },
+    {
+      "scenario": "sql:consulta-isbn-alta",
+      "p50": 6.81,
+      "p95": 8.36,
+      "budget": null,
+      "status": "no-budget",
+      "unit": "ms",
+      "concurrency": 1
+    },
+    {
+      "scenario": "consulta-isbn-alta@5",
+      "p50": 132.7,
+      "p95": 175.8,
+      "budget": null,
+      "status": "no-budget",
+      "unit": "ms",
+      "concurrency": 5
+    },
+    {
+      "scenario": "consulta-isbn-alta@10",
+      "p50": 247.4,
+      "p95": 312,
+      "budget": null,
+      "status": "no-budget",
+      "unit": "ms",
+      "concurrency": 10
+    }
+  ]
+}

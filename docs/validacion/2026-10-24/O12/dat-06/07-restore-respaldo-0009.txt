@@ -1,0 +1,3 @@
+Restore 20261024T221434Z-scratch-3daaab → scratch (biblib-scratch) completado en 8 s; tokens rotados: biblib.books.version (10130), biblib.library_state.revision (4).
+Migraciones pendientes tras restaurar: 0010_works_editions_copies, 0011_copies_cutover (usa db:plan:local y db:migrate:local).
+Siguiente paso: pnpm db:restore:verify --backup .biblib/backups/20261024T221434Z-scratch-3daaab --profile scratch

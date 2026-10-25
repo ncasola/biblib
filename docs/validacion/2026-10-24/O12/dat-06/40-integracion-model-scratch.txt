@@ -1,0 +1,19 @@
+Grupo model · perfil scratch · biblib-scratch · run 5cc414c1cec9
+Compilando la app para el perfil scratch…
+✔ dos copias de un ISBN: una edición, dos ejemplares con estado, ubicación y comprobación independientes (10815.1078ms)
+✔ cambiar una edición compartida informa de cuántos ejemplares afecta y exige confirmarlo (1180.6636ms)
+✔ un libro sin ISBN: null en la edición, se edita, se exporta en v2 y se restaura con null (602.4977ms)
+✔ importar un v2 con dos copias de una edición conserva la edición compartida tras la vista previa (187.9075ms)
+✔ aislamiento: B no cita ediciones ni ejemplares de A ni fusiona ediciones ajenas (468.2693ms)
+✔ concurrencia e idempotencia: altas simultáneas no duplican y repetir una clave recupera el resultado (323.8439ms)
+✔ fusionar ediciones: los ejemplares pasan con su estado y la revisión vieja se rechaza (584.833ms)
+✔ ningún proveedor simulado acredita la comprobación física (193.9177ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 16064.7812
+exit=0

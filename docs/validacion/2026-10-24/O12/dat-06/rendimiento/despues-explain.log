@@ -1,0 +1,8 @@
+Rendimiento · perfil scratch · biblib-scratch · huella ea260283d879 · tamaños 10000
+
+== 10000 ejemplares ==
+Dataset biblib-escala-v1 (6e9b3738de18): 10000 libros, 41 estanterías.
+Abriendo sesiones reales (10 de escala, A y B)…
+EXPLAIN de 22 consultas guardado.
+Índices candidatos medidos (transacción revertida): 1/1 aplicables.
+Resultados en .biblib\perf-dat06\despues-explain: 0 medida(s) fuera de presupuesto.

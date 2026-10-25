@@ -1,0 +1,29 @@
+Grupo jobs · perfil scratch · biblib-scratch · run bb44ff0f27f8
+✔ crear, recargar y continuar: otra sesión del dueño ve el mismo progreso y lo controla (15768.1437ms)
+✔ recuperar portadas desde Ajustes inicia un trabajo que el servidor completa (219.0499ms)
+✔ A no usa IDs de B: consultar, controlar o confirmar responde como inexistente y B no cambia (498.5217ms)
+✔ la entrada interna solo acepta el token del ejecutor y nunca un dueño de la petición (140.6554ms)
+✔ matar la publicación antes del commit: otro trabajador publica una sola vez, sin duplicados (9237.4904ms)
+✔ matar tras el commit con la respuesta perdida: consultar y repetir devuelven el mismo resultado (784.0149ms)
+✔ cancelar antes de publicar: no se aplica nada (666.1156ms)
+✔ cancelar durante la publicación atómica: espera al commit y responde que llegó después (3667.4118ms)
+✔ cancelar en la fase de portadas: la importación publicada se conserva (709.5677ms)
+✔ una revisión cambiada deja el trabajo en revisión y repetir no lo aplica (678.7456ms)
+✔ confirmImportAction publica mediante un trabajo y la misma clave recupera el mismo resultado (391.567ms)
+✔ crear y continuar: los pasos confirman progreso y portadas sin tocar los libros del seed (6623.057ms)
+✔ dos trabajadores sobre el mismo elemento: solo el que tiene el lease vigente confirma (9641.4135ms)
+✔ matar el trabajador tras la consulta y antes de persistir: otro lo recupera sin duplicar (5688.9588ms)
+✔ lease vencido: el trabajador antiguo no escribe aunque nadie lo haya reclamado (4661.8983ms)
+✔ 429 con Retry-After: espera compartida, sin más peticiones y nunca «sin portada» (3680.7483ms)
+✔ 503 y JSON roto se reintentan con backoff y cuentan como intento; nunca son ausencia (5638.8947ms)
+✔ cancelar durante las portadas: el paso en curso no escribe (6612.0007ms)
+✔ cuenta bloqueada: el trabajador antiguo no escribe y el trabajo queda no autorizado (7111.1371ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 87190.382
+exit=0

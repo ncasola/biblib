@@ -1,0 +1,1 @@
+{"cuenta":"beb77f90-8b4a-4a17-a41d-477762046468","fichas":121,"estanterias":8,"portada":{"asset":"3d90cc19-78ff-4433-9896-411272df5248","ficha":"3983c75b-44b9-4783-9680-e1f3031e4d7b","registro":"ready"}}

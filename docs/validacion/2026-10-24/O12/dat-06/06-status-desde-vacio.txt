@@ -1,0 +1,3 @@
+Estado de migraciones · biblib-scratch · up-to-date
+Head aplicado: 0011_copies_cutover · esperado: 0011_copies_cutover · pendientes: ninguna
+467 comprobaciones correctas.
