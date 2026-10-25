@@ -346,7 +346,7 @@ export const importPreviews = biblibSchema.table(
     mode: text("mode").$type<"merge" | "replace">().notNull(),
     rulesVersion: integer("rules_version").notNull(),
     plan: jsonb("plan").$type<ImportPlan>().notNull(),
-    /** Colección leída: forma legacy si no pierde nada; si no, el payload v2 completo (U-DAT-06). */
+    /** Colección leída. Desde U-DAT-06 se guarda el payload v2; las vistas previas anteriores (forma plana) caducan con las reglas. */
     payload: jsonb("payload").$type<LibraryData | PortableBackupV2>(),
     snapshotId: uuid("snapshot_id"),
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),

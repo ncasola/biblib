@@ -12,7 +12,7 @@ import type { ActionResult } from "@/lib/action-result"
 import { domainMutation } from "@/lib/server-action"
 import { DEFAULT_BOOK_COVER } from "@/lib/book-covers"
 import { parseLibraryImport } from "@/lib/library-import"
-import { createBackupV2, libraryRequiresV2, type PortableBackupV2 } from "@/lib/backup-v2"
+import { createBackupV2, type PortableBackupV2 } from "@/lib/backup-v2"
 import {
   buildImportPlan, canonicalJson, IMPORT_RULES_VERSION, MAX_ACTIVE_PREVIEWS, previewTtlMinutes,
   type ImportMode, type ImportOperationResult, type ImportPlan,
@@ -75,10 +75,9 @@ async function prepareImport(input: unknown, mode: unknown): Promise<PreparedImp
   const digest = sha256(canonicalJson(imported))
 
   const payload: LibraryData = { shelves: imported.shelves, books: imported.books }
-  // Al confirmar se vuelve a leer lo guardado. La forma legacy no expresa ediciones compartidas, obras, evidencias,
-  // identificadores, IDs de edición propios ni libros sin ISBN: en esos casos se guarda el payload v2 (U-DAT-06).
-  const storedPayload: LibraryData | PortableBackupV2 = libraryRequiresV2(payload) || payload.books.some((book) => book.edition)
-    ? createBackupV2(payload) : payload
+  // Al confirmar se vuelve a leer lo guardado y se exige el mismo plan. Se guarda el payload v2 (U-DAT-06): la forma
+  // plana no expresa ediciones compartidas, obras, evidencias, identificadores ni ejemplares sin ISBN-13.
+  const storedPayload: PortableBackupV2 = createBackupV2(payload)
   const previewId = randomUUID()
   const ttl = previewTtlMinutes(process.env.BIBLIB_IMPORT_PREVIEW_TTL_MINUTES)
 

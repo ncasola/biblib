@@ -214,3 +214,18 @@ test("las partes v2 respetan límites, son importables por separado y alimentan 
   const fromV2 = buildImportPlan({ imported: parseLibraryImport(v2(legacy)), current, mode: "replace", allocateId: allocate })
   assert.equal(canonicalJson(fromV2), canonicalJson(fromV1))
 })
+
+test("la vista previa guarda el payload v2 y al confirmar se vuelve a leer igual: legacy, identificadores no ISBN y v2 (U-DAT-06)", () => {
+  const cover = { small: "/default-book-cover.webp", medium: "/default-book-cover.webp", large: "/default-book-cover.webp" }
+  const legacyIds = { shelves: [{ id: "estante-x", title: "Importación", book_count: 2 }], books: [0, 1].map((index) => ({
+    id: `libro-x-${index}`, isbn: `manual-dat03-x-${index}`, title: `Libro ${index}`, authors: [], number_of_pages: 10, publish_date: "", cover, status: "unread", shelf_id: "estante-x", shelf_name: "Importación",
+  })) }
+  for (const input of [synthetic(), legacyIds]) {
+    const imported = parseLibraryImport(input)
+    const reread = parseLibraryImport(JSON.parse(JSON.stringify(createBackupV2(imported))))
+    assert.equal(canonicalJson(reread), canonicalJson(imported))
+  }
+  // La forma plana de antes no se podía volver a leer con un ejemplar sin ISBN-13.
+  const flat = parseLibraryImport(legacyIds)
+  assert.throws(() => parseLibraryImport(JSON.parse(JSON.stringify({ shelves: flat.shelves, books: flat.books }))))
+})
