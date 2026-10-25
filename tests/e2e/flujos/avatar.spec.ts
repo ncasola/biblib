@@ -24,6 +24,8 @@ test("avatar privado: previsualizar, recortar, persistir, fallo de red, móvil y
     await expect(page.getByRole("status").filter({ hasText: "Foto de perfil guardada." })).toBeVisible()
     const [saved] = await stack.sql`select avatar_asset_id from biblib.profiles where user_id = ${owner}`
     expect(saved.avatar_asset_id).toBeTruthy()
+    const [cropped] = await stack.sql`select width, height from biblib.media_assets where user_id = ${owner} and id = ${saved.avatar_asset_id}`
+    expect({ width: cropped.width, height: cropped.height }).toEqual({ width: 80, height: 80 })
     await page.reload()
     const avatar = page.getByRole("img", { name: `Foto de perfil de ${stack.displayName("a")}` })
     await expect(avatar).toHaveAttribute("src", `/api/media/${saved.avatar_asset_id}`)
