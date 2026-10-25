@@ -22,11 +22,12 @@ import {
 } from "./viewer-contract"
 
 /**
- * Vista 3D de estantería: escena CSS estática y paginada por el servidor (máximo
- * 48 libros por página). Se navega con toque y teclado seleccionando estantería y
- * página; no hay rotación, gestos de giro ni zoom, y ningún texto lo promete. La
- * URL conserva la selección para poder volver desde cada ficha y para enlazar a la
- * vista 2D con exactamente los mismos libros.
+ * Vista 3D de estantería (U-EXP-04, rediseño U-UX-02): un mueble CSS 3D paginado
+ * por el servidor (máximo 48 libros por página). Se navega con toque y teclado
+ * eligiendo estantería y página; cada libro se saca de la balda para ver su tapa y
+ * abrir su ficha. No hay zoom ni gestos de giro: el mueble solo se inclina un poco
+ * con el ratón en escritorio. La URL conserva la selección para poder volver desde
+ * cada ficha y para enlazar a la tabla con exactamente los mismos libros.
  */
 export default function Shelf3DPage() {
   const [shelves, setShelves] = useState<Shelf[]>([])
@@ -165,6 +166,14 @@ export default function Shelf3DPage() {
     return <LoadingState message="Cargando estanterías..." />
   }
 
+  const statusLine = booksLoading || (!sceneSettled && !booksError)
+    ? `Cargando la página ${page} de «${selectedShelf?.title ?? "…"}»…`
+    : booksError
+      ? `Estantería «${selectedShelf?.title ?? ""}» · página ${page}`
+      : currentTotal === 0
+        ? `Estantería «${selectedShelf?.title ?? ""}» · sin libros`
+        : `Estantería «${selectedShelf?.title ?? ""}» · ${currentTotal} ${currentTotal === 1 ? "libro" : "libros"} · página ${shownPage} de ${pageCount}`
+
   return (
     <>
       {shelvesError ? (
@@ -175,91 +184,82 @@ export default function Shelf3DPage() {
           <Button onClick={() => setShelvesRetry((value) => value + 1)} disabled={shelvesLoading}>{shelvesLoading ? "Reintentando…" : "Reintentar"}</Button>
         </div>
       ) : <>
-        <div className="mb-8">
-          <h1 className="mb-2 text-3xl font-bold heading-vintage md:text-4xl">Vista de estantería</h1>
-          <p className="text-base text-muted-foreground md:text-lg">Recorre tus estanterías página a página y abre cualquier lomo para ver su ficha.</p>
+        <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div className="min-w-0">
+            <p className="mb-1 text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">Estantería 3D</p>
+            <h1 className="mb-2 break-words text-3xl font-bold heading-vintage md:text-4xl">{selectedShelf?.title ?? "Vista de estantería"}</h1>
+            <p className="text-base text-muted-foreground">Saca un libro de la balda para ver su tapa y abrir su ficha.</p>
+          </div>
+          {shelves.length > 0 && (
+            <div className="flex flex-wrap items-end gap-3">
+              <div className="flex min-w-0 flex-col gap-1">
+                <label htmlFor="shelf-3d-select" className="text-sm font-medium text-foreground">Estantería</label>
+                <select
+                  id="shelf-3d-select"
+                  value={shelfId ?? ""}
+                  onChange={(event) => selectShelf(event.target.value)}
+                  className="min-h-11 w-full min-w-0 max-w-full rounded-xl border border-border bg-card px-3 text-sm text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring sm:w-64"
+                >
+                  {shelves.map((shelf) => (
+                    <option key={shelf.id} value={shelf.id}>{shelf.title} ({shelf.book_count} {shelf.book_count === 1 ? "libro" : "libros"})</option>
+                  ))}
+                </select>
+              </div>
+              {shelfId && (
+                <Button asChild variant="outline" className="min-h-11">
+                  <Link href={buildShelfCollectionHref(shelfId, page)}>
+                    <Table2 aria-hidden="true" className="h-4 w-4" />
+                    Ver como tabla
+                  </Link>
+                </Button>
+              )}
+            </div>
+          )}
         </div>
 
         {shelves.length === 0 ? (
           <div className="rounded-2xl border border-border bg-card p-12 text-center shadow-xl">
             <p className="text-muted-foreground">Aún no hay estanterías.</p>
           </div>
-        ) : <div className="grid grid-cols-1 gap-6 lg:grid-cols-4" aria-busy={shelvesLoading || booksLoading}>
-          <aside className="space-y-4" aria-label="Selección de estantería">
-            <div className="rounded-2xl border border-border bg-card p-6 shadow-xl backdrop-blur-md">
-              <h2 className="mb-4 text-lg font-bold text-foreground">Estanterías</h2>
-              <div className="space-y-2">
-                {shelves.map((shelf) => (
-                  <button
-                    key={shelf.id}
-                    type="button"
-                    onClick={() => selectShelf(shelf.id)}
-                    aria-pressed={shelfId === shelf.id}
-                    className={`min-h-11 w-full rounded-xl px-3 py-2 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${shelfId === shelf.id ? "bg-primary text-primary-foreground" : "bg-surface text-foreground hover:bg-border"}`}
-                  >
-                    <span className="block text-sm font-medium">{shelf.title}</span>
-                    <span className="block text-xs">{shelf.book_count} libro{shelf.book_count === 1 ? "" : "s"}</span>
-                  </button>
-                ))}
-              </div>
+        ) : <section className="min-w-0" aria-label="Libros en vista 3D" aria-busy={shelvesLoading || booksLoading}>
+          <div className="mb-3 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+            <p aria-live="polite" aria-atomic="true" className="text-sm text-muted-foreground">{statusLine}</p>
+            <nav aria-label="Páginas de la estantería" className="flex items-center gap-2">
+              <Button variant="outline" size="sm" className="min-h-11" aria-label="Página anterior" onClick={() => goToPage(page - 1)} disabled={page <= 1 || booksLoading}>
+                Anterior
+              </Button>
+              <Button variant="outline" size="sm" className="min-h-11" aria-label="Página siguiente" onClick={() => goToPage(page + 1)} disabled={page >= pageCount || booksLoading}>
+                Siguiente
+              </Button>
+            </nav>
+          </div>
+          <p className="mb-4 text-xs text-muted-foreground">
+            La escena muestra hasta {SCENE_BOOKS_PER_PAGE} libros por página, ordenados por título; la tabla tiene exactamente los mismos.
+          </p>
+          {booksError && !booksLoading ? (
+            <div role="alert" className="flex min-h-64 flex-col items-center justify-center gap-4 rounded-2xl border border-border bg-card p-6 text-center shadow-xl">
+              <AlertCircle aria-hidden="true" className="h-8 w-8 text-destructive" />
+              <p className="text-foreground">No se pudo cargar esta página de la estantería.</p>
+              <Button onClick={retryBooks} disabled={booksLoading}>Reintentar</Button>
             </div>
-          </aside>
-
-          <section className="min-w-0 lg:col-span-3" aria-label="Libros en vista 3D">
-            <div className="mb-3 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-              <p aria-live="polite" aria-atomic="true" className="text-sm text-muted-foreground">
-                {booksLoading || (!sceneSettled && !booksError)
-                  ? `Cargando la página ${page} de «${selectedShelf?.title ?? "…"}»…`
-                  : booksError
-                    ? `Estantería «${selectedShelf?.title ?? ""}» · página ${page}`
-                    : currentTotal === 0
-                      ? `Estantería «${selectedShelf?.title ?? ""}» · sin libros`
-                      : `Estantería «${selectedShelf?.title ?? ""}» · ${currentTotal} ${currentTotal === 1 ? "libro" : "libros"} · página ${shownPage} de ${pageCount}`}
-              </p>
-              <div className="flex flex-wrap items-center gap-2">
-                {shelfId && (
-                  <Button asChild variant="outline" size="sm" className="min-h-11">
-                    <Link href={buildShelfCollectionHref(shelfId, page)}>
-                      <Table2 aria-hidden="true" className="h-4 w-4" />
-                      Ver en la colección
-                    </Link>
-                  </Button>
-                )}
-                <nav aria-label="Páginas de la estantería" className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" className="min-h-11" aria-label="Página anterior" onClick={() => goToPage(page - 1)} disabled={page <= 1 || booksLoading}>
-                    Anterior
-                  </Button>
-                  <Button variant="outline" size="sm" className="min-h-11" aria-label="Página siguiente" onClick={() => goToPage(page + 1)} disabled={page >= pageCount || booksLoading}>
-                    Siguiente
-                  </Button>
-                </nav>
-              </div>
+          ) : !sceneSettled ? (
+            <div className="flex min-h-64 items-center justify-center rounded-2xl border border-border bg-card shadow-xl"><LoadingState message="Cargando los libros de la estantería..." /></div>
+          ) : currentBooks.length === 0 ? (
+            <div className="flex min-h-64 flex-col items-center justify-center rounded-2xl border border-border bg-card p-6 text-center shadow-xl">
+              <BookOpen aria-hidden="true" className="mb-3 h-8 w-8 text-muted-foreground" />
+              <p className="mb-1 font-medium text-foreground">Esta estantería todavía no tiene libros.</p>
+              <p className="mb-4 text-sm text-muted-foreground">Agrega alguno para verlo aquí, en la tabla o en esta escena.</p>
+              <Button asChild><Link href="/books/add">Agregar un libro</Link></Button>
             </div>
-            <p className="mb-4 text-xs text-muted-foreground">
-              La escena muestra hasta {SCENE_BOOKS_PER_PAGE} libros por página, ordenados por título; la altura de cada lomo se calcula con las páginas registradas.
-            </p>
-            <div className="min-h-64 overflow-hidden rounded-2xl border border-border bg-card shadow-xl backdrop-blur-md">
-              {booksError && !booksLoading ? (
-                <div role="alert" className="flex min-h-64 flex-col items-center justify-center gap-4 p-6 text-center">
-                  <AlertCircle aria-hidden="true" className="h-8 w-8 text-destructive" />
-                  <p className="text-foreground">No se pudo cargar esta página de la estantería.</p>
-                  <Button onClick={retryBooks} disabled={booksLoading}>Reintentar</Button>
-                </div>
-              ) : !sceneSettled ? (
-                <div className="flex min-h-64 items-center justify-center"><LoadingState message="Cargando los libros de la estantería..." /></div>
-              ) : currentBooks.length === 0 ? (
-                <div className="flex min-h-64 flex-col items-center justify-center p-6 text-center">
-                  <BookOpen aria-hidden="true" className="mb-3 h-8 w-8 text-muted-foreground" />
-                  <p className="mb-1 font-medium text-foreground">Esta estantería todavía no tiene libros.</p>
-                  <p className="mb-4 text-sm text-muted-foreground">Agrega alguno para verlo aquí, en la vista 2D o en esta escena.</p>
-                  <Button asChild><Link href="/books/add">Agregar un libro</Link></Button>
-                </div>
-              ) : (
-                <ShelfViewer3D key={`${shelfId ?? "sin-estanteria"}-${page}`} books={currentBooks} returnPath={buildShelf3dPath(shelfId, page)} />
-              )}
-            </div>
-          </section>
-        </div>}
+          ) : (
+            <ShelfViewer3D
+              key={`${shelfId ?? "sin-estanteria"}-${page}`}
+              books={currentBooks}
+              returnPath={buildShelf3dPath(shelfId, page)}
+              shelfTitle={selectedShelf?.title ?? "Estantería"}
+            />
+          )}
+        </section>}
       </>}
     </>
   )
