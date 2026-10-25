@@ -1399,3 +1399,45 @@ Medido con `perf:local --profile scratch --scale 10000` (10 000 fichas, 41 estan
 - `pnpm test:scripts`: metadatos reales de 0010 y 0011 y drift del modelo (`migrations.test.mjs`).
 - `pnpm test:integration:model --profile scratch|test [--reuse-build]`: grupo `tests/integration/model`, también en `test:integration:local`.
 - Ensayo de migración con datos: `docs/validacion/2026-10-24/O12/dat-06/ensayo-modelo.mjs cargar|comprobar|retirar`.
+
+## Eliminación de cuenta y retención · U-OPS-03 (O12)
+
+La persona elimina su cuenta desde **Perfil → Eliminar la cuenta**; un worker administrativo, fuera de Next, borra sus datos, objetos e identidad por pasos reintentables y deja una marca técnica que filtra la cuenta al restaurar un respaldo anterior. Especificación: [04 · U-OPS-03](spec-pendientes/04-calidad-seguridad-y-operacion.md#u-ops-03--eliminación-de-cuenta-y-retención-de-datos). Inventario, tratamiento y plazos: [retencion.md](retencion.md). Evidencia: [O12/ops-03](validacion/2026-10-25/O12/ops-03/informe.md).
+
+### Contratos
+
+| Pieza | Comportamiento |
+| --- | --- |
+| `requestAccountDeletionAction({ confirmation, operationKey })` (`app/actions/account.ts`) | Cuenta de la sesión (entrada estricta: ningún ID). Exige «ELIMINAR MI CUENTA» y un inicio de sesión de hace menos de 15 minutos (`REAUTH_REQUIRED`). Una solicitud ya registrada se devuelve tal cual, con cualquier clave. Tras registrar, logout global de GoTrue con el token del propio usuario (`sessionsRevoked`). |
+| `getAccountDeletionStatusAction()` | `{ phase, requestedAt }`: `none`, `requested`, `in_progress`, `retrying`, `needs_attention`, `completed`. Sin códigos técnicos ni contadores. |
+| Escrituras con la cuenta en eliminación | `ACCOUNT_INACTIVE` (403, sin reintento) desde cualquier acción: BD001 del bloqueo de colección o de las políticas RESTRICTIVE. |
+| `biblib.account_deletions` | Solicitud, paso, lease/fencing, `error_code` técnico y, al terminar, la marca (`completed`, `purge_after` a 90 días). Sin FK a `auth.users` ni privilegios de cliente. |
+
+### Worker y operación
+
+```powershell
+pnpm account:deletions:local --profile scratch --once          # un ciclo: reclama, procesa y copia las marcas al registro
+pnpm account:deletions:local --profile scratch                 # en bucle (cada 10 s); Ctrl+C para parar
+pnpm account:deletions:local --profile scratch --once --retry-failed   # reanuda las que agotaron sus 5 intentos
+pnpm account:deletions:local --profile scratch --once --purge-marks    # retira las marcas vencidas
+```
+
+Pasos: `sessions` (bloqueo en GoTrue) → `storage` → `covers` → `snapshots` → `staging` → `jobs` → `views` → `previews` → `operations` → `private_cache` → `copies` → `editions` → `works` → `shelves` → `state` → `auth` (borrado de la identidad) → `verify` (`account_residue` a cero). Cada paso borra por lotes bajo el lease (2 min, renovado en Storage) y solo avanza si la base confirma que está vacío; un worker vencido recibe BD003 y se detiene. Un fallo queda en `waiting_retry` con espera creciente (30 s · 2ⁿ, máx. 1 h) y, tras 5 intentos seguidos del mismo paso, en `failed`. La salida solo da cantidades y códigos (`STORAGE_UNAVAILABLE`, `STORAGE_PENDING`, `AUTH_UNAVAILABLE`…); sale con **8** si alguna espera reintento o revisión. Usa la credencial de servicio del perfil (como `assets:purge:local`) y nunca se ejecuta dentro de Next. En despliegue lo lanzará el scheduler de F4.
+
+Consulta de operación, sin datos de biblioteca: `select state, step, error_code, attempts, next_attempt_at from biblib.account_deletions where state <> 'completed'`.
+
+### Migración `0013_account_deletion`, despliegue y recuperación
+
+- **Esquema.** `account_lifecycle.state` admite `deleting`; tabla `account_deletions`; 29 políticas RESTRICTIVE `*_active` (insert/update/delete según los grants de cada tabla); `lock_library`, `account_is_active`, `account_set_state`, `cover_object_access`, `cover_asset_discard` y `cover_asset_revalidate` sustituidas para exigir cuenta activa; funciones del worker sin `EXECUTE` de cliente. No cambia datos.
+- **Aplicar.** Respaldo ensayado → `db:plan:local` → `db:migrate:local` → `db:status:local` sin drift. Ensayado 0012 → 0013 con datos restaurados y desde vacío con `db:reset:local`.
+- **Desactivar el flujo** sin tocar datos: retirar la sección de Perfil o no ejecutar el worker. Las solicitudes quedan pendientes y la cuenta sigue bloqueada para escrituras; no hay forma de «reactivarla» (decisión de seguridad), solo de completar su eliminación.
+- **Recuperar es reintentar la limpieza** (`--retry-failed`), nunca deshacer una supresión. Restore aplica las supresiones antes de abrir (fase `suppress`, [recuperación](recuperacion.md#supresiones-de-cuentas-al-restaurar-u-ops-03)) con las marcas restauradas y el registro privado `.biblib/state/<perfil>-suppressions.json`; un restore de otro perfil necesita `--suppressions <registro>`.
+- **Retirar 0013** no está previsto: dejaría sin guarda a las cuentas en eliminación.
+
+### Pruebas
+
+- `pnpm test`: contratos visibles, sesión reciente, `ACCOUNT_INACTIVE`, motor del worker con dependencias simuladas (orden, Storage caído o que conserva objetos, continuación, lease perdido) e inventario frente a 0013 y `docs/retencion.md` (`tests/account-deletion.test.ts`).
+- `pnpm test:db`: `tests/db/account-deletion.sql` (solicitud propia e idempotente, JWT antiguo sin escrituras en tablas, vista, bloqueo, funciones y Storage; worker con lease, fencing, Storage pendiente, `failed`/reintento; marca; toda tabla con dueño en un paso y toda tabla con escritura de cliente con guarda).
+- `pnpm test:scripts`: manifest de 0013 con hechos reales (`migrations.test.mjs`), worker CLI, registro de supresiones y verify con supresiones (`account-deletion.test.mjs`).
+- `pnpm test:integration:account --profile scratch|test [--reuse-build]`: grupo `tests/integration/account` (Server Action real, sesiones GoTrue, Data API y Storage con JWT antiguo, bloqueo en GoTrue, trabajo en vuelo, Storage caído, worker interrumpido, ausencia de recursos, B intacto, supresión al restaurar y rotación de trabajos en vuelo). También en `test:integration:local`; las cuentas de Auth terminan como empezaron.
+- Ensayo G12: `docs/validacion/2026-10-25/O12/ops-03/ensayo-supresion.mjs` (backup con la cuenta → eliminación por el worker → reset → restore → verify).

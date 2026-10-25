@@ -11,6 +11,7 @@ import { BiblibError, EXIT } from "../lib/exit-codes.mjs"
 import { sanitize } from "../lib/process.mjs"
 import { REPO_ROOT } from "../lib/profiles.mjs"
 import { readState } from "../lib/state.mjs"
+import { readSuppressions, residueOf, suppressedIds } from "../lib/suppressions.mjs"
 import { displayPath } from "./backup-local.mjs"
 import { loadJournal } from "./journal-guard.mjs"
 import { canonical } from "./plan.mjs"
@@ -52,10 +53,20 @@ export function compareRestored(manifest, current) {
   const excluded = manifest.assets?.excluded ?? []
   const excludedObjects = (manifest.assets?.items ?? []).filter((item) => !item.included && item.key).length
   const adjusted = { "biblib.cover_assets": excluded.length, "storage.objects": excludedObjects }
-  for (const expected of manifest.digests) {
-    const id = `${expected.schema}.${expected.table}`
-    const found = current.digests.find((d) => d.schema === expected.schema && d.table === expected.table)
-    const content = CONTENT_SCHEMAS.includes(expected.schema) && !KEY_ONLY_TABLES.includes(id)
+  // U-OPS-03: las tablas que cambió la fase suppress del restore se comparan con los hechos que registró tras aplicarla.
+  const suppression = current.suppression ?? { phase: null, ids: [], residue: [] }
+  const suppressed = new Set(suppression.ids)
+  for (const declared of manifest.digests) {
+    const id = `${declared.schema}.${declared.table}`
+    const found = current.digests.find((d) => d.schema === declared.schema && d.table === declared.table)
+    const content = CONTENT_SCHEMAS.includes(declared.schema) && !KEY_ONLY_TABLES.includes(id)
+    const override = suppression.phase?.adjusted?.find((d) => d.schema === declared.schema && d.table === declared.table)
+    if (override) {
+      const ok = found && found.count === override.count && found.keys === override.keys && (!content || found.content === override.content)
+      check(`table.${id}`, ok, `${id}: ${override.count} fila(s) iguales al estado tras aplicar las supresiones (${declared.count} en el recibo).`, found ? `${id}: ${found.count}/${override.count} filas o claves/contenido distintos del estado tras las supresiones.` : `${id}: falta la tabla.`)
+      continue
+    }
+    const expected = declared
     const less = adjusted[id] ?? 0
     const ok = found && found.count === expected.count - less && (less > 0 || found.keys === expected.keys) && (!content || found.content === expected.content)
     check(`table.${id}`, ok, `${id}: ${expected.count} fila(s)${content ? ", claves y contenido" : " y claves"} iguales al recibo.`, found ? `${id}: ${found.count}/${expected.count} filas o claves/contenido distintos.` : `${id}: falta la tabla.`)
@@ -64,20 +75,26 @@ export function compareRestored(manifest, current) {
   for (const [token, hashes] of Object.entries(manifest.tokens)) {
     const restored = current.tokens[token] ?? []
     const reused = restored.filter((h) => hashes.includes(h)).length
-    check(`tokens.${token}`, restored.length === hashes.length && reused === 0, `${token}: ${restored.length} token(s) rotados; ninguno coincide con el respaldo.`, `${token}: ${reused} token(s) del respaldo siguen vigentes o la cantidad difiere.`)
+    const removed = suppression.phase?.tokensRemoved?.[token] ?? 0
+    check(`tokens.${token}`, restored.length === hashes.length - removed && reused === 0, `${token}: ${restored.length} token(s) rotados; ninguno coincide con el respaldo.`, `${token}: ${reused} token(s) del respaldo siguen vigentes o la cantidad difiere.`)
   }
 
   if (manifest.assets) {
     // Manifiesto de portadas: cada asset incluido vuelve con su clave, sha256 y tamaño, en revisión.
     const restored = new Map((current.assets ?? []).map((asset) => [asset.id, asset]))
-    const included = manifest.assets.items.filter((item) => item.included)
+    const included = manifest.assets.items.filter((item) => item.included && !suppressed.has(item.owner))
     const wrong = included.filter((item) => { const found = restored.get(item.id); return !found || found.key !== item.key || found.sha256 !== item.sha256 || found.bytes !== item.bytes || found.owner !== item.owner || (item.state !== "quarantine" && !["restored", "ready"].includes(found.state)) })
     const leaked = excluded.filter((id) => restored.has(id))
     check("assets.manifest", wrong.length === 0 && leaked.length === 0, `Portadas privadas: ${included.length} asset(s) con su clave, sha256 y tamaño (en revisión hasta revalidarse); ${excluded.length} excluido(s) por su política.`, `Portadas privadas: ${wrong.length} asset(s) distintos del manifiesto y ${leaked.length} excluido(s) restaurados.`)
   }
 
-  const missing = manifest.sample.filter((s) => !current.sample.some((c) => c.id === s.id && c.digest === s.digest))
-  check("sample.books", missing.length === 0, `Muestra de ${manifest.sample.length} ficha(s) idéntica salvo el token rotado.`, `${missing.length} ficha(s) de la muestra faltan o difieren.`)
+  const sampleRemoved = new Set(suppression.phase?.sampleRemoved ?? [])
+  const missing = manifest.sample.filter((s) => !sampleRemoved.has(s.id) && !current.sample.some((c) => c.id === s.id && c.digest === s.digest))
+  check("sample.books", missing.length === 0, `Muestra de ${manifest.sample.length - sampleRemoved.size} ficha(s) idéntica salvo el token rotado.`, `${missing.length} ficha(s) de la muestra faltan o difieren.`)
+  if (suppression.ids.length) {
+    const left = suppression.residue.filter((r) => r.rows || r.objects || r.account).length
+    check("suppressions.applied", left === 0, `Supresiones: ${suppression.ids.length} cuenta(s) suprimida(s) sin identidad, filas ni objetos en el destino.`, `Supresiones: ${left} cuenta(s) suprimida(s) conservan identidad, filas u objetos.`)
+  }
   return checks
 }
 
@@ -122,7 +139,7 @@ async function verifyAccounts(sql, manifest, census, profile, root) {
   return checks
 }
 
-async function verifyStorage(resolved, manifest) {
+async function verifyStorage(resolved, manifest, suppressed = new Set()) {
   const values = resolved.target.env()
   const admin = createClient(values.SUPABASE_URL, values.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } })
   const checks = []
@@ -132,13 +149,15 @@ async function verifyStorage(resolved, manifest) {
     checks.push({ id: `storage.bucket.${bucket.id}`, status: ok ? "ok" : "fail", message: ok ? `Bucket ${bucket.id} ${bucket.public ? "público" : "privado"} con su configuración.` : `Bucket ${bucket.id} ausente o con otra visibilidad/configuración.` })
   }
   let present = 0
-  for (const object of manifest.storage.objects) {
+  // Los objetos de una cuenta suprimida no vuelven: su ausencia la comprueba suppressions.applied.
+  const expected = manifest.storage.objects.filter((object) => !suppressed.has(object.name.split("/")[0]))
+  for (const object of expected) {
     const { data, error } = await admin.storage.from(object.bucket).download(object.name)
     const hash = !error && data ? sha256(Buffer.from(await data.arrayBuffer())) : null
     if (hash === object.sha256) present++
     else checks.push({ id: "storage.object", status: "fail", message: hash ? `Objeto ${object.bucket}/${object.file} con sha256 distinto.` : `Falta el objeto ${object.bucket}/${object.file} en el destino.` })
   }
-  checks.push({ id: "storage.objects", status: present === manifest.storage.objects.length ? "ok" : "fail", message: `${present}/${manifest.storage.objects.length} objeto(s) presentes con su sha256.` })
+  checks.push({ id: "storage.objects", status: present === expected.length ? "ok" : "fail", message: `${present}/${expected.length} objeto(s) presentes con su sha256${expected.length < manifest.storage.objects.length ? ` (${manifest.storage.objects.length - expected.length} de cuentas suprimidas, retirados)` : ""}.` })
   return checks
 }
 
@@ -168,11 +187,15 @@ export async function runVerify(options, deps = {}) {
         digests: await contentDigests(tx, tables.filter((t) => present.some((p) => p.schema === t.schema && p.table === t.table))),
         tokens: await tokenHashes(tx), sample: await bookSample(tx, Math.max(manifest.sample.length, 5)),
         assets: await coverAssetInventory(tx),
+        suppression: await (async () => {
+          const ids = await suppressedIds(tx, readSuppressions(stack))
+          return { phase: restore?.phases?.suppress ?? null, ids, residue: await Promise.all(ids.map((id) => residueOf(tx, id))) }
+        })(),
       }
     })
     checks.push(...compareRestored(manifest, current))
     checks.push(...await verifyAccounts(sql, manifest, census, options.profile, root))
-    checks.push(...await verifyStorage(resolved, manifest))
+    checks.push(...await verifyStorage(resolved, manifest, new Set(current.suppression.ids)))
   } catch (error) {
     throw error instanceof BiblibError ? error : connectionError(error, "verify")
   } finally { await closeConnection(sql) }

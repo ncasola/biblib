@@ -92,6 +92,13 @@
       "when": 1792891326215,
       "tag": "0012_model_account_deletion",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1792913943438,
+      "tag": "0013_account_deletion",
+      "breakpoints": true
     }
   ]
 }

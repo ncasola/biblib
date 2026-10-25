@@ -1,0 +1,20 @@
+Grupo restore · perfil scratch · biblib-scratch · run 929c66ff979f
+✔ 2001 libros en dos partes se publican juntos; los observadores ven la colección anterior o la nueva, nunca una mezcla (7072.5705ms)
+✔ parte ausente, duplicada, corrupta o de otro conjunto y total falso: MANIFEST_MISMATCH sin tocar la colección (3161.862ms)
+✔ estanterías vacías y compartidas entre partes: compatibles se unen; contradictorias se rechazan (3311.0673ms)
+✔ un error en la última sentencia o un timeout lo revierten todo, incluido el indicador de éxito, y conservan el staging (5818.8495ms)
+✔ lock_timeout de 1 s: otra transacción con el bloqueo de colección hace fallar la publicación sin aplicar nada (1525.599ms)
+✔ repetir una parte o el commit da el mismo resultado; el mismo partId con otros bytes es conflicto (970.6049ms)
+✔ una edición en otra pestaña durante el staging invalida el CAS, conserva el staging y exige revisar (2526.8676ms)
+✔ A/B: B no ve, sube, valida, prepara, publica ni descarta la restauración de A, ni por SQL ni por la Data API (878.0629ms)
+✔ límites: más de 10 000 libros o de 80 MiB dan LIMIT_EXCEEDED antes de recibir bytes (188.6033ms)
+✔ las 111 fichas legacy restauran sin pérdida y una parte v1 sola sigue siendo importable (671.3302ms)
+✔ el restore administrativo trata el staging: integridad de trozos y sesiones sin publicar para revisión (191.7869ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 28140.7752

@@ -156,7 +156,14 @@ export async function rotateRestoredTokens(tx) {
     const rows = revision.type === "uuid" ? (await tx`update biblib.library_state set revision = gen_random_uuid()`).count : (await tx`update biblib.library_state set revision = gen_random_uuid()::text`).count
     result.rotated.push({ token: "biblib.library_state.revision", rows })
   }
+  // Trabajos (U-DAT-03) y eliminaciones de cuenta (U-OPS-03) en ejecución en el respaldo: se reanudan como reintento,
+  // sin lease, para que un trabajador los reclame de nuevo con fencing nuevo (sus CHECK exigen lease mientras corren).
+  const RESUMABLE = ["library_jobs", "account_deletions"]
   for (const table of tables) {
+    if (RESUMABLE.includes(table) && find(table, "state") && find(table, "lease_token") && find(table, "next_attempt_at")) {
+      const rows = (await tx`update ${tx("biblib")}.${tx(table)} set state = 'waiting_retry', lease_token = null, lease_until = null, next_attempt_at = now() where state = 'running'`).count
+      if (rows) result.invalidated.push({ table: `biblib.${table}`, action: "resume-as-retry", rows })
+    }
     if (/previews?$/.test(table)) {
       result.invalidated.push({ table: `biblib.${table}`, action: "delete", rows: (await tx`delete from ${tx("biblib")}.${tx(table)}`).count })
       continue

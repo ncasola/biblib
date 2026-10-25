@@ -1,7 +1,7 @@
 export type DomainErrorCode =
   | "INVALID_INPUT" | "UNAUTHORIZED" | "NOT_FOUND" | "CONFLICT" | "PROVIDER_UNAVAILABLE" | "RATE_LIMITED"
   | "REVISION_CONFLICT" | "PREVIEW_EXPIRED" | "IDEMPOTENCY_CONFLICT" | "JOB_CONFLICT" | "JOB_EXPIRED" | "LIMIT_EXCEEDED" | "MANIFEST_MISMATCH" | "ASSET_REJECTED"
-  | "EDITION_SHARED"
+  | "EDITION_SHARED" | "ACCOUNT_INACTIVE" | "REAUTH_REQUIRED"
 
 /**
  * Solo los fallos transitorios admiten reintento automático. Un conflicto de revisión, una
@@ -23,6 +23,8 @@ const RETRYABLE: Readonly<Record<DomainErrorCode, boolean>> = {
   MANIFEST_MISMATCH: false,
   ASSET_REJECTED: false,
   EDITION_SHARED: false,
+  ACCOUNT_INACTIVE: false,
+  REAUTH_REQUIRED: false,
 }
 
 export function isRetryable(code: DomainErrorCode): boolean {
@@ -47,6 +49,10 @@ const HTTP_STATUS: Readonly<Record<DomainErrorCode, number>> = {
   ASSET_REJECTED: 422,
   // U-DAT-06: el cambio afecta a varios ejemplares de una edición y la persona no lo ha confirmado.
   EDITION_SHARED: 409,
+  // U-OPS-03: la cuenta se está eliminando (también con un JWT anterior a revocar las sesiones).
+  ACCOUNT_INACTIVE: 403,
+  // Confirmar la eliminación exige haber iniciado sesión hace poco.
+  REAUTH_REQUIRED: 401,
 }
 
 export function httpStatusForDomainError(code: DomainErrorCode): number {
@@ -86,6 +92,11 @@ export function editionShared(copies: number): DomainError {
   return new DomainError("EDITION_SHARED", `Estos datos son de la edición, que comparten ${copies} ejemplares de tu biblioteca: si los guardas, cambiarán en todos. Confírmalo para continuar.`)
 }
 
+/** BD001 (0013): cualquier escritura de una cuenta en eliminación, desde las políticas RLS o el bloqueo de colección. */
+export function accountInactive(): DomainError {
+  return new DomainError("ACCOUNT_INACTIVE", "Tu cuenta se está eliminando y ya no admite cambios. No se ha guardado nada.")
+}
+
 export function databaseErrorCode(error: unknown): string | undefined {
   if (!error || typeof error !== "object") return undefined
   if ("code" in error && typeof error.code === "string") return error.code
@@ -94,6 +105,7 @@ export function databaseErrorCode(error: unknown): string | undefined {
 
 export function translateDatabaseError(error: unknown): never {
   if (error instanceof DomainError) throw error
+  if (databaseErrorCode(error) === "BD001") throw accountInactive()
   if (databaseErrorCode(error) === "23505") throw new DomainError("CONFLICT", "Ya existe una edición con ese ISBN o una estantería con ese nombre.")
   if (databaseErrorCode(error) === "BM003") throw new DomainError("EDITION_SHARED", "Esa edición la comparten varios ejemplares: cámbiala desde la ficha, confirmando cuántos ejemplares afecta.")
   if (databaseErrorCode(error) === "23503") throw new DomainError("CONFLICT", "La estantería ha cambiado. Actualiza los datos e inténtalo de nuevo.")

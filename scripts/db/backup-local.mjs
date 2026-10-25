@@ -11,6 +11,7 @@ import { localPath, removeLocalPath } from "../lib/local-path.mjs"
 import { sanitize, supabaseCommand } from "../lib/process.mjs"
 import { profileWorkdir, REPO_ROOT } from "../lib/profiles.mjs"
 import { acquireLock, readState } from "../lib/state.mjs"
+import { mergeSuppressions, readMarks } from "../lib/suppressions.mjs"
 import { compareLedger, loadJournal } from "./journal-guard.mjs"
 import { acquireMigrationLock, releaseMigrationLock } from "./migrate.mjs"
 import { canonical, gitCommit } from "./plan.mjs"
@@ -203,7 +204,7 @@ export async function runBackup({ profile, out, keyFile, root = REPO_ROOT, signa
       const domain = await (deps.dumpDomain ?? dumpDomain)(stack, db, id, signal)
       // Misma huella que el plan de db:reset:local: así su --backup-receipt acredita este estado.
       const discarded = await (deps.discardedState ?? discardedState)({ ...stack, fetch: deps.fetch ?? globalThis.fetch, signal }, resolved.target, { sql: tx })
-      return { inspection, scope, mark, domain, discarded, digests: await contentDigests(tx, scope.tables), objects: await objectFacts(tx), tokens: await tokenHashes(tx), sample: await bookSample(tx), accounts: await fixtureAccounts(tx, census), storage: await storageInventory(tx), assets: classifyCoverAssets(await coverAssetInventory(tx)) }
+      return { inspection, scope, mark, domain, discarded, digests: await contentDigests(tx, scope.tables), objects: await objectFacts(tx), tokens: await tokenHashes(tx), sample: await bookSample(tx), accounts: await fixtureAccounts(tx, census), storage: await storageInventory(tx), assets: classifyCoverAssets(await coverAssetInventory(tx)), marks: await readMarks(tx) }
     })
     const excludedAuth = authExclusions(snapshot.scope.authTables)
     const auth = await (deps.dumpAuth ?? dumpAuth)(stack, excludedAuth, signal)
@@ -267,6 +268,9 @@ export async function runBackup({ profile, out, keyFile, root = REPO_ROOT, signa
     })
     writeFileSync(path.join(dir, MANIFEST_FILE), `${JSON.stringify(manifest, null, 2)}\n`, { flag: "wx", mode: 0o600 })
     const receipt = writeBackupReceipt(root, dir)
+    // U-OPS-03: las marcas de supresión del respaldo pasan al registro privado del perfil, que el restore aplica
+    // aunque luego se restaure una copia anterior.
+    mergeSuppressions(stack, snapshot.marks)
     return { schemaVersion: 1, code: EXIT.OK, backupId, dir: displayPath(root, dir), receipt: receipt.file, discardedStateHash: manifest.discardedStateHash, profile, project: resolved.project, head: manifest.migrations.head, counts: manifest.counts, storageObjects: storageObjects.length, files: files.length, encrypted: Boolean(key), durationMs: manifest.durationMs, contentHash: manifest.contentHash }
   } catch (error) {
     if (created) discardPartial(root, dir)

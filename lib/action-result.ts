@@ -1,4 +1,4 @@
-import { DomainError, isRetryable, type DomainErrorCode } from "./domain-errors"
+import { accountInactive, databaseErrorCode, DomainError, isRetryable, type DomainErrorCode } from "./domain-errors"
 
 export interface ActionError {
   code: DomainErrorCode
@@ -26,6 +26,8 @@ export async function mutationResult<T>(operation: () => Promise<T>, context: Mu
   catch (error) {
     const correlationId = context.correlation?.()
     if (error instanceof DomainError) return { ok: false, error: actionError(error.code, error.message, correlationId) }
+    // Una escritura sin traducir de una cuenta en eliminación (BD001) nunca se presenta como un fallo transitorio.
+    if (databaseErrorCode(error) === "BD001") { const inactive = accountInactive(); return { ok: false, error: actionError(inactive.code, inactive.message, correlationId) } }
     console.error(JSON.stringify({ event: "mutation.failed", code: "UNEXPECTED_ERROR", ...(correlationId ? { correlationId } : {}) }))
     return { ok: false, error: actionError("PROVIDER_UNAVAILABLE", "No se pudo guardar el cambio. Inténtalo de nuevo.", correlationId) }
   }

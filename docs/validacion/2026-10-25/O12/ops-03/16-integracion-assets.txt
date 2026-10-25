@@ -1,0 +1,19 @@
+Grupo assets · perfil scratch · biblib-scratch · run 09d1ab718e97
+✔ A sube y adjunta su portada propia; la lee por la ruta autenticada y B no puede obtenerla ni firmarla, tampoco por Storage (5404.6494ms)
+✔ la subida propia pasa las mismas validaciones: tipo falso, SVG, políglota, tamaño y dimensiones; repetir no duplica (916.5625ms)
+✔ Google Books o una política sin rehostCover no generan red ni objeto, ni por la acción ni con un trabajo antiguo (342.2648ms)
+✔ tras un restore, la ruta revalida bytes y derechos vigentes del dueño antes de volver a servir (637.3471ms)
+✔ la descarga con derechos válidos se valida, se sube con la sesión y se adjunta con la versión vista (4475.1672ms)
+✔ red simulada: redirección a localhost, respuesta lenta, tamaño mentido, DNS cambiante, MIME falso, SVG y dimensiones excesivas (903.9419ms)
+✔ una edición concurrente o una cancelación impiden adjuntar el resultado tardío (405.8265ms)
+✔ repetir no duplica y matar el trabajador entre subir y registrar deja un objeto purgable, no un enlace roto (2130.8149ms)
+✔ versiones anteriores retienen la referencia; licencia vencida, cuarentena caducada y purga (1707.6736ms)
+✔ cuotas y cuenta bloqueada: sin subidas, adquisiciones ni escrituras de un trabajo antiguo (438.7243ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 20857.5505
