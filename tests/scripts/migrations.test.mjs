@@ -595,11 +595,12 @@ describe("stack scratch real [stack]", { skip: stack.reason ?? false }, () => {
       const before = await inspectDatabase(sql, journal)
       if (before.state !== "up-to-date") { t.skip(`scratch no está al día (${before.state})`); return }
       await sql.begin(async (tx) => {
-        await tx`drop trigger books_rotate_version on biblib.books`
-        await tx`alter policy books_select_own on biblib.books using (true)`
+        // Desde 0011 (U-DAT-06) books es una vista: el drift se provoca en la tabla de ejemplares.
+        await tx`drop trigger copies_rotate_version on biblib.copies`
+        await tx`alter policy copies_select_own on biblib.copies using (true)`
         const drift = await inspectDatabase(tx, journal)
         assert.equal(drift.state, "drift")
-        assert.deepEqual(failing(drift.manifest).sort(), ["policy.books_select_own", "trigger.books_rotate_version"])
+        assert.deepEqual(failing(drift.manifest).sort(), ["policy.copies_select_own", "trigger.copies_rotate_version"])
         throw new Error("revertir") // la transacción se revierte: scratch queda intacto
       }).catch((error) => { if (error.message !== "revertir") throw error })
       assert.equal((await inspectDatabase(sql, journal)).state, "up-to-date")

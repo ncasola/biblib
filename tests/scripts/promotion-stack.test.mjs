@@ -77,7 +77,9 @@ describe("promoción contra un remoto simulado [stack]", { skip }, () => {
   const ledger = async () => (await admin`select to_regclass('drizzle.__drizzle_migrations') is not null as present`)[0].present ? (await admin`select hash, created_at::bigint as created_at from drizzle.__drizzle_migrations order by id`).map((r) => ({ hash: r.hash, created_at: Number(r.created_at) })) : null
   const schemas = async () => (await admin`select nspname from pg_namespace where nspname in ('biblib', 'drizzle') order by 1`).map((r) => r.nspname)
   const domainRows = async () => ({
-    books: (await admin`select id::text, user_id::text, isbn, title, number_of_pages, shelf_id::text from biblib.books order by id`).map((r) => ({ ...r })),
+    // Desde 0011 (U-DAT-06) books es la vista plana: un ISBN válido se lee canónico y su texto original queda en
+    // books_legacy y en el informe de migración. Se compara el identificador sin espacios ni guiones.
+    books: (await admin`select id::text, user_id::text, isbn, title, number_of_pages, shelf_id::text from biblib.books order by id`).map((r) => ({ ...r, isbn: r.isbn?.replace(/[s-]/g, "") ?? null })),
     shelves: (await admin`select id::text, user_id::text, title, is_default from biblib.shelves order by id`).map((r) => ({ ...r })),
   })
   /** Copia equivalente a 0000: SQL y ledger de 0000 aplicados por el Drizzle antiguo, con datos A/B. */
@@ -162,7 +164,7 @@ describe("promoción contra un remoto simulado [stack]", { skip }, () => {
     assert.equal(result.result.previousHead.tag, tags[0])
     assert.equal(result.result.head.tag, tags.at(-1))
     assert.ok(result.result.checks.length > 100 && result.result.checks.every((c) => c.status === "ok"))
-    for (const id of ["column.books.catalogue", "constraint.books_owner_shelf_fk", "rls.books", "policy.books_select_own", "function.rotate_book_version", "trigger.books_rotate_version"]) assert.ok(result.result.checks.some((c) => c.id === id && c.status === "ok"), id)
+    for (const id of ["column.editions.catalogue", "constraint.copies_owner_shelf_fk", "rls.copies", "policy.copies_select_own", "function.rotate_book_version", "trigger.copies_rotate_version", "view.books"]) assert.ok(result.result.checks.some((c) => c.id === id && c.status === "ok"), id)
     assert.deepEqual(await domainRows(), original)
     assert.deepEqual((await ledger()).map((r) => r.created_at), journal.entries.map((e) => e.when))
     const [a, b] = SYNTHETIC.users
