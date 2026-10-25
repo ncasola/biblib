@@ -19,8 +19,8 @@ Siguen vigentes las reglas de [orquestación de F0](orquestacion-f0.md) (§0 y �
 | O11 | U-DAT-04 Restauración multipart atómica (+ T1 de rendimiento) | Claude (Opus) | `scratch` | `0008` |
 | O11 | U-EXP-03 Accesibilidad verificada (+ T6) | Codex | `test` | No (axe en el lockfile) |
 | O11 | U-DAT-10 Assets privados y portadas seguras | Claude (Opus) | `scratch` | `0009` y `sharp` |
-| O12 | U-DAT-06 Obra, edición y ejemplar; ISBN opcional (+ T5/T7) | Claude (Opus) | `scratch` | `0010` |
-| O12 | U-OPS-03 Eliminación de cuenta y retención | Tras U-DAT-06 | — | `0011` |
+| O12 | U-DAT-06 Obra, edición y ejemplar; ISBN opcional (+ T5/T7) | Claude (Opus) | `scratch` | `0010`–`0012` |
+| O12 | U-OPS-03 Eliminación de cuenta y retención | Claude (Opus) | `scratch` | `0013` |
 | O13 | U-DAT-07, U-DAT-09, U-EXP-05, U-EXP-06, U-PRO-01, U-PRO-03, U-PRO-05 | Por fijar | — | Un lote de schema revisado (D) |
 
 ## Puertas

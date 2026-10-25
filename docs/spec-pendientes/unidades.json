@@ -332,7 +332,13 @@
         "UX-01",
         "UX-08"
       ],
-      "status": "in-progress"
+      "status": "implemented",
+      "evidence": "O12 · merge 28b4407; 0010–0012; T7 8,36→0,13 ms, T5 103,7→30,4 ms; 8 grupos en scratch 100/100 (docs/validacion/2026-10-24/O12/dat-06/)",
+      "pending": [
+        "Exportación y vista previa 20–50 % más lentas (dentro de presupuesto).",
+        "books_legacy congelada: retirada en F4.",
+        "verify no descuenta previews/jobs invalidados por restore (documentado)."
+      ]
     },
     {
       "id": "U-DAT-07",
@@ -969,7 +975,7 @@
         "OPS-02",
         "SEC-05"
       ],
-      "status": "planned"
+      "status": "in-progress"
     },
     {
       "id": "U-OPS-04",
