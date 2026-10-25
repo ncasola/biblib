@@ -15,7 +15,7 @@ import { classify, closeConnection, connect, inspectDatabase, readLedger, resolv
 
 const repo = fileURLToPath(new URL("../../", import.meta.url))
 const drizzleDir = path.join(repo, "drizzle")
-// Metadatos reales capturados de Supabase local: tras 0002 (U-INF-04), tras 0003 (U-DAT-01), tras 0004 (U-DAT-05), tras 0005 (U-DAT-03), tras 0006 (U-DAT-02), tras 0007 (U-EXP-02), tras 0008 (U-DAT-04), tras 0009 (U-DAT-10), tras 0010 y tras 0011 (U-DAT-06, head actual).
+// Metadatos reales capturados de Supabase local: tras 0002 (U-INF-04), tras 0003 (U-DAT-01), tras 0004 (U-DAT-05), tras 0005 (U-DAT-03), tras 0006 (U-DAT-02), tras 0007 (U-EXP-02), tras 0008 (U-DAT-04), tras 0009 (U-DAT-10), tras 0010, 0011 y 0012 (U-DAT-06, head actual).
 const facts0002 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0002.json"), "utf8"))
 const facts0003 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0003.json"), "utf8"))
 const facts0004 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0004.json"), "utf8"))
@@ -25,7 +25,8 @@ const facts0007 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrat
 const facts0008 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0008.json"), "utf8"))
 const facts0009 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0009.json"), "utf8"))
 const facts0010 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0010.json"), "utf8"))
-const facts = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0011.json"), "utf8"))
+const facts0011 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0011.json"), "utf8"))
+const facts = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0012.json"), "utf8"))
 const HEAD_0010 = MANIFEST_MIGRATIONS.slice(0, 11)
 const named = (list, name) => list.find((item) => item.name === name)
 const temporary = []
@@ -111,7 +112,7 @@ describe("ledger", () => {
     assert.deepEqual(compareLedger(entries, rowsFor(entries)).pending, [])
     const partial = compareLedger(entries, rowsFor(entries, 1))
     assert.equal(partial.appliedHead.tag, "0000_biblib_init")
-    assert.deepEqual(partial.pending, ["0001_library_integrity", "0002_book_versions", "0003_library_revision", "0004_catalogue_coordination", "0005_library_jobs", "0006_library_snapshots", "0007_saved_views", "0008_restore_sessions", "0009_cover_assets", "0010_works_editions_copies", "0011_copies_cutover"])
+    assert.deepEqual(partial.pending, ["0001_library_integrity", "0002_book_versions", "0003_library_revision", "0004_catalogue_coordination", "0005_library_jobs", "0006_library_snapshots", "0007_saved_views", "0008_restore_sessions", "0009_cover_assets", "0010_works_editions_copies", "0011_copies_cutover", "0012_model_account_deletion"])
     assert.equal(compareLedger(entries, []).pending.length, entries.length)
   })
 
@@ -413,6 +414,16 @@ describe("manifest de objetos", () => {
     assert.ok(behind.includes("view.books") && behind.includes("rls.books_legacy") && behind.includes("trigger.books_view_update"))
     assert.ok(expectedObjects().views.includes("biblib.books"))
     assert.ok(!expectedObjects().triggers.some((entry) => entry.startsWith("books_rotate_version")), "books ya no tiene los triggers de la tabla anterior")
+  })
+
+  test("0012: la poda del modelo es SECURITY DEFINER para que Auth pueda borrar una cuenta en cascada", () => {
+    // Los metadatos reales de 0011 cumplen su head y, con 0012, solo fallan las dos funciones de poda.
+    assert.deepEqual(failing(verifyManifest(facts0011, MANIFEST_MIGRATIONS.slice(0, 12))), [])
+    assert.deepEqual(failing(verifyManifest(facts0011, MANIFEST_MIGRATIONS)).sort(), ["function.prune_orphan_editions", "function.prune_orphan_works"])
+    const invoker = clone(facts); named(invoker.functions, "prune_orphan_works").security_definer = false
+    assert.deepEqual(failing(verifyManifest(invoker, MANIFEST_MIGRATIONS)), ["function.prune_orphan_works"])
+    const callable = clone(facts); named(callable.functions, "prune_orphan_editions").execute_authenticated = true
+    assert.deepEqual(failing(verifyManifest(callable, MANIFEST_MIGRATIONS)), ["function.prune_orphan_editions"])
   })
 
   test("drift del modelo de ejemplares (0010/0011): vista, RLS, FK con dueño, unicidad, permisos y copia congelada", () => {

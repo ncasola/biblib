@@ -148,3 +148,28 @@ SELECT assert_true((SELECT pg_get_constraintdef(oid) LIKE '%edition.merge%' FROM
 SELECT assert_true(has_table_privilege('authenticated', 'biblib.books', 'SELECT') AND NOT has_table_privilege('anon', 'biblib.books', 'SELECT'), 'la vista es solo del dueño autenticado');
 SELECT assert_true(NOT has_function_privilege('authenticated', 'biblib.books_view_update()', 'EXECUTE'), 'los triggers de la vista no se invocan directamente');
 SELECT 'Correcto: operaciones del modelo y permisos de 0011';
+
+-- Antes de 0012: el borrado de una cuenta desde Auth falla porque la poda (SECURITY INVOKER) se ejecuta con un rol
+-- sin USAGE en biblib. Se documenta el fallo que corrige 0012 (ver tests/db/model-account-deletion.sql).
+CREATE ROLE biblib_auth_admin_sim NOLOGIN;
+GRANT USAGE ON SCHEMA auth TO biblib_auth_admin_sim;
+GRANT SELECT, DELETE ON auth.users TO biblib_auth_admin_sim;
+BEGIN;
+INSERT INTO auth.users(id) VALUES ('10000000-0000-4000-8000-0000000000d1');
+INSERT INTO biblib.shelves(id, user_id, title, is_default) VALUES ('3d000000-0000-4000-8000-0000000000d1', '10000000-0000-4000-8000-0000000000d1', 'Principal', true);
+INSERT INTO biblib.books(id, user_id, isbn, title, shelf_id) VALUES ('3d000000-0000-4000-8000-0000000000d2', '10000000-0000-4000-8000-0000000000d1', '9780306406157', 'Cuenta que se borra', '3d000000-0000-4000-8000-0000000000d1');
+DO $test$
+DECLARE
+  failed text;
+BEGIN
+  SET LOCAL ROLE biblib_auth_admin_sim;
+  BEGIN
+    DELETE FROM auth.users WHERE id = '10000000-0000-4000-8000-0000000000d1';
+  EXCEPTION WHEN insufficient_privilege THEN failed := SQLSTATE;
+  END;
+  RESET ROLE;
+  PERFORM assert_true(failed = '42501', 'con 0011 la poda invocada por Auth no tiene permisos sobre biblib');
+END;
+$test$;
+ROLLBACK;
+SELECT 'Correcto: con 0011 el borrado de cuenta desde Auth falla en la poda (lo corrige 0012)';

@@ -4,8 +4,8 @@ import { EXIT } from "../lib/exit-codes.mjs"
 // Manifest de objetos deliberados de BibLib. Se comprueba con metadatos de pg_catalog e
 // information_schema y con expresiones normalizadas, nunca comparando el pretty-print.
 // `since`/`until` indican la migración que introduce o retira cada objeto.
-const M0 = "0000_biblib_init", M1 = "0001_library_integrity", M2 = "0002_book_versions", M3 = "0003_library_revision", M4 = "0004_catalogue_coordination", M5 = "0005_library_jobs", M6 = "0006_library_snapshots", M7 = "0007_saved_views", M8 = "0008_restore_sessions", M9 = "0009_cover_assets", M10 = "0010_works_editions_copies", M11 = "0011_copies_cutover"
-export const MANIFEST_MIGRATIONS = [M0, M1, M2, M3, M4, M5, M6, M7, M8, M9, M10, M11]
+const M0 = "0000_biblib_init", M1 = "0001_library_integrity", M2 = "0002_book_versions", M3 = "0003_library_revision", M4 = "0004_catalogue_coordination", M5 = "0005_library_jobs", M6 = "0006_library_snapshots", M7 = "0007_saved_views", M8 = "0008_restore_sessions", M9 = "0009_cover_assets", M10 = "0010_works_editions_copies", M11 = "0011_copies_cutover", M12 = "0012_model_account_deletion"
+export const MANIFEST_MIGRATIONS = [M0, M1, M2, M3, M4, M5, M6, M7, M8, M9, M10, M11, M12]
 
 const own = "user_id=auth.uid"
 const ownNotDefault = "user_id=auth.uidandnotis_default"
@@ -436,8 +436,11 @@ export const MANIFEST = Object.freeze({
   ],
   functions: [
     modelFunction("isbn13_normalize", "text", 1, { authenticated: true }),
-    modelFunction("prune_orphan_editions", "trigger", 0),
-    modelFunction("prune_orphan_works", "trigger", 0),
+    // 0012: la poda pasa a SECURITY DEFINER para que el borrado en cascada de una cuenta (rol de Auth) no falle.
+    { ...modelFunction("prune_orphan_editions", "trigger", 0), until: M12 },
+    { ...modelFunction("prune_orphan_works", "trigger", 0), until: M12 },
+    modelFunction("prune_orphan_editions", "trigger", 0, { securityDefiner: true, since: M12 }),
+    modelFunction("prune_orphan_works", "trigger", 0, { securityDefiner: true, since: M12 }),
     modelFunction("edition_requires_copy", "trigger", 0),
     { ...modelFunction("model_sync_book", "trigger", 0, { securityDefiner: true }), until: M11 },
     { ...modelFunction("model_compare", "jsonb", 1, { securityDefiner: true }), until: M11 },
