@@ -4,8 +4,8 @@ import { EXIT } from "../lib/exit-codes.mjs"
 // Manifest de objetos deliberados de BibLib. Se comprueba con metadatos de pg_catalog e
 // information_schema y con expresiones normalizadas, nunca comparando el pretty-print.
 // `since`/`until` indican la migración que introduce o retira cada objeto.
-const M0 = "0000_biblib_init", M1 = "0001_library_integrity", M2 = "0002_book_versions", M3 = "0003_library_revision", M4 = "0004_catalogue_coordination", M5 = "0005_library_jobs", M6 = "0006_library_snapshots", M7 = "0007_saved_views", M8 = "0008_restore_sessions", M9 = "0009_cover_assets", M10 = "0010_works_editions_copies", M11 = "0011_copies_cutover", M12 = "0012_model_account_deletion"
-export const MANIFEST_MIGRATIONS = [M0, M1, M2, M3, M4, M5, M6, M7, M8, M9, M10, M11, M12]
+const M0 = "0000_biblib_init", M1 = "0001_library_integrity", M2 = "0002_book_versions", M3 = "0003_library_revision", M4 = "0004_catalogue_coordination", M5 = "0005_library_jobs", M6 = "0006_library_snapshots", M7 = "0007_saved_views", M8 = "0008_restore_sessions", M9 = "0009_cover_assets", M10 = "0010_works_editions_copies", M11 = "0011_copies_cutover", M12 = "0012_model_account_deletion", M13 = "0013_account_deletion"
+export const MANIFEST_MIGRATIONS = [M0, M1, M2, M3, M4, M5, M6, M7, M8, M9, M10, M11, M12, M13]
 
 const own = "user_id=auth.uid"
 const ownNotDefault = "user_id=auth.uidandnotis_default"
@@ -98,10 +98,18 @@ const modelTrigger = (table, name, fn, timing, events, level, tgtype) => ({ tabl
 const CUTOVER = migrationBodies(M11)
 const cutoverFunction = (name, returns, args, { authenticated = false, securityDefiner = true } = {}) => ({ name, language: "plpgsql", returns, args, searchPath: "search_path=pg_catalog", securityDefiner, body: CUTOVER[name], execute: { authenticated, anon: false }, since: M11 })
 const legacyTable = (entry) => ({ ...entry, table: "books_legacy", since: M11 })
+// Eliminación de cuenta (0013, U-OPS-03): políticas RESTRICTIVE de cuenta activa en cada tabla con escritura de cliente,
+// la tabla de solicitudes y marcas sin privilegios de cliente, y funciones definer (solo solicitar y consultar, para el dueño).
+const DELETION = migrationBodies(M13)
+const accountActive = "selectbiblib.account_write_allowedasaccount_write_allowed"
+const activePolicies = (table, commands) => commands.map((cmd) => ({ table, name: `${table}_${cmd.toLowerCase()}_active`, cmd, roles: ["authenticated"], permissive: false,
+  using: cmd === "INSERT" ? null : accountActive, check: cmd === "DELETE" ? null : accountActive, since: M13 }))
+const ALL_WRITES = ["INSERT", "UPDATE", "DELETE"]
+const deletionFunction = (name, returns, args, authenticated = false, securityDefiner = true) => ({ name, language: "plpgsql", returns, args, searchPath: "search_path=pg_catalog", securityDefiner, body: DELETION[name], execute: { authenticated, anon: false }, since: M13 })
 const jobStateTokens = ["'queued'", "'running'", "'waiting_retry'", "'needs_review'", "'paused'", "'succeeded'", "'partially_succeeded'", "'failed'", "'cancelled'", "'expired'"]
 
 export const MANIFEST = Object.freeze({
-  tables: [{ name: "shelves", since: M0 }, { name: "books", since: M0, until: M11 }, { name: "books_legacy", since: M11 }, { name: "library_state", since: M3 }, { name: "import_previews", since: M3 }, { name: "library_operations", since: M3 }, ...catalogueTables.map((name) => ({ name, since: M4 })), ...jobTables.map((name) => ({ name, since: M5 })), ...snapshotTables.map((name) => ({ name, since: M6 })), { name: "saved_book_views", since: M7 }, ...restoreTables.map((name) => ({ name, since: M8 })), { name: "cover_assets", since: M9 }, ...[...modelTables, "model_migration_report"].map((name) => ({ name, since: M10 }))],
+  tables: [{ name: "shelves", since: M0 }, { name: "books", since: M0, until: M11 }, { name: "books_legacy", since: M11 }, { name: "library_state", since: M3 }, { name: "import_previews", since: M3 }, { name: "library_operations", since: M3 }, ...catalogueTables.map((name) => ({ name, since: M4 })), ...jobTables.map((name) => ({ name, since: M5 })), ...snapshotTables.map((name) => ({ name, since: M6 })), { name: "saved_book_views", since: M7 }, ...restoreTables.map((name) => ({ name, since: M8 })), { name: "cover_assets", since: M9 }, ...[...modelTables, "model_migration_report"].map((name) => ({ name, since: M10 })), { name: "account_deletions", since: M13 }],
   policies: [
     policy("shelves", "shelves_select_own", "SELECT", own, null),
     policy("shelves", "shelves_insert_own", "INSERT", null, own),
@@ -139,15 +147,19 @@ export const MANIFEST = Object.freeze({
       policy(table, `${table}_delete_own`, "DELETE", ownModel, null, M10),
     ]),
     policy("model_migration_report", "model_migration_report_select_own", "SELECT", ownModel, null, M10),
+    ...["saved_book_views", "shelves", ...modelTables, "import_sessions", "import_session_parts"].flatMap((table) => activePolicies(table, ALL_WRITES)),
+    ...["import_previews", "import_session_chunks", "import_session_rows"].flatMap((table) => activePolicies(table, ["INSERT", "DELETE"])),
+    ...activePolicies("library_operations", ["INSERT"]),
+    ...activePolicies("catalogue_private_cache", ["DELETE"]),
   ],
   // library_state solo se lee: la revisión cambia por lock_library()/triggers, nunca por escritura directa.
   // La caché compartida, las consultas en vuelo y las cuotas no tienen ningún privilegio de cliente.
   grants: {
     authenticated: { shelves: ["DELETE", "INSERT", "SELECT", "UPDATE"], books: ["DELETE", "INSERT", "SELECT", "UPDATE"], library_state: ["SELECT"], import_previews: ["DELETE", "INSERT", "SELECT"], library_operations: ["INSERT", "SELECT"], catalogue_cache: [], catalogue_inflight: [], catalogue_quota_buckets: [], catalogue_quota_reservations: [], catalogue_private_cache: ["DELETE", "SELECT"], library_jobs: ["SELECT"], library_job_items: ["SELECT"], account_lifecycle: ["SELECT"], library_snapshots: ["SELECT"], library_snapshot_chunks: ["SELECT"], saved_book_views: ["DELETE", "INSERT", "SELECT", "UPDATE"],
       ...Object.fromEntries(restoreFullTables.map((name) => [name, ["DELETE", "INSERT", "SELECT", "UPDATE"]])), ...Object.fromEntries(restoreImmutableTables.map((name) => [name, ["DELETE", "INSERT", "SELECT"]])), cover_assets: ["SELECT"],
-      ...Object.fromEntries(modelTables.map((name) => [name, ["DELETE", "INSERT", "SELECT", "UPDATE"]])), model_migration_report: ["SELECT"], books_legacy: [] },
+      ...Object.fromEntries(modelTables.map((name) => [name, ["DELETE", "INSERT", "SELECT", "UPDATE"]])), model_migration_report: ["SELECT"], books_legacy: [], account_deletions: [] },
     // books (vista desde 0011) y books_legacy se comprueban en `views` y con la tabla congelada.
-    anon: { shelves: [], books: [], library_state: [], import_previews: [], library_operations: [], ...Object.fromEntries([...catalogueTables, ...jobTables, ...snapshotTables, "saved_book_views", ...restoreTables, "cover_assets", ...modelTables, "model_migration_report", "books_legacy"].map((name) => [name, []])) },
+    anon: { shelves: [], books: [], library_state: [], import_previews: [], library_operations: [], ...Object.fromEntries([...catalogueTables, ...jobTables, ...snapshotTables, "saved_book_views", ...restoreTables, "cover_assets", ...modelTables, "model_migration_report", "books_legacy", "account_deletions"].map((name) => [name, []])) },
   },
   constraints: [
     // Copia congelada (0011): PK, FK al dueño y checks; sin FK a estanterías ni portadas.
@@ -269,7 +281,17 @@ export const MANIFEST = Object.freeze({
     { table: "catalogue_private_cache", name: "catalogue_private_cache_expiry_check", type: "c", columns: ["expires_at", "fetched_at"], tokens: ["expires_at>fetched_at"], since: M4 },
     { table: "account_lifecycle", name: "account_lifecycle_pkey", type: "p", columns: ["user_id"], since: M5 },
     { table: "account_lifecycle", name: "account_lifecycle_user_id_users_id_fk", type: "f", columns: ["user_id"], references: "auth.users", refColumns: ["id"], onDelete: "c", since: M5 },
-    { table: "account_lifecycle", name: "account_lifecycle_state_check", type: "c", columns: ["state"], tokens: ["'active'", "'blocked'"], since: M5 },
+    { table: "account_lifecycle", name: "account_lifecycle_state_check", type: "c", columns: ["state"], tokens: ["'active'", "'blocked'"], since: M5, variants: [{ since: M13, tokens: ["'active'", "'blocked'", "'deleting'"] }] },
+    // Solicitudes y marcas de supresión (0013): sin FK a auth.users para sobrevivir a la identidad.
+    { table: "account_deletions", name: "account_deletions_pkey", type: "p", columns: ["user_id"], since: M13 },
+    { table: "account_deletions", name: "account_deletions_state_check", type: "c", columns: ["state"], tokens: ["'pending'", "'running'", "'waiting_retry'", "'failed'", "'completed'"], since: M13 },
+    { table: "account_deletions", name: "account_deletions_step_check", type: "c", columns: ["step"], tokens: ["'sessions'", "'storage'", "'auth'", "'verify'", "'done'"], since: M13 },
+    { table: "account_deletions", name: "account_deletions_key_check", type: "c", columns: ["operation_key"], tokens: [">=16", "<=128"], since: M13 },
+    { table: "account_deletions", name: "account_deletions_error_check", type: "c", columns: ["error_code"], tokens: ["error_code is null", "'^[A-Z_]{1,64}$'"], since: M13 },
+    { table: "account_deletions", name: "account_deletions_counts_check", type: "c", columns: ["counts"], tokens: ["jsonb_typeof(counts)='object'"], since: M13 },
+    { table: "account_deletions", name: "account_deletions_attempts_check", type: "c", columns: ["attempts", "fencing_number"], tokens: ["attempts>=0", "fencing_number>=0"], since: M13 },
+    { table: "account_deletions", name: "account_deletions_lease_check", type: "c", columns: ["state", "lease_token"], tokens: ["state<>'running'", "lease_token is not null"], since: M13 },
+    { table: "account_deletions", name: "account_deletions_completed_check", type: "c", columns: ["state", "completed_at", "purge_after", "step"], tokens: ["state='completed'", "completed_at is not null", "purge_after is not null", "step='done'"], since: M13 },
     { table: "library_jobs", name: "library_jobs_pkey", type: "p", columns: ["id"], since: M5 },
     { table: "library_jobs", name: "library_jobs_user_id_users_id_fk", type: "f", columns: ["user_id"], references: "auth.users", refColumns: ["id"], onDelete: "c", since: M5 },
     { table: "library_jobs", name: "library_jobs_kind_check", type: "c", columns: ["kind"], tokens: ["'import'", "'covers'"], since: M5, variants: [{ since: M9, tokens: ["'import'", "'covers'", "'cover_asset'"] }] },
@@ -311,6 +333,8 @@ export const MANIFEST = Object.freeze({
     { table: "library_snapshot_chunks", name: "library_snapshot_chunks_digest_check", type: "c", columns: ["digest"], tokens: ["'^[0-9a-f]{64}$'"], since: M6 },
   ],
   indexes: [
+    { table: "account_deletions", name: "account_deletions_due_idx", unique: false, columns: ["next_attempt_at"], partial: true, since: M13 },
+    { table: "account_deletions", name: "account_deletions_purge_idx", unique: false, columns: ["purge_after"], partial: true, since: M13 },
     legacyTable({ name: "books_user_id_isbn_unique", unique: true, columns: ["user_id", "isbn"], partial: false }),
     legacyTable({ name: "books_user_id_id_unique", unique: true, columns: ["user_id", "id"], partial: false }),
     // T7: igualdad indexada por (dueño, ISBN-13) y una sola edición canónica por ISBN; listado por título; T8 sobre ejemplares.
@@ -376,6 +400,11 @@ export const MANIFEST = Object.freeze({
     { table: "library_snapshots", name: "library_snapshots_expires_at_idx", unique: false, columns: ["expires_at"], partial: false, since: M6 },
   ],
   columns: [
+    { table: "account_deletions", name: "user_id", type: "uuid", notNull: true, since: M13 },
+    { table: "account_deletions", name: "state", type: "text", notNull: true, defaultTokens: ["'pending'"], since: M13 },
+    { table: "account_deletions", name: "step", type: "text", notNull: true, defaultTokens: ["'sessions'"], since: M13 },
+    { table: "account_deletions", name: "lease_token", type: "uuid", notNull: false, since: M13 },
+    { table: "account_deletions", name: "purge_after", type: "timestamp with time zone", notNull: false, since: M13 },
     legacyTable({ name: "catalogue", type: "jsonb", notNull: true }),
     legacyTable({ name: "cover_asset_id", type: "uuid", notNull: false }),
     { table: "editions", name: "isbn13", type: "text", notNull: false, since: M10 },
@@ -450,7 +479,8 @@ export const MANIFEST = Object.freeze({
     cutoverFunction("books_view_delete", "trigger", 0, { securityDefiner: false }),
     cutoverFunction("library_snapshot_capture", "jsonb", 2, { authenticated: true }),
     cutoverFunction("library_snapshot_foreign_ids", "uuid[]", 1, { authenticated: true }),
-    cutoverFunction("cover_asset_revalidate", "text", 2, { authenticated: true }),
+    { ...cutoverFunction("cover_asset_revalidate", "text", 2, { authenticated: true }), until: M13 },
+    deletionFunction("cover_asset_revalidate", "text", 2, true),
     cutoverFunction("cover_asset_purge_candidates", "jsonb", 3),
     cutoverFunction("cover_asset_purge_confirm", "text[]", 3),
     { name: "saved_view_filters_valid", language: "plpgsql", returns: "boolean", args: 1, searchPath: "search_path=pg_catalog", securityDefiner: false, body: VIEWS.saved_view_filters_valid, execute: { authenticated: true, anon: false }, since: M7 },
@@ -458,7 +488,25 @@ export const MANIFEST = Object.freeze({
     { name: "rotate_book_version", language: "plpgsql", returns: "trigger", args: 0, searchPath: "search_path=pg_catalog", securityDefiner: false, body: "beginnew.version:=gen_random_uuid();returnnew;end;", since: M2 },
     // SECURITY DEFINER con search_path fijo: única vía de escritura de library_state.
     { name: "rotate_library_revision", language: "plpgsql", returns: "trigger", args: 0, searchPath: "search_path=pg_catalog", securityDefiner: true, body: normalizeBody(ROTATE_LIBRARY_REVISION), execute: { authenticated: false, anon: false }, since: M3 },
-    { name: "lock_library", language: "plpgsql", returns: "uuid", args: 0, searchPath: "search_path=pg_catalog", securityDefiner: true, body: normalizeBody(LOCK_LIBRARY), execute: { authenticated: true, anon: false }, since: M3 },
+    { name: "lock_library", language: "plpgsql", returns: "uuid", args: 0, searchPath: "search_path=pg_catalog", securityDefiner: true, body: normalizeBody(LOCK_LIBRARY), execute: { authenticated: true, anon: false }, since: M3, until: M13 },
+    // 0013: el bloqueo de colección exige cuenta activa (antes de crear la fila de estado y tras obtener el bloqueo).
+    deletionFunction("lock_library", "uuid", 0, true),
+    deletionFunction("account_write_allowed", "boolean", 0, true),
+    deletionFunction("account_deletion_request", "jsonb", 1, true),
+    deletionFunction("account_deletion_status", "jsonb", 0, true),
+    deletionFunction("account_deletion_step_tables", "text[]", 1, false, false),
+    deletionFunction("account_deletion_step_remaining", "integer", 2),
+    deletionFunction("account_deletion_lease", "jsonb", 2),
+    deletionFunction("account_deletion_claim", "jsonb", 2),
+    deletionFunction("account_deletion_purge", "integer", 4),
+    deletionFunction("account_deletion_objects", "jsonb", 2),
+    deletionFunction("account_residue", "jsonb", 1),
+    deletionFunction("account_deletion_advance", "text", 5),
+    deletionFunction("account_deletion_fail", "text", 5),
+    deletionFunction("account_deletion_complete", "jsonb", 3),
+    deletionFunction("account_deletion_retry", "integer", 1),
+    deletionFunction("account_deletion_suppress", "boolean", 3),
+    deletionFunction("account_deletion_purge_marks", "integer", 1),
     catalogueFunction("catalogue_reserve", "jsonb", 8),
     catalogueFunction("catalogue_release", "boolean", 3),
     catalogueFunction("catalogue_begin", "jsonb", 9),
@@ -466,8 +514,11 @@ export const MANIFEST = Object.freeze({
     catalogueFunction("catalogue_private_get", "jsonb", 7),
     catalogueFunction("catalogue_private_put", "boolean", 10),
     catalogueFunction("catalogue_invalidate", "integer", 3),
-    jobFunction("account_is_active", "boolean", 1),
-    jobFunction("account_set_state", "integer", 2),
+    { ...jobFunction("account_is_active", "boolean", 1), until: M13 },
+    { ...jobFunction("account_set_state", "integer", 2), until: M13 },
+    // 0013: una cuenta con solicitud o marca de supresión no está activa ni se reactiva por account_set_state.
+    deletionFunction("account_is_active", "boolean", 1),
+    deletionFunction("account_set_state", "integer", 2),
     jobFunction("library_job_create", "jsonb", 5, true),
     jobFunction("library_job_control", "jsonb", 3, true),
     { ...jobFunction("library_job_claim", "jsonb", 3), until: M9 },
@@ -481,13 +532,16 @@ export const MANIFEST = Object.freeze({
     snapshotFunction("library_snapshot_purge_expired", "integer", 1, false),
     { name: "guard_import_staging", language: "plpgsql", returns: "trigger", args: 0, searchPath: "search_path=pg_catalog", securityDefiner: false, body: RESTORE.guard_import_staging, execute: { authenticated: false, anon: false }, since: M8 },
     { name: "import_session_purge_expired", language: "plpgsql", returns: "integer", args: 1, searchPath: "search_path=pg_catalog", securityDefiner: true, body: RESTORE.import_session_purge_expired, execute: { authenticated: false, anon: false }, since: M8 },
-    assetFunction("cover_object_access", "boolean", 2),
+    { ...assetFunction("cover_object_access", "boolean", 2), until: M13 },
+    // 0013: retirar objetos de storage.objects también exige cuenta activa.
+    deletionFunction("cover_object_access", "boolean", 2, true),
     assetFunction("cover_asset_quota", "text", 1, false),
     assetFunction("cover_asset_request", "jsonb", 7),
     assetFunction("cover_asset_begin_upload", "jsonb", 0),
     assetFunction("cover_asset_authorize", "boolean", 2),
     assetFunction("cover_asset_register", "jsonb", 7),
-    assetFunction("cover_asset_discard", "boolean", 1),
+    { ...assetFunction("cover_asset_discard", "boolean", 1), until: M13 },
+    deletionFunction("cover_asset_discard", "boolean", 1, true),
     { ...assetFunction("cover_asset_revalidate", "text", 2), until: M11 },
     assetFunction("guard_book_cover_asset", "trigger", 0, false, false),
     { ...assetFunction("cover_asset_purge_candidates", "jsonb", 3, false), until: M11 },
@@ -655,7 +709,8 @@ export function verifyManifest(facts, appliedTags) {
   for (const expected of expectedPolicies) {
     const found = facts.policies.find((p) => p.name === expected.name && p.table === expected.table)
     const cmd = { r: "SELECT", a: "INSERT", w: "UPDATE", d: "DELETE", "*": "ALL" }[found?.cmd]
-    const okay = found && cmd === expected.cmd && found.permissive && same(found.roles, expected.roles) && normalizeExpression(found.using) === expected.using && normalizeExpression(found.check) === expected.check
+    // Una política RESTRICTIVE (0013) se declara con `permissive: false`; el resto son permisivas.
+    const okay = found && cmd === expected.cmd && found.permissive === (expected.permissive ?? true) && same(found.roles, expected.roles) && normalizeExpression(found.using) === expected.using && normalizeExpression(found.check) === expected.check
     result(`policy.${expected.name}`, okay, `Política ${expected.name} (${expected.cmd} TO ${expected.roles.join(",")}) conforme.`, found ? `La política ${expected.name} difiere en comando, roles o expresión normalizada.` : `Falta la política ${expected.name} en biblib.${expected.table}.`)
   }
   for (const extra of facts.policies.filter((p) => !expectedPolicies.some((e) => e.name === p.name && e.table === p.table))) {

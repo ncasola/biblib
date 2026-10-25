@@ -15,7 +15,7 @@ import { classify, closeConnection, connect, inspectDatabase, readLedger, resolv
 
 const repo = fileURLToPath(new URL("../../", import.meta.url))
 const drizzleDir = path.join(repo, "drizzle")
-// Metadatos reales capturados de Supabase local: tras 0002 (U-INF-04), tras 0003 (U-DAT-01), tras 0004 (U-DAT-05), tras 0005 (U-DAT-03), tras 0006 (U-DAT-02), tras 0007 (U-EXP-02), tras 0008 (U-DAT-04), tras 0009 (U-DAT-10), tras 0010, 0011 y 0012 (U-DAT-06, head actual).
+// Metadatos reales capturados de Supabase local: tras 0002 (U-INF-04), tras 0003 (U-DAT-01), tras 0004 (U-DAT-05), tras 0005 (U-DAT-03), tras 0006 (U-DAT-02), tras 0007 (U-EXP-02), tras 0008 (U-DAT-04), tras 0009 (U-DAT-10), tras 0010, 0011 y 0012 (U-DAT-06) y tras 0013 (U-OPS-03, head actual).
 const facts0002 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0002.json"), "utf8"))
 const facts0003 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0003.json"), "utf8"))
 const facts0004 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0004.json"), "utf8"))
@@ -26,7 +26,8 @@ const facts0008 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrat
 const facts0009 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0009.json"), "utf8"))
 const facts0010 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0010.json"), "utf8"))
 const facts0011 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0011.json"), "utf8"))
-const facts = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0012.json"), "utf8"))
+const facts0012 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0012.json"), "utf8"))
+const facts = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0013.json"), "utf8"))
 const HEAD_0010 = MANIFEST_MIGRATIONS.slice(0, 11)
 const named = (list, name) => list.find((item) => item.name === name)
 const temporary = []
@@ -112,7 +113,7 @@ describe("ledger", () => {
     assert.deepEqual(compareLedger(entries, rowsFor(entries)).pending, [])
     const partial = compareLedger(entries, rowsFor(entries, 1))
     assert.equal(partial.appliedHead.tag, "0000_biblib_init")
-    assert.deepEqual(partial.pending, ["0001_library_integrity", "0002_book_versions", "0003_library_revision", "0004_catalogue_coordination", "0005_library_jobs", "0006_library_snapshots", "0007_saved_views", "0008_restore_sessions", "0009_cover_assets", "0010_works_editions_copies", "0011_copies_cutover", "0012_model_account_deletion"])
+    assert.deepEqual(partial.pending, ["0001_library_integrity", "0002_book_versions", "0003_library_revision", "0004_catalogue_coordination", "0005_library_jobs", "0006_library_snapshots", "0007_saved_views", "0008_restore_sessions", "0009_cover_assets", "0010_works_editions_copies", "0011_copies_cutover", "0012_model_account_deletion", "0013_account_deletion"])
     assert.equal(compareLedger(entries, []).pending.length, entries.length)
   })
 
@@ -419,11 +420,39 @@ describe("manifest de objetos", () => {
   test("0012: la poda del modelo es SECURITY DEFINER para que Auth pueda borrar una cuenta en cascada", () => {
     // Los metadatos reales de 0011 cumplen su head y, con 0012, solo fallan las dos funciones de poda.
     assert.deepEqual(failing(verifyManifest(facts0011, MANIFEST_MIGRATIONS.slice(0, 12))), [])
-    assert.deepEqual(failing(verifyManifest(facts0011, MANIFEST_MIGRATIONS)).sort(), ["function.prune_orphan_editions", "function.prune_orphan_works"])
+    assert.deepEqual(failing(verifyManifest(facts0011, MANIFEST_MIGRATIONS.slice(0, 13))).sort(), ["function.prune_orphan_editions", "function.prune_orphan_works"])
     const invoker = clone(facts); named(invoker.functions, "prune_orphan_works").security_definer = false
     assert.deepEqual(failing(verifyManifest(invoker, MANIFEST_MIGRATIONS)), ["function.prune_orphan_works"])
     const callable = clone(facts); named(callable.functions, "prune_orphan_editions").execute_authenticated = true
     assert.deepEqual(failing(verifyManifest(callable, MANIFEST_MIGRATIONS)), ["function.prune_orphan_editions"])
+  })
+
+  test("0013: eliminación de cuenta con guardas RESTRICTIVE, marca sin privilegios de cliente y funciones administrativas", () => {
+    // Los metadatos reales de 0012 cumplen su head; con 0013 faltan la tabla, las guardas y las funciones nuevas o sustituidas.
+    assert.deepEqual(failing(verifyManifest(facts0012, MANIFEST_MIGRATIONS.slice(0, 13))), [])
+    const behind = failing(verifyManifest(facts0012, MANIFEST_MIGRATIONS))
+    for (const id of ["rls.account_deletions", "policy.copies_update_active", "policy.import_session_rows_insert_active", "function.account_deletion_request", "function.lock_library", "function.cover_object_access", "constraint.account_lifecycle_state_check"]) assert.ok(behind.includes(id), id)
+    // Una guarda permisiva (OR con la del dueño) o ausente ya no impide escribir a un JWT antiguo.
+    const permissive = clone(facts); named(permissive.policies, "shelves_insert_active").permissive = true
+    assert.deepEqual(failing(verifyManifest(permissive, MANIFEST_MIGRATIONS)), ["policy.shelves_insert_active"])
+    const missing = { ...facts, policies: facts.policies.filter((p) => p.name !== "copies_delete_active") }
+    assert.deepEqual(failing(verifyManifest(missing, MANIFEST_MIGRATIONS)), ["policy.copies_delete_active"])
+    const bypass = clone(facts); named(bypass.policies, "editions_update_active").check = "true"
+    assert.deepEqual(failing(verifyManifest(bypass, MANIFEST_MIGRATIONS)), ["policy.editions_update_active"])
+    // La marca y el estado no se leen ni escriben desde el cliente; las funciones administrativas no son una vía del navegador.
+    const readable = clone(facts); readable.grants.push({ grantee: "authenticated", table: "account_deletions", privilege: "SELECT" })
+    assert.deepEqual(failing(verifyManifest(readable, MANIFEST_MIGRATIONS)), ["grant.authenticated.account_deletions"])
+    for (const name of ["account_deletion_claim", "account_deletion_purge", "account_deletion_advance", "account_deletion_complete", "account_deletion_retry", "account_deletion_suppress", "account_residue", "account_set_state"]) {
+      const callable = clone(facts); named(callable.functions, name).execute_authenticated = true
+      assert.deepEqual(failing(verifyManifest(callable, MANIFEST_MIGRATIONS)), [`function.${name}`], `${name} no puede ser ejecutable por authenticated`)
+    }
+    const anon = clone(facts); named(anon.functions, "account_deletion_request").execute_anon = true
+    assert.deepEqual(failing(verifyManifest(anon, MANIFEST_MIGRATIONS)), ["function.account_deletion_request"])
+    // Volver al bloqueo de 0003 (sin guarda) o a la guarda de Storage de 0009 (retirar sin cuenta activa) es drift.
+    const unguarded = clone(facts); named(unguarded.functions, "lock_library").body = named(facts0012.functions, "lock_library").body
+    assert.deepEqual(failing(verifyManifest(unguarded, MANIFEST_MIGRATIONS)), ["function.lock_library"])
+    const storage = clone(facts); named(storage.functions, "cover_object_access").body = named(facts0012.functions, "cover_object_access").body
+    assert.deepEqual(failing(verifyManifest(storage, MANIFEST_MIGRATIONS)), ["function.cover_object_access"])
   })
 
   test("drift del modelo de ejemplares (0010/0011): vista, RLS, FK con dueño, unicidad, permisos y copia congelada", () => {

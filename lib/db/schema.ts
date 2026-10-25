@@ -16,6 +16,19 @@ const authUsers = pgSchema("auth").table("users", { id: uuid("id").primaryKey().
 export const biblibSchema = pgSchema("biblib")
 const ownRow = (userIdColumn: AnyPgColumn) => sql`(select auth.uid() = ${userIdColumn})`
 
+/*
+ * U-OPS-03: con la cuenta en eliminación ninguna escritura de cliente pasa la RLS, tampoco con un JWT emitido antes
+ * de revocar las sesiones. Políticas RESTRICTIVE (se suman a las del dueño) en cada tabla con privilegios de escritura
+ * para `authenticated`; `biblib.account_write_allowed()` (0013) lanza BD001 y el cliente no puede cambiar su estado.
+ */
+type WriteCommand = "insert" | "update" | "delete"
+const activeAccount = sql`(select biblib.account_write_allowed())`
+const activeAccountPolicies = (name: string, commands: readonly WriteCommand[]) => commands.map((command) => pgPolicy(`${name}_${command}_active`, {
+  as: "restrictive", for: command, to: authenticatedRole,
+  ...(command === "insert" ? { withCheck: activeAccount } : command === "update" ? { using: activeAccount, withCheck: activeAccount } : { using: activeAccount }),
+}))
+const ALL_WRITES = ["insert", "update", "delete"] as const
+
 /** Preferencias privadas independientes de la revisión de colección (U-EXP-02). */
 export const savedBookViews = biblibSchema.table("saved_book_views", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -36,6 +49,7 @@ export const savedBookViews = biblibSchema.table("saved_book_views", {
   pgPolicy("saved_book_views_insert_own", { for: "insert", to: authenticatedRole, withCheck: ownRow(table.userId) }),
   pgPolicy("saved_book_views_update_own", { for: "update", to: authenticatedRole, using: ownRow(table.userId), withCheck: ownRow(table.userId) }),
   pgPolicy("saved_book_views_delete_own", { for: "delete", to: authenticatedRole, using: ownRow(table.userId) }),
+  ...activeAccountPolicies("saved_book_views", ALL_WRITES),
 ]).enableRLS()
 
 export const shelves = biblibSchema.table(
@@ -78,6 +92,7 @@ export const shelves = biblibSchema.table(
       to: authenticatedRole,
       using: sql`${ownRow(table.userId)} and not ${table.isDefault}`,
     }),
+    ...activeAccountPolicies("shelves", ALL_WRITES),
   ],
 ).enableRLS()
 
@@ -136,6 +151,7 @@ const ownPolicies = (name: string, userIdColumn: AnyPgColumn) => [
   pgPolicy(`${name}_insert_own`, { for: "insert", to: authenticatedRole, withCheck: ownCopyRow(userIdColumn) }),
   pgPolicy(`${name}_update_own`, { for: "update", to: authenticatedRole, using: ownCopyRow(userIdColumn), withCheck: ownCopyRow(userIdColumn) }),
   pgPolicy(`${name}_delete_own`, { for: "delete", to: authenticatedRole, using: ownCopyRow(userIdColumn) }),
+  ...activeAccountPolicies(name, ALL_WRITES),
 ]
 
 export const works = biblibSchema.table("works", {
@@ -376,6 +392,7 @@ export const importPreviews = biblibSchema.table(
       to: authenticatedRole,
       using: ownRow(table.userId),
     }),
+    ...activeAccountPolicies("import_previews", ["insert", "delete"]),
   ],
 ).enableRLS()
 
@@ -420,6 +437,7 @@ export const libraryOperations = biblibSchema.table(
       to: authenticatedRole,
       withCheck: ownRow(table.userId),
     }),
+    ...activeAccountPolicies("library_operations", ["insert"]),
   ],
 ).enableRLS()
 
@@ -567,6 +585,7 @@ export const cataloguePrivateCache = biblibSchema.table(
       to: authenticatedRole,
       using: ownRow(table.ownerId),
     }),
+    ...activeAccountPolicies("catalogue_private_cache", ["delete"]),
   ],
 ).enableRLS()
 
@@ -583,7 +602,8 @@ export const libraryJobFenceSeq = biblibSchema.sequence("library_job_fence_seq")
 
 /**
  * Ciclo de vida mínimo de la cuenta: sin fila equivale a activa. Un estado `blocked` impide que un
- * trabajador escriba en su nombre; lo revalida cada transacción del ejecutor.
+ * trabajador escriba en su nombre; lo revalida cada transacción del ejecutor. `deleting` (U-OPS-03) lo
+ * fija solo la solicitud de eliminación: además bloquea toda escritura de cliente y nadie lo revierte.
  */
 export const accountLifecycle = biblibSchema.table(
   "account_lifecycle",
@@ -591,11 +611,11 @@ export const accountLifecycle = biblibSchema.table(
     userId: uuid("user_id")
       .primaryKey()
       .references(() => authUsers.id, { onDelete: "cascade" }),
-    state: text("state").$type<"active" | "blocked">().notNull().default("active"),
+    state: text("state").$type<"active" | "blocked" | "deleting">().notNull().default("active"),
     changedAt: timestamp("changed_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
-    check("account_lifecycle_state_check", sql`${table.state} in ('active', 'blocked')`),
+    check("account_lifecycle_state_check", sql`${table.state} in ('active', 'blocked', 'deleting')`),
     pgPolicy("account_lifecycle_select_own", {
       for: "select",
       to: authenticatedRole,
@@ -603,6 +623,52 @@ export const accountLifecycle = biblibSchema.table(
     }),
   ],
 ).enableRLS()
+
+/*
+ * Eliminación de cuenta (U-OPS-03). Una fila por cuenta: la solicitud idempotente, el paso en curso del worker
+ * administrativo (lease y fencing como los trabajos) y, al terminar, la marca técnica mínima de supresión: sin FK a
+ * `auth.users` (sobrevive a la identidad) ni contenido bibliográfico, para filtrar la cuenta al restaurar un respaldo
+ * anterior. Sin privilegios de cliente: el dueño solicita y consulta por `account_deletion_request`/`_status`; el
+ * resto de funciones solo las ejecuta el proceso administrativo. Plazo de la marca: `purge_after` (docs/retencion.md).
+ */
+export type AccountDeletionState = "pending" | "running" | "waiting_retry" | "failed" | "completed"
+export type AccountDeletionStep = "sessions" | "storage" | "covers" | "snapshots" | "staging" | "jobs" | "views" | "previews" | "operations"
+  | "private_cache" | "copies" | "editions" | "works" | "shelves" | "state" | "auth" | "verify" | "done"
+const deletionStates = sql`('pending', 'running', 'waiting_retry', 'failed', 'completed')`
+const deletionSteps = sql`('sessions', 'storage', 'covers', 'snapshots', 'staging', 'jobs', 'views', 'previews', 'operations', 'private_cache', 'copies', 'editions', 'works', 'shelves', 'state', 'auth', 'verify', 'done')`
+
+export const accountDeletions = biblibSchema.table("account_deletions", {
+  userId: uuid("user_id").primaryKey(),
+  state: text("state").$type<AccountDeletionState>().notNull().default("pending"),
+  step: text("step").$type<AccountDeletionStep>().notNull().default("sessions"),
+  operationKey: text("operation_key").notNull(),
+  requestedAt: timestamp("requested_at", { withTimezone: true }).notNull().defaultNow(),
+  attempts: integer("attempts").notNull().default(0),
+  nextAttemptAt: timestamp("next_attempt_at", { withTimezone: true }).notNull().defaultNow(),
+  leaseToken: uuid("lease_token"),
+  leaseUntil: timestamp("lease_until", { withTimezone: true }),
+  fencingNumber: bigint("fencing_number", { mode: "bigint" }).notNull().default(sql`0`),
+  // Código técnico del último fallo (sin detalles ni rutas); solo lo ve la operación.
+  errorCode: text("error_code"),
+  // Filas y objetos retirados por paso mientras dura; se vacía al terminar.
+  counts: jsonb("counts").$type<Record<string, number>>().notNull().default({}),
+  completedAt: timestamp("completed_at", { withTimezone: true }),
+  purgeAfter: timestamp("purge_after", { withTimezone: true }),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index("account_deletions_due_idx").on(table.nextAttemptAt).where(sql`${table.state} in ('pending', 'running', 'waiting_retry')`),
+  index("account_deletions_purge_idx").on(table.purgeAfter).where(sql`${table.state} = 'completed'`),
+  check("account_deletions_state_check", sql`${table.state} in ${deletionStates}`),
+  check("account_deletions_step_check", sql`${table.step} in ${deletionSteps}`),
+  check("account_deletions_key_check", sql`length(${table.operationKey}) between 16 and 128`),
+  check("account_deletions_error_check", sql`${table.errorCode} is null or ${table.errorCode} ~ '^[A-Z_]{1,64}$'`),
+  check("account_deletions_counts_check", sql`jsonb_typeof(${table.counts}) = 'object'`),
+  check("account_deletions_attempts_check", sql`${table.attempts} >= 0 and ${table.fencingNumber} >= 0`),
+  // En ejecución siempre hay testigo de lease; un restore puede vencer su plazo (lease_until nulo) sin soltarlo.
+  check("account_deletions_lease_check", sql`${table.state} <> 'running' or ${table.leaseToken} is not null`),
+  // Terminada si y solo si tiene fecha de fin, plazo de la marca y ningún paso pendiente.
+  check("account_deletions_completed_check", sql`(${table.state} = 'completed') = (${table.completedAt} is not null and ${table.purgeAfter} is not null and ${table.step} = 'done')`),
+]).enableRLS()
 
 export const libraryJobs = biblibSchema.table(
   "library_jobs",
@@ -838,6 +904,7 @@ export const importSessions = biblibSchema.table(
     pgPolicy("import_sessions_insert_own", { for: "insert", to: authenticatedRole, withCheck: ownRow(table.userId) }),
     pgPolicy("import_sessions_update_own", { for: "update", to: authenticatedRole, using: ownRow(table.userId), withCheck: ownRow(table.userId) }),
     pgPolicy("import_sessions_delete_own", { for: "delete", to: authenticatedRole, using: ownRow(table.userId) }),
+    ...activeAccountPolicies("import_sessions", ALL_WRITES),
   ],
 ).enableRLS()
 
@@ -872,6 +939,7 @@ export const importSessionParts = biblibSchema.table(
     pgPolicy("import_session_parts_insert_own", { for: "insert", to: authenticatedRole, withCheck: ownRow(table.userId) }),
     pgPolicy("import_session_parts_update_own", { for: "update", to: authenticatedRole, using: ownRow(table.userId), withCheck: ownRow(table.userId) }),
     pgPolicy("import_session_parts_delete_own", { for: "delete", to: authenticatedRole, using: ownRow(table.userId) }),
+    ...activeAccountPolicies("import_session_parts", ALL_WRITES),
   ],
 ).enableRLS()
 
@@ -897,6 +965,7 @@ export const importSessionChunks = biblibSchema.table(
     pgPolicy("import_session_chunks_select_own", { for: "select", to: authenticatedRole, using: ownRow(table.userId) }),
     pgPolicy("import_session_chunks_insert_own", { for: "insert", to: authenticatedRole, withCheck: ownRow(table.userId) }),
     pgPolicy("import_session_chunks_delete_own", { for: "delete", to: authenticatedRole, using: ownRow(table.userId) }),
+    ...activeAccountPolicies("import_session_chunks", ["insert", "delete"]),
   ],
 ).enableRLS()
 
@@ -922,6 +991,7 @@ export const importSessionRows = biblibSchema.table(
     pgPolicy("import_session_rows_select_own", { for: "select", to: authenticatedRole, using: ownRow(table.userId) }),
     pgPolicy("import_session_rows_insert_own", { for: "insert", to: authenticatedRole, withCheck: ownRow(table.userId) }),
     pgPolicy("import_session_rows_delete_own", { for: "delete", to: authenticatedRole, using: ownRow(table.userId) }),
+    ...activeAccountPolicies("import_session_rows", ["insert", "delete"]),
   ],
 ).enableRLS()
 
