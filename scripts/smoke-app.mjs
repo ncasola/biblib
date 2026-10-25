@@ -341,7 +341,7 @@ async function browserChecks(cdp) {
   await navigate("/books/add", "document.body.innerText.includes('Buscar libro')")
   await field("Número ISBN", "0-7475-3269-9")
   await click("Buscar libro")
-  await wait("document.body.innerText.includes('Este libro ya está en tu biblioteca')", "ISBN equivalente ya catalogado")
+  await wait("document.body.innerText.includes('Esta edición ya está en tu biblioteca')", "ISBN equivalente ya catalogado")
   assert.equal(await evaluate(`Boolean(document.querySelector('a[href="/book/${createdBookId}"]'))`), true)
   record("ISBN-10 con guiones detecta libro existente y conserva enlace")
 
