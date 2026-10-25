@@ -1,8 +1,9 @@
 /* ==================================================================
    Estantería 3D (U-UX-02) · prototipo «Estantería 3D nueva»
-   CSS 3D sin dependencias. Variables propias con valores por defecto
-   (madera y latón) para no depender de los tokens globales: el tema
-   oscuro cambia solo la sala y el panel; el mueble es de madera en
+   CSS 3D sin dependencias. Madera, sala y latón son variables propias;
+   acción, foco, latón de texto, estados y fuentes toman los tokens de
+   «Biblioteca nocturna» (U-UX-01) con un valor por defecto propio. El
+   tema oscuro cambia solo la sala y el panel; el mueble es de madera en
    ambos temas. La madera se elige con `data-madera` (nogal por defecto).
    ================================================================== */
 
@@ -24,24 +25,24 @@
   --s3-room-3: #d9c39c;
   --s3-ink: #2a1d12;
   --s3-ink-soft: #5f4a35;
-  --s3-eyebrow: #7a5a1e;
+  --s3-eyebrow: var(--brass-text, #7a5a12);
   --s3-panel-bg: rgba(255, 250, 240, 0.9);
   --s3-panel-border: rgba(60, 40, 20, 0.18);
   --s3-tile: rgba(60, 40, 20, 0.06);
   --s3-pill-border: rgba(60, 40, 20, 0.3);
   --s3-pill-hover: rgba(60, 40, 20, 0.08);
-  --s3-action: #b3261e;
-  --s3-action-hover: #961f18;
-  --s3-action-ink: #fffaf0;
-  --s3-focus: #7a4a00;
+  --s3-action: var(--primary, #b3302a);
+  --s3-action-hover: #8a2a1e;
+  --s3-action-ink: var(--primary-foreground, #fffaf0);
+  --s3-focus: var(--ring, #8a6514);
   --s3-floor-shadow: rgba(60, 35, 15, 0.45);
-  --s3-status-read: #2f6b1f;
-  --s3-status-reading: #8a5a00;
-  --s3-status-to-read: #2d4a9a;
-  --s3-status-unread: #5f4a35;
-  /* Tipografía: la del sistema visual si existe; si no, serif clásica. */
-  --s3-serif: var(--font-serif, Georgia, "Times New Roman", serif);
-  --s3-sans: var(--font-sans, Inter, system-ui, sans-serif);
+  --s3-status-read: var(--status-read, #3f5a1c);
+  --s3-status-reading: var(--status-reading, #7a5000);
+  --s3-status-to-read: var(--status-to-read, #2f4a9a);
+  --s3-status-unread: var(--status-unread, #5c4a39);
+  /* Fraunces e Inter autoalojadas (app/fonts.ts); sin ellas, serif y sans del sistema. */
+  --s3-serif: var(--font-fraunces, Georgia), Georgia, "Times New Roman", serif;
+  --s3-sans: var(--font-inter, system-ui), ui-sans-serif, system-ui, sans-serif;
   /* Geometría compartida (px sin unidad para poder calcular). */
   --s3-depth: 120;
   --s3-book-depth: 92;
@@ -63,20 +64,20 @@
   --s3-room-3: #120c08;
   --s3-ink: #fbf3e2;
   --s3-ink-soft: #e3d6bf;
-  --s3-eyebrow: #d9c08a;
+  --s3-eyebrow: var(--brass-text, #e2bd63);
   --s3-panel-bg: rgba(20, 13, 9, 0.78);
   --s3-panel-border: rgba(246, 237, 221, 0.14);
   --s3-tile: rgba(246, 237, 221, 0.06);
   --s3-pill-border: rgba(246, 237, 221, 0.28);
   --s3-pill-hover: rgba(246, 237, 221, 0.08);
-  --s3-action: #c0392b;
+  --s3-action: var(--primary, #c0392b);
   --s3-action-hover: #a93226;
-  --s3-focus: #f2c94c;
+  --s3-focus: var(--ring, #f2d58a);
   --s3-floor-shadow: rgba(0, 0, 0, 0.65);
-  --s3-status-read: #9fd18b;
-  --s3-status-reading: #f2c94c;
-  --s3-status-to-read: #b9c7ff;
-  --s3-status-unread: #e3d6bf;
+  --s3-status-read: var(--status-read, #a9c47f);
+  --s3-status-reading: var(--status-reading, #f2c94c);
+  --s3-status-to-read: var(--status-to-read, #b9c7ff);
+  --s3-status-unread: var(--status-unread, #d4c6ad);
 }
 
 .s3-root[data-madera="roble"] {
