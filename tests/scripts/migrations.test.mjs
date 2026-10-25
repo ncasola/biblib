@@ -15,7 +15,7 @@ import { classify, closeConnection, connect, inspectDatabase, readLedger, resolv
 
 const repo = fileURLToPath(new URL("../../", import.meta.url))
 const drizzleDir = path.join(repo, "drizzle")
-// Metadatos reales capturados de Supabase local: tras 0002 (U-INF-04), tras 0003 (U-DAT-01), tras 0004 (U-DAT-05), tras 0005 (U-DAT-03), tras 0006 (U-DAT-02), tras 0007 (U-EXP-02), tras 0008 (U-DAT-04) y tras 0009 (U-DAT-10, head actual).
+// Metadatos reales capturados de Supabase local: tras 0002 (U-INF-04), tras 0003 (U-DAT-01), tras 0004 (U-DAT-05), tras 0005 (U-DAT-03), tras 0006 (U-DAT-02), tras 0007 (U-EXP-02), tras 0008 (U-DAT-04), tras 0009 (U-DAT-10), tras 0010 y tras 0011 (U-DAT-06, head actual).
 const facts0002 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0002.json"), "utf8"))
 const facts0003 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0003.json"), "utf8"))
 const facts0004 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0004.json"), "utf8"))
@@ -23,7 +23,10 @@ const facts0005 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrat
 const facts0006 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0006.json"), "utf8"))
 const facts0007 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0007.json"), "utf8"))
 const facts0008 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0008.json"), "utf8"))
-const facts = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0009.json"), "utf8"))
+const facts0009 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0009.json"), "utf8"))
+const facts0010 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0010.json"), "utf8"))
+const facts = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0011.json"), "utf8"))
+const HEAD_0010 = MANIFEST_MIGRATIONS.slice(0, 11)
 const named = (list, name) => list.find((item) => item.name === name)
 const temporary = []
 after(() => { for (const dir of temporary) rmSync(dir, { recursive: true, force: true }) })
@@ -108,7 +111,7 @@ describe("ledger", () => {
     assert.deepEqual(compareLedger(entries, rowsFor(entries)).pending, [])
     const partial = compareLedger(entries, rowsFor(entries, 1))
     assert.equal(partial.appliedHead.tag, "0000_biblib_init")
-    assert.deepEqual(partial.pending, ["0001_library_integrity", "0002_book_versions", "0003_library_revision", "0004_catalogue_coordination", "0005_library_jobs", "0006_library_snapshots", "0007_saved_views", "0008_restore_sessions", "0009_cover_assets"])
+    assert.deepEqual(partial.pending, ["0001_library_integrity", "0002_book_versions", "0003_library_revision", "0004_catalogue_coordination", "0005_library_jobs", "0006_library_snapshots", "0007_saved_views", "0008_restore_sessions", "0009_cover_assets", "0010_works_editions_copies", "0011_copies_cutover"])
     assert.equal(compareLedger(entries, []).pending.length, entries.length)
   })
 
@@ -181,7 +184,10 @@ describe("manifest de objetos", () => {
 
   test("los metadatos reales tras 0008 cumplen su prefijo", () => { assert.deepEqual(failing(verifyManifest(facts0008, MANIFEST_MIGRATIONS.slice(0, 9))), []) })
 
-  test("los metadatos reales tras 0009 cumplen el manifest completo", () => {
+  test("los metadatos reales tras 0009 cumplen su prefijo y los de 0010 el head 0010", () => {
+    assert.deepEqual(failing(verifyManifest(facts0009, HEAD_0010.slice(0, 10))), [])
+    // Objetos de la tabla books anteriores a 0011 (U-DAT-06): se comprueban con el head 0010, en el que aún existen.
+    const facts = facts0010, MANIFEST_MIGRATIONS = HEAD_0010
     const checks = verifyManifest(facts, MANIFEST_MIGRATIONS)
     assert.deepEqual(failing(checks), [])
     assert.ok(checks.length >= 320)
@@ -193,8 +199,8 @@ describe("manifest de objetos", () => {
     assert.ok(failing(verifyManifest(facts, MANIFEST_MIGRATIONS.slice(0, 6))).includes("policy.library_snapshots_select_own"))
     // Antes de 0006 faltan las funciones de captura: los metadatos de 0005 no cumplen el manifest completo.
     assert.ok(failing(verifyManifest(facts0005, MANIFEST_MIGRATIONS)).includes("function.library_snapshot_capture"))
-    assert.equal(expectedObjects().triggers[0], "books_rotate_version:BEFORE INSERT OR UPDATE ROW")
-    assert.deepEqual(expectedObjects().triggers.slice(1, 3), ["books_rotate_library_revision:AFTER INSERT OR UPDATE OR DELETE ROW", "shelves_rotate_library_revision:AFTER INSERT OR UPDATE OR DELETE ROW"])
+    assert.equal(expectedObjects(MANIFEST_MIGRATIONS).triggers[0], "books_rotate_version:BEFORE INSERT OR UPDATE ROW")
+    assert.deepEqual(expectedObjects(MANIFEST_MIGRATIONS).triggers.slice(1, 3), ["books_rotate_library_revision:AFTER INSERT OR UPDATE OR DELETE ROW", "shelves_rotate_library_revision:AFTER INSERT OR UPDATE OR DELETE ROW"])
     // Las tablas de 0003 con RLS y un head anterior que aún no las conoce marcan drift.
     assert.ok(failing(verifyManifest(facts, MANIFEST_MIGRATIONS.slice(0, 3))).includes("policy.library_state_select_own"))
     assert.ok(failing(verifyManifest(facts, MANIFEST_MIGRATIONS.slice(0, 4))).includes("policy.catalogue_private_cache_select_own"))
@@ -255,6 +261,8 @@ describe("manifest de objetos", () => {
   })
 
   test("drift de las versiones anteriores (0006): escritura de cliente, purga, propietario e índices", () => {
+    // Objetos de la tabla books anteriores a 0011 (U-DAT-06): se comprueban con el head 0010, en el que aún existen.
+    const facts = facts0010, MANIFEST_MIGRATIONS = HEAD_0010
     for (const table of ["library_snapshots", "library_snapshot_chunks"]) {
       for (const privilege of ["INSERT", "UPDATE", "DELETE"]) {
         const writable = clone(facts); writable.grants.push({ grantee: "authenticated", table, privilege })
@@ -307,6 +315,8 @@ describe("manifest de objetos", () => {
   })
 
   test("drift de las portadas privadas (0009): Storage, Google, ejecutor, escritura y propietario", () => {
+    // Objetos de la tabla books anteriores a 0011 (U-DAT-06): se comprueban con el head 0010, en el que aún existen.
+    const facts = facts0010, MANIFEST_MIGRATIONS = HEAD_0010
     // Bucket público, otros tipos o una política nueva en storage.objects abren las portadas privadas.
     const open = clone(facts); open.storage.buckets[0].public = true
     assert.deepEqual(failing(verifyManifest(open, MANIFEST_MIGRATIONS)), ["storage.bucket.biblib-covers"])
@@ -345,6 +355,8 @@ describe("manifest de objetos", () => {
   })
 
   test("drift de los objetos de 0003: escritura directa, permisos, seguridad y triggers", () => {
+    // Objetos de la tabla books anteriores a 0011 (U-DAT-06): se comprueban con el head 0010, en el que aún existen.
+    const facts = facts0010, MANIFEST_MIGRATIONS = HEAD_0010
     const write = clone(facts); write.grants.push({ grantee: "authenticated", table: "library_state", privilege: "UPDATE" })
     assert.deepEqual(failing(verifyManifest(write, MANIFEST_MIGRATIONS)), ["grant.authenticated.library_state"])
     const anonLock = clone(facts); named(anonLock.functions, "lock_library").execute_anon = true
@@ -366,6 +378,8 @@ describe("manifest de objetos", () => {
   })
 
   test("drift de trigger, función y políticas se detecta por metadatos", () => {
+    // Objetos de la tabla books anteriores a 0011 (U-DAT-06): se comprueban con el head 0010, en el que aún existen.
+    const facts = facts0010, MANIFEST_MIGRATIONS = HEAD_0010
     const noTrigger = { ...facts, triggers: facts.triggers.filter((t) => t.name !== "books_rotate_version") }
     assert.deepEqual(failing(verifyManifest(noTrigger, MANIFEST_MIGRATIONS)), ["trigger.books_rotate_version"])
     const after = clone(facts); named(after.triggers, "books_rotate_version").tgtype = 21 // AFTER INSERT OR UPDATE ROW
@@ -388,6 +402,52 @@ describe("manifest de objetos", () => {
     assert.deepEqual(failing(verifyManifest(anon, MANIFEST_MIGRATIONS)), ["grant.anon.books"])
     const fk = clone(facts); fk.constraints.find((c) => c.name === "books_owner_shelf_fk").on_delete = "c"
     assert.deepEqual(failing(verifyManifest(fk, MANIFEST_MIGRATIONS)), ["constraint.books_owner_shelf_fk"])
+  })
+
+  test("los metadatos reales tras 0011 cumplen el manifest completo: vista plana, modelo y books_legacy congelada", () => {
+    const checks = verifyManifest(facts, MANIFEST_MIGRATIONS)
+    assert.deepEqual(failing(checks), [])
+    assert.ok(checks.length >= 460)
+    // Los metadatos de 0010 no son un head 0011: falta la vista y sobra la sincronización.
+    const behind = failing(verifyManifest(facts0010, MANIFEST_MIGRATIONS))
+    assert.ok(behind.includes("view.books") && behind.includes("rls.books_legacy") && behind.includes("trigger.books_view_update"))
+    assert.ok(expectedObjects().views.includes("biblib.books"))
+    assert.ok(!expectedObjects().triggers.some((entry) => entry.startsWith("books_rotate_version")), "books ya no tiene los triggers de la tabla anterior")
+  })
+
+  test("drift del modelo de ejemplares (0010/0011): vista, RLS, FK con dueño, unicidad, permisos y copia congelada", () => {
+    const definer = clone(facts); named(definer.views, "books").options = []
+    assert.deepEqual(failing(verifyManifest(definer, MANIFEST_MIGRATIONS)), ["view.books"])
+    const anonView = clone(facts); anonView.grants.push({ grantee: "anon", table: "books", privilege: "SELECT" })
+    assert.deepEqual(failing(verifyManifest(anonView, MANIFEST_MIGRATIONS)), ["grant.anon.view.books"])
+    const legacyRead = clone(facts); legacyRead.grants.push({ grantee: "authenticated", table: "books_legacy", privilege: "SELECT" })
+    assert.deepEqual(failing(verifyManifest(legacyRead, MANIFEST_MIGRATIONS)), ["grant.authenticated.books_legacy"])
+    const legacyPolicy = clone(facts); legacyPolicy.policies.push({ ...named(legacyPolicy.policies, "copies_select_own"), name: "books_select_own", table: "books_legacy" })
+    assert.deepEqual(failing(verifyManifest(legacyPolicy, MANIFEST_MIGRATIONS)), ["policy.books_select_own"])
+    const open = clone(facts); named(open.policies, "editions_select_own").using = "true"
+    assert.deepEqual(failing(verifyManifest(open, MANIFEST_MIGRATIONS)), ["policy.editions_select_own"])
+    const noRls = clone(facts); named(noRls.tables, "copies").rls = false
+    assert.deepEqual(failing(verifyManifest(noRls, MANIFEST_MIGRATIONS)), ["rls.copies"])
+    const cascade = clone(facts); named(cascade.constraints, "copies_owner_edition_fk").on_delete = "c"
+    assert.deepEqual(failing(verifyManifest(cascade, MANIFEST_MIGRATIONS)), ["constraint.copies_owner_edition_fk"])
+    const ownerless = clone(facts); named(ownerless.constraints, "editions_owner_work_fk").columns = ["work_id"]
+    assert.deepEqual(failing(verifyManifest(ownerless, MANIFEST_MIGRATIONS)), ["constraint.editions_owner_work_fk"])
+    const duplicated = clone(facts); duplicated.indexes = duplicated.indexes.filter((i) => i.name !== "editions_user_isbn13_unique")
+    assert.deepEqual(failing(verifyManifest(duplicated, MANIFEST_MIGRATIONS)), ["index.editions_user_isbn13_unique"])
+    const verified = clone(facts); named(verified.constraints, "editions_catalogue_check").definition = "CHECK ((jsonb_typeof(catalogue) = 'object'::text))"
+    assert.deepEqual(failing(verifyManifest(verified, MANIFEST_MIGRATIONS)), ["constraint.editions_catalogue_check"])
+    const compare = clone(facts); named(compare.functions, "model_compare").execute_authenticated = true
+    assert.deepEqual(failing(verifyManifest(compare, MANIFEST_MIGRATIONS)), ["function.model_compare"])
+    const viewDefiner = clone(facts); named(viewDefiner.functions, "books_view_insert").security_definer = true
+    assert.deepEqual(failing(verifyManifest(viewDefiner, MANIFEST_MIGRATIONS)), ["function.books_view_insert"])
+    const unguarded = clone(facts); named(unguarded.triggers, "books_view_update").enabled = "D"
+    assert.deepEqual(failing(verifyManifest(unguarded, MANIFEST_MIGRATIONS)), ["trigger.books_view_update"])
+    const orphan = { ...facts, triggers: facts.triggers.filter((t) => t.name !== "editions_require_copy") }
+    assert.deepEqual(failing(verifyManifest(orphan, MANIFEST_MIGRATIONS)), ["trigger.editions_require_copy"])
+    const prune = clone(facts); named(prune.functions, "prune_orphan_editions").body = "BEGIN RETURN NULL; END;"
+    assert.deepEqual(failing(verifyManifest(prune, MANIFEST_MIGRATIONS)), ["function.prune_orphan_editions"])
+    const coverOnBooks = clone(facts); named(coverOnBooks.functions, "cover_asset_purge_confirm").body = named(facts0009.functions, "cover_asset_purge_confirm").body
+    assert.deepEqual(failing(verifyManifest(coverOnBooks, MANIFEST_MIGRATIONS)), ["function.cover_asset_purge_confirm"])
   })
 
   test("la comparación es semántica, no de pretty-print", () => {
