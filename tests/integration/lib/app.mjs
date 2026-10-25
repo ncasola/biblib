@@ -63,12 +63,34 @@ function resolveValue(rows, value) {
   if (value.startsWith("$$")) return value.slice(1)
   if (value === "$undefined") return undefined
   if (value.startsWith("$D")) return value.slice(2)
-  const reference = /^\$@?([0-9a-f]+)$/.exec(value)
+  const node = referencedNode(rows, value)
+  return "text" in node ? node.text : resolveValue(rows, node.json)
+}
+
+// `$<fila>` o, cuando React deduplica un objeto repetido, `$<fila>:<clave>:<clave>…`: la ruta se recorre
+// sobre el JSON sin resolver, porque puede apuntar dentro de la misma fila que se está resolviendo.
+function referencedNode(rows, value) {
+  const reference = /^\$@?([0-9a-f]+)((?::[^:]+)*)$/.exec(value)
   if (!reference) throw new BiblibError(EXIT.VERIFICATION_FAILED, "app", "Respuesta de la acción con un tipo no admitido por el harness.")
   const row = rows.get(reference[1])
-  if (!row || row.unsupported) throw new BiblibError(EXIT.VERIFICATION_FAILED, "app", "Respuesta de la acción incompleta.")
+  const incomplete = () => new BiblibError(EXIT.VERIFICATION_FAILED, "app", "Respuesta de la acción incompleta.")
+  if (!row || row.unsupported) throw incomplete()
   if (row.thrown) throw new ThrownInAction()
-  return "text" in row ? row.text : resolveValue(rows, row.json)
+  if ("text" in row) {
+    if (reference[2]) throw incomplete()
+    return { text: row.text }
+  }
+  let node = row.json
+  for (const key of reference[2].split(":").slice(1)) {
+    if (typeof node === "string" && /^\$@?[0-9a-f]/.test(node)) {
+      const inner = referencedNode(rows, node)
+      if ("text" in inner) throw incomplete()
+      node = inner.json
+    }
+    if (!node || typeof node !== "object" || !Object.hasOwn(node, key)) throw incomplete()
+    node = node[key]
+  }
+  return { json: node }
 }
 
 /**

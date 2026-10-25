@@ -1,0 +1,20 @@
+# Recursos Docker del perfil test tras db:local:down (UTC 2026-10-25T21:50:32Z)
+## Contenedores biblib-test en marcha
+(ninguno si la lista está vacía)
+## Redes
+biblib-test-network
+## Volúmenes (conservados)
+supabase_db_biblib-test
+supabase_storage_biblib-test
+## HolaERP (solo lectura; no tocado por este run)
+supabase_studio_holaerp | Exited (143) 21 minutes ago
+supabase_pg_meta_holaerp | Exited (0) 21 minutes ago
+supabase_edge_runtime_holaerp | Exited (255) 2 days ago
+supabase_storage_holaerp | Exited (0) 21 minutes ago
+supabase_rest_holaerp | Exited (0) 21 minutes ago
+supabase_realtime_holaerp | Exited (137) 21 minutes ago
+supabase_inbucket_holaerp | Exited (0) 21 minutes ago
+supabase_auth_holaerp | Exited (0) 21 minutes ago
+supabase_kong_holaerp | Exited (0) 21 minutes ago
+supabase_db_holaerp | Exited (0) 21 minutes ago
+holaerp-local-redis | Exited (0) 37 hours ago

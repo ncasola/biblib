@@ -58,8 +58,9 @@ test("el orden es exacto: 1, 1.5 y 2 por posición, con el orden desconocido al 
 })
 
 test("una serie incompleta es válida y un volumen sin posición se muestra como orden desconocido, al final", async () => {
-  const extra = await ctx.library(a.id)
-  const [unknown] = extra.books
+  // Un ejemplar más en la estantería de A: otra ctx.library(a.id) repetiría su estantería predeterminada.
+  const [unknown] = (await ctx.sql`insert into biblib.books (user_id, isbn, title, shelf_id, catalogue) values (${a.id}, ${`manual-${ctx.key("sin-posicion")}`}, ${ctx.label("sin posición")}, ${lib.shelf},
+    ${ctx.sql.json({ source: "open-library", sourceUrl: "https://openlibrary.org/books/OL1M", isbnVerified: false })}) returning id, edition_id as "editionId"`)
   const added = await link(unknown.editionId, saga.id)
   assert.equal(added.ok, true)
   assert.equal(added.value.link.position, undefined)
@@ -169,6 +170,13 @@ test("el filtro por serie del catálogo devuelve solo las ediciones de esa serie
   const result = await ctx.call("listBooksAction", [{ series: filtered.id, pageSize: 100 }], sessionA)
   assert.deepEqual(result.value.books.map((book) => book.id), [second.id])
   assert.equal(result.value.total, 1)
+  // Serie y etiquetas (U-PRO-01) se combinan: ambas condiciones a la vez.
+  const [tag] = await ctx.sql`insert into biblib.tags (user_id, name) values (${a.id}, ${ctx.label("etiqueta con serie")}) returning id`
+  await ctx.sql`insert into biblib.copy_tags (user_id, copy_id, tag_id) values (${a.id}, ${first.id}, ${tag.id})`
+  const tagged = (extra) => ctx.call("listBooksAction", [{ series: filtered.id, tagIds: [tag.id], pageSize: 100, ...extra }], sessionA)
+  assert.deepEqual((await tagged()).value.books, [], "la etiqueta está en un libro fuera de la serie")
+  await ctx.sql`insert into biblib.copy_tags (user_id, copy_id, tag_id) values (${a.id}, ${second.id}, ${tag.id})`
+  assert.deepEqual((await tagged({ tagMode: "and" })).value.books.map((book) => book.id), [second.id])
   const all = await ctx.call("listBooksAction", [{ pageSize: 100 }], sessionA)
   assert.ok(all.value.books.some((book) => book.id === first.id), "sin filtro, todos los libros")
   const invalid = await ctx.call("listBooksAction", [{ series: "no-es-un-uuid" }], sessionA)
