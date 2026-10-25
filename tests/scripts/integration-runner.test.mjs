@@ -47,6 +47,10 @@ test("integración: decodifica respuestas RSC de acciones, referencias, texto la
   const thrown = Buffer.from('0:{"a":"$@1","q":"","i":false,"b":"x"}\n1:E{"digest":"123"}\n')
   assert.deepEqual(decodeActionResponse(thrown), { value: undefined, thrown: true })
   assert.throws(() => decodeActionResponse(Buffer.from('0:{"a":"$Q1"}\n')), { code: EXIT.VERIFICATION_FAILED })
+  // React deduplica un objeto repetido con una ruta dentro de la fila (U-DAT-09: `plan.csv` comparte `omittedRows`).
+  const shared = Buffer.from('0:{"a":"$@1","q":"","i":false,"b":"x"}\n1:{"ok":true,"value":{"omittedRows":[{"ordinal":2}],"plan":{"csv":{"omittedRows":"$1:value:omittedRows"}}}}\n')
+  assert.deepEqual(decodeActionResponse(shared).value.value.plan.csv.omittedRows, [{ ordinal: 2 }])
+  assert.throws(() => decodeActionResponse(Buffer.from('0:{"a":"$2:b"}\n1:{"ok":true}\n2:{"b":"$1:value:falta"}\n')), { code: EXIT.VERIFICATION_FAILED })
 })
 
 test("integración: la sesión SSR se envejece sin tocar los tokens y se aplican Set-Cookie", () => {
