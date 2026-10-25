@@ -1,5 +1,5 @@
 import { createHash, randomUUID } from "node:crypto"
-import { and, asc, eq, inArray, sql } from "drizzle-orm"
+import { and, asc, eq, inArray, ne, sql } from "drizzle-orm"
 import type { DatabaseTransaction } from "./db/client"
 import { books, importSessionParts, importSessions, libraryOperations, librarySnapshots, shelves, type RestoreSessionTotals } from "./db/schema"
 import { DEFAULT_BOOK_COVER } from "./book-covers"
@@ -116,7 +116,7 @@ async function readParts(tx: DatabaseTransaction, userId: string, sessionId: str
 
 function view(session: SessionRow, parts: RestorePartView[]): RestoreSessionView {
   return {
-    sessionId: session.id, state: session.state, source: session.source, exportSetId: session.exportSetId,
+    sessionId: session.id, state: session.state, source: session.source === "manifest" ? "manifest" : "loose", exportSetId: session.exportSetId,
     payloadFormatVersion: session.payloadFormatVersion === 1 || session.payloadFormatVersion === 2 ? session.payloadFormatVersion : null,
     manifestDigest: session.manifestDigest, partCount: session.partCount, validatedParts: session.validatedParts,
     receivedBytes: session.receivedBytes, totalBytes: session.totalBytes, totals: session.totals ?? null, errorCode: session.errorCode,
@@ -127,7 +127,8 @@ function view(session: SessionRow, parts: RestorePartView[]): RestoreSessionView
 /** Sesión propia vigente (bloqueada si `forUpdate`), o el error genérico: ajena, inexistente y caducada responden igual. */
 async function loadSession(tx: DatabaseTransaction, userId: string, sessionId: string, { forUpdate = false } = {}): Promise<SessionRow & { expired: boolean; previewExpired: boolean }> {
   const query = tx.select({ session: importSessions, expired: sql<boolean>`${importSessions.expiresAt} <= now()`, previewExpired: sql<boolean>`coalesce(${importSessions.previewExpiresAt} <= now(), false)` })
-    .from(importSessions).where(and(eq(importSessions.id, sessionId), eq(importSessions.userId, userId))).limit(1)
+    // Las sesiones CSV (U-DAT-09, 0014) comparten tabla pero son de otro flujo: aquí no existen.
+    .from(importSessions).where(and(eq(importSessions.id, sessionId), eq(importSessions.userId, userId), ne(importSessions.source, "csv"))).limit(1)
   const [row] = forUpdate ? await query.for("update") : await query
   if (!row) throw sessionUnavailable()
   return { ...row.session, expired: row.expired, previewExpired: row.previewExpired }
@@ -136,7 +137,7 @@ async function loadSession(tx: DatabaseTransaction, userId: string, sessionId: s
 /** Restauraciones a medias del dueño (sin publicar ni caducar), las más recientes primero. */
 export async function listOpenSessions(tx: DatabaseTransaction, userId: string): Promise<RestoreSessionView[]> {
   const rows = await tx.select().from(importSessions)
-    .where(and(eq(importSessions.userId, userId), sql`${importSessions.expiresAt} > now()`, sql`${importSessions.state} in ('receiving', 'validated', 'prepared')`))
+    .where(and(eq(importSessions.userId, userId), ne(importSessions.source, "csv"), sql`${importSessions.expiresAt} > now()`, sql`${importSessions.state} in ('receiving', 'validated', 'prepared')`))
     .orderBy(sql`${importSessions.createdAt} desc`, sql`${importSessions.id} desc`).limit(RESTORE_LIMITS.maxOpenSessions)
   return Promise.all(rows.map(async (row) => view(row, await readParts(tx, userId, row.id))))
 }
@@ -177,7 +178,7 @@ export async function beginSession(tx: DatabaseTransaction, userId: string, inpu
   // Las sesiones vencidas del dueño se retiran al empezar otra; nunca toca la colección activa.
   await tx.delete(importSessions).where(and(eq(importSessions.userId, userId), sql`${importSessions.expiresAt} <= now()`))
   const [{ open }] = await tx.select({ open: sql<number>`count(*)::int` }).from(importSessions)
-    .where(and(eq(importSessions.userId, userId), sql`${importSessions.state} in ('receiving', 'validated', 'prepared')`))
+    .where(and(eq(importSessions.userId, userId), ne(importSessions.source, "csv"), sql`${importSessions.state} in ('receiving', 'validated', 'prepared')`))
   if (open >= RESTORE_LIMITS.maxOpenSessions) {
     throw new DomainError("LIMIT_EXCEEDED", `Ya tienes ${RESTORE_LIMITS.maxOpenSessions} restauraciones a medias. Descarta alguna en Ajustes o espera a que caduquen antes de empezar otra.`)
   }
