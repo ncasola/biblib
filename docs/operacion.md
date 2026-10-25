@@ -1494,3 +1494,39 @@ Se comprueba HTTPS/contexto seguro, `BarcodeDetector` y su formato `ean_13` ante
 Sin detector compatible, contexto seguro o permiso, se informa de la alternativa y el formulario permanece disponible. La compatibilidad depende del navegador/plataforma; no se instala un detector alternativo. Referencias de implementación: [Barcode Detection API](https://wicg.github.io/shape-detection-api/#barcode-detection-api), [Permissions Policy](https://www.w3.org/TR/permissions-policy/), [Media Capture and Streams](https://w3c.github.io/mediacapture-main/).
 
 El runner `test:e2e:local` activa la capacidad en su entorno aislado para poder simular permiso denegado, lectura y parada. `tests/e2e/flujos/alta-consecutiva.spec.ts` añade esos recorridos junto a consecutiva, borrador tras error, doble envío y duplicado. No sustituye una prueba con cámara física ni lectores reales. Evidencia y pendientes de integración en [O13/exp-05](validacion/2026-10-25/O13/exp-05/README.md).
+
+## Avatar personal e imágenes privadas · U-EXP-06 (O13)
+
+El avatar propio se guarda en `biblib.profiles` y `biblib.media_assets`, con objetos privados en `biblib-media` según el [contrato O13](spec-pendientes/contratos-o13.md). El correo continúa como información de Google y ninguna acción de avatar modifica la metadata OAuth. Perfil y cabecera (también el menú móvil) muestran la imagen propia, la de Google o las iniciales; si falla la lectura privada se usa el siguiente fallback sin borrar el asset.
+
+La edición se activa exclusivamente con **`BIBLIB_PRIVATE_MEDIA_UPLOADS=1`**, una capacidad de servidor que los wrappers de Next permiten expresamente. Ausencia, `0` o cualquier otro valor ocultan el editor y rechazan sus acciones; las imágenes existentes siguen leyéndose. Activarla solo después de verificar las políticas con `test:integration:media` en el perfil autorizado. Para retirarla, quitar la variable del proceso y reiniciar Next; no hay migración inversa ni eliminación de datos.
+
+```powershell
+$env:BIBLIB_PRIVATE_MEDIA_UPLOADS = '1'
+pnpm dev:local --profile scratch
+# Solo en un perfil propio cuyo uso esté autorizado.
+Remove-Item Env:BIBLIB_PRIVATE_MEDIA_UPLOADS -ErrorAction SilentlyContinue
+```
+
+El formulario admite JPEG, PNG y WebP de hasta **1 MiB y 1024 × 1024 píxeles**; permite previsualizar y desplazar un recorte cuadrado antes de guardar. El helper compartido `lib/media/server.ts` sirve también a ubicaciones y evidencias (hasta 5 MiB y 4096 px por lado), valida firma, tipo declarado, dimensiones, animación y datos añadidos, y reencodifica con `sharp` a WebP sin EXIF/GPS. No redimensiona silenciosamente un original fuera de los límites. El cliente prepara el recorte, pero el servidor vuelve a validar y reencodificar los bytes recibidos.
+
+Flujo: `beginUpload(kind)` → `upload(asset, bytes, declaredType?)` → `register(assetId, image)` → publicar la referencia con la versión leída → `discard(previousId)`. La reserva y el registro pasan por `withRlsContext`; Storage usa la sesión del dueño con `upsert: false`. `signedUrl(assetId)` tiene TTL de 60 segundos; la UI usa `GET /api/media/[id]`, autenticado en cada lectura, con `private, no-store`. Nunca se envía una URL pública ni una ruta elegida por el cliente.
+
+Un fallo antes de publicar conserva la referencia y los bytes anteriores. Un conflicto descarta solo el asset nuevo; un fallo al limpiar después de guardar no convierte el guardado confirmado en un error. Si la capacidad o el servicio fallan, se oculta el editor y se conserva el fallback. Las cuentas en eliminación reciben `ACCOUNT_INACTIVE`. Los avatares quedan fuera del JSON de colección por contrato; el respaldo administrativo y la eliminación de cuenta ya los cubren desde 0014.
+
+### Purga local
+
+```powershell
+pnpm media:purge:local --profile scratch --limit 200 --grace-seconds 86400 --json
+```
+
+El script administrativo `scripts/jobs/purge-media-assets.mjs`, fuera de Next, sigue el patrón de `assets:purge:local`: `media_asset_purge_candidates(null, límite, gracia)` → `media_asset_purge_confirm(null, ids, gracia)` bajo bloqueo → eliminación de objetos por Storage. Respeta referencias actuales y versiones anteriores. Recoge cuarentenas vencidas, imágenes sin referencias tras la gracia (por defecto 24 horas) y objetos sin fila de más de 10 minutos. Un borrado de Storage fallido sale con 8; el objeto queda huérfano y se recoge en una ejecución posterior. Solo informa cantidades, nunca rutas, IDs ni credenciales; solo admite destino local y perfiles `main|scratch|test` con las guardas de identidad existentes. Su programación periódica en despliegue corresponde a F4.
+
+### Validación
+
+- `pnpm test`: formatos admitidos y rechazados, límites por tipo, EXIF/GPS eliminados y publicación/limpieza del avatar ante fallos.
+- `pnpm test:scripts`: argumentos, bandera estricta y purga confirmada/reintentable.
+- `pnpm test:integration:media --profile scratch|test [--reuse-build]`: acciones reales de subida, reemplazo y retirada, persistencia, metadata intacta, dos usuarios, ruta manipulada, versión antigua, red de Storage simulada (sin parar servicios), purga y cuenta inactiva. Usa cuentas desechables del harness de producto; está registrado en `SUITES` y el runner activa la capacidad solo en su proceso aislado.
+- `tests/e2e/flujos/avatar.spec.ts`: previsualización, recorte, persistencia, foto de cabecera, fallo de red que conserva el avatar, menú móvil y retirada. El runner E2E activa la capacidad. La prueba exige que la cuenta ficticia no tenga un avatar ajeno al ensayo y limpia sus filas y objetos en `finally`.
+
+Evidencia y resultados: [O13/exp-06](validacion/2026-10-25/O13/exp-06/informe.md). Los recorridos de integración y E2E los ejecuta el coordinador con su stack autorizado.
