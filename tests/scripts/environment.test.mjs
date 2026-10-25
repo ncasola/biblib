@@ -198,6 +198,9 @@ test("generar local es idempotente y no acepta otros objetivos", () => {
   const first = readFileSync(file, "utf8")
   writeLocalEnvFile(ctx)
   assert.equal(readFileSync(file, "utf8"), first)
+  // Un `pnpm build` sin objetivo también carga .env.local: el catálogo ficticio deducido no se escribe.
+  assert.doesNotMatch(first, /BIBLIB_CATALOGUE_MODE/)
+  assert.equal(loadTarget("local", { cwd, profile: "scratch" }).env().BIBLIB_CATALOGUE_MODE, "fixture")
   assert.equal(loadTarget("local", { cwd, profile: "scratch" }).fingerprint, ctx.fingerprint)
   assertNoForeignEnvFiles(ctx, { mode: "build" })
   rejectsCode(() => writeLocalEnvFile(context(cwd)))

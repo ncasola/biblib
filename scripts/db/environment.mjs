@@ -211,7 +211,10 @@ export function writeLocalEnvFile(ctx) {
   const file = path.join(ctx.cwd, ".env.local")
   if (existsSync(file) && !hasMarker(file, ctx)) transition()
   const values = ctx.env()
-  const content = [marker(ctx), ...INPUT_KEYS.filter((key) => Object.hasOwn(values, key)).map((key) => `${key}=${JSON.stringify(values[key])}`), ""].join("\n")
+  // Next también carga .env.local en un `pnpm build` sin objetivo, donde el catálogo ficticio se rechaza.
+  // «fixture» es lo que los wrappers ya deducen para local, así que solo se escribe un modo elegido a mano.
+  const written = INPUT_KEYS.filter((key) => Object.hasOwn(values, key) && !(key === "BIBLIB_CATALOGUE_MODE" && values[key] === "fixture"))
+  const content = [marker(ctx), ...written.map((key) => `${key}=${JSON.stringify(values[key])}`), ""].join("\n")
   writeFileSync(file, content, { encoding: "utf8", mode: 0o600, flag: existsSync(file) ? "w" : "wx" })
   return file
 }
