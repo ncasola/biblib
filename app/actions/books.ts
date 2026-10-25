@@ -8,6 +8,7 @@ import { copyVerification } from "@/lib/db/model"
 import { createEdition, findBook, findBookByIsbn, updateEdition } from "@/lib/db/editions"
 import { getRequiredUserId } from "@/lib/server-user"
 import { parseBookInput, parseUuid, statusSchema } from "@/lib/book-validation"
+import { personalDatabaseError } from "@/lib/personal-server"
 import { DomainError, translateDatabaseError } from "@/lib/domain-errors"
 import { normalizeIsbn } from "@/lib/isbn"
 import { bibliographicCatalog } from "@/lib/bibliographic-catalog/server"
@@ -72,7 +73,7 @@ async function addBook(input: unknown): Promise<Book> {
       const shelfId = await getShelf(tx, userId, book.shelf_id)
       return createEdition(tx, userId, { book: { ...book, catalogue }, shelfId, idempotencyKey: book.idempotencyKey })
     })
-  } catch (error) { translateDatabaseError(error) }
+  } catch (error) { personalDatabaseError(error) }
 }
 
 const bibliographicChanged = (current: Book, next: Pick<Book, "isbn" | "title" | "subtitle" | "authors" | "publishers" | "publish_date" | "number_of_pages" | "cover" | "catalogue">) =>

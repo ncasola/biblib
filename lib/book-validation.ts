@@ -3,6 +3,7 @@ import { normalizeBookCover } from "./book-covers"
 import { normalizeIsbn } from "./isbn"
 import { DomainError } from "./domain-errors"
 import { catalogueProblem, catalogueSchema, normalizeCatalogue } from "./catalogue-provenance"
+import { parsePersonalInput, personalInputSchema } from "./personal-validation"
 
 export const uuidSchema = z.uuid({ message: "El identificador no es válido." })
 /**
@@ -40,6 +41,7 @@ const bookInputSchema = z.object({
   shelf_id: z.string().max(100).default(""),
   // Procedencia legacy (v1) o `schemaVersion: 2` (U-BIB-04); las acciones deciden cuál se guarda.
   catalogue: catalogueSchema.optional(),
+  personal: personalInputSchema.optional(),
 })
 
 export type BookInput = z.input<typeof bookInputSchema>
@@ -49,6 +51,7 @@ export type BookInput = z.input<typeof bookInputSchema>
  * recibe un identificador inventado (U-DAT-06) y un `manual-…` enviado por una versión anterior cuenta como vacío.
  */
 export function parseBookInput(input: unknown) {
+  if (input && typeof input === "object" && "personal" in input && input.personal !== undefined) parsePersonalInput(input.personal)
   const result = bookInputSchema.safeParse(input)
   const problem = !result.success && input && typeof input === "object" && "catalogue" in input ? catalogueProblem(input.catalogue) : null
   if (problem) throw new DomainError("INVALID_INPUT", problem)

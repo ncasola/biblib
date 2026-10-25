@@ -133,6 +133,8 @@ export interface Book {
   coverAssetId?: string
   /** Nota, valoración y etiquetas del ejemplar (U-PRO-01, 0014); ausente si no tiene ninguna. */
   personal?: CopyPersonal
+  /** Token de notas, valoración y etiquetas; null antes de la primera anotación. No se exporta. */
+  personalVersion?: string | null
   /** Ubicación física actual del ejemplar (U-PRO-03, 0014); la estantería lógica es `shelf_id`. */
   location?: CopyLocationRef
   /** Evidencias bibliográficas del ejemplar, como su comprobación física (U-DAT-07, 0014). */
