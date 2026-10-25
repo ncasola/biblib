@@ -38,7 +38,6 @@ export function normalizeTagName(name: string): string {
 /** Nombre visible válido (como `tags_name_check`): 1–40 caracteres, sin espacios en los extremos ni caracteres de control. */
 export function isValidTagName(name: string): boolean {
   const length = [...name].length
-  // eslint-disable-next-line no-control-regex
   return length >= 1 && length <= TAG_LIMITS.nameMax && !name.startsWith(" ") && !name.endsWith(" ") && !/[\u0000-\u001f\u007f-\u009f]/.test(name)
 }
 

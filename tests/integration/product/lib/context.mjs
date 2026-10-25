@@ -3,6 +3,8 @@ import { readFileSync } from "node:fs"
 import path from "node:path"
 import { createServerClient } from "@supabase/ssr"
 import { createClient } from "@supabase/supabase-js"
+import { createDeletionDatabase, processDeletion } from "../../../../lib/account-deletion/worker.ts"
+import { createSupabaseDeletionServices } from "../../../../scripts/account/deletion-services.mjs"
 import { BiblibError, EXIT } from "../../../../scripts/lib/exit-codes.mjs"
 import { REPO_ROOT } from "../../../../scripts/lib/profiles.mjs"
 import { resolveSeedTarget } from "../../../../scripts/db/seed-local.mjs"
@@ -33,6 +35,7 @@ export async function productContext() {
   const resolved = await resolveSeedTarget(profile)
   const env = resolved.target.env()
   const sql = connect(resolved, { applicationName: "biblib-product-tests" })
+  const workerSql = connect(resolved, { applicationName: "biblib-product-worker" })
   const admin = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, clientOptions)
   const { host, port } = resolved.stack.profile.app
   const app = { url: `http://${host}:${port}`, actions: loadActions(resolved.stack.root) }
@@ -120,7 +123,17 @@ export async function productContext() {
       return { id: begun.asset_id, key: begun.storage_key, sha256, bytes }
     },
 
-    /** Retira objetos y cuentas del run (la cascada de auth.users retira sus filas). */
+    /** Lo que queda de una cuenta (filas con dueño en biblib, objetos y su identidad). */
+    async residue(owner) { return (await sql`select biblib.account_residue(${owner}::uuid) as r`)[0].r },
+    /** Reclama y procesa la eliminación de `owner` con el worker real y sus adaptadores de GoTrue y Storage. */
+    async deleteAccount(owner) {
+      const services = createSupabaseDeletionServices(admin)
+      const deps = { db: createDeletionDatabase(workerSql), storage: services.storage, auth: services.auth, limits: { retryBaseMs: 0 } }
+      const claimed = await deps.db.claim(owner, 60_000)
+      return claimed ? processDeletion(deps, claimed) : null
+    },
+
+    /** Retira objetos y cuentas del run (la cascada de auth.users retira sus filas) y las marcas de supresión del run. */
     async cleanup() {
       for (const owner of created) {
         for (const prefix of ["avatar", "location", "evidence"]) {
@@ -128,10 +141,11 @@ export async function productContext() {
           if (data?.length) await admin.storage.from(MEDIA_BUCKET).remove(data.map((object) => `${owner}/${prefix}/${object.name}`))
         }
         await admin.auth.admin.deleteUser(owner)
+        await sql`delete from biblib.account_deletions where user_id = ${owner}`
       }
       created.length = 0
     },
-    async close() { await closeConnection(sql) },
+    async close() { await closeConnection(workerSql); await closeConnection(sql) },
   }
   return ctx
 }
