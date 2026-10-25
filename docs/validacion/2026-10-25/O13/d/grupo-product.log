@@ -1,0 +1,54 @@
+
+> biblib@1.0.0 test:integration:product C:\Users\ncaso\orca\workspaces\biblib\u-inf-03
+> node tests/integration/product/run.mjs "--profile" "scratch" "--reuse-build"
+
+(node:20844) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/ncaso/orca/workspaces/biblib/u-inf-03/lib/account-deletion/worker.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-inf-03\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Grupo product · perfil scratch · biblib-scratch · run 0afc5dcefae7
+(node:26464) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/ncaso/orca/workspaces/biblib/u-inf-03/lib/account-deletion/worker.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-inf-03\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ B no lee nada de producto de A y A ve lo suyo (958.9721ms)
+✔ B no escribe filas a nombre de A ni cita etiquetas, ubicaciones, series, ejemplares o ediciones de A (60.675ms)
+✔ una cuenta en eliminación no escribe en ninguna tabla de producto ni reserva imágenes (BD001) (41.6277ms)
+(node:30224) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/ncaso/orca/workspaces/biblib/u-inf-03/lib/account-deletion/worker.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-inf-03\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ etiquetas únicas por nombre normalizado (mayúsculas y acentos) y la ñ distingue (827.5357ms)
+✔ hasta 20 etiquetas por ejemplar, también en una sola sentencia; notas de 4000 y valoración 1–5 o nula (44.5593ms)
+✔ ubicaciones: sin ciclos (también en una sentencia), máximo 8 niveles, ocupada o con hijas no se borra, la estantería lógica no cambia (65.2126ms)
+✔ serie: posición NUMERIC exacta 1, 1.5, 2 con orden desconocido al final; una serie por edición; borrar la serie conserva ediciones (34.4591ms)
+(node:7556) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/ncaso/orca/workspaces/biblib/u-inf-03/lib/account-deletion/worker.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-inf-03\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ el worker retira etiquetas, notas, árbol de ubicaciones, series, evidencias, revisión, perfil, CSV e imágenes, y B sigue intacto (1531.7107ms)
+(node:36456) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/ncaso/orca/workspaces/biblib/u-inf-03/lib/account-deletion/worker.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-inf-03\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ la exportación v2 declara y lleva etiquetas, notas, ubicaciones, series y evidencias, con fotos por referencia y sha256 (1837.5721ms)
+✔ reemplazar desde la propia copia devuelve los datos de producto exactos, con los mismos IDs y fotos propias (398.504ms)
+✔ la versión anterior que capturó el reemplazo restaura también sus datos de producto (317.9488ms)
+✔ otra cuenta importa el archivo sin las fotos de A y con IDs propios; los ejemplares ya existentes no reciben datos (480.832ms)
+✔ un archivo anterior (v2 sin secciones nuevas o v1) se importa con los datos de producto vacíos (212.1856ms)
+(node:18820) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/ncaso/orca/workspaces/biblib/u-inf-03/lib/account-deletion/worker.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-inf-03\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ el bucket es privado, solo WebP y 5 MiB, con las tres políticas del dueño (1067.3714ms)
+✔ avatar propio: subida autorizada, B no lo lee ni lo sustituye, perfil privado y metadata OAuth intacta (169.6021ms)
+✔ sin reserva no se sube; otra ruta del mismo dueño tampoco; un asset en cuarentena no se cita (45.2904ms)
+✔ foto de ubicación: citada no se descarta; sustituida se descarta y su objeto se retira con la sesión del dueño (76.2062ms)
+ℹ tests 17
+ℹ suites 0
+ℹ pass 17
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 16748.8014
