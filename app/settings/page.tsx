@@ -29,7 +29,8 @@ import type { LibraryData } from "@/lib/types"
 import type { ActionError } from "@/lib/action-result"
 
 type Message = { type: "success" | "error"; text: string; reference?: string }
-type Preview = { name: string; library: LibraryData }
+/** `input` es el contenido del archivo tal cual: el servidor lo vuelve a leer (la forma plana no expresa ediciones compartidas ni ejemplares sin ISBN-13). */
+type Preview = { name: string; library: LibraryData; input: unknown }
 /** El archivo y la selección se conservan; la revisión del servidor ya no corresponde a la colección actual. */
 type Stale = { reason: "conflict" | "expired"; text: string }
 
@@ -316,14 +317,14 @@ export default function SettingsPage() {
   const errorMessage = (error: ActionError): Message => ({ type: "error", text: error.message, reference: error.correlationId })
 
   /** Pide al servidor la revisión de este archivo y modo frente a la colección actual. */
-  const prepare = async (library: LibraryData, importMode: LibraryImportOptions["mode"]) => {
+  const prepare = async (input: unknown, importMode: LibraryImportOptions["mode"]) => {
     setIsPreparing(true)
     setPrepared(null)
     setStale(null)
     setMessage(null)
     setReplaceAcknowledged(false)
     try {
-      const response = await prepareImportAction(library, importMode)
+      const response = await prepareImportAction(input, importMode)
       if (!response.ok) { setMessage(errorMessage(response.error)); return }
       idempotencyKey.current = newIdempotencyKey()
       setPrepared(response.value)
@@ -360,9 +361,9 @@ export default function SettingsPage() {
     setReplaceAcknowledged(false)
     setIsValidating(true)
     let library: LibraryData
+    let input: unknown
     try {
       if (file.size > MAX_IMPORT_BYTES) throw new Error("El archivo supera el límite de 8 MiB.")
-      let input: unknown
       try { input = JSON.parse(await file.text()) } catch { throw new Error("No se pudo leer el JSON. Comprueba que el archivo esté completo y sea válido.") }
       // Revisión local inmediata de errores del archivo, antes de consultar al servidor.
       library = parseLibraryImport(input)
@@ -372,14 +373,14 @@ export default function SettingsPage() {
     } finally {
       setIsValidating(false)
     }
-    setPreview({ name: file.name, library })
-    await prepare(library, "merge")
+    setPreview({ name: file.name, library, input })
+    await prepare(input, "merge")
   }
 
   const changeMode = (next: LibraryImportOptions["mode"]) => {
     if (!preview || busy || next === mode) return
     setMode(next)
-    void prepare(preview.library, next)
+    void prepare(preview.input, next)
   }
 
   const handleConfirm = async () => {
@@ -494,7 +495,7 @@ export default function SettingsPage() {
               <p className="font-medium">{stale.reason === "conflict" ? "Tu biblioteca ha cambiado" : "La revisión ya no es válida"}</p>
               <p className="text-sm">{stale.text}</p>
               <p className="text-sm text-muted-foreground">Se conservan el archivo «{preview.name}» y el modo «{mode === "replace" ? "Reemplazar" : "Fusionar"}». Revisa de nuevo el plan antes de confirmar.</p>
-              <div className="flex flex-wrap gap-3"><Button onClick={() => void prepare(preview.library, mode)} disabled={busy}><RefreshCw aria-hidden="true" />Volver a revisar con los datos actuales</Button><Button variant="outline" onClick={cancelImport} disabled={busy}>Cancelar importación</Button></div>
+              <div className="flex flex-wrap gap-3"><Button onClick={() => void prepare(preview.input, mode)} disabled={busy}><RefreshCw aria-hidden="true" />Volver a revisar con los datos actuales</Button><Button variant="outline" onClick={cancelImport} disabled={busy}>Cancelar importación</Button></div>
             </div>}
 
             {preview && prepared && plan && <div className="mt-6 space-y-5">
