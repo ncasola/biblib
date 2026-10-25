@@ -198,6 +198,7 @@ test("planificador: solo los ejemplares nuevos reciben lectura y préstamos; IDs
   assert.equal(replaced.readingEntries[0].id, ENTRY)
   assert.equal(replaced.readingEntries[0].cycleId, `nuevo-reading_cycle-${CYCLE_2}`, "la entrada sigue a su ciclo")
   assert.deepEqual(replaced.loans.map((row) => row.id), [`nuevo-loan-${LOAN_1}`, LOAN_2])
-  const empty = planProductRows({ ...data, books: data.books.map(({ reading: _r, loans: _l, ...rest }) => rest) }, replace, "replace", targets(), allocator)
+  const bare = data.books.map((entry) => { const copy = { ...entry }; delete copy.reading; delete copy.loans; return copy })
+  const empty = planProductRows({ ...data, books: bare }, replace, "replace", targets(), allocator)
   assert.deepEqual([empty.readingCycles, empty.readingEntries, empty.loans], [[], [], []])
 })
