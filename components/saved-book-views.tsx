@@ -54,7 +54,7 @@ export function SavedBookViews({ filters, onApply }: { filters: BookSearchFilter
     if (view) setViews((current) => [view, ...current.filter((entry) => entry.id !== view.id)])
   }
 
-  return <section aria-label="Vistas guardadas" className="rounded-2xl border border-border bg-card/80 p-4 shadow-xl backdrop-blur-xl [overflow-wrap:anywhere]">
+  return <section aria-label="Vistas guardadas" className="rounded-2xl border border-border bg-surface/50 p-4 [overflow-wrap:anywhere]">
     <details>
       <summary ref={summaryRef} className="cursor-pointer rounded-lg py-2 font-semibold text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">Vistas guardadas{loaded ? ` (${views.length}/100)` : ""}</summary>
       <fieldset disabled={pending} aria-busy={pending} className="mt-3 space-y-4">

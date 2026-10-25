@@ -29,7 +29,7 @@ interface BookFormProps {
   scope?: "copy" | "edition"
 }
 
-const selectClass = "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base text-foreground focus-visible:outline-2 focus-visible:outline-ring"
+const selectClass = "flex h-10 w-full rounded-md border border-input bg-input px-3 py-2 text-base text-foreground focus-visible:outline-2 focus-visible:outline-ring"
 
 export function BookForm({ initialBook, initialIsbn = "", shelves, onSubmit, onSaveAndAddAnother, entryDefaults, onCancel, onReload, submitLabel = "Agregar a la biblioteca", scope = "copy" }: BookFormProps) {
   const id = useId()
