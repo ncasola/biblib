@@ -162,3 +162,38 @@ describe("decisión de confirmación", () => {
     assert.deepEqual(decideConfirmation(base({ preview: { ...base().preview!, confirmed: true } })), { kind: "reject", code: "ALREADY_CONFIRMED" })
   })
 })
+
+describe("plan de importación con ejemplares (U-DAT-06)", () => {
+  const shelf = { id: "s-def", title: "Predeterminada", book_count: 3, isDefault: true }
+  const own = "30000000-0000-4000-8000-0000000000c1"
+  const edition = { id: "e-compartida" }
+  const row = (id: string, overrides: Partial<LibraryData["books"][number]> = {}) => ({ id, isbn: "9780000000019", title: "Uno", authors: [], number_of_pages: 0, publish_date: "", cover, status: "unread" as const, shelf_id: "s-def", shelf_name: "Predeterminada", ...overrides })
+
+  test("un libro sin ISBN se reconoce por su ID propio: fusionar lo omite y reemplazar lo conserva", () => {
+    const imported: LibraryData = { shelves: [shelf], books: [row(own, { isbn: null })] }
+    const snapshot = current([{ id: own, isbn: null, editionId: own }])
+    assert.deepEqual(buildImportPlan({ imported, current: snapshot, mode: "merge", allocateId: allocator("n1") }).books.skip, [{ sourceId: own, existingId: own }])
+    const replace = buildImportPlan({ imported, current: snapshot, mode: "replace", allocateId: allocator("n2") })
+    assert.equal(replace.books.insert[0].id, own, "el ejemplar conserva su ID")
+    assert.equal(replace.editions.create[0].id, own, "y su edición propia")
+    assert.equal(replace.counts.deleted, 0)
+    // En otra cuenta el mismo archivo crea un ejemplar nuevo: el ID solo vale en la cuenta que lo tiene.
+    assert.notEqual(buildImportPlan({ imported, current: current(), mode: "merge", allocateId: allocator("n3") }).books.insert[0].id, own)
+  })
+
+  test("dos copias de una edición del archivo crean una edición y conservan sus IDs al reemplazar", () => {
+    const a = "30000000-0000-4000-8000-0000000000a1", b = "30000000-0000-4000-8000-0000000000b1"
+    const imported: LibraryData = { shelves: [shelf], books: [row(a, { edition }), row(b, { edition, status: "read" })] }
+    const merge = buildImportPlan({ imported, current: current(), mode: "merge", allocateId: allocator("m") })
+    assert.equal(merge.editions.create.length, 1)
+    assert.equal(merge.counts.editionsCreated, 1)
+    assert.equal(new Set(merge.books.insert.map((entry) => entry.editionId)).size, 1)
+    // La colección ya tiene esas dos copias (misma edición): reemplazar conserva IDs y edición.
+    const snapshot = current([{ id: a, isbn: "9780000000019", editionId: "e-actual" }, { id: b, isbn: "9780000000019", editionId: "e-actual" }])
+    const replace = buildImportPlan({ imported, current: snapshot, mode: "replace", allocateId: allocator("r") })
+    assert.deepEqual(replace.books.insert.map((entry) => entry.id), [a, b])
+    assert.deepEqual(replace.editions.create.map((entry) => entry.id), ["e-actual"])
+    // Fusionar el mismo archivo no añade copias: la edición ya está.
+    assert.equal(buildImportPlan({ imported, current: snapshot, mode: "merge", allocateId: allocator("m2") }).counts.added, 0)
+  })
+})

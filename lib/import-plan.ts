@@ -196,9 +196,12 @@ export function buildImportPlan({ imported, current, mode, allocateId, covers = 
     if (!shelfId) throw new Error("Hay libros con una estantería inexistente.")
     const identity = copyIdentity(book)
     const candidates = identity ? previousByIdentifier.get(identity) ?? [] : []
-    if (mode === "merge" && candidates.length) { skip.push({ sourceId: book.id, existingId: candidates[0] }); continue }
-    // Al reemplazar, un ejemplar con el mismo ID e identificador conserva su ID; si no, el siguiente libre con ese identificador.
-    const previous = candidates.includes(book.id) && !matched.has(book.id) ? book.id : candidates.find((id) => !matched.has(id))
+    // Un ejemplar sin ISBN ni identificador (U-DAT-06) solo se reconoce por su ID propio de esta cuenta.
+    const own = previousById.get(book.id)
+    const sameCopy = Boolean(own) && (identity === null ? !own!.isbn?.trim() : candidates.includes(book.id))
+    if (mode === "merge" && (candidates.length || sameCopy)) { skip.push({ sourceId: book.id, existingId: sameCopy ? book.id : candidates[0] }); continue }
+    // Al reemplazar, el mismo ejemplar conserva su ID; si no, el siguiente libre con ese identificador.
+    const previous = sameCopy && !matched.has(book.id) ? book.id : candidates.find((id) => !matched.has(id))
     const id = previous ?? allocateId("book", book.id)
     if (previous) matched.add(previous)
     if (id !== book.id) reassigned.push({ kind: "book", sourceId: book.id, id })
