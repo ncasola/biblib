@@ -15,7 +15,7 @@ import { classify, closeConnection, connect, inspectDatabase, readLedger, resolv
 
 const repo = fileURLToPath(new URL("../../", import.meta.url))
 const drizzleDir = path.join(repo, "drizzle")
-// Metadatos reales capturados de Supabase local: tras 0002 (U-INF-04), tras 0003 (U-DAT-01), tras 0004 (U-DAT-05), tras 0005 (U-DAT-03), tras 0006 (U-DAT-02), tras 0007 (U-EXP-02), tras 0008 (U-DAT-04), tras 0009 (U-DAT-10), tras 0010, 0011 y 0012 (U-DAT-06) y tras 0013 (U-OPS-03, head actual).
+// Metadatos reales capturados de Supabase local: tras 0002 (U-INF-04), tras 0003 (U-DAT-01), tras 0004 (U-DAT-05), tras 0005 (U-DAT-03), tras 0006 (U-DAT-02), tras 0007 (U-EXP-02), tras 0008 (U-DAT-04), tras 0009 (U-DAT-10), tras 0010, 0011 y 0012 (U-DAT-06), tras 0013 (U-OPS-03) y tras 0014 (lote de producto de O13, head actual).
 const facts0002 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0002.json"), "utf8"))
 const facts0003 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0003.json"), "utf8"))
 const facts0004 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0004.json"), "utf8"))
@@ -27,7 +27,8 @@ const facts0009 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrat
 const facts0010 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0010.json"), "utf8"))
 const facts0011 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0011.json"), "utf8"))
 const facts0012 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0012.json"), "utf8"))
-const facts = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0013.json"), "utf8"))
+const facts0013 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0013.json"), "utf8"))
+const facts = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0014.json"), "utf8"))
 const HEAD_0010 = MANIFEST_MIGRATIONS.slice(0, 11)
 const named = (list, name) => list.find((item) => item.name === name)
 const temporary = []
@@ -113,7 +114,7 @@ describe("ledger", () => {
     assert.deepEqual(compareLedger(entries, rowsFor(entries)).pending, [])
     const partial = compareLedger(entries, rowsFor(entries, 1))
     assert.equal(partial.appliedHead.tag, "0000_biblib_init")
-    assert.deepEqual(partial.pending, ["0001_library_integrity", "0002_book_versions", "0003_library_revision", "0004_catalogue_coordination", "0005_library_jobs", "0006_library_snapshots", "0007_saved_views", "0008_restore_sessions", "0009_cover_assets", "0010_works_editions_copies", "0011_copies_cutover", "0012_model_account_deletion", "0013_account_deletion"])
+    assert.deepEqual(partial.pending, ["0001_library_integrity", "0002_book_versions", "0003_library_revision", "0004_catalogue_coordination", "0005_library_jobs", "0006_library_snapshots", "0007_saved_views", "0008_restore_sessions", "0009_cover_assets", "0010_works_editions_copies", "0011_copies_cutover", "0012_model_account_deletion", "0013_account_deletion", "0014_product_batch_o13"])
     assert.equal(compareLedger(entries, []).pending.length, entries.length)
   })
 
@@ -425,6 +426,40 @@ describe("manifest de objetos", () => {
     assert.deepEqual(failing(verifyManifest(invoker, MANIFEST_MIGRATIONS)), ["function.prune_orphan_works"])
     const callable = clone(facts); named(callable.functions, "prune_orphan_editions").execute_authenticated = true
     assert.deepEqual(failing(verifyManifest(callable, MANIFEST_MIGRATIONS)), ["function.prune_orphan_editions"])
+  })
+
+  test("0014: lote de producto con RLS del dueño, cuenta activa, FK del mismo dueño, imágenes privadas y pasos de eliminación", () => {
+    // Los metadatos reales de 0013 cumplen su head; con 0014 faltan las tablas, sus guardas, el bucket y las funciones nuevas o sustituidas.
+    assert.deepEqual(failing(verifyManifest(facts0013, MANIFEST_MIGRATIONS.slice(0, 14))), [])
+    const behind = failing(verifyManifest(facts0013, MANIFEST_MIGRATIONS))
+    for (const id of ["rls.tags", "policy.copy_tags_insert_active", "policy.media_assets_select_own", "function.media_asset_register", "function.library_snapshot_capture",
+      "function.account_deletion_step_tables", "constraint.account_deletions_step_check", "storage.bucket.biblib-media", "storage.policy.biblib_media_insert_own", "trigger.locations_tree_check"]) assert.ok(behind.includes(id), id)
+    // Una guarda de cuenta activa permisiva o ausente deja escribir a un JWT antiguo; una política abierta expone datos de otra cuenta.
+    const permissive = clone(facts); named(permissive.policies, "tags_insert_active").permissive = true
+    assert.deepEqual(failing(verifyManifest(permissive, MANIFEST_MIGRATIONS)), ["policy.tags_insert_active"])
+    const missing = { ...facts, policies: facts.policies.filter((p) => p.name !== "copy_locations_update_active") }
+    assert.deepEqual(failing(verifyManifest(missing, MANIFEST_MIGRATIONS)), ["policy.copy_locations_update_active"])
+    const open = clone(facts); named(open.policies, "copy_annotations_select_own").using = "true"
+    assert.deepEqual(failing(verifyManifest(open, MANIFEST_MIGRATIONS)), ["policy.copy_annotations_select_own"])
+    // Las decisiones son de solo inserción y los assets de imagen solo se leen.
+    const editable = clone(facts); editable.grants.push({ grantee: "authenticated", table: "review_decisions", privilege: "UPDATE" })
+    assert.deepEqual(failing(verifyManifest(editable, MANIFEST_MIGRATIONS)), ["grant.authenticated.review_decisions"])
+    const writable = clone(facts); writable.grants.push({ grantee: "authenticated", table: "media_assets", privilege: "INSERT" })
+    assert.deepEqual(failing(verifyManifest(writable, MANIFEST_MIGRATIONS)), ["grant.authenticated.media_assets"])
+    // FK sin dueño o con cascada donde debe impedir el borrado (ubicación ocupada), purga sin restricciones y bucket público son drift.
+    const cascade = clone(facts); named(cascade.constraints, "copy_locations_owner_location_fk").on_delete = "c"
+    assert.deepEqual(failing(verifyManifest(cascade, MANIFEST_MIGRATIONS)), ["constraint.copy_locations_owner_location_fk"])
+    const purge = clone(facts); named(purge.functions, "media_asset_purge_candidates").execute_authenticated = true
+    assert.deepEqual(failing(verifyManifest(purge, MANIFEST_MIGRATIONS)), ["function.media_asset_purge_candidates"])
+    const publicBucket = clone(facts); publicBucket.storage.buckets.find((b) => b.id === "biblib-media").public = true
+    assert.deepEqual(failing(verifyManifest(publicBucket, MANIFEST_MIGRATIONS)), ["storage.bucket.biblib-media"])
+    const lax = clone(facts); named(lax.storage.policies, "biblib_media_insert_own").check = "(bucket_id = 'biblib-media'::text)"
+    assert.deepEqual(failing(verifyManifest(lax, MANIFEST_MIGRATIONS)), ["storage.policy.biblib_media_insert_own"])
+    // Volver a la captura de 0011 (sin datos de producto) o a los pasos de 0013 (sin product/media) es drift.
+    const capture = clone(facts); named(capture.functions, "library_snapshot_capture").body = named(facts0013.functions, "library_snapshot_capture").body
+    assert.deepEqual(failing(verifyManifest(capture, MANIFEST_MIGRATIONS)), ["function.library_snapshot_capture"])
+    const steps = clone(facts); named(steps.functions, "account_deletion_step_tables").body = named(facts0013.functions, "account_deletion_step_tables").body
+    assert.deepEqual(failing(verifyManifest(steps, MANIFEST_MIGRATIONS)), ["function.account_deletion_step_tables"])
   })
 
   test("0013: eliminación de cuenta con guardas RESTRICTIVE, marca sin privilegios de cliente y funciones administrativas", () => {

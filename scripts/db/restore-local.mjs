@@ -4,7 +4,7 @@ import path from "node:path"
 import { pathToFileURL } from "node:url"
 import { createClient } from "@supabase/supabase-js"
 import { checkBackupFiles, compareMigrations, readBackupFile, readKeyFile, readManifest, resolveBackupDir } from "../lib/backup-files.mjs"
-import { COVERS_BUCKET, rotateRestoredTokens } from "../lib/backup-db.mjs"
+import { COVERS_BUCKET, MEDIA_BUCKET, rotateRestoredTokens } from "../lib/backup-db.mjs"
 import { streamCommand } from "../lib/backup-process.mjs"
 import { inventory } from "../lib/docker.mjs"
 import { BiblibError, EXIT } from "../lib/exit-codes.mjs"
@@ -158,6 +158,20 @@ export async function restoreCoverAssets(tx, manifest) {
 }
 
 /**
+ * Imágenes privadas restauradas (O13, desde 0014): como las portadas, `drop schema biblib cascade` retira las políticas de
+ * storage.objects del bucket `biblib-media`, que se reinstalan con la función de la migración. Los assets son subidas
+ * propias: vuelven tal cual con sus objetos (comprobados por sha256 en el respaldo y en db:restore:verify).
+ */
+export async function restoreMediaAssets(tx) {
+  const [present] = await tx`select to_regprocedure('biblib.media_storage_install()') is not null as found`
+  if (!present.found) return { installed: false, ready: 0, review: [] }
+  await tx`select biblib.media_storage_install()`
+  const [{ ready, quarantine }] = await tx`select (count(*) filter (where state = 'ready'))::integer as ready, (count(*) filter (where state = 'quarantine'))::integer as quarantine from biblib.media_assets`
+  const review = quarantine ? [{ table: "biblib.media_assets", message: `${quarantine} subida(s) de imagen sin terminar: caducan solas y las retira media_asset_purge_candidates.` }] : []
+  return { installed: true, ready, review }
+}
+
+/**
  * Destino vacío o recién reseteado: solo puede contener las cuentas, bibliotecas y el objeto
  * del censo de fixtures que vuelve a crear `db:reset:local`, más filas de tablas derivadas.
  * Cualquier otro dato aborta.
@@ -170,8 +184,8 @@ export function classifyDestination({ users, books, shelves, otherRows, buckets,
   if (books.some((b) => b.census !== census.censusId || !b.fixture || !fixtureUsers.has(b.user_id))) foreign.push("libros que no son fixtures")
   if (shelves.some((s) => !fixtureUsers.has(s.user_id))) foreign.push("estanterías de otras cuentas")
   if (otherRows.some((r) => r.rows > 0 && !DERIVED_TABLES.includes(r.table))) foreign.push("filas en otras tablas de biblib")
-  // El bucket de portadas lo crea la migración 0009 (vacío tras el reset); cualquier objeto en él es ajeno.
-  if (buckets.some((b) => b.id !== BUCKET && b.id !== COVERS_BUCKET) || objects.some((o) => o.bucket !== BUCKET || o.name !== ASSET)) foreign.push("objetos Storage fuera del fixture")
+  // Los buckets de portadas (0009) y de imágenes (0014) los crean las migraciones (vacíos tras el reset); cualquier objeto en ellos es ajeno.
+  if (buckets.some((b) => b.id !== BUCKET && b.id !== COVERS_BUCKET && b.id !== MEDIA_BUCKET) || objects.some((o) => o.bucket !== BUCKET || o.name !== ASSET)) foreign.push("objetos Storage fuera del fixture")
   return { fresh: foreign.length === 0, foreign, fixtureUsers: [...fixtureUsers] }
 }
 
@@ -321,7 +335,8 @@ export async function runRestore(options, deps = {}) {
       const snapshots = await verifyRestoredSnapshots(tx)
       const restoreSessions = await verifyRestoredSessions(tx)
       const coverAssets = await restoreCoverAssets(tx, manifest)
-      return { ...rotated, snapshots, restoreSessions, coverAssets, review: [...rotated.review, ...snapshots.review, ...restoreSessions.review, ...coverAssets.review] }
+      const mediaAssets = await restoreMediaAssets(tx)
+      return { ...rotated, snapshots, restoreSessions, coverAssets, mediaAssets, review: [...rotated.review, ...snapshots.review, ...restoreSessions.review, ...coverAssets.review, ...mediaAssets.review] }
     })
     if (rotation.staleWriteRejected === false) fail(EXIT.VERIFICATION_FAILED, "Una escritura condicional con una versión del respaldo siguió aplicando tras la rotación.", "rotate")
     save("rotate", "passed", rotation)

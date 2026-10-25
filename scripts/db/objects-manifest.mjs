@@ -4,8 +4,8 @@ import { EXIT } from "../lib/exit-codes.mjs"
 // Manifest de objetos deliberados de BibLib. Se comprueba con metadatos de pg_catalog e
 // information_schema y con expresiones normalizadas, nunca comparando el pretty-print.
 // `since`/`until` indican la migración que introduce o retira cada objeto.
-const M0 = "0000_biblib_init", M1 = "0001_library_integrity", M2 = "0002_book_versions", M3 = "0003_library_revision", M4 = "0004_catalogue_coordination", M5 = "0005_library_jobs", M6 = "0006_library_snapshots", M7 = "0007_saved_views", M8 = "0008_restore_sessions", M9 = "0009_cover_assets", M10 = "0010_works_editions_copies", M11 = "0011_copies_cutover", M12 = "0012_model_account_deletion", M13 = "0013_account_deletion"
-export const MANIFEST_MIGRATIONS = [M0, M1, M2, M3, M4, M5, M6, M7, M8, M9, M10, M11, M12, M13]
+const M0 = "0000_biblib_init", M1 = "0001_library_integrity", M2 = "0002_book_versions", M3 = "0003_library_revision", M4 = "0004_catalogue_coordination", M5 = "0005_library_jobs", M6 = "0006_library_snapshots", M7 = "0007_saved_views", M8 = "0008_restore_sessions", M9 = "0009_cover_assets", M10 = "0010_works_editions_copies", M11 = "0011_copies_cutover", M12 = "0012_model_account_deletion", M13 = "0013_account_deletion", M14 = "0014_product_batch_o13"
+export const MANIFEST_MIGRATIONS = [M0, M1, M2, M3, M4, M5, M6, M7, M8, M9, M10, M11, M12, M13, M14]
 
 const own = "user_id=auth.uid"
 const ownNotDefault = "user_id=auth.uidandnotis_default"
@@ -106,10 +106,28 @@ const activePolicies = (table, commands) => commands.map((cmd) => ({ table, name
   using: cmd === "INSERT" ? null : accountActive, check: cmd === "DELETE" ? null : accountActive, since: M13 }))
 const ALL_WRITES = ["INSERT", "UPDATE", "DELETE"]
 const deletionFunction = (name, returns, args, authenticated = false, securityDefiner = true) => ({ name, language: "plpgsql", returns, args, searchPath: "search_path=pg_catalog", securityDefiner, body: DELETION[name], execute: { authenticated, anon: false }, since: M13 })
+// Lote de producto de O13 (0014): tablas privadas con RLS del dueño y guarda RESTRICTIVE de cuenta activa en cada escritura de
+// cliente; las decisiones de revisión son de solo inserción y los assets de imagen solo se leen (transiciones por funciones
+// definer con auth.uid()). Sustituye la captura y los IDs ajenos de las versiones anteriores y los pasos de eliminación.
+const PRODUCT = migrationBodies(M14)
+const productFullTables = ["tags", "copy_annotations", "locations", "copy_locations", "series", "series_editions", "profiles", "bibliographic_evidence", "review_issues", "csv_mapping_profiles"]
+const productTables = [...productFullTables, "copy_tags", "review_decisions", "media_assets"]
+const productPolicies = (table, commands) => [
+  { table, name: `${table}_select_own`, cmd: "SELECT", roles: ["authenticated"], using: ownModel, check: null, since: M14 },
+  ...commands.map((cmd) => ({ table, name: `${table}_${cmd.toLowerCase()}_own`, cmd, roles: ["authenticated"], using: cmd === "INSERT" ? null : ownModel, check: cmd === "DELETE" ? null : ownModel, since: M14 })),
+  ...commands.map((cmd) => ({ table, name: `${table}_${cmd.toLowerCase()}_active`, cmd, roles: ["authenticated"], permissive: false,
+    using: cmd === "INSERT" ? null : accountActive, check: cmd === "DELETE" ? null : accountActive, since: M14 })),
+]
+const productFunction = (name, returns, args, { authenticated = false, securityDefiner = true } = {}) => ({ name, language: "plpgsql", returns, args, searchPath: "search_path=pg_catalog", securityDefiner, body: PRODUCT[name], execute: { authenticated, anon: false }, since: M14 })
+const productTrigger = (table, name, fn, timing, events, level, tgtype) => ({ table, name, function: `biblib.${fn}`, timing, events, level, tgtype, since: M14 })
+const ownerFk = (table, name, columns, references, onDelete) => ({ table, name, type: "f", columns: ["user_id", ...columns], references: `biblib.${references}`, refColumns: ["user_id", "id"], onDelete, since: M14 })
+const MEDIA_BUCKET = "biblib-media"
+const mediaCondition = (action) => normalizeExpression(`bucket_id = '${MEDIA_BUCKET}' and biblib.media_object_access(name, '${action}')`)
+const mediaStoragePolicy = (name, cmd, action) => ({ name, cmd, roles: ["authenticated"], using: cmd === "INSERT" ? null : mediaCondition(action), check: cmd === "INSERT" ? mediaCondition(action) : null, since: M14 })
 const jobStateTokens = ["'queued'", "'running'", "'waiting_retry'", "'needs_review'", "'paused'", "'succeeded'", "'partially_succeeded'", "'failed'", "'cancelled'", "'expired'"]
 
 export const MANIFEST = Object.freeze({
-  tables: [{ name: "shelves", since: M0 }, { name: "books", since: M0, until: M11 }, { name: "books_legacy", since: M11 }, { name: "library_state", since: M3 }, { name: "import_previews", since: M3 }, { name: "library_operations", since: M3 }, ...catalogueTables.map((name) => ({ name, since: M4 })), ...jobTables.map((name) => ({ name, since: M5 })), ...snapshotTables.map((name) => ({ name, since: M6 })), { name: "saved_book_views", since: M7 }, ...restoreTables.map((name) => ({ name, since: M8 })), { name: "cover_assets", since: M9 }, ...[...modelTables, "model_migration_report"].map((name) => ({ name, since: M10 })), { name: "account_deletions", since: M13 }],
+  tables: [{ name: "shelves", since: M0 }, { name: "books", since: M0, until: M11 }, { name: "books_legacy", since: M11 }, { name: "library_state", since: M3 }, { name: "import_previews", since: M3 }, { name: "library_operations", since: M3 }, ...catalogueTables.map((name) => ({ name, since: M4 })), ...jobTables.map((name) => ({ name, since: M5 })), ...snapshotTables.map((name) => ({ name, since: M6 })), { name: "saved_book_views", since: M7 }, ...restoreTables.map((name) => ({ name, since: M8 })), { name: "cover_assets", since: M9 }, ...[...modelTables, "model_migration_report"].map((name) => ({ name, since: M10 })), { name: "account_deletions", since: M13 }, ...productTables.map((name) => ({ name, since: M14 }))],
   policies: [
     policy("shelves", "shelves_select_own", "SELECT", own, null),
     policy("shelves", "shelves_insert_own", "INSERT", null, own),
@@ -151,17 +169,65 @@ export const MANIFEST = Object.freeze({
     ...["import_previews", "import_session_chunks", "import_session_rows"].flatMap((table) => activePolicies(table, ["INSERT", "DELETE"])),
     ...activePolicies("library_operations", ["INSERT"]),
     ...activePolicies("catalogue_private_cache", ["DELETE"]),
+    ...productFullTables.flatMap((table) => productPolicies(table, ALL_WRITES)),
+    ...productPolicies("copy_tags", ["INSERT", "DELETE"]),
+    ...productPolicies("review_decisions", ["INSERT"]),
+    ...productPolicies("media_assets", []),
   ],
   // library_state solo se lee: la revisión cambia por lock_library()/triggers, nunca por escritura directa.
   // La caché compartida, las consultas en vuelo y las cuotas no tienen ningún privilegio de cliente.
   grants: {
     authenticated: { shelves: ["DELETE", "INSERT", "SELECT", "UPDATE"], books: ["DELETE", "INSERT", "SELECT", "UPDATE"], library_state: ["SELECT"], import_previews: ["DELETE", "INSERT", "SELECT"], library_operations: ["INSERT", "SELECT"], catalogue_cache: [], catalogue_inflight: [], catalogue_quota_buckets: [], catalogue_quota_reservations: [], catalogue_private_cache: ["DELETE", "SELECT"], library_jobs: ["SELECT"], library_job_items: ["SELECT"], account_lifecycle: ["SELECT"], library_snapshots: ["SELECT"], library_snapshot_chunks: ["SELECT"], saved_book_views: ["DELETE", "INSERT", "SELECT", "UPDATE"],
       ...Object.fromEntries(restoreFullTables.map((name) => [name, ["DELETE", "INSERT", "SELECT", "UPDATE"]])), ...Object.fromEntries(restoreImmutableTables.map((name) => [name, ["DELETE", "INSERT", "SELECT"]])), cover_assets: ["SELECT"],
-      ...Object.fromEntries(modelTables.map((name) => [name, ["DELETE", "INSERT", "SELECT", "UPDATE"]])), model_migration_report: ["SELECT"], books_legacy: [], account_deletions: [] },
+      ...Object.fromEntries(modelTables.map((name) => [name, ["DELETE", "INSERT", "SELECT", "UPDATE"]])), model_migration_report: ["SELECT"], books_legacy: [], account_deletions: [],
+      ...Object.fromEntries(productFullTables.map((name) => [name, ["DELETE", "INSERT", "SELECT", "UPDATE"]])), copy_tags: ["DELETE", "INSERT", "SELECT"], review_decisions: ["INSERT", "SELECT"], media_assets: ["SELECT"] },
     // books (vista desde 0011) y books_legacy se comprueban en `views` y con la tabla congelada.
-    anon: { shelves: [], books: [], library_state: [], import_previews: [], library_operations: [], ...Object.fromEntries([...catalogueTables, ...jobTables, ...snapshotTables, "saved_book_views", ...restoreTables, "cover_assets", ...modelTables, "model_migration_report", "books_legacy", "account_deletions"].map((name) => [name, []])) },
+    anon: { shelves: [], books: [], library_state: [], import_previews: [], library_operations: [], ...Object.fromEntries([...catalogueTables, ...jobTables, ...snapshotTables, "saved_book_views", ...restoreTables, "cover_assets", ...modelTables, "model_migration_report", "books_legacy", "account_deletions", ...productTables].map((name) => [name, []])) },
   },
   constraints: [
+    // Lote de producto (0014): FK con el mismo dueño (borrar el ejemplar, la edición, la etiqueta o la serie arrastra el vínculo;
+    // una ubicación ocupada o con hijas, o una imagen citada, no se borra), unicidad normalizada y límites del contrato.
+    ...["tags", "locations", "series", "media_assets", "bibliographic_evidence", "review_issues", "review_decisions", "csv_mapping_profiles"].flatMap((table) => [
+      { table, name: `${table}_pkey`, type: "p", columns: ["id"], since: M14 },
+      { table, name: `${table}_user_id_users_id_fk`, type: "f", columns: ["user_id"], references: "auth.users", refColumns: ["id"], onDelete: "c", since: M14 },
+    ]),
+    { table: "profiles", name: "profiles_pkey", type: "p", columns: ["user_id"], since: M14 },
+    { table: "profiles", name: "profiles_user_id_users_id_fk", type: "f", columns: ["user_id"], references: "auth.users", refColumns: ["id"], onDelete: "c", since: M14 },
+    { table: "copy_tags", name: "copy_tags_pkey", type: "p", columns: ["user_id", "copy_id", "tag_id"], since: M14 },
+    { table: "copy_annotations", name: "copy_annotations_pkey", type: "p", columns: ["user_id", "copy_id"], since: M14 },
+    { table: "copy_locations", name: "copy_locations_pkey", type: "p", columns: ["user_id", "copy_id"], since: M14 },
+    { table: "series_editions", name: "series_editions_pkey", type: "p", columns: ["user_id", "edition_id"], since: M14 },
+    ownerFk("copy_tags", "copy_tags_owner_copy_fk", ["copy_id"], "copies", "c"),
+    ownerFk("copy_tags", "copy_tags_owner_tag_fk", ["tag_id"], "tags", "c"),
+    ownerFk("copy_annotations", "copy_annotations_owner_copy_fk", ["copy_id"], "copies", "c"),
+    ownerFk("locations", "locations_owner_parent_fk", ["parent_id"], "locations", "a"),
+    ownerFk("locations", "locations_owner_photo_fk", ["photo_asset_id"], "media_assets", "a"),
+    ownerFk("copy_locations", "copy_locations_owner_copy_fk", ["copy_id"], "copies", "c"),
+    ownerFk("copy_locations", "copy_locations_owner_location_fk", ["location_id"], "locations", "a"),
+    ownerFk("series_editions", "series_editions_owner_edition_fk", ["edition_id"], "editions", "c"),
+    ownerFk("series_editions", "series_editions_owner_series_fk", ["series_id"], "series", "c"),
+    ownerFk("profiles", "profiles_owner_avatar_fk", ["avatar_asset_id"], "media_assets", "a"),
+    ownerFk("bibliographic_evidence", "bibliographic_evidence_owner_edition_fk", ["edition_id"], "editions", "c"),
+    ownerFk("bibliographic_evidence", "bibliographic_evidence_owner_copy_fk", ["copy_id"], "copies", "c"),
+    ownerFk("bibliographic_evidence", "bibliographic_evidence_owner_photo_fk", ["photo_asset_id"], "media_assets", "a"),
+    ownerFk("review_decisions", "review_decisions_owner_issue_fk", ["issue_id"], "review_issues", "c"),
+    { table: "tags", name: "tags_name_check", type: "c", columns: ["name"], tokens: ["char_length(name)>=1", "char_length(name)<=40", "name=btrim(name)"], since: M14 },
+    { table: "copy_annotations", name: "copy_annotations_notes_check", type: "c", columns: ["notes"], tokens: ["char_length(notes)<=4000"], since: M14 },
+    { table: "copy_annotations", name: "copy_annotations_rating_check", type: "c", columns: ["rating"], tokens: ["rating>=1", "rating<=5"], since: M14 },
+    { table: "locations", name: "locations_kind_check", type: "c", columns: ["kind"], tokens: ["'room'", "'bookcase'", "'cabinet'", "'box'", "'shelf'", "'other'"], since: M14 },
+    { table: "locations", name: "locations_parent_check", type: "c", columns: ["parent_id", "id"], tokens: ["parent_id is null", "parent_id<>id"], since: M14 },
+    { table: "copy_locations", name: "copy_locations_position_check", type: "c", columns: ["position"], tokens: ["position>=1", "position<=100000"], since: M14 },
+    { table: "series_editions", name: "series_editions_position_check", type: "c", columns: ["position"], tokens: ["position>=0", "position<1000000", "scale(position)<=4"], since: M14 },
+    { table: "media_assets", name: "media_assets_kind_check", type: "c", columns: ["kind"], tokens: ["'avatar'", "'location'", "'evidence'"], since: M14 },
+    { table: "media_assets", name: "media_assets_key_check", type: "c", columns: ["storage_key", "user_id", "kind", "id"], tokens: ["storage_key=user_id||'/'||kind||'/'||id"], since: M14 },
+    { table: "media_assets", name: "media_assets_ready_check", type: "c", columns: ["state", "sha256", "mime", "width", "height", "bytes", "expires_at"], tokens: ["state='quarantine'", "mime='image/webp'"], since: M14 },
+    { table: "bibliographic_evidence", name: "bibliographic_evidence_subject_check", type: "c", columns: ["edition_id", "copy_id"], tokens: ["num_nonnulls(edition_id,copy_id)=1"], since: M14 },
+    { table: "bibliographic_evidence", name: "bibliographic_evidence_confidence_check", type: "c", columns: ["confidence"], tokens: ["'provisional'", "'bibliographic_match'", "'physically_checked'"], since: M14 },
+    { table: "bibliographic_evidence", name: "bibliographic_evidence_physical_check", type: "c", columns: ["confidence", "copy_id"], tokens: ["confidence<>'physically_checked'", "copy_id is not null"], since: M14 },
+    { table: "review_issues", name: "review_issues_state_check", type: "c", columns: ["state"], tokens: ["'open'", "'resolved'", "'ignored'"], since: M14 },
+    { table: "review_decisions", name: "review_decisions_actor_check", type: "c", columns: ["actor"], tokens: ["actor='owner'"], since: M14 },
+    { table: "import_sessions", name: "import_sessions_csv_source_check", type: "c", columns: ["source", "input_sha256", "csv_mapping"], tokens: ["source='csv'", "input_sha256 is not null"], since: M14 },
+    { table: "import_session_rows", name: "import_session_rows_source_check", type: "c", columns: ["source_ordinal", "source_row_key"], tokens: ["source_ordinal>=1", "source_ordinal<=1000000"], since: M14 },
     // Copia congelada (0011): PK, FK al dueño y checks; sin FK a estanterías ni portadas.
     legacyTable({ name: "books_pkey", type: "p", columns: ["id"] }),
     legacyTable({ name: "books_user_fk", type: "f", columns: ["user_id"], references: "auth.users", refColumns: ["id"], onDelete: "c" }),
@@ -210,7 +276,7 @@ export const MANIFEST = Object.freeze({
     { table: "import_sessions", name: "import_sessions_pkey", type: "p", columns: ["id"], since: M8 },
     { table: "import_sessions", name: "import_sessions_user_id_users_id_fk", type: "f", columns: ["user_id"], references: "auth.users", refColumns: ["id"], onDelete: "c", since: M8 },
     { table: "import_sessions", name: "import_sessions_state_check", type: "c", columns: ["state"], tokens: ["'receiving'", "'validated'", "'prepared'", "'committed'", "'rejected'"], since: M8 },
-    { table: "import_sessions", name: "import_sessions_source_check", type: "c", columns: ["source"], tokens: ["'manifest'", "'loose'"], since: M8 },
+    { table: "import_sessions", name: "import_sessions_source_check", type: "c", columns: ["source"], tokens: ["'manifest'", "'loose'"], since: M8, variants: [{ since: M14, tokens: ["'manifest'", "'loose'", "'csv'"] }] },
     { table: "import_sessions", name: "import_sessions_digest_check", type: "c", columns: ["manifest_digest"], tokens: ["'^[0-9a-f]{64}$'"], since: M8 },
     { table: "import_sessions", name: "import_sessions_parts_check", type: "c", columns: ["part_count", "validated_parts"], tokens: ["part_count>=1", "part_count<=50", "validated_parts<=part_count"], since: M8 },
     { table: "import_sessions", name: "import_sessions_bytes_check", type: "c", columns: ["total_bytes", "received_bytes"], tokens: ["total_bytes<=83886080", "received_bytes<=total_bytes"], since: M8 },
@@ -226,7 +292,7 @@ export const MANIFEST = Object.freeze({
     { table: "import_session_chunks", name: "import_session_chunks_sha_check", type: "c", columns: ["sha256", "bytes"], tokens: ["sha256=encode(sha256(bytes),'hex')"], since: M8 },
     { table: "import_session_rows", name: "import_session_rows_pkey", type: "p", columns: ["session_id", "kind", "row_key"], since: M8 },
     { table: "import_session_rows", name: "import_session_rows_owner_session_fk", type: "f", columns: ["user_id", "session_id"], references: "biblib.import_sessions", refColumns: ["user_id", "id"], onDelete: "c", since: M8 },
-    { table: "import_session_rows", name: "import_session_rows_kind_check", type: "c", columns: ["kind"], tokens: ["'book'", "'shelf'"], since: M8 },
+    { table: "import_session_rows", name: "import_session_rows_kind_check", type: "c", columns: ["kind"], tokens: ["'book'", "'shelf'"], since: M8, variants: [{ since: M14, tokens: ["'book'", "'shelf'", "'tag'", "'location'", "'series'", "'record'"] }] },
     { table: "saved_book_views", name: "saved_book_views_pkey", type: "p", columns: ["id"], since: M7 },
     { table: "saved_book_views", name: "saved_book_views_user_id_users_id_fk", type: "f", columns: ["user_id"], references: "auth.users", refColumns: ["id"], onDelete: "c", since: M7 },
     { table: "saved_book_views", name: "saved_book_views_name_check", type: "c", columns: ["name"], tokens: ["length(btrim(name))", ">=1", "<=80", "name=btrim(name)"], since: M7 },
@@ -285,7 +351,7 @@ export const MANIFEST = Object.freeze({
     // Solicitudes y marcas de supresión (0013): sin FK a auth.users para sobrevivir a la identidad.
     { table: "account_deletions", name: "account_deletions_pkey", type: "p", columns: ["user_id"], since: M13 },
     { table: "account_deletions", name: "account_deletions_state_check", type: "c", columns: ["state"], tokens: ["'pending'", "'running'", "'waiting_retry'", "'failed'", "'completed'"], since: M13 },
-    { table: "account_deletions", name: "account_deletions_step_check", type: "c", columns: ["step"], tokens: ["'sessions'", "'storage'", "'auth'", "'verify'", "'done'"], since: M13 },
+    { table: "account_deletions", name: "account_deletions_step_check", type: "c", columns: ["step"], tokens: ["'sessions'", "'storage'", "'auth'", "'verify'", "'done'"], since: M13, variants: [{ since: M14, tokens: ["'sessions'", "'storage'", "'private_cache'", "'product'", "'media'", "'copies'", "'auth'", "'verify'", "'done'"] }] },
     { table: "account_deletions", name: "account_deletions_key_check", type: "c", columns: ["operation_key"], tokens: [">=16", "<=128"], since: M13 },
     { table: "account_deletions", name: "account_deletions_error_check", type: "c", columns: ["error_code"], tokens: ["error_code is null", "'^[A-Z_]{1,64}$'"], since: M13 },
     { table: "account_deletions", name: "account_deletions_counts_check", type: "c", columns: ["counts"], tokens: ["jsonb_typeof(counts)='object'"], since: M13 },
@@ -327,12 +393,18 @@ export const MANIFEST = Object.freeze({
     { table: "library_snapshots", name: "library_snapshots_expiry_check", type: "c", columns: ["expires_at", "created_at"], tokens: ["expires_at>created_at"], since: M6 },
     { table: "library_snapshot_chunks", name: "library_snapshot_chunks_pkey", type: "p", columns: ["snapshot_id", "seq"], since: M6 },
     { table: "library_snapshot_chunks", name: "library_snapshot_chunks_owner_snapshot_fk", type: "f", columns: ["user_id", "snapshot_id"], references: "biblib.library_snapshots", refColumns: ["user_id", "id"], onDelete: "c", since: M6 },
-    { table: "library_snapshot_chunks", name: "library_snapshot_chunks_kind_check", type: "c", columns: ["kind"], tokens: ["'shelves'", "'books'"], since: M6 },
+    { table: "library_snapshot_chunks", name: "library_snapshot_chunks_kind_check", type: "c", columns: ["kind"], tokens: ["'shelves'", "'books'"], since: M6, variants: [{ since: M14, tokens: ["'shelves'", "'books'", "'tags'", "'locations'", "'series'"] }] },
     { table: "library_snapshot_chunks", name: "library_snapshot_chunks_seq_check", type: "c", columns: ["seq"], tokens: ["seq>=0"], since: M6 },
     { table: "library_snapshot_chunks", name: "library_snapshot_chunks_size_check", type: "c", columns: ["item_count", "payload"], tokens: [">=1", "<=200", "jsonb_array_length(payload)=item_count"], since: M6 },
     { table: "library_snapshot_chunks", name: "library_snapshot_chunks_digest_check", type: "c", columns: ["digest"], tokens: ["'^[0-9a-f]{64}$'"], since: M6 },
   ],
   indexes: [
+    ...["tags", "locations", "series", "media_assets", "bibliographic_evidence", "review_issues", "review_decisions", "csv_mapping_profiles"].map((table) => ({ table, name: `${table}_user_id_id_unique`, unique: true, columns: ["user_id", "id"], partial: false, since: M14 })),
+    { table: "tags", name: "tags_user_normalized_unique", unique: true, columns: ["user_id", "normalized_name"], partial: false, since: M14 },
+    { table: "review_issues", name: "review_issues_open_dedupe_unique", unique: true, columns: ["user_id", "dedupe_key"], partial: true, since: M14 },
+    { table: "import_session_rows", name: "import_session_rows_source_key_unique", unique: true, columns: ["session_id", "source_row_key"], partial: true, since: M14 },
+    // pg_index.indkey solo enumera user_id para el índice con expresión lower(name).
+    { table: "csv_mapping_profiles", name: "csv_mapping_profiles_user_name_unique", unique: true, columns: ["user_id"], partial: false, since: M14 },
     { table: "account_deletions", name: "account_deletions_due_idx", unique: false, columns: ["next_attempt_at"], partial: true, since: M13 },
     { table: "account_deletions", name: "account_deletions_purge_idx", unique: false, columns: ["purge_after"], partial: true, since: M13 },
     legacyTable({ name: "books_user_id_isbn_unique", unique: true, columns: ["user_id", "isbn"], partial: false }),
@@ -400,6 +472,16 @@ export const MANIFEST = Object.freeze({
     { table: "library_snapshots", name: "library_snapshots_expires_at_idx", unique: false, columns: ["expires_at"], partial: false, since: M6 },
   ],
   columns: [
+    { table: "tags", name: "normalized_name", type: "text", notNull: true, since: M14 },
+    { table: "series_editions", name: "position", type: "numeric", notNull: false, since: M14 },
+    { table: "copy_annotations", name: "rating", type: "smallint", notNull: false, since: M14 },
+    { table: "media_assets", name: "storage_key", type: "text", notNull: true, since: M14 },
+    { table: "media_assets", name: "state", type: "text", notNull: true, defaultTokens: ["'quarantine'"], since: M14 },
+    { table: "bibliographic_evidence", name: "confidence", type: "text", notNull: true, since: M14 },
+    { table: "import_sessions", name: "csv_mapping", type: "jsonb", notNull: false, since: M14 },
+    { table: "import_sessions", name: "input_sha256", type: "text", notNull: false, since: M14 },
+    { table: "import_session_rows", name: "source_row_key", type: "text", notNull: false, since: M14 },
+    ...productFullTables.map((table) => ({ table, name: "version", type: "uuid", notNull: true, defaultTokens: ["gen_random_uuid()"], since: M14 })),
     { table: "account_deletions", name: "user_id", type: "uuid", notNull: true, since: M13 },
     { table: "account_deletions", name: "state", type: "text", notNull: true, defaultTokens: ["'pending'"], since: M13 },
     { table: "account_deletions", name: "step", type: "text", notNull: true, defaultTokens: ["'sessions'"], since: M13 },
@@ -477,8 +559,23 @@ export const MANIFEST = Object.freeze({
     cutoverFunction("books_view_insert", "trigger", 0, { securityDefiner: false }),
     cutoverFunction("books_view_update", "trigger", 0, { securityDefiner: false }),
     cutoverFunction("books_view_delete", "trigger", 0, { securityDefiner: false }),
-    cutoverFunction("library_snapshot_capture", "jsonb", 2, { authenticated: true }),
-    cutoverFunction("library_snapshot_foreign_ids", "uuid[]", 1, { authenticated: true }),
+    { ...cutoverFunction("library_snapshot_capture", "jsonb", 2, { authenticated: true }), until: M14 },
+    { ...cutoverFunction("library_snapshot_foreign_ids", "uuid[]", 1, { authenticated: true }), until: M14 },
+    // 0014: versiones anteriores con datos de producto (schema_version 3) e IDs ajenos de etiquetas, ubicaciones, series y evidencias.
+    productFunction("library_snapshot_capture", "jsonb", 2, { authenticated: true }),
+    productFunction("library_snapshot_foreign_ids", "uuid[]", 1, { authenticated: true }),
+    productFunction("tag_normalize", "text", 1, { authenticated: true, securityDefiner: false }),
+    productFunction("enforce_row_limit", "trigger", 0, { securityDefiner: false }),
+    productFunction("guard_location_tree", "trigger", 0, { securityDefiner: false }),
+    productFunction("guard_media_reference", "trigger", 0, { securityDefiner: false }),
+    productFunction("media_object_access", "boolean", 2, { authenticated: true }),
+    productFunction("media_asset_begin_upload", "jsonb", 1, { authenticated: true }),
+    productFunction("media_asset_register", "jsonb", 5, { authenticated: true }),
+    productFunction("media_asset_discard", "jsonb", 1, { authenticated: true }),
+    productFunction("media_asset_purge_candidates", "jsonb", 3),
+    productFunction("media_asset_purge_confirm", "text[]", 3),
+    productFunction("media_storage_install", "void", 0, { securityDefiner: false }),
+    productFunction("evidence_snapshot_item", "jsonb", 1, { securityDefiner: false }),
     { ...cutoverFunction("cover_asset_revalidate", "text", 2, { authenticated: true }), until: M13 },
     deletionFunction("cover_asset_revalidate", "text", 2, true),
     cutoverFunction("cover_asset_purge_candidates", "jsonb", 3),
@@ -494,15 +591,18 @@ export const MANIFEST = Object.freeze({
     deletionFunction("account_write_allowed", "boolean", 0, true),
     deletionFunction("account_deletion_request", "jsonb", 1, true),
     deletionFunction("account_deletion_status", "jsonb", 0, true),
-    deletionFunction("account_deletion_step_tables", "text[]", 1, false, false),
+    { ...deletionFunction("account_deletion_step_tables", "text[]", 1, false, false), until: M14 },
+    productFunction("account_deletion_step_tables", "text[]", 1, { securityDefiner: false }),
     deletionFunction("account_deletion_step_remaining", "integer", 2),
     deletionFunction("account_deletion_lease", "jsonb", 2),
     deletionFunction("account_deletion_renew", "boolean", 3),
     deletionFunction("account_deletion_claim", "jsonb", 2),
-    deletionFunction("account_deletion_purge", "integer", 4),
+    { ...deletionFunction("account_deletion_purge", "integer", 4), until: M14 },
+    productFunction("account_deletion_purge", "integer", 4),
     deletionFunction("account_deletion_objects", "jsonb", 2),
     deletionFunction("account_residue", "jsonb", 1),
-    deletionFunction("account_deletion_advance", "text", 5),
+    { ...deletionFunction("account_deletion_advance", "text", 5), until: M14 },
+    productFunction("account_deletion_advance", "text", 5),
     deletionFunction("account_deletion_fail", "text", 5),
     deletionFunction("account_deletion_complete", "jsonb", 3),
     deletionFunction("account_deletion_retry", "integer", 1),
@@ -577,14 +677,27 @@ export const MANIFEST = Object.freeze({
     { table: "books", name: "books_view_insert", function: "biblib.books_view_insert", timing: "INSTEAD OF", events: ["INSERT"], level: "ROW", tgtype: 69, since: M11 },
     { table: "books", name: "books_view_update", function: "biblib.books_view_update", timing: "INSTEAD OF", events: ["UPDATE"], level: "ROW", tgtype: 81, since: M11 },
     { table: "books", name: "books_view_delete", function: "biblib.books_view_delete", timing: "INSTEAD OF", events: ["DELETE"], level: "ROW", tgtype: 73, since: M11 },
+    // Lote de producto (0014). BEFORE INSERT FOR EACH ROW = 7; AFTER INSERT OR UPDATE FOR EACH ROW = 21.
+    ...productFullTables.map((table) => productTrigger(table, `${table}_rotate_version`, "rotate_book_version", "BEFORE", ["INSERT", "UPDATE"], "ROW", 23)),
+    ...["tags", "copy_tags", "copy_annotations", "locations", "copy_locations", "series", "series_editions", "bibliographic_evidence"].map((table) =>
+      productTrigger(table, `${table}_rotate_library_revision`, "rotate_library_revision", "AFTER", ["INSERT", "UPDATE", "DELETE"], "ROW", 29)),
+    ...["tags", "copy_tags", "locations", "series", "bibliographic_evidence", "review_issues", "csv_mapping_profiles"].map((table) =>
+      productTrigger(table, `${table}_limit`, "enforce_row_limit", "BEFORE", ["INSERT"], "ROW", 7)),
+    productTrigger("locations", "locations_tree_lock", "guard_location_tree", "BEFORE", ["INSERT", "UPDATE"], "ROW", 23),
+    productTrigger("locations", "locations_tree_check", "guard_location_tree", "AFTER", ["INSERT", "UPDATE"], "ROW", 21),
+    productTrigger("profiles", "profiles_guard_avatar", "guard_media_reference", "BEFORE", ["INSERT", "UPDATE"], "ROW", 23),
+    productTrigger("locations", "locations_guard_photo", "guard_media_reference", "BEFORE", ["INSERT", "UPDATE"], "ROW", 23),
+    productTrigger("bibliographic_evidence", "bibliographic_evidence_guard_photo", "guard_media_reference", "BEFORE", ["INSERT", "UPDATE"], "ROW", 23),
   ],
   // Vista plana books (0011): security_invoker (RLS de las tablas para quien consulta) y privilegios del dueño.
   views: [{ name: "books", securityInvoker: true, grants: { authenticated: ["DELETE", "INSERT", "SELECT", "UPDATE"], anon: [] }, since: M11 }],
   // Bucket privado de portadas y sus políticas en storage.objects (0009). Fuera del esquema biblib, pero
   // del dominio: se comprueban igual y una política biblib_* no declarada es drift.
   storage: {
-    buckets: [{ id: COVERS_BUCKET, public: false, fileSizeLimit: 5242880, allowedMimeTypes: ["image/webp"], since: M9 }],
-    policies: [storagePolicy("biblib_covers_select_own", "SELECT", "select"), storagePolicy("biblib_covers_insert_own", "INSERT", "insert"), storagePolicy("biblib_covers_delete_own", "DELETE", "delete")],
+    buckets: [{ id: COVERS_BUCKET, public: false, fileSizeLimit: 5242880, allowedMimeTypes: ["image/webp"], since: M9 },
+      { id: MEDIA_BUCKET, public: false, fileSizeLimit: 5242880, allowedMimeTypes: ["image/webp"], since: M14 }],
+    policies: [storagePolicy("biblib_covers_select_own", "SELECT", "select"), storagePolicy("biblib_covers_insert_own", "INSERT", "insert"), storagePolicy("biblib_covers_delete_own", "DELETE", "delete"),
+      mediaStoragePolicy("biblib_media_select_own", "SELECT", "select"), mediaStoragePolicy("biblib_media_insert_own", "INSERT", "insert"), mediaStoragePolicy("biblib_media_delete_own", "DELETE", "delete")],
   },
   prerequisites: ["auth.users", "auth.uid()", "role:authenticated", "role:anon"],
 })
@@ -664,14 +777,16 @@ async function inspectViews(sql) {
 /**
  * Bucket de portadas y políticas biblib_* de storage.objects, solo con el dominio de 0009 presente
  * (biblib.cover_assets): la fila del bucket es un dato de Storage que sobrevive a borrar el esquema
- * biblib, y sin el dominio no forma parte de sus hechos. null en heads anteriores a 0009.
+ * biblib, y sin el dominio no forma parte de sus hechos. null en heads anteriores a 0009. El bucket de imágenes de 0014
+ * (`biblib-media`) entra con la misma regla: solo si existe biblib.media_assets.
  */
 async function inspectStorage(sql) {
   const rows = await sql`select to_regclass('storage.objects') is not null and to_regclass('storage.buckets') is not null and to_regclass('biblib.cover_assets') is not null as found`
   // Un inspector simulado de heads anteriores (pruebas de hechos sellados) no responde a esta consulta.
   if (!Array.isArray(rows) || !rows[0]?.found) return null
   const [buckets, policies] = await Promise.all([
-    sql`select id, public, file_size_limit, allowed_mime_types from storage.buckets where id = ${COVERS_BUCKET}`,
+    sql`select id, public, file_size_limit, allowed_mime_types from storage.buckets
+      where id = ${COVERS_BUCKET} or (id = ${MEDIA_BUCKET} and to_regclass('biblib.media_assets') is not null) order by id`,
     sql`select p.polname as name, p.polcmd as cmd, p.polpermissive as permissive,
         coalesce((select array_agg(case when r = 0 then 'public' else (select rolname::text from pg_roles where oid = r) end order by 1) from unnest(p.polroles) r), '{}'::text[]) as roles,
         pg_get_expr(p.polqual, p.polrelid) as using, pg_get_expr(p.polwithcheck, p.polrelid) as check

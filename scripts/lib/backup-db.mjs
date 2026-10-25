@@ -11,7 +11,10 @@ const MARK_EXCLUDED = Object.freeze({ "auth.users": ["last_sign_in_at", "updated
 // Tokens que restore rota deliberadamente: se excluyen al comparar contenido. Rotar books.version
 // dispara el trigger de 0003, que también renueva rotated_xact y updated_at de library_state.
 // Desde 0011 (U-DAT-06) los tokens viven en obras, ediciones y ejemplares; books_legacy está congelada y no se rota.
-export const ROTATING_COLUMNS = Object.freeze({ "biblib.books": ["version"], "biblib.works": ["version"], "biblib.editions": ["version"], "biblib.copies": ["version"], "biblib.library_state": ["revision", "rotated_xact", "updated_at"] })
+// O13 (0014): los tokens de los datos de producto también se rotan (PRODUCT_TOKEN_TABLES).
+export const PRODUCT_TOKEN_TABLES = Object.freeze(["tags", "copy_annotations", "locations", "copy_locations", "series", "series_editions", "bibliographic_evidence", "review_issues", "profiles", "csv_mapping_profiles", "media_assets"])
+export const ROTATING_COLUMNS = Object.freeze({ "biblib.books": ["version"], "biblib.works": ["version"], "biblib.editions": ["version"], "biblib.copies": ["version"], "biblib.library_state": ["revision", "rotated_xact", "updated_at"],
+  ...Object.fromEntries(PRODUCT_TOKEN_TABLES.map((table) => [`biblib.${table}`, ["version"]])) })
 // Clave natural de cada tabla para comparar presencia cuando el contenido cambia legítimamente.
 export const TABLE_KEYS = Object.freeze({ "storage.objects": ["bucket_id", "name"], "drizzle.__drizzle_migrations": ["hash", "created_at"], "biblib.library_state": ["user_id"] })
 // Auth y Storage se comparan por cantidad y claves: restore reasigna credenciales de fixtures
@@ -150,6 +153,11 @@ export async function rotateRestoredTokens(tx) {
     // Una pestaña anterior al respaldo conserva la versión restaurada: su escritura condicional no debe aplicar.
     if (stale) result.staleWriteRejected = (await tx`update biblib.books set status = status where id = ${stale.id} and version = ${stale.version}`).count === 0
   }
+  // Datos de producto (0014): cada escritura condicional usa su `version`; una pestaña anterior al respaldo no debe escribir.
+  for (const table of PRODUCT_TOKEN_TABLES) {
+    if (!tables.includes(table) || !find(table, "version")) continue
+    result.rotated.push({ token: `biblib.${table}.version`, rows: (await tx`update ${tx("biblib")}.${tx(table)} set version = gen_random_uuid()`).count })
+  }
   const revision = find("library_state", "revision")
   if (revision) {
     if (!["uuid", "text", "character varying"].includes(revision.type)) throw new BiblibError(EXIT.VERIFICATION_FAILED, "rotación", "library_state.revision tiene un tipo sin rotación definida; amplía rotateRestoredTokens antes de restaurar.")
@@ -229,6 +237,29 @@ export function verifyCoverObjects(assets, objects) {
     const object = byKey.get(item.key)
     if (!object) problems.push(`falta el objeto del asset ${item.id}`)
     else if (object.sha256 !== item.sha256 || object.size !== item.bytes) problems.push(`el objeto del asset ${item.id} no coincide con su sha256 o tamaño`)
+  }
+  return problems
+}
+
+// Imágenes privadas de O13 (0014): avatar, fotos de ubicaciones y fotos fuente en `biblib-media`. Son subidas propias:
+// entran todas en el respaldo y cada asset listo debe coincidir en bytes y sha256 con su objeto copiado.
+export const MEDIA_BUCKET = "biblib-media"
+
+/** Assets de imagen listos (clave, sha256 y tamaño), sin datos de la colección. Null antes de 0014. */
+export async function mediaAssetInventory(tx) {
+  if (!(await relationExists(tx, "biblib", "media_assets"))) return null
+  const rows = await tx`select id::text as id, user_id::text as owner, kind, storage_key as key, sha256, bytes from biblib.media_assets where state = 'ready' order by id`
+  return rows.map((row) => ({ ...row }))
+}
+
+/** Cada asset listo copiado debe coincidir con su objeto; si no, el respaldo no vale. */
+export function verifyMediaObjects(assets, objects) {
+  const byKey = new Map(objects.filter((object) => object.bucket === MEDIA_BUCKET).map((object) => [object.name, object]))
+  const problems = []
+  for (const item of assets ?? []) {
+    const object = byKey.get(item.key)
+    if (!object) problems.push(`falta el objeto de la imagen ${item.id}`)
+    else if (object.sha256 !== item.sha256 || object.size !== item.bytes) problems.push(`el objeto de la imagen ${item.id} no coincide con su sha256 o tamaño`)
   }
   return problems
 }
