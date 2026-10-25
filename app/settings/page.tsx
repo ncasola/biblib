@@ -29,7 +29,8 @@ import type { LibraryData } from "@/lib/types"
 import type { ActionError } from "@/lib/action-result"
 
 type Message = { type: "success" | "error"; text: string; reference?: string }
-type Preview = { name: string; library: LibraryData }
+/** `input` es el contenido del archivo tal cual: el servidor lo vuelve a leer (la forma plana no expresa ediciones compartidas ni ejemplares sin ISBN-13). */
+type Preview = { name: string; library: LibraryData; input: unknown }
 /** El archivo y la selección se conservan; la revisión del servidor ya no corresponde a la colección actual. */
 type Stale = { reason: "conflict" | "expired"; text: string }
 
@@ -301,7 +302,7 @@ export default function SettingsPage() {
       // Las partes se ofrecen en un diálogo: la lista no empuja el resto de la página (tarea T2 de rendimiento).
       else setPartsOpen(true)
       const format = prepared.formatVersion === 2
-        ? " Se usa el formato 2 porque tu biblioteca tiene procedencia por campo o de la BNE que el formato 1 no conserva."
+        ? " Se usa el formato 2 porque tu biblioteca tiene datos que el formato 1 no conserva: varios ejemplares de una edición, obras, libros sin ISBN, comprobaciones con evidencias o procedencia por campo."
         : " Se usa el formato 1, compatible con versiones anteriores, porque conserva todos tus datos."
       setMessage({ type: "success", text: (parts.length === 1
         ? `Copia preparada con ${prepared.totals.books} libros y ${prepared.totals.shelves} estanterías. Conserva el archivo descargado para restaurar la colección.`
@@ -316,14 +317,14 @@ export default function SettingsPage() {
   const errorMessage = (error: ActionError): Message => ({ type: "error", text: error.message, reference: error.correlationId })
 
   /** Pide al servidor la revisión de este archivo y modo frente a la colección actual. */
-  const prepare = async (library: LibraryData, importMode: LibraryImportOptions["mode"]) => {
+  const prepare = async (input: unknown, importMode: LibraryImportOptions["mode"]) => {
     setIsPreparing(true)
     setPrepared(null)
     setStale(null)
     setMessage(null)
     setReplaceAcknowledged(false)
     try {
-      const response = await prepareImportAction(library, importMode)
+      const response = await prepareImportAction(input, importMode)
       if (!response.ok) { setMessage(errorMessage(response.error)); return }
       idempotencyKey.current = newIdempotencyKey()
       setPrepared(response.value)
@@ -360,9 +361,9 @@ export default function SettingsPage() {
     setReplaceAcknowledged(false)
     setIsValidating(true)
     let library: LibraryData
+    let input: unknown
     try {
       if (file.size > MAX_IMPORT_BYTES) throw new Error("El archivo supera el límite de 8 MiB.")
-      let input: unknown
       try { input = JSON.parse(await file.text()) } catch { throw new Error("No se pudo leer el JSON. Comprueba que el archivo esté completo y sea válido.") }
       // Revisión local inmediata de errores del archivo, antes de consultar al servidor.
       library = parseLibraryImport(input)
@@ -372,14 +373,14 @@ export default function SettingsPage() {
     } finally {
       setIsValidating(false)
     }
-    setPreview({ name: file.name, library })
-    await prepare(library, "merge")
+    setPreview({ name: file.name, library, input })
+    await prepare(input, "merge")
   }
 
   const changeMode = (next: LibraryImportOptions["mode"]) => {
     if (!preview || busy || next === mode) return
     setMode(next)
-    void prepare(preview.library, next)
+    void prepare(preview.input, next)
   }
 
   const handleConfirm = async () => {
@@ -484,7 +485,7 @@ export default function SettingsPage() {
           <section aria-labelledby="import-title" aria-busy={isImporting || isValidating || isPreparing} className="rounded-2xl border border-border bg-card/80 backdrop-blur-xl p-5 md:p-8 shadow-xl">
             <h2 id="import-title" className="text-2xl font-bold mb-2">Importar una biblioteca</h2>
             <p className="text-muted-foreground mb-4">Selecciona un JSON para validarlo y revisar qué cambiará en tu biblioteca. Elegir el archivo todavía no modifica tus datos.</p>
-            <p id="import-limits" className="text-sm text-muted-foreground mb-4">Formato antiguo de BibLib o versión 1. Máximo 8 MiB, {MAX_IMPORT_BOOKS.toLocaleString("es")} libros y {MAX_IMPORT_SHELVES} estanterías.</p>
+            <p id="import-limits" className="text-sm text-muted-foreground mb-4">Formato antiguo de BibLib, versión 1 o versión 2. Máximo 8 MiB, {MAX_IMPORT_BOOKS.toLocaleString("es")} libros y {MAX_IMPORT_SHELVES} estanterías.</p>
             <input ref={fileInput} id="import-file" type="file" accept=".json,application/json" onChange={(event) => void handleFile(event)} disabled={busy || !counts || loading} className="sr-only" tabIndex={-1} aria-label="Archivo JSON de biblioteca" aria-describedby="import-limits" />
             <Button type="button" onClick={() => fileInput.current?.click()} disabled={busy || !counts || loading} variant="secondary" className="rounded-xl">{isValidating ? <LoaderCircle aria-hidden="true" className="animate-spin" /> : <Upload aria-hidden="true" />}{isValidating ? "Validando archivo…" : preview ? "Elegir otro archivo" : "Seleccionar archivo JSON"}</Button>
 
@@ -494,7 +495,7 @@ export default function SettingsPage() {
               <p className="font-medium">{stale.reason === "conflict" ? "Tu biblioteca ha cambiado" : "La revisión ya no es válida"}</p>
               <p className="text-sm">{stale.text}</p>
               <p className="text-sm text-muted-foreground">Se conservan el archivo «{preview.name}» y el modo «{mode === "replace" ? "Reemplazar" : "Fusionar"}». Revisa de nuevo el plan antes de confirmar.</p>
-              <div className="flex flex-wrap gap-3"><Button onClick={() => void prepare(preview.library, mode)} disabled={busy}><RefreshCw aria-hidden="true" />Volver a revisar con los datos actuales</Button><Button variant="outline" onClick={cancelImport} disabled={busy}>Cancelar importación</Button></div>
+              <div className="flex flex-wrap gap-3"><Button onClick={() => void prepare(preview.input, mode)} disabled={busy}><RefreshCw aria-hidden="true" />Volver a revisar con los datos actuales</Button><Button variant="outline" onClick={cancelImport} disabled={busy}>Cancelar importación</Button></div>
             </div>}
 
             {preview && prepared && plan && <div className="mt-6 space-y-5">

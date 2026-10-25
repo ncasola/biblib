@@ -113,9 +113,9 @@ function fragment<T>(data: LibraryData, format: PartFormat<T>): T[] {
   return chunks
 }
 
-const V1_REQUIRED = "La biblioteca tiene procedencia que el formato 1 no conserva (BNE o fuentes por campo). Exporta en formato 2."
+const V1_REQUIRED = "La biblioteca tiene datos que el formato 1 no conserva (procedencia BNE o por campo, varios ejemplares de una edición, obras, evidencias o libros sin ISBN). Exporta en formato 2."
 
-/** Divide una biblioteca en archivos v1 importables sin perder libros ni estanterías. Lanza si v1 perdería procedencia. */
+/** Divide una biblioteca en archivos v1 importables sin perder libros ni estanterías. Lanza si v1 perdería datos. */
 export function fragmentLibraryExport(data: LibraryData, exportedAt = new Date()): LibraryExport[] {
   if (libraryRequiresV2(data)) throw new Error(V1_REQUIRED)
   const timestamp = exportedAt.toISOString()
@@ -146,8 +146,8 @@ export type LibraryBackup =
   | { formatVersion: 2; parts: PortableBackupV2[]; reason: string }
 
 /**
- * Elige el formato de la copia: v1 solo si no pierde datos (compatibilidad con versiones
- * anteriores de BibLib); si alguna ficha tiene procedencia BNE o por campo, exige v2.
+ * Elige el formato de la copia: v1 solo si no pierde datos (compatibilidad con versiones anteriores de
+ * BibLib); procedencia ampliada, varias copias por edición, obras, evidencias o libros sin ISBN exigen v2.
  */
 export function exportLibraryBackup(data: LibraryData, exportedAt = new Date()): LibraryBackup {
   if (libraryRequiresV2(data)) return { formatVersion: 2, parts: fragmentBackupV2(data, exportedAt), reason: V1_REQUIRED }
@@ -196,10 +196,12 @@ export function buildBackupSet(data: LibraryData, options: { exportedAt: Date; e
     return { index, fileName: names.part(index), text, byteLength: bytes.byteLength, sha256: options.sha256(bytes), counts: payloadCounts(part).counts }
   })
   const books = data.books.length
+  const editions = new Set(data.books.map((book) => book.edition?.id ?? book.id)).size
+  const works = new Set(data.books.flatMap((book) => book.edition?.workId ? [book.edition.workId] : [])).size
   const manifest = createBackupSetManifest({
     exportSetId: options.exportSetId, exportedAt, payloadFormatVersion: backup.formatVersion,
     parts: files.map(({ byteLength, sha256, counts }) => ({ byteLength, sha256, counts })),
-    totals: backup.formatVersion === 2 ? { works: 0, editions: books, copies: books, shelves: data.shelves.length } : { books, shelves: data.shelves.length },
+    totals: backup.formatVersion === 2 ? { works, editions, copies: books, shelves: data.shelves.length } : { books, shelves: data.shelves.length },
   })
   return {
     formatVersion: backup.formatVersion, ...(backup.formatVersion === 2 ? { reason: backup.reason } : {}),

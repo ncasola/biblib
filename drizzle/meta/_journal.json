@@ -71,6 +71,27 @@
       "when": 1792851547262,
       "tag": "0009_cover_assets",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1792879191311,
+      "tag": "0010_works_editions_copies",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1792880355867,
+      "tag": "0011_copies_cutover",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1792891326215,
+      "tag": "0012_model_account_deletion",
+      "breakpoints": true
     }
   ]
 }

@@ -1,0 +1,409 @@
+{
+  "escala": 10000,
+  "dataset": {
+    "id": "biblib-escala-v1",
+    "hash": "6e9b3738de18bd6d695f605e18cefaed384db736596ef61cd71a06188f3d97fe",
+    "libros": 10000,
+    "estanterias": 41,
+    "porEstado": {
+      "read": 3963,
+      "to-read": 3060,
+      "unread": 2179,
+      "reading": 798
+    },
+    "estanteriaMayor": 1534,
+    "isbnManuales": 1420
+  },
+  "frio": [
+    {
+      "escenario": "consulta-isbn-alta",
+      "accion": "getBookByIsbnAction",
+      "accionMs": 318.9,
+      "sqlMs": 0.72,
+      "authServidorMs": [
+        48.54
+      ],
+      "ok": true,
+      "bytes": 66
+    }
+  ],
+  "acciones": [
+    {
+      "escenario": "consulta-isbn-alta",
+      "accion": "getBookByIsbnAction",
+      "concurrencia": 1,
+      "iteraciones": 60,
+      "accionMs": {
+        "n": 60,
+        "min": 52.9,
+        "p50": 59.5,
+        "p95": 66.7,
+        "p99": 75.9,
+        "max": 82.2,
+        "mean": 60
+      },
+      "sqlMs": {
+        "n": 60,
+        "min": 0.04,
+        "p50": 0.05,
+        "p95": 0.13,
+        "p99": 0.36,
+        "max": 0.63,
+        "mean": 0.08
+      },
+      "authServidorMs": {
+        "n": 63,
+        "min": 38.17,
+        "p50": 43.52,
+        "p95": 50.41,
+        "p99": 51.61,
+        "max": 53.33,
+        "mean": 44
+      },
+      "llamadasAuthPorPeticion": 1.05,
+      "filas": {
+        "n": 0
+      },
+      "bytes": {
+        "n": 60,
+        "min": 66,
+        "p50": 66,
+        "p95": 935,
+        "p99": 972,
+        "max": 975,
+        "mean": 437
+      },
+      "errores": 0,
+      "peticionesPorSegundo": 15.9,
+      "pool": {
+        "samples": 35,
+        "maxTotal": 1,
+        "maxActive": 1,
+        "byState": {
+          "idle": 31,
+          "active": 2,
+          "idle in transaction": 2
+        },
+        "error": null
+      },
+      "sentencias": [
+        {
+          "query": "select \"books\".\"id\", \"books\".\"version\", \"books\".\"user_id\", \"books\".\"title\", \"books\".\"subtitle\", \"books\".\"authors\", \"books\".\"publishers\", \"books\".\"number_of_pages\", \"books\".\"publish_date\", \"books\".\"cover_small\", \"books\".\"cover_medium\", \"books\".\"cover_large\", \"books\".\"status\", \"books\".\"shelf_id\", \"books\".\"cover_asset_id\", \"books\".\"created_at\", \"books\".\"updated_at\", \"books\".\"edition_id\", \"books\".\"copy_version\", \"books\".\"edition_version\", \"books\".\"isbn13\", \"books\".\"legacy_identifier\", \"books\".\"edition_verification\", \"books\".\"work_id\", \"books\".\"work_title\", \"books\".\"language\", \"books\".\"identifiers\", \"books\".\"edition_catalogue\", \"books\".\"edition_copies\", \"biblib\".\"shelves\".\"title\" from \"biblib\".\"books\" inner join \"biblib\".\"shelves\" on (\"books\".\"shelf_id\" = \"biblib\".\"shelves\".\"id\" and \"biblib\".\"shelves\".\"user_id\" = $1) where (\"books\".\"user_id\" = $2 and \"books\".\"isbn13\" = $3) order by \"books\".\"created_at\" asc, \"books\".\"id\" asc limit $4",
+          "calls": 60,
+          "rowsPerCall": 0.4,
+          "meanMs": 0.06,
+          "maxMs": 0.153,
+          "stddevMs": 0.04,
+          "bufferHitRatio": 1,
+          "hasLimit": true,
+          "selectsRows": true
+        },
+        {
+          "query": "select set_config('request.jwt.claims', $1, true), set_config('request.jwt.claim.sub', $2, true), set_config('role', 'authenticated', true)",
+          "calls": 60,
+          "rowsPerCall": 1,
+          "meanMs": 0.014,
+          "maxMs": 0.018,
+          "stddevMs": 0.001,
+          "bufferHitRatio": null,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "select b.oid, b.typarray from pg_catalog.pg_type a left join pg_catalog.pg_type b on b.oid = a.typelem where a.typcategory = $1 group by b.oid, b.typarray order by b.oid",
+          "calls": 1,
+          "rowsPerCall": 369,
+          "meanMs": 0.596,
+          "maxMs": 0.596,
+          "stddevMs": 0,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": true
+        },
+        {
+          "query": "begin",
+          "calls": 60,
+          "rowsPerCall": 0,
+          "meanMs": 0.001,
+          "maxMs": 0.001,
+          "stddevMs": 0,
+          "bufferHitRatio": null,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "commit",
+          "calls": 60,
+          "rowsPerCall": 0,
+          "meanMs": 0.001,
+          "maxMs": 0.002,
+          "stddevMs": 0,
+          "bufferHitRatio": null,
+          "hasLimit": false,
+          "selectsRows": false
+        }
+      ],
+      "pantalla": "Añadir libro (ISBN existente)"
+    },
+    {
+      "escenario": "consulta-isbn-alta",
+      "accion": "getBookByIsbnAction",
+      "concurrencia": 5,
+      "iteraciones": 20,
+      "accionMs": {
+        "n": 100,
+        "min": 61,
+        "p50": 80.4,
+        "p95": 95.2,
+        "p99": 121.2,
+        "max": 125.7,
+        "mean": 82.4
+      },
+      "sqlMs": null,
+      "authServidorMs": {
+        "n": 106,
+        "min": 39.12,
+        "p50": 52.92,
+        "p95": 60.87,
+        "p99": 62.58,
+        "max": 64.8,
+        "mean": 53.13
+      },
+      "llamadasAuthPorPeticion": 1.06,
+      "filas": {
+        "n": 0
+      },
+      "bytes": {
+        "n": 100,
+        "min": 66,
+        "p50": 66,
+        "p95": 934,
+        "p99": 970,
+        "max": 975,
+        "mean": 424
+      },
+      "errores": 0,
+      "peticionesPorSegundo": 58.9,
+      "pool": {
+        "samples": 16,
+        "maxTotal": 4,
+        "maxActive": 1,
+        "byState": {
+          "idle": 56,
+          "idle in transaction": 2,
+          "active": 3
+        },
+        "error": null
+      },
+      "sentencias": [
+        {
+          "query": "select \"books\".\"id\", \"books\".\"version\", \"books\".\"user_id\", \"books\".\"title\", \"books\".\"subtitle\", \"books\".\"authors\", \"books\".\"publishers\", \"books\".\"number_of_pages\", \"books\".\"publish_date\", \"books\".\"cover_small\", \"books\".\"cover_medium\", \"books\".\"cover_large\", \"books\".\"status\", \"books\".\"shelf_id\", \"books\".\"cover_asset_id\", \"books\".\"created_at\", \"books\".\"updated_at\", \"books\".\"edition_id\", \"books\".\"copy_version\", \"books\".\"edition_version\", \"books\".\"isbn13\", \"books\".\"legacy_identifier\", \"books\".\"edition_verification\", \"books\".\"work_id\", \"books\".\"work_title\", \"books\".\"language\", \"books\".\"identifiers\", \"books\".\"edition_catalogue\", \"books\".\"edition_copies\", \"biblib\".\"shelves\".\"title\" from \"biblib\".\"books\" inner join \"biblib\".\"shelves\" on (\"books\".\"shelf_id\" = \"biblib\".\"shelves\".\"id\" and \"biblib\".\"shelves\".\"user_id\" = $1) where (\"books\".\"user_id\" = $2 and \"books\".\"isbn13\" = $3) order by \"books\".\"created_at\" asc, \"books\".\"id\" asc limit $4",
+          "calls": 100,
+          "rowsPerCall": 0.4,
+          "meanMs": 0.068,
+          "maxMs": 0.183,
+          "stddevMs": 0.045,
+          "bufferHitRatio": 1,
+          "hasLimit": true,
+          "selectsRows": true
+        },
+        {
+          "query": "select b.oid, b.typarray from pg_catalog.pg_type a left join pg_catalog.pg_type b on b.oid = a.typelem where a.typcategory = $1 group by b.oid, b.typarray order by b.oid",
+          "calls": 3,
+          "rowsPerCall": 369,
+          "meanMs": 0.798,
+          "maxMs": 0.818,
+          "stddevMs": 0.016,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": true
+        },
+        {
+          "query": "select set_config('request.jwt.claims', $1, true), set_config('request.jwt.claim.sub', $2, true), set_config('role', 'authenticated', true)",
+          "calls": 100,
+          "rowsPerCall": 1,
+          "meanMs": 0.016,
+          "maxMs": 0.116,
+          "stddevMs": 0.015,
+          "bufferHitRatio": 1,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "commit",
+          "calls": 100,
+          "rowsPerCall": 0,
+          "meanMs": 0.001,
+          "maxMs": 0.002,
+          "stddevMs": 0,
+          "bufferHitRatio": null,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "begin",
+          "calls": 100,
+          "rowsPerCall": 0,
+          "meanMs": 0.001,
+          "maxMs": 0.002,
+          "stddevMs": 0,
+          "bufferHitRatio": null,
+          "hasLimit": false,
+          "selectsRows": false
+        }
+      ],
+      "pantalla": "Añadir libro (ISBN existente)"
+    },
+    {
+      "escenario": "consulta-isbn-alta",
+      "accion": "getBookByIsbnAction",
+      "concurrencia": 10,
+      "iteraciones": 15,
+      "accionMs": {
+        "n": 150,
+        "min": 72.5,
+        "p50": 127.6,
+        "p95": 161.1,
+        "p99": 170.3,
+        "max": 174.2,
+        "mean": 126.5
+      },
+      "sqlMs": null,
+      "authServidorMs": {
+        "n": 164,
+        "min": 39.7,
+        "p50": 77.15,
+        "p95": 109.13,
+        "p99": 113.47,
+        "max": 115.46,
+        "mean": 76.85
+      },
+      "llamadasAuthPorPeticion": 1.09,
+      "filas": {
+        "n": 0
+      },
+      "bytes": {
+        "n": 150,
+        "min": 66,
+        "p50": 66,
+        "p95": 938,
+        "p99": 966,
+        "max": 975,
+        "mean": 425
+      },
+      "errores": 0,
+      "peticionesPorSegundo": 77.3,
+      "pool": {
+        "samples": 19,
+        "maxTotal": 4,
+        "maxActive": 4,
+        "byState": {
+          "idle": 47,
+          "active": 13,
+          "idle in transaction": 16
+        },
+        "error": null
+      },
+      "sentencias": [
+        {
+          "query": "select \"books\".\"id\", \"books\".\"version\", \"books\".\"user_id\", \"books\".\"title\", \"books\".\"subtitle\", \"books\".\"authors\", \"books\".\"publishers\", \"books\".\"number_of_pages\", \"books\".\"publish_date\", \"books\".\"cover_small\", \"books\".\"cover_medium\", \"books\".\"cover_large\", \"books\".\"status\", \"books\".\"shelf_id\", \"books\".\"cover_asset_id\", \"books\".\"created_at\", \"books\".\"updated_at\", \"books\".\"edition_id\", \"books\".\"copy_version\", \"books\".\"edition_version\", \"books\".\"isbn13\", \"books\".\"legacy_identifier\", \"books\".\"edition_verification\", \"books\".\"work_id\", \"books\".\"work_title\", \"books\".\"language\", \"books\".\"identifiers\", \"books\".\"edition_catalogue\", \"books\".\"edition_copies\", \"biblib\".\"shelves\".\"title\" from \"biblib\".\"books\" inner join \"biblib\".\"shelves\" on (\"books\".\"shelf_id\" = \"biblib\".\"shelves\".\"id\" and \"biblib\".\"shelves\".\"user_id\" = $1) where (\"books\".\"user_id\" = $2 and \"books\".\"isbn13\" = $3) order by \"books\".\"created_at\" asc, \"books\".\"id\" asc limit $4",
+          "calls": 150,
+          "rowsPerCall": 0.4,
+          "meanMs": 0.072,
+          "maxMs": 0.167,
+          "stddevMs": 0.045,
+          "bufferHitRatio": 1,
+          "hasLimit": true,
+          "selectsRows": true
+        },
+        {
+          "query": "select set_config('request.jwt.claims', $1, true), set_config('request.jwt.claim.sub', $2, true), set_config('role', 'authenticated', true)",
+          "calls": 150,
+          "rowsPerCall": 1,
+          "meanMs": 0.015,
+          "maxMs": 0.055,
+          "stddevMs": 0.006,
+          "bufferHitRatio": null,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "commit",
+          "calls": 150,
+          "rowsPerCall": 0,
+          "meanMs": 0.002,
+          "maxMs": 0.092,
+          "stddevMs": 0.007,
+          "bufferHitRatio": null,
+          "hasLimit": false,
+          "selectsRows": false
+        },
+        {
+          "query": "begin",
+          "calls": 150,
+          "rowsPerCall": 0,
+          "meanMs": 0.001,
+          "maxMs": 0.029,
+          "stddevMs": 0.002,
+          "bufferHitRatio": null,
+          "hasLimit": false,
+          "selectsRows": false
+        }
+      ],
+      "pantalla": "Añadir libro (ISBN existente)"
+    }
+  ],
+  "conexiones": {
+    "maxConnections": 100,
+    "total": 10,
+    "porAplicacion": [
+      {
+        "aplicacion": "postgres.js",
+        "rol": "postgres",
+        "estado": "idle",
+        "conexiones": 4
+      },
+      {
+        "aplicacion": "biblib-perf",
+        "rol": "postgres",
+        "estado": "active",
+        "conexiones": 1
+      },
+      {
+        "aplicacion": "biblib-perf-sampler",
+        "rol": "postgres",
+        "estado": "idle",
+        "conexiones": 1
+      },
+      {
+        "aplicacion": "(sin nombre)",
+        "rol": "supabase_storage_admin",
+        "estado": "idle",
+        "conexiones": 1
+      },
+      {
+        "aplicacion": "pg_net 0.20.4",
+        "rol": "postgres",
+        "estado": "idle",
+        "conexiones": 1
+      },
+      {
+        "aplicacion": "PostgREST 16.2",
+        "rol": "authenticator",
+        "estado": "idle",
+        "conexiones": 1
+      },
+      {
+        "aplicacion": "pg_cron scheduler",
+        "rol": "supabase_admin",
+        "estado": null,
+        "conexiones": 1
+      }
+    ]
+  },
+  "redExterna": {
+    "guardCargado": true,
+    "hostsBloqueadosDelServidor": [],
+    "hostsAbortadosDelNavegador": []
+  }
+}

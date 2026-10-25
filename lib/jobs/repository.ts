@@ -2,7 +2,8 @@ import type postgres from "postgres"
 import { and, asc, eq, inArray, sql } from "drizzle-orm"
 import { drizzle } from "drizzle-orm/postgres-js"
 import * as schema from "../db/schema"
-import { books, libraryJobItems, libraryJobs } from "../db/schema"
+import { books, editions, libraryJobItems, libraryJobs } from "../db/schema"
+import { editionCatalogue, editionOfCopy } from "../db/model"
 import type { DatabaseTransaction } from "../db/client"
 import { databaseErrorCode } from "../domain-errors"
 import { DEFAULT_BOOK_COVER } from "../book-covers"
@@ -80,7 +81,8 @@ export interface FinishUpdate {
 
 export interface CoverSnapshot {
   id: string
-  isbn: string
+  /** ISBN-13 de la edición o null (U-DAT-06): sin ISBN no se busca portada. */
+  isbn: string | null
   version: string
   cover: Book["cover"]
 }
@@ -243,7 +245,7 @@ export function createJobRepository(db: JobDatabase) {
   async function coverSnapshots(owner: string, ids: string[]): Promise<Map<string, CoverSnapshot>> {
     const valid = ids.filter((id) => /^[0-9a-f-]{36}$/i.test(id))
     if (!valid.length) return new Map()
-    const rows = await db.select({ id: books.id, isbn: books.isbn, version: books.version, small: books.coverSmall, medium: books.coverMedium, large: books.coverLarge })
+    const rows = await db.select({ id: books.id, isbn: books.isbn13, version: books.version, small: books.coverSmall, medium: books.coverMedium, large: books.coverLarge })
       .from(books).where(and(eq(books.userId, owner), inArray(books.id, valid)))
     return new Map(rows.map((row) => [row.id, { id: row.id, isbn: row.isbn, version: row.version, cover: { small: row.small, medium: row.medium, large: row.large } }]))
   }
@@ -279,9 +281,10 @@ export async function applyRecoveredCovers(tx: DatabaseTransaction, owner: strin
         retrievedAt: (options.now?.() ?? new Date()).toISOString(), selection: "unverified",
       }, options.reviewEnabled === true)
     }
-    const rows = await tx.update(books).set({ coverSmall: entry.cover.small, coverMedium: entry.cover.medium, coverLarge: entry.cover.large, ...(catalogue ? { catalogue } : {}), updatedAt: new Date() })
-      .where(and(eq(books.userId, owner), eq(books.id, entry.id), eq(books.version, entry.version), missingCover("biblib.books")))
-      .returning({ id: books.id })
+    // La portada es de la edición del ejemplar (U-DAT-06); el token plano protege también la edición.
+    const rows = await tx.update(editions).set({ coverSmall: entry.cover.small, coverMedium: entry.cover.medium, coverLarge: entry.cover.large, ...(catalogue ? { catalogue: editionCatalogue(catalogue) } : {}), updatedAt: new Date() })
+      .where(and(editionOfCopy(owner, entry.id, entry.version), missingCover("biblib.editions")))
+      .returning({ id: editions.id })
     if (rows.length) applied.add(entry.id)
   }
   return applied

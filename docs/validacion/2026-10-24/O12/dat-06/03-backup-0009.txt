@@ -1,0 +1,1 @@
+Respaldo 20261024T221434Z-scratch-3daaab · scratch (biblib-scratch) · head 0009_cover_assets · 5 archivos · .biblib/backups/20261024T221434Z-scratch-3daaab · recibo .biblib/backups/20261024T221434Z-scratch-3daaab/receipt.json (ensayo pendiente: tras db:restore:verify, reemítelo con --receipt-of)

@@ -1,0 +1,8 @@
+# Recursos Docker de biblib-scratch tras db:local:down (2026-10-25T05:18:01Z)
+--- contenedores
+(ninguno)
+--- volúmenes
+supabase_db_biblib-scratch
+supabase_storage_biblib-scratch
+--- redes
+biblib-scratch-network

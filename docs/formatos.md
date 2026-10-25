@@ -1,6 +1,6 @@
 # Formatos de copia y procedencia
 
-**Unidad:** U-BIB-04 (ola O09). **Contratos:** [02 · Contratos transversales y U-DAT-06](spec-pendientes/02-datos-importacion-y-catalogacion.md), [06 · U-BIB-04](spec-pendientes/06-proveedores-bibliograficos.md) y [A06](spec-pendientes/README.md#a06--formatos-y-compatibilidad).
+**Unidades:** U-BIB-04 (ola O09) y U-DAT-06 (ola O12: capacidad completa de v2 con el modelo de ejemplares). **Contratos:** [02 · Contratos transversales y U-DAT-06](spec-pendientes/02-datos-importacion-y-catalogacion.md), [06 · U-BIB-04](spec-pendientes/06-proveedores-bibliograficos.md) y [A06](spec-pendientes/README.md#a06--formatos-y-compatibilidad).
 
 BibLib separa cuatro versiones que no se deducen unas de otras:
 
@@ -13,7 +13,7 @@ BibLib separa cuatro versiones que no se deducen unas de otras:
 | Sin `schemaVersion` | `catalogue` de cada ficha | Procedencia legacy (una fuente por ficha) | Se lee y se escribe. |
 | `catalogue.schemaVersion: 2` | `catalogue` de cada ficha | Procedencia por campo y fuentes ampliadas (BNE) | Se lee siempre; se escribe según la bandera de revisión. |
 
-`Book.version` (UUID) es un token de concurrencia: nunca se exporta en v2 y, si aparece en un v1, se ignora. Restaurar una copia genera tokens nuevos.
+`Book.version` y los tokens de ejemplar y edición (UUID) son tokens de concurrencia: nunca se exportan en v2 y, si aparecen en un v1, se ignoran. Restaurar una copia genera tokens nuevos.
 
 El código vive en `lib/library-import.ts` (lector común), `lib/library-export.ts` (escritores y elección de formato), `lib/backup-v2.ts` (payload v2 y adaptador legacy) y `lib/catalogue-provenance.ts` (procedencia).
 
@@ -29,6 +29,7 @@ El código vive en `lib/library-import.ts` (lector común), `lib/library-export.
 ```
 
 - El formato legacy es el mismo objeto sin `formatVersion` ni `exportedAt`. Un v1 exige `exportedAt`.
+- **Una fila es un ejemplar con su propia edición** (U-DAT-06): el fixture sintético de 111 fichas produce 111 ejemplares y 111 ediciones. El texto `isbn` pasa a ISBN-13 canónico si es un ISBN-10/13 válido; si no (`manual-…` u otro valor), se conserva como identificador legacy del ejemplar y la edición queda sin ISBN. Dos filas con el mismo ISBN siguen siendo un duplicado: v1 no expresa varias copias de una edición.
 - Libro sin `catalogue`: se lee como `{ "source": "import", "isbnVerified": false }`. Nunca como `manual`.
 - `isbnVerified` ausente se lee como `false`. Solo se conserva `true` si el ISBN es válido.
 - Los writers solo han escrito `source`, `isbnVerified` y `sourceUrl` en `catalogue`. Cualquier otra clave se rechaza en lugar de descartarse.
@@ -36,45 +37,53 @@ El código vive en `lib/library-import.ts` (lector común), `lib/library-export.
 
 ## Payload portable `formatVersion: 2`
 
-Es el esquema canónico que U-DAT-06 reutilizará al separar tablas. No existe otro contenido llamado v2: un v2 con un array `books` se rechaza.
+Es el esquema canónico del modelo de obra, edición y ejemplar (U-DAT-06). U-BIB-04 lo creó como adaptador sobre la tabla legacy; desde 0011 se lee y se escribe con su capacidad completa. No existe otro contenido llamado v2: un v2 con un array `books` se rechaza.
 
 ```json
 {
   "formatVersion": 2,
-  "exportedAt": "2026-10-23T10:00:00.000Z",
-  "requiredCapabilities": ["catalogue.provenance-v2"],
-  "works": [],
+  "exportedAt": "2026-10-25T10:00:00.000Z",
+  "requiredCapabilities": ["works.entities", "copies.multiple-per-edition", "copies.verification-evidence", "editions.identifiers"],
+  "works": [{ "id": "…", "title": "Crónica del asesino de reyes" }],
   "editions": [{
-    "id": "<book.id>", "work_id": null, "isbn13": "9788401337208",
+    "id": "…", "work_id": "…", "isbn13": "9788401337208",
     "title": "…", "subtitle": "…", "authors": [{ "name": "…" }], "publishers": [{ "name": "…" }],
     "publish_date": "2009", "number_of_pages": 872, "cover": { "small": "…", "medium": "…", "large": "…" },
-    "catalogue": { "schemaVersion": 2, "source": "bne", "sourceUrl": "https://…",
-                   "fields": { "title": { "provider": "bne", "recordId": "…", "retrievedAt": "…", "selection": "user-selected" } } }
+    "catalogue": { "source": "manual" }, "language": "es", "identifiers": { "openLibrary": ["OL1M"] }
+  }, {
+    "id": "…", "work_id": null, "isbn13": null, "title": "Libro sin ISBN", "authors": [], "publish_date": "",
+    "number_of_pages": 0, "cover": { "small": "…", "medium": "…", "large": "…" }, "catalogue": { "source": "manual" }
   }],
-  "copies": [{
-    "id": "<book.id>", "edition_id": "<book.id>", "status": "read", "shelf_id": "…",
-    "edition_verification": { "isbnVerified": true }, "legacy_identifier": null
-  }],
+  "copies": [
+    { "id": "<ID del ejemplar>", "edition_id": "…", "status": "read", "shelf_id": "…",
+      "edition_verification": { "isbnVerified": true, "checkedAt": "2026-10-20T10:00:00.000Z", "evidenceRefs": ["foto:lomo-1"] }, "legacy_identifier": null },
+    { "id": "<otro ejemplar>", "edition_id": "<la misma edición>", "status": "to-read", "shelf_id": "…",
+      "edition_verification": { "isbnVerified": false }, "legacy_identifier": null },
+    { "id": "…", "edition_id": "<la edición sin ISBN>", "status": "unread", "shelf_id": "…",
+      "edition_verification": { "isbnVerified": false }, "legacy_identifier": null }
+  ],
   "shelves": [{ "id": "…", "title": "…", "isDefault": true }]
 }
 ```
 
-**Adaptador legacy (antes de separar tablas).** Cada fila `books` produce una edición y una copia:
+- **Ejemplar** (`copies`): conserva el ID de la ficha legacy (las rutas `/book/[id]` no cambian), su estado, estantería, comprobación física (`edition_verification`) e identificador legacy. Varios ejemplares pueden compartir edición.
+- **Edición** (`editions`): descripción bibliográfica, portada, procedencia por campo (`catalogue`, que nunca lleva `isbnVerified`), idioma e identificadores externos. `isbn13` es el ISBN-13 canónico o `null`: un libro sin ISBN se exporta y se restaura con `null`, sin identificador inventado. Un ejemplar de una edición con ISBN no lleva `legacy_identifier`.
+- **Obra** (`works`): solo con evidencia explícita (un archivo v2 o una decisión de la persona); la migración no deduce ninguna. Una obra sin ediciones no se conserva.
+- Una ficha legacy exportada antes de 0011 tiene `edition.id = copy.id`; el backfill de 0010 conservó esos IDs. Una fusión posterior de ediciones devuelve un mapeo explícito.
+- `publishers` y `subtitle` solo aparecen si la ficha los tenía, para que la ida y vuelta sea exacta. Las estanterías no llevan `book_count`: el lector lo recalcula.
+- Al partir una colección grande, una edición con ejemplares en varias partes aparece en cada parte que los contiene, con los mismos datos; la restauración por partes lo comprueba.
 
-- `edition.id = copy.id = copy.edition_id = book.id`: mismo valor en namespaces de entidad distintos. El backfill de U-DAT-06 reutiliza esos IDs.
-- `work_id = null` y `works = []`: sin evidencia, no se deduce ninguna obra.
-- `isbn13` es el ISBN-13 canónico o `null`. Un `manual-…` u otro identificador que no es un ISBN válido va a `copy.legacy_identifier`; nunca ocupa `isbn13`.
-- **Verificación física en la copia** (`edition_verification.isbnVerified`). **Fuentes por campo en la edición** (`edition.catalogue`, que nunca lleva `isbnVerified`).
-- `publishers` y `subtitle` solo aparecen si la ficha los tenía, para que la ida y vuelta sea exacta.
-- Las estanterías no llevan `book_count`: el lector lo recalcula.
-
-**Capacidades.** Cada payload declara en `requiredCapabilities` lo que necesita su lector. Este lector conserva:
+**Capacidades.** Cada payload declara en `requiredCapabilities` lo que usa. Este lector conserva todas las conocidas; si un archivo usa una sin declararla, o declara una desconocida, se rechaza.
 
 | Capacidad | Significado |
 | --- | --- |
-| `catalogue.provenance-v2` | Alguna edición usa `catalogue.schemaVersion: 2`. Si se usa sin declararla, el archivo se rechaza. |
+| `catalogue.provenance-v2` | Alguna edición usa `catalogue.schemaVersion: 2`. |
+| `works.entities` | Hay obras y ediciones que las citan. |
+| `copies.multiple-per-edition` | Alguna edición tiene más de un ejemplar. |
+| `copies.verification-evidence` | Alguna comprobación física lleva `checkedAt` o `evidenceRefs`. |
+| `editions.identifiers` | Alguna edición lleva `identifiers` o `language`. |
 
-Conoce y **rechaza** hasta U-DAT-06 `works.entities`, `copies.multiple-per-edition`, `copies.verification-evidence` y `editions.identifiers`. Una capacidad desconocida también se rechaza.
+Un lector anterior a U-DAT-06 (U-BIB-04) rechaza las cuatro últimas con explicación: no trunca copias ni descarta campos.
 
 ### Qué rechaza el lector v2 y por qué
 
@@ -82,17 +91,17 @@ Todos los rechazos ocurren antes de escribir. Nada se importa parcialmente y nin
 
 | Entrada | Motivo |
 | --- | --- |
-| Varias copias con el mismo `edition_id` | La tabla `books` tiene una fila por edición y por ISBN. Representarlas exigiría fusionar u omitir copias. |
-| `works` no vacío o `work_id` no nulo | No existe todavía la entidad obra. |
-| Edición sin copia | Una fila legacy siempre es un ejemplar. |
-| `edition.id` distinto de `copy.id` | El ID de edición no se podría conservar. |
-| `isbn13` y `legacy_identifier` a la vez | `books.isbn` solo guarda uno de los dos. |
+| Capacidad desconocida, o una conocida usada sin declararla | El archivo necesita un lector distinto o está mal construido. |
+| Dos ediciones con el mismo `isbn13` | Una cuenta tiene una edición canónica por ISBN-13: se revisan como candidatos o se fusionan, nunca se crean dos. |
+| Copias de una misma edición con datos bibliográficos distintos (entre partes) | No es una edición coherente. |
+| Edición sin copias u obra sin ediciones | BibLib no conserva entidades huérfanas. |
+| Copia que cita una edición inexistente, o edición que cita una obra inexistente | Referencia rota. |
+| `isbn13` y `legacy_identifier` a la vez, o comprobación física sin ISBN | Un ejemplar de una edición con ISBN no conserva otro identificador; no se comprueba un ISBN que no existe. |
 | `isbn13` con dígito de control incorrecto | No es un ISBN. No se inventa uno. |
-| Claves o secciones desconocidas (`identifiers`, `checkedAt`, `loans`…) | No se pueden conservar. El mensaje nombra las claves. |
-| Capacidad desconocida o no admitida | Requiere un lector posterior. |
+| Claves o secciones desconocidas (`loans`…) | No se pueden conservar. El mensaje nombra las claves. |
 | `formatVersion` distinto de 1 o 2 | Versión no compatible. |
 
-Tras el adaptador, un v2 pasa por las mismas validaciones que v1: límites, duplicados de ISBN e ID, estanterías existentes y una sola predeterminada. También alimenta el mismo plan de importación de U-DAT-01.
+Después, un v2 pasa por las mismas validaciones que v1 (límites, IDs, estanterías existentes y una sola predeterminada) y alimenta el mismo plan de importación (reglas versión 2): las filas con la misma edición crean una edición y sus ejemplares; al fusionar se omite un ejemplar cuyo ISBN-13 o identificador ya está en la cuenta, o el mismo ejemplar de la cuenta (un libro sin ISBN se reconoce por su ID); al reemplazar se conservan los IDs propios reconocidos de ejemplar, edición y obra.
 
 ## Procedencia: `catalogue`
 
@@ -139,7 +148,7 @@ La procedencia de una edición se calcula en el servidor a partir de la ficha bl
 `exportLibraryBackup` en Ajustes:
 
 - **v1** si ninguna ficha necesita v2. Es compatible con versiones anteriores de BibLib.
-- **v2** si alguna ficha tiene procedencia BNE o `fields`. El formato 1 la perdería, así que no se ofrece (`createLibraryExport` y `fragmentLibraryExport` lanzan un error explicativo).
+- **v2** si v1 perdería algo: procedencia BNE o `fields`, varios ejemplares de una edición, obras, evidencias de comprobación, identificadores o idioma de edición, o un libro sin ISBN ni identificador legacy (v1 tendría que inventarle uno). En esos casos v1 no se ofrece (`createLibraryExport` y `fragmentLibraryExport` lanzan un error explicativo). En el manifiesto de un conjunto v2, `totals` cuenta obras, ediciones y copias distintas.
 
 Los límites por archivo son los mismos para ambos formatos: 8 MiB, 2000 libros (copias) y 200 estanterías. Una colección mayor se divide en partes independientes del mismo formato, cada una importable por sí sola, y se acompaña de un manifiesto `bundleVersion: 1` que las agrupa en un conjunto verificable. Desde U-DAT-04 la copia la genera el servidor (`lib/library-export-server.ts`): Ajustes ya no descarga la colección para exportarla.
 
@@ -198,3 +207,10 @@ Las versiones de BibLib anteriores a U-BIB-04 rechazan `formatVersion: 2` con un
 - `tests/backup-v2.test.ts`: payload canónico, ida y vuelta v1→v2→v1 y v2→v2 con `tests/fixtures/import/sintetico-111.json`, rechazos explicados, Google y fuentes desconocidas, `isbnVerified`, partes v2 y plan de U-DAT-01.
 - `tests/catalogue-provenance.test.ts`: writers con y sin bandera, edición concurrente con `Book.version` y revisión de colección.
 - `tests/library-import.test.ts`: lectores legacy y v1 existentes.
+- `tests/backup-v2.test.ts` (U-DAT-06): capacidad completa (varias copias por edición, obras, evidencias, identificadores e idioma) en ida y vuelta v2 sin pérdida, libro sin ISBN con `null`, exigencia de v2 cuando v1 perdería datos y rechazo de capacidades no declaradas.
+- `tests/import-plan.test.ts` y `tests/library-snapshots.test.ts` (U-DAT-06): reglas de importación versión 2 (ediciones compartidas, libro sin ISBN reconocido por su ID) y versiones anteriores v1/v2.
+- `tests/integration/model/` (U-DAT-06): exportación v2 con un libro sin ISBN y su restauración en otra cuenta con `null`, con la app compilada y sesiones reales.
+
+## Versiones anteriores (U-DAT-06)
+
+El formato interno de una versión anterior es independiente de `formatVersion`. Desde 0011 (`schema_version: 2`) cada entrada es un ejemplar con su edición: `isbn` es el ISBN-13 de la edición o `null` y se añaden `edition_id`, `verification` (comprobación física con sus evidencias) y, si existen, `legacy_identifier`, `work_id`/`work_title`, `language` e `identifiers`. Una versión 1 (anterior a 0011) se restaura como el backfill: su texto `isbn` pasa a ISBN-13 o identificador legacy y dos fichas equivalentes con los mismos datos comparten edición. El hash de los trozos y de la versión no cambia de cálculo.

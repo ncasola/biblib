@@ -2,10 +2,13 @@ import { createHash } from "node:crypto"
 import { and, eq, sql } from "drizzle-orm"
 import { z } from "zod"
 import type { DatabaseTransaction } from "./db/client"
-import { books, coverAssets, librarySnapshots, shelves, type LibrarySnapshotReason } from "./db/schema"
+import { coverAssets, librarySnapshots, shelves, type LibrarySnapshotReason } from "./db/schema"
+import { deleteAllCopies, insertPlannedCopies } from "./db/model"
 import { DomainError, databaseErrorCode } from "./domain-errors"
-import { canonicalJson, IMPORT_RULES_VERSION, type CollectionSnapshot, type IdAllocator, type ImportMode, type ImportPlan } from "./import-plan"
-import type { Author, Book, CatalogueMetadata, Publisher } from "./types"
+import { editionFingerprint } from "./backup-v2"
+import { canonicalJson, IMPORT_RULES_VERSION, planEditions, type CollectionSnapshot, type IdAllocator, type ImportMode, type ImportPlan } from "./import-plan"
+import { normalizeIsbn } from "./isbn"
+import type { Author, Book, CatalogueMetadata, CopyVerification, EditionIdentifiers, Publisher } from "./types"
 
 // Versiones anteriores de la colección (U-DAT-02). Funciones puras (plan de restauración, cursor,
 // límites) y el acceso a Postgres que usan el publicador y las acciones dentro de una transacción
@@ -22,15 +25,20 @@ export const SNAPSHOT_LIMITS = Object.freeze({
   pageSize: 10,
   maxPageSize: 20,
 })
-export const SNAPSHOT_SCHEMA_VERSION = 1
+/** 1: ficha legacy (0006–0010). 2: ejemplar con su edición, obra y comprobación (0011, U-DAT-06). */
+export const SNAPSHOT_SCHEMA_VERSION = 2
 
 /** Tablas privadas que la limpieza de cuenta (U-OPS-03) debe incluir; todas cuelgan de `auth.users`. */
 export const SNAPSHOT_INVENTORY = Object.freeze(["biblib.library_snapshots", "biblib.library_snapshot_chunks", "biblib.import_previews (snapshot_id)"])
 
 export interface SnapshotShelfEntry { id: string; title: string; is_default: boolean; created_at: string }
+/**
+ * Ejemplar de una versión anterior. En schema_version 2, `isbn` es el ISBN-13 de su edición (o null) y
+ * `edition_id` agrupa los ejemplares de una edición; en 1, `isbn` es el texto legacy de la ficha.
+ */
 export interface SnapshotBookEntry {
   id: string
-  isbn: string
+  isbn: string | null
   title: string
   subtitle: string | null
   authors: Author[]
@@ -46,6 +54,13 @@ export interface SnapshotBookEntry {
   created_at: string
   /** Portada privada de la ficha (U-DAT-10, desde 0009); ausente en las fichas sin asset y en versiones anteriores. */
   cover_asset_id?: string
+  edition_id?: string
+  verification?: CopyVerification
+  legacy_identifier?: string
+  work_id?: string
+  work_title?: string | null
+  language?: string
+  identifiers?: EditionIdentifiers
 }
 export interface SnapshotContent { shelves: SnapshotShelfEntry[]; books: SnapshotBookEntry[] }
 
@@ -181,7 +196,7 @@ export function buildRestorePlan({ snapshot, current, foreign, allocateId }: Bui
   }
   const shelfFor = new Map(map.map((entry) => [entry.sourceId, entry.id]))
 
-  const insert: ImportPlan["books"]["insert"] = []
+  const insert: { sourceId: string; id: string; shelfId: string }[] = []
   let matched = 0
   for (const book of snapshot.books) {
     const shelfId = shelfFor.get(book.shelf_id)
@@ -191,6 +206,11 @@ export function buildRestorePlan({ snapshot, current, foreign, allocateId }: Bui
     if (currentBooks.has(id)) matched++
     insert.push({ sourceId: book.id, id, shelfId })
   }
+  // Ediciones y obras con sus IDs de la versión salvo los que hoy usa otra cuenta (internos, no se informan).
+  const editions = planEditions(snapshotRows(snapshot), insert, allocateId, {
+    keepEdition: (key) => foreign.has(key) ? null : key,
+    keepWork: (key) => foreign.has(key) ? null : key,
+  })
   const restored = new Set(insert.map((entry) => entry.id))
   const created = new Set(create.map((entry) => entry.id))
   const deletedBooks = current.books.filter((book) => !restored.has(book.id)).map((book) => book.id)
@@ -209,11 +229,15 @@ export function buildRestorePlan({ snapshot, current, foreign, allocateId }: Bui
       shelvesDeleted: deletedShelves.length,
       shelvesAfter: 1 + create.length,
       booksAfter: insert.length,
+      editionsCreated: editions.editions.length,
+      worksCreated: editions.works.length,
       coversFound: 0,
       coversPending: 0,
     },
     shelves: { create, map, delete: deletedShelves },
-    books: { insert, skip: [], delete: deletedBooks },
+    books: { insert: insert.map((entry) => ({ ...entry, editionId: editions.editionOf(entry.sourceId) })), skip: [], delete: deletedBooks },
+    editions: { create: editions.editions },
+    works: { create: editions.works },
     reassigned,
   }
 }
@@ -223,10 +247,13 @@ const jsonArray = <T>() => z.custom<T[]>((value) => Array.isArray(value))
 const jsonObject = <T>() => z.custom<T>((value) => typeof value === "object" && value !== null && !Array.isArray(value))
 const shelfEntrySchema = z.object({ id: uuidText, title: z.string(), is_default: z.boolean(), created_at: z.string() })
 const bookEntrySchema = z.object({
-  id: uuidText, isbn: z.string(), title: z.string(), subtitle: z.string().nullable(), authors: jsonArray<Author>(), publishers: jsonArray<Publisher>(),
+  id: uuidText, isbn: z.string().nullable(), title: z.string(), subtitle: z.string().nullable(), authors: jsonArray<Author>(), publishers: jsonArray<Publisher>(),
   catalogue: jsonObject<CatalogueMetadata>(), number_of_pages: z.number().int(), publish_date: z.string(),
   cover_small: z.string(), cover_medium: z.string(), cover_large: z.string(), status: z.enum(["read", "reading", "unread", "to-read"]),
   shelf_id: uuidText, created_at: z.string(), cover_asset_id: uuidText.optional(),
+  // schema_version 2 (U-DAT-06): edición, comprobación, identificador legacy, obra, idioma e identificadores.
+  edition_id: uuidText.optional(), verification: jsonObject<CopyVerification>().optional(), legacy_identifier: z.string().optional(),
+  work_id: uuidText.optional(), work_title: z.string().nullable().optional(), language: z.string().optional(), identifiers: jsonObject<EditionIdentifiers>().optional(),
 })
 
 export interface SnapshotChunkRow { seq: number; kind: string; itemCount: number; digest: string; valid: boolean; payload: unknown }
@@ -302,30 +329,66 @@ export async function foreignSnapshotIds(tx: DatabaseTransaction, snapshotId: st
   return new Set(rows[0]?.ids ?? [])
 }
 
-/** Sustituye la colección por la versión según el plan ya comprobado. Las fichas reciben versiones nuevas. */
+/**
+ * Filas planas (DTO) de los ejemplares de una versión, con la clave de su edición. Una versión 1 (antes de
+ * 0011) es una ficha por edición: su texto `isbn` pasa a ISBN-13 o identificador legacy como en el backfill, y
+ * dos fichas equivalentes con los mismos datos comparten edición; si difieren, la segunda queda sin ISBN-13
+ * con su texto original, sin descartar ninguna.
+ */
+export function snapshotRows(content: SnapshotContent): Map<string, Book> {
+  const rows = new Map<string, Book>()
+  const isbnOwner = new Map<string, { key: string; fingerprint: string }>()
+  for (const entry of content.books) {
+    const v2 = entry.edition_id !== undefined
+    let isbn = v2 ? entry.isbn : entry.isbn ? normalizeIsbn(entry.isbn) : null
+    let legacy = v2 ? entry.legacy_identifier : isbn ? undefined : entry.isbn?.trim() || undefined
+    let key = entry.edition_id ?? entry.id
+    const verified = entry.verification?.isbnVerified ?? entry.catalogue.isbnVerified ?? false
+    const evidence = { ...(entry.verification?.checkedAt ? { checkedAt: entry.verification.checkedAt } : {}), ...(entry.verification?.evidenceRefs?.length ? { evidenceRefs: entry.verification.evidenceRefs } : {}) }
+    const book: Book = {
+      id: entry.id, isbn, title: entry.title, ...(entry.subtitle !== null ? { subtitle: entry.subtitle } : {}), authors: entry.authors, publishers: entry.publishers,
+      number_of_pages: entry.number_of_pages, publish_date: entry.publish_date, cover: { small: entry.cover_small, medium: entry.cover_medium, large: entry.cover_large },
+      status: entry.status, shelf_id: entry.shelf_id, shelf_name: "", catalogue: { ...entry.catalogue, isbnVerified: verified } as CatalogueMetadata,
+      ...(Object.keys(evidence).length ? { verification: evidence } : {}),
+    }
+    if (isbn && !v2) {
+      const owner = isbnOwner.get(isbn)
+      const fingerprint = editionFingerprint(book)
+      if (owner && owner.fingerprint === fingerprint) key = owner.key
+      else if (owner) { legacy = entry.isbn ?? undefined; isbn = null }
+      else isbnOwner.set(isbn, { key, fingerprint })
+    }
+    rows.set(entry.id, {
+      ...book, isbn, ...(legacy ? { legacyIdentifier: legacy } : {}),
+      edition: { id: key, ...(entry.work_id ? { workId: entry.work_id, ...(entry.work_title ? { workTitle: entry.work_title } : {}) } : {}),
+        ...(entry.language ? { language: entry.language } : {}), ...(entry.identifiers && Object.keys(entry.identifiers).length ? { identifiers: entry.identifiers } : {}) },
+    })
+  }
+  return rows
+}
+
+/** Sustituye la colección por la versión según el plan ya comprobado. Los ejemplares y ediciones reciben versiones nuevas. */
 export async function applyRestorePlan(tx: DatabaseTransaction, userId: string, content: SnapshotContent, plan: ImportPlan): Promise<void> {
-  await tx.delete(books).where(eq(books.userId, userId))
+  await deleteAllCopies(tx, userId)
   await tx.delete(shelves).where(and(eq(shelves.userId, userId), eq(shelves.isDefault, false)))
   const shelfSource = new Map(content.shelves.map((shelf) => [shelf.id, shelf]))
   if (plan.shelves.create.length) {
     await tx.insert(shelves).values(plan.shelves.create.map((entry) => ({ id: entry.id, userId, title: entry.title, isDefault: false, createdAt: new Date(shelfSource.get(entry.sourceId)?.created_at ?? Date.now()) })))
   }
   const bookSource = new Map(content.books.map((book) => [book.id, book]))
+  if (plan.books.insert.some((entry) => !bookSource.has(entry.sourceId))) throw snapshotDamaged()
   // La versión retiene la referencia a la portada privada; solo se recupera si el asset propio sigue
   // utilizable (la purga no retira lo que una versión cita, pero una licencia vencida sí).
   const referenced = [...new Set(content.books.flatMap((book) => book.cover_asset_id ? [book.cover_asset_id] : []))]
   const usable = new Set(referenced.length ? (await tx.select({ id: coverAssets.id }).from(coverAssets)
     .where(and(eq(coverAssets.userId, userId), eq(coverAssets.state, "ready"), sql`${coverAssets.id} = any(${`{${referenced.join(",")}}`}::uuid[])`, sql`(${coverAssets.expiresAt} is null or ${coverAssets.expiresAt} > now())`))).map((row) => row.id) : [])
-  const values = plan.books.insert.map((entry) => {
-    const book = bookSource.get(entry.sourceId)
-    if (!book) throw snapshotDamaged()
-    return { id: entry.id, userId, isbn: book.isbn, title: book.title, subtitle: book.subtitle, authors: book.authors, publishers: book.publishers,
-      catalogue: book.catalogue, numberOfPages: book.number_of_pages, publishDate: book.publish_date,
-      coverSmall: book.cover_small, coverMedium: book.cover_medium, coverLarge: book.cover_large, status: book.status, shelfId: entry.shelfId,
-      coverAssetId: book.cover_asset_id && usable.has(book.cover_asset_id) ? book.cover_asset_id : null,
-      createdAt: new Date(book.created_at) }
+  await insertPlannedCopies(tx, userId, plan, snapshotRows(content), {
+    createdAt: (sourceId) => new Date(bookSource.get(sourceId)!.created_at),
+    coverAssetId: (sourceId) => {
+      const asset = bookSource.get(sourceId)?.cover_asset_id
+      return asset && usable.has(asset) ? asset : null
+    },
   })
-  for (let offset = 0; offset < values.length; offset += 100) await tx.insert(books).values(values.slice(offset, offset + 100))
 }
 
 /** Títulos afectados por una restauración, acotados para la comparación de la vista previa. */

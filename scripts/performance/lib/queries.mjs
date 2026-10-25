@@ -10,9 +10,15 @@ const uuid = (value) => {
   return `'${value}'`
 }
 
-const COLUMNS = `"biblib"."books"."id", "biblib"."books"."version", "biblib"."books"."user_id", "biblib"."books"."isbn", "biblib"."books"."title", "biblib"."books"."subtitle", "biblib"."books"."authors", "biblib"."books"."publishers", "biblib"."books"."catalogue", "biblib"."books"."number_of_pages", "biblib"."books"."publish_date", "biblib"."books"."cover_small", "biblib"."books"."cover_medium", "biblib"."books"."cover_large", "biblib"."books"."status", "biblib"."books"."shelf_id", "biblib"."books"."created_at", "biblib"."books"."updated_at", "biblib"."shelves"."title"`
+// Desde U-DAT-06 (0011) `books` es la vista plana ejemplar + edición. La app lee `bookFields`: sin el recuento de
+// ejemplares (solo la ficha), sin el texto de búsqueda y con la procedencia de la edición.
+const VIEW_COLUMNS = ["id", "version", "user_id", "title", "subtitle", "authors", "publishers", "number_of_pages", "publish_date", "cover_small", "cover_medium", "cover_large", "status", "shelf_id", "cover_asset_id", "created_at", "updated_at",
+  "edition_id", "copy_version", "edition_version", "isbn13", "legacy_identifier", "edition_verification", "work_id", "work_title", "language", "identifiers", "edition_catalogue"]
+const COLUMNS = `${VIEW_COLUMNS.map((column) => `"biblib"."books"."${column}"`).join(", ")}, "biblib"."shelves"."title"`
 const JOIN = (user) => `from "biblib"."books" inner join "biblib"."shelves" on ("biblib"."books"."shelf_id" = "biblib"."shelves"."id" and "biblib"."shelves"."user_id" = ${user})`
-const SEARCH_EXPR = `translate(lower("biblib"."books"."title" || ' ' || coalesce("biblib"."books"."subtitle", '') || ' ' || "biblib"."books"."authors"::text || ' ' || "biblib"."books"."isbn"), 'áéíóúüñ', 'aeiouun')`
+// Tarea T5: el texto de búsqueda es la columna generada de la edición; el identificador legacy, del ejemplar.
+const SEARCH_EXPR = `"biblib"."books"."search_text"`
+const search = (pattern) => `(${SEARCH_EXPR} like '${pattern}' or lower(coalesce("biblib"."books"."legacy_identifier", '')) like '${pattern}')`
 
 export { SEARCH_EXPR }
 
@@ -33,37 +39,41 @@ export function mainQueries({ userId, shelfId, bookId, scale }) {
       sql: `select ${COLUMNS} ${JOIN(u)} where ("biblib"."books"."user_id" = ${u} and "biblib"."books"."status" = 'reading') order by "biblib"."books"."updated_at" desc, "biblib"."books"."id" asc limit 5` },
     { id: "listado.recuento", accion: "listBooksAction", pantalla: "Colección", limite: false,
       sql: `select count(*) from "biblib"."books" where "biblib"."books"."user_id" = ${u}` },
+    // U-DAT-06: el listado ordena y pagina solo IDs; luego lee las filas de la página (listado.filas).
     { id: "listado.pagina-1", accion: "listBooksAction", pantalla: "Colección", limite: true,
-      sql: `select ${COLUMNS} ${JOIN(u)} where "biblib"."books"."user_id" = ${u} order by "biblib"."books"."title" asc, "biblib"."books"."id" asc limit 10 offset 0` },
+      sql: `select "biblib"."books"."id" from "biblib"."books" where "biblib"."books"."user_id" = ${u} order by "biblib"."books"."title" asc, "biblib"."books"."id" asc limit 10 offset 0` },
     { id: "listado.ultima-pagina", accion: "listBooksAction", pantalla: "Colección", limite: true,
-      sql: `select ${COLUMNS} ${JOIN(u)} where "biblib"."books"."user_id" = ${u} order by "biblib"."books"."title" asc, "biblib"."books"."id" asc limit 10 offset ${lastPageOffset}` },
+      sql: `select "biblib"."books"."id" from "biblib"."books" where "biblib"."books"."user_id" = ${u} order by "biblib"."books"."title" asc, "biblib"."books"."id" asc limit 10 offset ${lastPageOffset}` },
+    { id: "listado.filas", accion: "listBooksAction", pantalla: "Colección", limite: true,
+      sql: `select ${COLUMNS} ${JOIN(u)} where ("biblib"."books"."user_id" = ${u} and "biblib"."books"."id" in (select "id" from "biblib"."books" where "user_id" = ${u} order by "title", "id" limit 10))` },
     { id: "filtrado.recuento", accion: "listBooksAction", pantalla: "Colección filtrada", limite: false,
       sql: `select count(*) from "biblib"."books" where ("biblib"."books"."user_id" = ${u} and "biblib"."books"."status" = 'read' and "biblib"."books"."shelf_id" = ${s})` },
     { id: "filtrado.pagina", accion: "listBooksAction", pantalla: "Colección filtrada", limite: true,
-      sql: `select ${COLUMNS} ${JOIN(u)} where ("biblib"."books"."user_id" = ${u} and "biblib"."books"."status" = 'read' and "biblib"."books"."shelf_id" = ${s}) order by "biblib"."books"."number_of_pages" desc, "biblib"."books"."id" asc limit 10 offset 0` },
+      sql: `select "biblib"."books"."id" from "biblib"."books" where ("biblib"."books"."user_id" = ${u} and "biblib"."books"."status" = 'read' and "biblib"."books"."shelf_id" = ${s}) order by "biblib"."books"."number_of_pages" desc, "biblib"."books"."id" asc limit 10 offset 0` },
     { id: "orden.autor", accion: "listBooksAction", pantalla: "Colección ordenada", limite: true,
-      sql: `select ${COLUMNS} ${JOIN(u)} where "biblib"."books"."user_id" = ${u} order by "biblib"."books"."authors"->0->>'name' asc, "biblib"."books"."id" asc limit 10 offset 0` },
+      sql: `select "biblib"."books"."id" from "biblib"."books" where "biblib"."books"."user_id" = ${u} order by "biblib"."books"."authors"->0->>'name' asc, "biblib"."books"."id" asc limit 10 offset 0` },
     { id: "orden.fecha", accion: "listBooksAction", pantalla: "Colección ordenada", limite: true,
-      sql: `select ${COLUMNS} ${JOIN(u)} where "biblib"."books"."user_id" = ${u} order by coalesce(substring("biblib"."books"."publish_date" from '[0-9]{4}'), '0000') desc, "biblib"."books"."id" asc limit 10 offset 0` },
+      sql: `select "biblib"."books"."id" from "biblib"."books" where "biblib"."books"."user_id" = ${u} order by coalesce(substring("biblib"."books"."publish_date" from '[0-9]{4}'), '0000') desc, "biblib"."books"."id" asc limit 10 offset 0` },
     { id: "busqueda.recuento", accion: "listBooksAction", pantalla: "Búsqueda local", limite: false,
-      sql: `select count(*) from "biblib"."books" where ("biblib"."books"."user_id" = ${u} and ${SEARCH_EXPR} like '%faro%')` },
+      sql: `select count(*) from "biblib"."books" where ("biblib"."books"."user_id" = ${u} and ${search("%faro%")})` },
     { id: "busqueda.pagina", accion: "listBooksAction", pantalla: "Búsqueda local", limite: true,
-      sql: `select ${COLUMNS} ${JOIN(u)} where ("biblib"."books"."user_id" = ${u} and ${SEARCH_EXPR} like '%faro%') order by "biblib"."books"."title" asc, "biblib"."books"."id" asc limit 10 offset 0` },
+      sql: `select "biblib"."books"."id" from "biblib"."books" where ("biblib"."books"."user_id" = ${u} and ${search("%faro%")}) order by "biblib"."books"."title" asc, "biblib"."books"."id" asc limit 10 offset 0` },
     { id: "busqueda.isbn", accion: "listBooksAction", pantalla: "Búsqueda local", limite: true,
-      sql: `select ${COLUMNS} ${JOIN(u)} where ("biblib"."books"."user_id" = ${u} and ${SEARCH_EXPR} like '%9790000%') order by "biblib"."books"."title" asc, "biblib"."books"."id" asc limit 10 offset 0` },
+      sql: `select "biblib"."books"."id" from "biblib"."books" where ("biblib"."books"."user_id" = ${u} and ${search("%9790000%")}) order by "biblib"."books"."title" asc, "biblib"."books"."id" asc limit 10 offset 0` },
     { id: "busqueda.isbn-exacto", accion: "listBooksAction", pantalla: "Búsqueda local", limite: true,
-      sql: `select ${COLUMNS} ${JOIN(u)} where ("biblib"."books"."user_id" = ${u} and ${SEARCH_EXPR} like '%${scaleIsbn(7)}%') order by "biblib"."books"."title" asc, "biblib"."books"."id" asc limit 10 offset 0` },
+      sql: `select "biblib"."books"."id" from "biblib"."books" where ("biblib"."books"."user_id" = ${u} and ${search(`%${scaleIsbn(7)}%`)}) order by "biblib"."books"."title" asc, "biblib"."books"."id" asc limit 10 offset 0` },
     { id: "detalle", accion: "getBookDetailAction", pantalla: "Ficha", limite: true,
-      sql: `select ${COLUMNS} ${JOIN(u)} where ("biblib"."books"."id" = ${uuid(bookId)} and "biblib"."books"."user_id" = ${u}) limit 1` },
+      sql: `select ${COLUMNS}, "biblib"."books"."edition_copies" ${JOIN(u)} where ("biblib"."books"."id" = ${uuid(bookId)} and "biblib"."books"."user_id" = ${u}) limit 1` },
     { id: "estanterias", accion: "getShelvesAction", pantalla: "Estanterías / filtros / 3D", limite: false,
-      sql: `select "biblib"."shelves"."id", "biblib"."shelves"."title", "biblib"."shelves"."is_default", count("biblib"."books"."id")::int from "biblib"."shelves" left join "biblib"."books" on ("biblib"."books"."shelf_id" = "biblib"."shelves"."id" and "biblib"."books"."user_id" = ${u}) where "biblib"."shelves"."user_id" = ${u} group by "biblib"."shelves"."id" order by "biblib"."shelves"."created_at" asc, "biblib"."shelves"."id" asc` },
+      sql: `select "biblib"."shelves"."id", "biblib"."shelves"."title", "biblib"."shelves"."is_default", count("biblib"."copies"."id")::int from "biblib"."shelves" left join "biblib"."copies" on ("biblib"."copies"."shelf_id" = "biblib"."shelves"."id" and "biblib"."copies"."user_id" = ${u}) where "biblib"."shelves"."user_id" = ${u} group by "biblib"."shelves"."id" order by "biblib"."shelves"."created_at" asc, "biblib"."shelves"."id" asc` },
     { id: "3d.pagina", accion: "listBooksAction", pantalla: "Estantería 3D (48)", limite: true,
-      sql: `select ${COLUMNS} ${JOIN(u)} where ("biblib"."books"."user_id" = ${u} and "biblib"."books"."shelf_id" = ${s}) order by "biblib"."books"."title" asc, "biblib"."books"."id" asc limit 48 offset 48` },
+      sql: `select "biblib"."books"."id" from "biblib"."books" where ("biblib"."books"."user_id" = ${u} and "biblib"."books"."shelf_id" = ${s}) order by "biblib"."books"."title" asc, "biblib"."books"."id" asc limit 48 offset 48` },
     { id: "exportacion.todo", accion: "prepareLibraryExportAction / descarga de partes (servidor)", pantalla: "Ajustes (exportación por partes)", limite: false,
       sql: `select ${COLUMNS} ${JOIN(u)} where "biblib"."books"."user_id" = ${u} order by "biblib"."books"."title" asc, "biblib"."books"."id" asc` },
-    { id: "isbn.escaneo", accion: "getBookByIsbnAction / alta / edición", pantalla: "Añadir libro", limite: false,
-      sql: `select "isbn" from "biblib"."books" where "biblib"."books"."user_id" = ${u}` },
+    // Tarea T7: igualdad indexada por (dueño, ISBN-13) en lugar de leer todos los ISBN de la cuenta.
+    { id: "isbn.igualdad", accion: "getBookByIsbnAction / alta", pantalla: "Añadir libro", limite: true,
+      sql: `select ${COLUMNS}, "biblib"."books"."edition_copies" ${JOIN(u)} where ("biblib"."books"."user_id" = ${u} and "biblib"."books"."isbn13" = '${scaleIsbn(7)}') order by "biblib"."books"."created_at" asc, "biblib"."books"."id" asc limit 1` },
     { id: "importacion.instantanea", accion: "prepareImportAction / confirmImportAction", pantalla: "Ajustes (importación)", limite: false,
-      sql: `select "id", "isbn" from "biblib"."books" where "biblib"."books"."user_id" = ${u} order by "biblib"."books"."id" asc` },
+      sql: `select "id", "isbn", "edition_id", "work_id" from "biblib"."books" where "biblib"."books"."user_id" = ${u} order by "biblib"."books"."id" asc` },
   ]
 }

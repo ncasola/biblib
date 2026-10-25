@@ -69,9 +69,11 @@ test("A no inserta para B ni enlaza sus libros con estanterías de B", async () 
     shelfForB: await sqlState(tx, (sp) => sp`insert into biblib.shelves (user_id, title) values (${lib.b.userId}, 'Intrusa')`),
     ownBookInBShelf: await sqlState(tx, (sp) => sp`insert into biblib.books (user_id, isbn, title, shelf_id) values (${lib.a.userId}, 'qa01-fk', 'Referencia ajena', ${bShelf})`),
     moveToBShelf: await sqlState(tx, (sp) => sp`update biblib.books set shelf_id = ${bShelf} where id = ${aBook}`),
+    // U-DAT-06: la vista plana no cambia el dueño de un ejemplar (0A000) y la tabla lo impide por RLS (42501).
     giveAwayBook: await sqlState(tx, (sp) => sp`update biblib.books set user_id = ${lib.b.userId}, shelf_id = ${bShelf} where id = ${aBook}`),
+    giveAwayCopy: await sqlState(tx, (sp) => sp`update biblib.copies set user_id = ${lib.b.userId}, shelf_id = ${bShelf} where id = ${aBook}`),
   }))
-  assert.deepEqual(codes, { insertForB: "42501", shelfForB: "42501", ownBookInBShelf: "23503", moveToBShelf: "23503", giveAwayBook: "42501" })
+  assert.deepEqual(codes, { insertForB: "42501", shelfForB: "42501", ownBookInBShelf: "23503", moveToBShelf: "23503", giveAwayBook: "0A000", giveAwayCopy: "42501" })
 })
 
 test("la estantería predeterminada está protegida también para su dueño", async () => {

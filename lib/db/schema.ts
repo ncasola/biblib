@@ -1,8 +1,9 @@
-import { sql } from "drizzle-orm"
+import { getViewSelectedFields, sql } from "drizzle-orm"
 import { authenticatedRole } from "drizzle-orm/supabase"
 import { pgSchema, uuid, text, timestamp, boolean, integer, bigint, jsonb, uniqueIndex, index, check, pgPolicy, foreignKey, primaryKey, customType, type AnyPgColumn } from "drizzle-orm/pg-core"
-import type { Author, Publisher, Book, CatalogueMetadata, LibraryData } from "@/lib/types"
+import type { Author, Publisher, Book, CatalogueMetadata, CopyVerification, EditionCatalogue, EditionIdentifiers, LibraryData } from "@/lib/types"
 import type { ImportPlan, ImportOperationResult } from "@/lib/import-plan"
+import type { PortableBackupV2 } from "@/lib/backup-v2"
 import type { SavedViewFilters } from "@/lib/saved-views"
 
 /**
@@ -80,8 +81,14 @@ export const shelves = biblibSchema.table(
   ],
 ).enableRLS()
 
-export const books = biblibSchema.table(
-  "books",
+/**
+ * Tabla `books` anterior a U-DAT-06, congelada por 0011 como `books_legacy`: nadie la escribe ni la lee la
+ * aplicación, sin políticas ni privilegios de cliente y sin FK a estanterías ni portadas (no bloquea su
+ * borrado). Se conserva durante la ventana de retirada de F4 como punto de comparación del backfill
+ * (`biblib.model_compare`); su retirada es un DROP TABLE en una migración de F4 (docs/operacion.md).
+ */
+export const booksLegacy = biblibSchema.table(
+  "books_legacy",
   {
     id: uuid("id").defaultRandom().primaryKey(),
     version: uuid("version").notNull().defaultRandom(),
@@ -102,51 +109,198 @@ export const books = biblibSchema.table(
     status: text("status").$type<Book["status"]>().notNull().default("unread"),
     shelfId: uuid("shelf_id")
       .notNull(),
-    // Portada privada validada (U-DAT-10). Sustituye a las URL visibles mientras exista; las URL se
-    // conservan como alternativa. U-DAT-06 la trasladará a la edición o el ejemplar.
     coverAssetId: uuid("cover_asset_id"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
     uniqueIndex("books_user_id_isbn_unique").on(table.userId, table.isbn),
-    index("books_cover_asset_idx").on(table.userId, table.coverAssetId).where(sql`${table.coverAssetId} is not null`),
-    foreignKey({ name: "books_owner_cover_asset_fk", columns: [table.userId, table.coverAssetId], foreignColumns: [coverAssets.userId, coverAssets.id] }),
     uniqueIndex("books_user_id_id_unique").on(table.userId, table.id),
-    index("books_user_id_idx").on(table.userId),
-    index("books_shelf_id_idx").on(table.shelfId),
-    // Índices de lectura medidos por U-QA-03 (tarea T8, migración 0006): listado por título, vista 3D
-    // por estantería y «Añadidos recientemente». Aditivos; su retirada es DROP INDEX (docs/operacion.md).
-    index("books_user_title_idx").on(table.userId, table.title, table.id),
-    index("books_user_shelf_title_idx").on(table.userId, table.shelfId, table.title, table.id),
-    index("books_user_created_idx").on(table.userId, table.createdAt.desc().nullsFirst(), table.id.desc().nullsFirst()),
     check("books_status_check", sql`${table.status} in ('read', 'reading', 'unread', 'to-read')`),
     check("books_pages_check", sql`${table.numberOfPages} between 0 and 100000`),
     check("books_title_check", sql`length(btrim(${table.title})) between 1 and 500`),
-    foreignKey({ name: "books_owner_shelf_fk", columns: [table.userId, table.shelfId], foreignColumns: [shelves.userId, shelves.id] }).onDelete("restrict"),
-    pgPolicy("books_select_own", {
-      for: "select",
-      to: authenticatedRole,
-      using: ownRow(table.userId),
-    }),
-    pgPolicy("books_insert_own", {
-      for: "insert",
-      to: authenticatedRole,
-      withCheck: ownRow(table.userId),
-    }),
-    pgPolicy("books_update_own", {
-      for: "update",
-      to: authenticatedRole,
-      using: ownRow(table.userId),
-      withCheck: ownRow(table.userId),
-    }),
-    pgPolicy("books_delete_own", {
-      for: "delete",
-      to: authenticatedRole,
-      using: ownRow(table.userId),
-    }),
   ],
 ).enableRLS()
+
+/*
+ * Obra, edición y ejemplar (U-DAT-06). Todo privado por cuenta: cada FK incluye al propietario y RLS
+ * limita las filas a `auth.uid()`. La descripción bibliográfica, la portada (URL y asset privado) y el
+ * ISBN-13 opcional pertenecen a la edición; estado, estantería, comprobación física e identificador
+ * legacy, al ejemplar. Una obra solo existe con evidencia explícita (archivo v2 o una decisión de la
+ * persona): la migración no la deduce de títulos parecidos.
+ */
+// `user_id = (select auth.uid())`: el uid se evalúa una vez (InitPlan) y no por fila, en las tablas que crecen con la colección.
+const ownCopyRow = (userIdColumn: AnyPgColumn) => sql`${userIdColumn} = (select auth.uid())`
+const ownPolicies = (name: string, userIdColumn: AnyPgColumn) => [
+  pgPolicy(`${name}_select_own`, { for: "select", to: authenticatedRole, using: ownCopyRow(userIdColumn) }),
+  pgPolicy(`${name}_insert_own`, { for: "insert", to: authenticatedRole, withCheck: ownCopyRow(userIdColumn) }),
+  pgPolicy(`${name}_update_own`, { for: "update", to: authenticatedRole, using: ownCopyRow(userIdColumn), withCheck: ownCopyRow(userIdColumn) }),
+  pgPolicy(`${name}_delete_own`, { for: "delete", to: authenticatedRole, using: ownCopyRow(userIdColumn) }),
+]
+
+export const works = biblibSchema.table("works", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id").notNull().references(() => authUsers.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  version: uuid("version").notNull().defaultRandom(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  uniqueIndex("works_user_id_id_unique").on(table.userId, table.id),
+  check("works_title_check", sql`length(btrim(${table.title})) between 1 and 500`),
+  ...ownPolicies("works", table.userId),
+]).enableRLS()
+
+export const editions = biblibSchema.table("editions", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id").notNull().references(() => authUsers.id, { onDelete: "cascade" }),
+  workId: uuid("work_id"),
+  // ISBN-13 canónico o nulo; un identificador manual nunca ocupa este campo.
+  isbn13: text("isbn13"),
+  title: text("title").notNull(),
+  subtitle: text("subtitle"),
+  authors: jsonb("authors").$type<Author[]>().notNull().default([]),
+  publishers: jsonb("publishers").$type<Publisher[]>().notNull().default([]),
+  publishDate: text("publish_date").notNull().default(""),
+  numberOfPages: integer("number_of_pages").notNull().default(0),
+  language: text("language"),
+  identifiers: jsonb("identifiers").$type<EditionIdentifiers>().notNull().default({}),
+  catalogue: jsonb("catalogue").$type<EditionCatalogue>().notNull().default({ source: "import" }),
+  coverSmall: text("cover_small").notNull().default("/default-book-cover.webp"),
+  coverMedium: text("cover_medium").notNull().default("/default-book-cover.webp"),
+  coverLarge: text("cover_large").notNull().default("/default-book-cover.webp"),
+  // Portada privada validada (U-DAT-10) de la edición. Una foto de un ejemplar concreto queda para F3.
+  coverAssetId: uuid("cover_asset_id"),
+  // Texto de búsqueda local (tarea T5): la misma expresión que filtraba `books`, calculada al escribir.
+  searchText: text("search_text").generatedAlwaysAs(sql`translate(lower(title || ' ' || coalesce(subtitle, '') || ' ' || authors::text || ' ' || coalesce(isbn13, '')), 'áéíóúüñ', 'aeiouun')`),
+  version: uuid("version").notNull().defaultRandom(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  uniqueIndex("editions_user_id_id_unique").on(table.userId, table.id),
+  // T7: «¿ya tengo este ISBN?» es una igualdad indexada; varias copias comparten la edición canónica.
+  uniqueIndex("editions_user_isbn13_unique").on(table.userId, table.isbn13).where(sql`${table.isbn13} is not null`),
+  index("editions_user_title_idx").on(table.userId, table.title, table.id),
+  index("editions_user_work_idx").on(table.userId, table.workId).where(sql`${table.workId} is not null`),
+  index("editions_cover_asset_idx").on(table.userId, table.coverAssetId).where(sql`${table.coverAssetId} is not null`),
+  foreignKey({ name: "editions_owner_work_fk", columns: [table.userId, table.workId], foreignColumns: [works.userId, works.id] }).onDelete("set null"),
+  foreignKey({ name: "editions_owner_cover_asset_fk", columns: [table.userId, table.coverAssetId], foreignColumns: [coverAssets.userId, coverAssets.id] }),
+  check("editions_isbn13_check", sql`${table.isbn13} is null or biblib.isbn13_normalize(${table.isbn13}) is not distinct from ${table.isbn13}`),
+  check("editions_title_check", sql`length(btrim(${table.title})) between 1 and 500`),
+  check("editions_pages_check", sql`${table.numberOfPages} between 0 and 100000`),
+  check("editions_language_check", sql`${table.language} is null or ${table.language} ~ '^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$'`),
+  check("editions_identifiers_check", sql`jsonb_typeof(${table.identifiers}) = 'object'`),
+  // La comprobación física nunca vive en la edición compartida.
+  check("editions_catalogue_check", sql`jsonb_typeof(${table.catalogue}) = 'object' and not ${table.catalogue} ? 'isbnVerified'`),
+  ...ownPolicies("editions", table.userId),
+]).enableRLS()
+
+export const copies = biblibSchema.table("copies", {
+  // Conserva el `books.id` legacy: las rutas /book/[id] siguen apuntando al ejemplar.
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id").notNull().references(() => authUsers.id, { onDelete: "cascade" }),
+  editionId: uuid("edition_id").notNull(),
+  status: text("status").$type<Book["status"]>().notNull().default("unread"),
+  shelfId: uuid("shelf_id").notNull(),
+  editionVerification: jsonb("edition_verification").$type<CopyVerification>().notNull().default({ isbnVerified: false }),
+  legacyIdentifier: text("legacy_identifier"),
+  version: uuid("version").notNull().defaultRandom(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  uniqueIndex("copies_user_id_id_unique").on(table.userId, table.id),
+  uniqueIndex("copies_user_legacy_identifier_unique").on(table.userId, table.legacyIdentifier).where(sql`${table.legacyIdentifier} is not null`),
+  index("copies_user_edition_idx").on(table.userId, table.editionId),
+  index("copies_user_shelf_idx").on(table.userId, table.shelfId),
+  index("copies_user_created_idx").on(table.userId, table.createdAt.desc().nullsFirst(), table.id.desc().nullsFirst()),
+  foreignKey({ name: "copies_owner_edition_fk", columns: [table.userId, table.editionId], foreignColumns: [editions.userId, editions.id] }).onDelete("restrict"),
+  foreignKey({ name: "copies_owner_shelf_fk", columns: [table.userId, table.shelfId], foreignColumns: [shelves.userId, shelves.id] }).onDelete("restrict"),
+  check("copies_status_check", sql`${table.status} in ('read', 'reading', 'unread', 'to-read')`),
+  check("copies_verification_check", sql`jsonb_typeof(${table.editionVerification}) = 'object' and jsonb_typeof(${table.editionVerification}->'isbnVerified') = 'boolean'`),
+  check("copies_legacy_identifier_check", sql`${table.legacyIdentifier} is null or length(btrim(${table.legacyIdentifier})) between 1 and 100`),
+  ...ownPolicies("copies", table.userId),
+]).enableRLS()
+
+/**
+ * Modelo de lectura plano (U-DAT-06): la vista `biblib.books` de 0011, un ejemplar con su edición y su obra,
+ * con las columnas de la tabla legacy más las del modelo. `security_invoker`: aplica RLS de las tablas a
+ * quien consulta. `version` es el token plano (cambia con el ejemplar o con la edición); `isbn`, el ISBN-13
+ * de la edición o el identificador legacy del ejemplar. La aplicación solo la lee: escribe en `copies`,
+ * `editions` y `works`. Sus triggers INSTEAD OF mantienen compatibles los scripts SQL que escribían `books`.
+ */
+export const books = biblibSchema.view("books", {
+  id: uuid("id").notNull(),
+  version: uuid("version").notNull(),
+  userId: uuid("user_id").notNull(),
+  isbn: text("isbn"),
+  title: text("title").notNull(),
+  subtitle: text("subtitle"),
+  authors: jsonb("authors").$type<Author[]>().notNull(),
+  publishers: jsonb("publishers").$type<Publisher[]>().notNull(),
+  catalogue: jsonb("catalogue").$type<CatalogueMetadata>().notNull(),
+  numberOfPages: integer("number_of_pages").notNull(),
+  publishDate: text("publish_date").notNull(),
+  coverSmall: text("cover_small").notNull(),
+  coverMedium: text("cover_medium").notNull(),
+  coverLarge: text("cover_large").notNull(),
+  status: text("status").$type<Book["status"]>().notNull(),
+  shelfId: uuid("shelf_id").notNull(),
+  coverAssetId: uuid("cover_asset_id"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
+  editionId: uuid("edition_id").notNull(),
+  copyVersion: uuid("copy_version").notNull(),
+  editionVersion: uuid("edition_version").notNull(),
+  isbn13: text("isbn13"),
+  legacyIdentifier: text("legacy_identifier"),
+  editionVerification: jsonb("edition_verification").$type<CopyVerification>().notNull(),
+  workId: uuid("work_id"),
+  workTitle: text("work_title"),
+  language: text("language"),
+  identifiers: jsonb("identifiers").$type<EditionIdentifiers>().notNull(),
+  searchText: text("search_text"),
+  editionCopies: integer("edition_copies").notNull(),
+  editionCatalogue: jsonb("edition_catalogue").$type<EditionCatalogue>().notNull(),
+}).existing()
+
+const viewFields = getViewSelectedFields(books)
+/**
+ * Columnas que la aplicación lee de la vista (`select({ book: bookFields, … })`): sin el recuento de ejemplares
+ * de la edición (subconsulta por fila; lo pide aparte la ficha), sin el texto de búsqueda y con la procedencia de
+ * la edición en lugar de la plana (que se recompone en el mapper sin calcularla en Postgres para cada fila).
+ */
+export const bookFields = {
+  id: viewFields.id, version: viewFields.version, userId: viewFields.userId, title: viewFields.title, subtitle: viewFields.subtitle,
+  authors: viewFields.authors, publishers: viewFields.publishers, numberOfPages: viewFields.numberOfPages, publishDate: viewFields.publishDate,
+  coverSmall: viewFields.coverSmall, coverMedium: viewFields.coverMedium, coverLarge: viewFields.coverLarge, status: viewFields.status, shelfId: viewFields.shelfId,
+  coverAssetId: viewFields.coverAssetId, createdAt: viewFields.createdAt, updatedAt: viewFields.updatedAt, editionId: viewFields.editionId,
+  copyVersion: viewFields.copyVersion, editionVersion: viewFields.editionVersion, isbn13: viewFields.isbn13, legacyIdentifier: viewFields.legacyIdentifier,
+  editionVerification: viewFields.editionVerification, workId: viewFields.workId, workTitle: viewFields.workTitle, language: viewFields.language,
+  identifiers: viewFields.identifiers, editionCatalogue: viewFields.editionCatalogue,
+}
+
+export type ModelMigrationReportKind = "summary" | "normalized" | "invalid" | "conflict" | "grouped"
+
+/**
+ * Informe privado del backfill y la comparación del modelo (0010/0011): un resumen por cuenta y las
+ * fichas que cambiaron de forma (ISBN normalizado, identificador no válido, equivalencias ISBN-10/13
+ * en conflicto o agrupadas). El dueño solo lo lee; lo escriben las migraciones.
+ */
+export const modelMigrationReport = biblibSchema.table("model_migration_report", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id").notNull().references(() => authUsers.id, { onDelete: "cascade" }),
+  migration: text("migration").notNull(),
+  kind: text("kind").$type<ModelMigrationReportKind>().notNull(),
+  copyId: uuid("copy_id"),
+  otherCopyId: uuid("other_copy_id"),
+  details: jsonb("details").$type<Record<string, unknown>>().notNull().default({}),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index("model_migration_report_user_idx").on(table.userId, table.migration, table.kind),
+  check("model_migration_report_kind_check", sql`${table.kind} in ('summary', 'normalized', 'invalid', 'conflict', 'grouped')`),
+  check("model_migration_report_details_check", sql`jsonb_typeof(${table.details}) = 'object'`),
+  pgPolicy("model_migration_report_select_own", { for: "select", to: authenticatedRole, using: ownCopyRow(table.userId) }),
+]).enableRLS()
 
 const xid8 = customType<{ data: string; driverData: string }>({ dataType: () => "xid8" })
 
@@ -192,7 +346,8 @@ export const importPreviews = biblibSchema.table(
     mode: text("mode").$type<"merge" | "replace">().notNull(),
     rulesVersion: integer("rules_version").notNull(),
     plan: jsonb("plan").$type<ImportPlan>().notNull(),
-    payload: jsonb("payload").$type<LibraryData>(),
+    /** Colección leída. Desde U-DAT-06 se guarda el payload v2; las vistas previas anteriores (forma plana) caducan con las reglas. */
+    payload: jsonb("payload").$type<LibraryData | PortableBackupV2>(),
     snapshotId: uuid("snapshot_id"),
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -224,6 +379,12 @@ export const importPreviews = biblibSchema.table(
   ],
 ).enableRLS()
 
+/**
+ * Operaciones idempotentes por (propietario, operación, clave). U-DAT-06 añade las del modelo: crear un
+ * ejemplar o una edición, cambiar una edición y fusionar ediciones; su resultado durable es el de la acción.
+ */
+export type LibraryOperationKind = "import.confirm" | "snapshot.restore" | "restore.commit" | "copy.create" | "edition.create" | "edition.update" | "edition.merge"
+
 /** Resultado durable e idempotente por (propietario, operación, clave). Sin UPDATE ni DELETE para `authenticated`. */
 export const libraryOperations = biblibSchema.table(
   "library_operations",
@@ -232,12 +393,12 @@ export const libraryOperations = biblibSchema.table(
     userId: uuid("user_id")
       .notNull()
       .references(() => authUsers.id, { onDelete: "cascade" }),
-    operation: text("operation").$type<"import.confirm" | "snapshot.restore" | "restore.commit">().notNull(),
+    operation: text("operation").$type<LibraryOperationKind>().notNull(),
     idempotencyKey: text("idempotency_key").notNull(),
     inputDigest: text("input_digest").notNull(),
     previewId: uuid("preview_id"),
     status: text("status").$type<"committed">().notNull(),
-    result: jsonb("result").$type<ImportOperationResult>().notNull(),
+    result: jsonb("result").$type<ImportOperationResult | Record<string, unknown>>().notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
@@ -245,7 +406,7 @@ export const libraryOperations = biblibSchema.table(
     uniqueIndex("library_operations_preview_unique").on(table.userId, table.previewId).where(sql`${table.previewId} is not null`),
     // Destino de la FK con propietario de las versiones anteriores (U-DAT-02).
     uniqueIndex("library_operations_user_id_id_unique").on(table.userId, table.id),
-    check("library_operations_operation_check", sql`${table.operation} in ('import.confirm', 'snapshot.restore', 'restore.commit')`),
+    check("library_operations_operation_check", sql`${table.operation} in ('import.confirm', 'snapshot.restore', 'restore.commit', 'copy.create', 'edition.create', 'edition.update', 'edition.merge')`),
     check("library_operations_status_check", sql`${table.status} in ('committed')`),
     check("library_operations_key_check", sql`length(${table.idempotencyKey}) between 16 and 128`),
     check("library_operations_digest_check", sql`${table.inputDigest} ~ '^[0-9a-f]{64}$'`),

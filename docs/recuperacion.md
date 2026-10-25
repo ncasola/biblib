@@ -119,6 +119,18 @@ Desactivar la publicación (`BIBLIB_RESTORE_SESSIONS_PUBLISH=false`) deja valida
 
 En una restauración remota (U-INF-07), tras cargar el volcado de dominio, hay que ejecutar `select biblib.cover_storage_install()` antes de abrir tráfico, como hace el ensayo de promoción.
 
+#### Obra, edición y ejemplar (U-DAT-06)
+
+Desde 0011 la colección vive en `biblib.works`, `biblib.editions` y `biblib.copies`; `biblib.books` es la vista plana y `biblib.books_legacy` la copia congelada anterior al cambio (se respalda y restaura como cualquier tabla mientras dure su ventana).
+
+- **Destino.** Tras un reset, el censo de fixtures vive en ediciones y ejemplares; se clasifica por la vista plana como libros de fixture. Una obra en el destino es un dato ajeno.
+- **Fase `rotate`.** Rota los tokens de ejemplares, ediciones y obras (la vista deriva de ellos su token plano) y comprueba que una escritura con el token anterior ya no aplica. `books_legacy` no se rota: nadie la escribe.
+- **Comparación.** `db:restore:verify` compara las tablas por contenido sin esos tokens. La muestra de fichas lee la vista sin sus tres tokens.
+- **Vistas previas y trabajos.** Restore borra las vistas previas y caduca los leases a propósito (fase `rotate`), pero `db:restore:verify` aún los compara por contenido: un respaldo con vistas previas o trabajos en curso da `table.biblib.import_previews`/`library_jobs` distintos. Es anterior a U-DAT-06 (lo vio el primer ciclo de 0012 con restos de pruebas); ensayar con esas tablas vacías hasta que verify descuente `invalidated` del recibo.
+- **Respaldo de 0009 sobre la versión nueva.** Se restaura con su head (0009) y después se aplican 0010 y 0011 con `db:plan:local`/`db:migrate:local`: es el ensayo de [O12/dat-06](validacion/2026-10-24/O12/dat-06/informe.md).
+
+**Recuperación del cambio de modelo.** Hasta aplicar 0011 la aplicación anterior sigue funcionando sobre 0010 (la sincronización mantiene el modelo al día) y `biblib.model_compare(null)` informa de cualquier diferencia. Después de 0011 no se promete volver al escritor anterior: con varias copias por edición o libros sin ISBN, `books` ya no puede representarlos. Si algo falla, se detienen las escrituras y se corrige hacia delante o se restaura el respaldo ensayado (el de antes del cambio, con su head, y se repite la migración).
+
 ### Verificación (`db:restore:verify`)
 
 Comprueba los archivos del respaldo; que hay un restore completado de ese respaldo; el ledger idéntico; el manifest de objetos de U-INF-04 (RLS, políticas, grants, FK, índices, columnas, función y trigger de versión) y los hechos de catálogo idénticos al origen; cantidades, claves y contenido por tabla (dominio y ledger completos salvo el token rotado; Auth y Storage por cantidad y claves); que ningún token coincide con el respaldo; la muestra de fichas; sesiones GoTrue reales de A y B con `tests/integration/support/session.mjs`, sus IDs restaurados y RLS con sus claims (solo ven lo suyo, actualizar lo ajeno afecta 0 filas); buckets y cada objeto Storage con su sha256. Escribe el informe en `<respaldo>/rehearsals/` con duración del restore, de la verificación y total, discrepancias y la ventana de datos perdidos, y lo enlaza desde el recibo. Cualquier discrepancia sale con **11**.

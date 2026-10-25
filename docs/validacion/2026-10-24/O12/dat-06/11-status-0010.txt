@@ -1,0 +1,3 @@
+Estado de migraciones · biblib-scratch · up-to-date
+Head aplicado: 0010_works_editions_copies · esperado: 0010_works_editions_copies · pendientes: ninguna
+469 comprobaciones correctas.

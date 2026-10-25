@@ -3,6 +3,7 @@ import { z } from "zod"
 import { mutationResult } from "./action-result"
 import { DomainError } from "./domain-errors"
 import { normalizeIsbn } from "./isbn"
+import { versionTokenSchema } from "./book-validation"
 import { normalizeCandidate } from "./bibliographic-catalog/normalize"
 import type { BibliographicCandidate, BibliographicCatalogService, CatalogLookupResult, ProviderOutcome } from "./bibliographic-catalog/types"
 import type { Book } from "./types"
@@ -30,7 +31,7 @@ const text = (maximum: number) => z.string().max(maximum).refine((value) => !/[\
 const querySchema = z.object({ title: text(300).optional(), author: text(200).optional(), page: z.number().int().min(1), limit: z.union([z.literal(10), z.literal(20)]), language: z.string().regex(/^[a-z]{2,3}$/i).transform((value) => value.toLowerCase()).optional() }).strict()
 const opaque = z.string().min(40).max(40000).regex(/^[A-Za-z0-9_-]+$/)
 const editionsSchema = z.object({ queryToken: opaque, workKey: opaque, page: z.number().int().min(1) }).strict()
-const prepareSchema = z.object({ candidateKey: opaque, targetCopyId: z.uuid().optional(), expectedVersion: z.uuid().optional() }).strict()
+const prepareSchema = z.object({ candidateKey: opaque, targetCopyId: z.uuid().optional(), expectedVersion: versionTokenSchema.optional() }).strict()
 const envelopeSchema = z.object({ version: z.literal(1), kind: z.enum(["query", "candidate"]), expires: z.number(), queryId: z.uuid(), limit: z.union([z.literal(10), z.literal(20)]), candidate: z.unknown().optional() }).strict()
 type Envelope = z.infer<typeof envelopeSchema>
 

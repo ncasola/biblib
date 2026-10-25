@@ -24,12 +24,22 @@ test("valida ISBN-10 con X y convierte ISBN equivalentes a una misma edición", 
   assert.throws(() => parseBookInput(input({ isbn: "9788401337201" })), invalidInput)
 })
 
-test("permite fichas sin ISBN y conserva identificadores manuales compatibles", () => {
-  assert.equal(parseBookInput(input({ isbn: "" })).isbn, "")
-  assert.equal(parseBookInput(input({ isbn: undefined })).isbn, "")
+test("permite fichas sin ISBN sin inventarles un identificador y acepta los manual-… anteriores", () => {
+  // U-DAT-06: sin ISBN es null; un manual-… de una versión anterior se acepta, pero no es un ISBN.
+  assert.equal(parseBookInput(input({ isbn: "" })).isbn, null)
+  assert.equal(parseBookInput(input({ isbn: undefined })).isbn, null)
+  assert.equal(parseBookInput(input({ isbn: null })).isbn, null)
   const manual = "manual-123e4567-e89b-42d3-a456-426614174000"
-  assert.equal(parseBookInput(input({ isbn: manual })).isbn, manual)
+  assert.equal(parseBookInput(input({ isbn: manual })).isbn, null)
+  assert.equal(parseBookInput(input({ isbn: "0-8044-2957-X" })).isbn, "9780804429573")
   assert.throws(() => parseBookInput(input({ isbn: "manual-no-valido" })), invalidInput)
+})
+
+test("acepta los tokens de ficha, ejemplar y edición con forma de UUID (el plano es md5) y rechaza otros", () => {
+  const flat = "0cc175b9-c0f1-b6a8-31c3-99e269772661"
+  const parsed = parseBookInput(input({ version: flat, copyVersion: "10000000-0000-4000-8000-000000000001", editionVersion: flat }))
+  assert.deepEqual([parsed.version, parsed.editionVersion], [flat, flat])
+  assert.throws(() => parseBookInput(input({ version: "no-es-un-token" })), invalidInput)
 })
 
 test("recorta títulos y nombres y rechaza texto vacío, cantidades negativas y arrays malformados", () => {

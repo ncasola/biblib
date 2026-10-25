@@ -1,0 +1,47 @@
+[ok] backup.files: 5 archivo(s) del respaldo presentes con su sha256.
+[ok] restore.receipt: Restore 7ccef25d-49d0-4d32-b568-9e8f4f3cc5b8 de este respaldo completado (4 token(s) rotados, escritura antigua rechazada: sí).
+[ok] ledger.history: Ledger con 13 migración(es) idénticas al respaldo (head 0012_model_account_deletion).
+[ok] manifest.objects: Manifest U-INF-04: 463 comprobaciones de RLS, políticas, grants, FK, índices, columnas, función y trigger conformes.
+[ok] objects.facts: Hechos de catálogo (tablas, RLS, políticas, grants, constraints, índices, columnas, función, trigger) idénticos al origen.
+[ok] table.auth.identities: auth.identities: 3 fila(s) y claves iguales al recibo.
+[ok] table.auth.mfa_factors: auth.mfa_factors: 0 fila(s) y claves iguales al recibo.
+[ok] table.auth.users: auth.users: 3 fila(s) y claves iguales al recibo.
+[ok] table.auth.webauthn_credentials: auth.webauthn_credentials: 0 fila(s) y claves iguales al recibo.
+[ok] table.biblib.account_lifecycle: biblib.account_lifecycle: 2 fila(s), claves y contenido iguales al recibo.
+[ok] table.biblib.books_legacy: biblib.books_legacy: 130 fila(s), claves y contenido iguales al recibo.
+[ok] table.biblib.catalogue_cache: biblib.catalogue_cache: 0 fila(s), claves y contenido iguales al recibo.
+[ok] table.biblib.catalogue_inflight: biblib.catalogue_inflight: 0 fila(s), claves y contenido iguales al recibo.
+[ok] table.biblib.catalogue_private_cache: biblib.catalogue_private_cache: 0 fila(s), claves y contenido iguales al recibo.
+[ok] table.biblib.catalogue_quota_buckets: biblib.catalogue_quota_buckets: 0 fila(s), claves y contenido iguales al recibo.
+[ok] table.biblib.catalogue_quota_reservations: biblib.catalogue_quota_reservations: 0 fila(s), claves y contenido iguales al recibo.
+[ok] table.biblib.copies: biblib.copies: 130 fila(s), claves y contenido iguales al recibo.
+[ok] table.biblib.cover_assets: biblib.cover_assets: 1 fila(s) y claves iguales al recibo.
+[ok] table.biblib.editions: biblib.editions: 128 fila(s), claves y contenido iguales al recibo.
+[ok] table.biblib.import_previews: biblib.import_previews: 0 fila(s), claves y contenido iguales al recibo.
+[ok] table.biblib.import_session_chunks: biblib.import_session_chunks: 1 fila(s), claves y contenido iguales al recibo.
+[ok] table.biblib.import_session_parts: biblib.import_session_parts: 1 fila(s), claves y contenido iguales al recibo.
+[ok] table.biblib.import_session_rows: biblib.import_session_rows: 0 fila(s), claves y contenido iguales al recibo.
+[ok] table.biblib.import_sessions: biblib.import_sessions: 1 fila(s), claves y contenido iguales al recibo.
+[ok] table.biblib.library_job_items: biblib.library_job_items: 0 fila(s), claves y contenido iguales al recibo.
+[ok] table.biblib.library_jobs: biblib.library_jobs: 0 fila(s), claves y contenido iguales al recibo.
+[ok] table.biblib.library_operations: biblib.library_operations: 1 fila(s), claves y contenido iguales al recibo.
+[ok] table.biblib.library_snapshot_chunks: biblib.library_snapshot_chunks: 0 fila(s), claves y contenido iguales al recibo.
+[ok] table.biblib.library_snapshots: biblib.library_snapshots: 0 fila(s), claves y contenido iguales al recibo.
+[ok] table.biblib.library_state: biblib.library_state: 3 fila(s), claves y contenido iguales al recibo.
+[ok] table.biblib.model_migration_report: biblib.model_migration_report: 14 fila(s), claves y contenido iguales al recibo.
+[ok] table.biblib.saved_book_views: biblib.saved_book_views: 0 fila(s), claves y contenido iguales al recibo.
+[ok] table.biblib.shelves: biblib.shelves: 14 fila(s), claves y contenido iguales al recibo.
+[ok] table.biblib.works: biblib.works: 0 fila(s), claves y contenido iguales al recibo.
+[ok] table.drizzle.__drizzle_migrations: drizzle.__drizzle_migrations: 13 fila(s), claves y contenido iguales al recibo.
+[ok] table.storage.buckets: storage.buckets: 2 fila(s) y claves iguales al recibo.
+[ok] table.storage.objects: storage.objects: 2 fila(s) y claves iguales al recibo.
+[ok] tokens.biblib.books.version: biblib.books.version: 130 token(s) rotados; ninguno coincide con el respaldo.
+[ok] tokens.biblib.library_state.revision: biblib.library_state.revision: 3 token(s) rotados; ninguno coincide con el respaldo.
+[ok] assets.manifest: Portadas privadas: 1 asset(s) con su clave, sha256 y tamaño (en revisión hasta revalidarse); 0 excluido(s) por su política.
+[ok] sample.books: Muestra de 5 ficha(s) idéntica salvo el token rotado.
+[ok] access.a: Cuenta A: sesión GoTrue real con el ID restaurado; ve 5 libro(s) y 3 estantería(s) propias y 0 ajenas; actualizar las ajenas afecta 0 filas.
+[ok] access.b: Cuenta B: sesión GoTrue real con el ID restaurado; ve 4 libro(s) y 3 estantería(s) propias y 0 ajenas; actualizar las ajenas afecta 0 filas.
+[ok] storage.bucket.biblib-covers: Bucket biblib-covers privado con su configuración.
+[ok] storage.bucket.biblib-test-assets: Bucket biblib-test-assets privado con su configuración.
+[ok] storage.objects: 2/2 objeto(s) presentes con su sha256.
+Ensayo de recuperación superado · recuperación 20 s · informe .biblib/backups/20261025T045854Z-scratch-8f7ab0/rehearsals/20261025T050100Z-scratch.json

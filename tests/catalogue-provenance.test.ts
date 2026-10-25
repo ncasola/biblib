@@ -6,7 +6,7 @@ import {
   catalogueForCreate, catalogueForUpdate, catalogueRequiresV2, catalogueWithField, provenanceProviderLabel, readCatalogueView,
 } from "../lib/catalogue-provenance"
 import { DomainError } from "../lib/domain-errors"
-import { decideConfirmation } from "../lib/import-plan"
+import { decideConfirmation, IMPORT_RULES_VERSION } from "../lib/import-plan"
 import type { Book, CatalogueMetadata } from "../lib/types"
 
 const VERSION_A = "11111111-1111-4111-8111-111111111111"
@@ -86,7 +86,7 @@ test("edición concurrente: una versión antigua no escribe y la nueva parte de 
   assert.deepEqual(afterB.schemaVersion === 2 && Object.keys(afterB.fields ?? {}).sort(), ["cover", "publish_date", "subtitle", "title"])
   // Un cambio solo de procedencia también rota la revisión de colección: una vista previa anterior caduca.
   assert.deepEqual(decideConfirmation({
-    existing: null, preview: { id: "p", revision: VERSION_A, expired: false, rulesVersion: 1, confirmed: false },
+    existing: null, preview: { id: "p", revision: VERSION_A, expired: false, rulesVersion: IMPORT_RULES_VERSION, confirmed: false },
     previewId: "p", digest: "d", expectedRevision: VERSION_A, currentRevision: VERSION_B,
   }), { kind: "reject", code: "REVISION_CONFLICT" })
 })

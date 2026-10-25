@@ -1,0 +1,23 @@
+✔ authenticated y anon no leen ni escriben la caché compartida, las consultas en vuelo ni las cuotas (6286.5623ms)
+✔ ninguna función catalogue_* es ejecutable con rol de cliente (41.814ms)
+✔ caché privada: A solo ve y purga lo suyo; no escribe, no actualiza y no toca lo de B (23.3418ms)
+✔ la Data API con el JWT real de A no expone tablas ni funciones de coordinación (54.4486ms)
+✔ dos procesos piden a la vez el mismo ISBN: una única consulta en vuelo y resultado equivalente (4847.9996ms)
+✔ ISBN distintos desde búsqueda, importación y portada respetan el intervalo global de OL (5608.5662ms)
+✔ OL y BNE no comparten reserva: cada proveedor tiene su cubo y su intervalo (1292.3523ms)
+✔ 429 con Retry-After: cooldown compartido entre procesos, sin peticiones y sin caché de ausencia (3766.0581ms)
+✔ worker muerto tras reservar: su concesión caduca, otro proceso la toma y la cuota sigue contando (1814.0698ms)
+✔ carrera de caducidad: un worker tardío no publica una entrada vieja sobre la reciente (fencing) (2080.0304ms)
+✔ caché malformada se descarta y se vuelve a consultar; nunca llega como ficha ni ausencia (276.3641ms)
+✔ cambio de política o de schema invalida entradas incompatibles; una política que deniega no escribe (2293.1257ms)
+✔ búsqueda de texto: caché privada por dueño con HMAC; B no reutiliza la de A y no queda el texto (458.7662ms)
+✔ Postgres no disponible: unavailable sin ráfaga externa (207.6452ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 32180.3966
+exit=0

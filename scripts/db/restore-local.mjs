@@ -144,7 +144,10 @@ export async function restoreCoverAssets(tx, manifest) {
   await tx`select biblib.cover_storage_install()`
   const excluded = manifest.assets?.excluded ?? []
   if (excluded.length) {
-    await tx`update biblib.books set cover_asset_id = null where cover_asset_id = any(${excluded}::uuid[])`
+    // Desde 0011 la portada privada es de la edición (U-DAT-06); antes, de la ficha.
+    const model = (await tx`select to_regclass('biblib.editions') is not null as model`)[0]?.model === true
+    if (model) await tx`update biblib.editions set cover_asset_id = null where cover_asset_id = any(${excluded}::uuid[])`
+    else await tx`update biblib.books set cover_asset_id = null where cover_asset_id = any(${excluded}::uuid[])`
     await tx`delete from biblib.cover_assets where id = any(${excluded}::uuid[])`
   }
   const [{ restored }] = await tx`select biblib.cover_asset_quarantine_restored() as restored`
@@ -176,7 +179,11 @@ async function readDestination(tx) {
   const books = schema.books ? await tx`select user_id::text as user_id, catalogue->>'censusId' as census, catalogue ? 'fixtureKey' as fixture from biblib.books` : []
   const shelves = schema.shelves ? await tx`select user_id::text as user_id from biblib.shelves` : []
   const otherRows = []
-  for (const t of await tx`select tablename as table from pg_tables where schemaname = 'biblib' and tablename not in ('books', 'shelves')`) {
+  // Desde 0011 (U-DAT-06) books es la vista plana de ejemplares y ediciones: sus filas son las de copies/editions
+  // (toda edición tiene un ejemplar) y se clasifican arriba como libros. Las obras se cuentan aparte.
+  const [view] = await tx`select c.relkind = 'v' as model from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname = 'biblib' and c.relname = 'books'`
+  const flat = view?.model ? ["copies", "editions"] : []
+  for (const t of await tx`select tablename as table from pg_tables where schemaname = 'biblib' and tablename not in ('books', 'shelves') and not (tablename = any(${flat}::text[]))`) {
     const [row] = await tx`select count(*)::integer as rows from ${tx("biblib")}.${tx(t.table)}`
     otherRows.push({ table: t.table, rows: row.rows })
   }

@@ -60,8 +60,8 @@ test("un ISBN-10 con guiones equivalente detecta la ficha ya catalogada", async 
   await page.goto("/books/add")
   await page.getByLabel("Número ISBN").fill("0-00-000001-9")
   await page.getByRole("button", { name: "Buscar libro" }).click()
-  await expect(page.getByRole("status").filter({ hasText: "Este libro ya está en tu biblioteca" })).toBeVisible()
-  await expect(page.getByRole("link", { name: "Ver libro guardado" })).toHaveAttribute("href", `/book/${stack.fixtureBookId("a", "isla")}`)
+  await expect(page.getByRole("status").filter({ hasText: "Esta edición ya está en tu biblioteca" })).toBeVisible()
+  await expect(page.getByRole("link", { name: "Abrir el ejemplar guardado" })).toHaveAttribute("href", `/book/${stack.fixtureBookId("a", "isla")}`)
 })
 
 test("edición: el conflicto de versión conserva el borrador y la recarga es explícita", async ({ page, stack, data }, testInfo) => {

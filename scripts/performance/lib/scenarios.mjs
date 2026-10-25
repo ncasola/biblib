@@ -36,6 +36,8 @@ export function actionScenarios(facts) {
     { name: "busqueda-local-texto", pantalla: "Búsqueda local", action: "listBooksAction", args: (i) => [list({ q: SEARCH_TERMS[i % SEARCH_TERMS.length].normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase() })], iterations: STANDARD },
     { name: "busqueda-local-isbn", pantalla: "Búsqueda local", action: "listBooksAction", args: (i) => [list({ q: scaleIsbn(1 + ((i * 37) % Math.max(1, facts.total))) })], iterations: STANDARD },
     { name: "detalle", pantalla: "Ficha", action: "getBookDetailAction", args: (i) => [facts.bookIds[i % facts.bookIds.length]], iterations: STANDARD },
+    // Tarea T7 (U-DAT-06): «¿ya tengo este ISBN?» al añadir o editar; existentes y ausentes alternados.
+    { name: "consulta-isbn-alta", pantalla: "Añadir libro (ISBN existente)", action: "getBookByIsbnAction", args: (i) => [scaleIsbn(i % 2 ? 1 + ((i * 37) % Math.max(1, facts.total)) : 900_000 + i)], iterations: STANDARD },
     { name: "estanterias", pantalla: "Estanterías / filtros", action: "getShelvesAction", args: () => [], iterations: STANDARD },
     { name: "estanteria-3d-pagina-48", pantalla: "Estantería 3D", action: "listBooksAction", args: (i) => [list({ shelf: facts.bigShelf, page: 1 + (i % facts.scenePages), pageSize: 48 })], iterations: STANDARD },
     // Tarea T1 (U-DAT-04): Ajustes carga solo recuentos; la copia por partes la genera el servidor al exportar.

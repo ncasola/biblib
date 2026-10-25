@@ -3,12 +3,13 @@
 import { createHash } from "node:crypto"
 import { and, eq } from "drizzle-orm"
 import { z } from "zod"
+import { versionTokenSchema } from "@/lib/book-validation"
 import type { ActionResult } from "@/lib/action-result"
 import { OPEN_LIBRARY_COVERS_HOST } from "@/lib/bibliographic-catalog/providers/endpoints"
 import { assertBookVersion, bookVersionConflict } from "@/lib/book-version"
 import { withRlsContext, type DatabaseTransaction } from "@/lib/db/client"
 import { lockLibrary, mapRowToBook } from "@/lib/db/library"
-import { books, libraryJobs, shelves } from "@/lib/db/schema"
+import { bookFields, books, libraryJobs, shelves } from "@/lib/db/schema"
 import { DomainError, idempotencyConflict, jobConflict } from "@/lib/domain-errors"
 import { IDEMPOTENCY_KEY_PATTERN, isTerminal } from "@/lib/jobs/contracts"
 import { controlJob } from "@/lib/jobs/server"
@@ -28,11 +29,11 @@ import { ownerStorage, purgeOwnerAssets, runAssetJob } from "@/lib/assets/server
 // cambia hasta que la imagen está validada, registrada y adjunta con la versión de la ficha.
 
 const keySchema = z.string().regex(IDEMPOTENCY_KEY_PATTERN)
-const requestSchema = z.object({ entityId: z.uuid(), expectedVersion: z.uuid(), providerCoverKey: z.string().max(80), idempotencyKey: keySchema })
+const requestSchema = z.object({ entityId: z.uuid(), expectedVersion: versionTokenSchema, providerCoverKey: z.string().max(80), idempotencyKey: keySchema })
 const jobSchema = z.object({ jobId: z.uuid() })
 const controlSchema = z.object({ jobId: z.uuid(), expectedVersion: z.uuid() })
-const attachSchema = z.object({ assetId: z.uuid(), entityId: z.uuid(), expectedVersion: z.uuid() })
-const detachSchema = z.object({ entityId: z.uuid(), expectedVersion: z.uuid() })
+const attachSchema = z.object({ assetId: z.uuid(), entityId: z.uuid(), expectedVersion: versionTokenSchema })
+const detachSchema = z.object({ entityId: z.uuid(), expectedVersion: versionTokenSchema })
 const uploadSchema = z.object({ entityId: z.uuid(), mime: z.enum(ACCEPTED_IMAGE_TYPES), bytes: z.coerce.number().int().min(1) })
 
 function parse<T>(schema: z.ZodType<T>, input: unknown, message: string): T {
@@ -52,7 +53,7 @@ const quotaExceeded = (quota: "quarantine" | "stored") => new DomainError("LIMIT
   : "Has alcanzado el espacio de portadas privadas (500 imágenes o 200 MiB). Retira alguna antes de añadir otra.")
 
 async function findBook(tx: DatabaseTransaction, userId: string, id: string): Promise<Book | null> {
-  const [row] = await tx.select({ book: books, shelfTitle: shelves.title }).from(books)
+  const [row] = await tx.select({ book: bookFields, shelfTitle: shelves.title }).from(books)
     .innerJoin(shelves, and(eq(books.shelfId, shelves.id), eq(shelves.userId, userId)))
     .where(and(eq(books.id, id), eq(books.userId, userId))).limit(1)
   return row ? mapRowToBook(row) : null

@@ -5,16 +5,30 @@ import { DomainError } from "./domain-errors"
 import { catalogueProblem, catalogueSchema, normalizeCatalogue } from "./catalogue-provenance"
 
 export const uuidSchema = z.uuid({ message: "El identificador no es válido." })
+/**
+ * Token de concurrencia. El de la ficha plana (U-DAT-06) se deriva de los de ejemplar y edición con md5, así que tiene
+ * forma de UUID pero no su versión ni variante: se valida la forma, no el RFC.
+ */
+export const versionTokenSchema = z.guid({ message: "La versión de la ficha no es válida." })
 export const statusSchema = z.enum(["read", "reading", "unread", "to-read"])
 export const shelfTitleSchema = z.string().trim().min(1).max(120)
+/** Clave de idempotencia de una operación de la persona (formulario o reintento). */
+export const idempotencyKeySchema = z.string().regex(/^[A-Za-z0-9_-]{16,128}$/, "La clave de la operación no es válida.")
 const coverUrl = z.string().max(2048).refine((value) => {
   if (value === "" || value === "/default-book-cover.webp") return true
   try { return new URL(value).protocol === "https:" } catch { return false }
 }, "La portada debe tener una dirección HTTPS válida.")
 
 const bookInputSchema = z.object({
-  version: uuidSchema.optional(),
-  isbn: z.string().trim().max(100).default(""),
+  /** Token plano de la ficha que se editó (U-DAT-02); con U-DAT-06, junto a los de ejemplar y edición. */
+  version: versionTokenSchema.optional(),
+  copyVersion: versionTokenSchema.optional(),
+  editionVersion: versionTokenSchema.optional(),
+  /** Número de ejemplares de la edición compartida que la persona ha confirmado que cambian. */
+  confirmSharedCopies: z.number().int().min(2).max(100_000).optional(),
+  idempotencyKey: idempotencyKeySchema.optional(),
+  // ISBN-10/13 o vacío. Un identificador `manual-…` de versiones anteriores se acepta pero no se guarda como ISBN.
+  isbn: z.string().trim().max(100).nullish(),
   title: z.string().trim().min(1).max(500),
   subtitle: z.string().trim().max(1000).optional(),
   authors: z.array(z.object({ name: z.string().trim().min(1).max(200), url: z.string().max(2048).optional() })).max(30),
@@ -30,22 +44,26 @@ const bookInputSchema = z.object({
 
 export type BookInput = z.input<typeof bookInputSchema>
 
+/**
+ * Datos de una ficha enviada por la interfaz. `isbn` es el ISBN-13 canónico o `null`: un libro sin ISBN no
+ * recibe un identificador inventado (U-DAT-06) y un `manual-…` enviado por una versión anterior cuenta como vacío.
+ */
 export function parseBookInput(input: unknown) {
   const result = bookInputSchema.safeParse(input)
   const problem = !result.success && input && typeof input === "object" && "catalogue" in input ? catalogueProblem(input.catalogue) : null
   if (problem) throw new DomainError("INVALID_INPUT", problem)
   if (!result.success) throw new DomainError("INVALID_INPUT", "Revisa el título, autores, páginas, estado y dirección de portada.")
   const data = result.data
-  let isbn = data.isbn
-  if (isbn.startsWith("manual-") && !uuidSchema.safeParse(isbn.slice(7)).success) {
+  const raw = data.isbn ?? ""
+  if (raw.startsWith("manual-") && !uuidSchema.safeParse(raw.slice(7)).success) {
     throw new DomainError("INVALID_INPUT", "El identificador del libro sin ISBN no es válido.")
   }
-  if (isbn && !isbn.startsWith("manual-")) {
-    const normalized = normalizeIsbn(isbn)
-    if (!normalized) throw new DomainError("INVALID_INPUT", "El ISBN no es válido. Revisa sus dígitos o déjalo vacío.")
-    isbn = normalized
+  let isbn: string | null = null
+  if (raw && !raw.startsWith("manual-")) {
+    isbn = normalizeIsbn(raw)
+    if (!isbn) throw new DomainError("INVALID_INPUT", "El ISBN no es válido. Revisa sus dígitos o déjalo vacío.")
   }
-  return { ...data, isbn, cover: normalizeBookCover(data.cover), catalogue: normalizeCatalogue(data.catalogue ?? { source: "manual", isbnVerified: false }, isbn) }
+  return { ...data, isbn, cover: normalizeBookCover(data.cover), catalogue: normalizeCatalogue(data.catalogue ?? { source: "manual", isbnVerified: false }, isbn ?? "") }
 }
 
 export function parseUuid(value: unknown): string {

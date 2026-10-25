@@ -75,7 +75,7 @@ test("las 111 fichas sintéticas legacy forman una sola parte v1 importable", ()
   assert.equal(set.files.length, 1)
   const restored = parseLibraryImport(JSON.parse(set.files[0].text))
   assert.equal(restored.books.length, 111)
-  assert.equal(restored.books.filter((book) => book.isbn.startsWith("manual-")).length, 9, "los identificadores manuales se conservan")
+  assert.equal(restored.books.filter((book) => book.legacyIdentifier?.startsWith("manual-")).length, 9, "los identificadores manuales se conservan")
   assert.deepEqual(parseBackupSetManifest(JSON.parse(set.manifestText)).totals, { books: 111, shelves: legacy.shelves.length })
 })
 

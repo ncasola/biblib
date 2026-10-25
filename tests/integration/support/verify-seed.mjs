@@ -19,8 +19,10 @@ export async function verifySeed({ profile = "scratch" } = {}) {
     const a = first.accounts.find((u) => u.key === "a")
     const manualId = fixtureId(first.censusId, a.id, "human", "manual-sin-fixture-key")
     const [shelf] = await sql`select id from biblib.shelves where user_id = ${a.id} and is_default = true`
+    // Desde 0011 books es la vista plana: sin ON CONFLICT, el alta se omite si ya existe.
     await sql`insert into biblib.books (id, user_id, isbn, title, shelf_id)
-      values (${manualId}, ${a.id}, 'manual-ensayo-o05', 'Alta manual de ensayo O05', ${shelf.id}) on conflict (id) do nothing`
+      select ${manualId}, ${a.id}, 'manual-ensayo-o05', 'Alta manual de ensayo O05', ${shelf.id}
+      where not exists (select 1 from biblib.books where id = ${manualId})`
     const before = await sql`select id, user_id, version from biblib.books where catalogue->>'censusId' = ${first.censusId} order by id`
     const shelvesBefore = await sql`select id from biblib.shelves where user_id in (${first.accounts[0].id}, ${first.accounts[1].id}) order by id`
     const second = await runSeed(options)

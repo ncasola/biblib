@@ -1,0 +1,20 @@
+Rendimiento · perfil scratch · biblib-scratch · huella ea260283d879 · tamaños 10000
+Compilando la app para el perfil scratch…
+
+== 10000 ejemplares ==
+Dataset biblib-escala-v1 (6e9b3738de18): 10000 libros, 41 estanterías.
+Abriendo sesiones reales (10 de escala, A y B)…
+Frío (primera llamada de cada acción tras arrancar la app)…
+  exportacion-servidor             c=1  p50     672 ms · p95   737.2 ms · SQL p95 156.08 ms · errores 0
+  exportacion-servidor             c=5  p50  2350.2 ms · p95  4670.5 ms · errores 0
+  exportacion-servidor             c=10 p50  4570.2 ms · p95  6791.5 ms · errores 0
+  preview-importacion-conservar    c=1  p50   275.5 ms · p95   299.7 ms · SQL p95 42.44 ms · errores 0
+  preview-importacion-conservar    c=5  p50   927.6 ms · p95  1399.8 ms · errores 0
+  preview-importacion-conservar    c=10 p50  1774.2 ms · p95  2250.5 ms · errores 0
+  preview-importacion-nuevos       c=1  p50   368.4 ms · p95   410.5 ms · SQL p95 69.09 ms · errores 0
+  preview-importacion-nuevos       c=5  p50  1103.4 ms · p95  1697.6 ms · errores 0
+  preview-importacion-nuevos       c=10 p50    2105 ms · p95    2747 ms · errores 0
+  preview-importacion-reemplazo    c=1  p50   352.2 ms · p95   367.5 ms · SQL p95 64.51 ms · errores 0
+  preview-importacion-reemplazo    c=5  p50  1125.5 ms · p95  1667.5 ms · errores 0
+  preview-importacion-reemplazo    c=10 p50  2004.1 ms · p95  2740.2 ms · errores 0
+Resultados en .biblib\perf-dat06\despues-final: 0 medida(s) fuera de presupuesto.

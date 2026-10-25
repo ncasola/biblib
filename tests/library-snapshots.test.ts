@@ -3,7 +3,7 @@ import { createHash } from "node:crypto"
 import { describe, test } from "node:test"
 import { canonicalJson, confirmationInput, IMPORT_RULES_VERSION, type CollectionSnapshot, type IdAllocator } from "../lib/import-plan"
 import {
-  assembleSnapshot, buildRestorePlan, decodeSnapshotCursor, encodeSnapshotCursor, pageLimit, restoreChanges, restoreDigest, SNAPSHOT_LIMITS,
+  assembleSnapshot, buildRestorePlan, decodeSnapshotCursor, encodeSnapshotCursor, pageLimit, restoreChanges, restoreDigest, SNAPSHOT_LIMITS, snapshotRows,
   snapshotDigest, translateSnapshotError, type SnapshotBookEntry, type SnapshotChunkRow, type SnapshotContent,
 } from "../lib/library-snapshots"
 import { DomainError, httpStatusForDomainError, isRetryable } from "../lib/domain-errors"
@@ -163,5 +163,37 @@ describe("contratos auxiliares", () => {
     assert.ok(other instanceof Error && !(other instanceof DomainError), "el resto se relanza sin traducir")
     assert.equal(isRetryable("LIMIT_EXCEEDED"), false)
     assert.equal(httpStatusForDomainError("LIMIT_EXCEEDED"), 413)
+  })
+})
+
+describe("versiones anteriores y ejemplares (U-DAT-06)", () => {
+  test("una versión legacy se restaura como en el backfill: equivalencias compatibles comparten edición y las demás conservan su texto", () => {
+    const legacy = (n: number, isbn: string, title = "Ensayo"): SnapshotBookEntry => ({ ...book(n), isbn, title })
+    const content: SnapshotContent = { shelves: snapshot.shelves, books: [legacy(1, "9780306406157"), legacy(2, "0306406152"), legacy(3, "978-0-306-40615-7", "Otra"), legacy(4, "manual-4")] }
+    const rows = snapshotRows(content)
+    assert.equal(rows.get(book(2).id)!.edition!.id, book(1).id, "el ISBN-10 con los mismos datos comparte edición")
+    assert.equal(rows.get(book(2).id)!.isbn, "9780306406157")
+    assert.equal(rows.get(book(3).id)!.isbn, null, "con datos distintos no ocupa el ISBN-13")
+    assert.equal(rows.get(book(3).id)!.legacyIdentifier, "978-0-306-40615-7", "y conserva su texto original")
+    assert.equal(rows.get(book(4).id)!.legacyIdentifier, "manual-4")
+    const plan = buildRestorePlan({ snapshot: content, current: { shelves: [{ id: DEFAULT, title: "Predeterminada", isDefault: true }], books: [] }, foreign: new Set(), allocateId: allocator })
+    assert.equal(plan.books.insert.length, 4, "ninguna ficha se descarta")
+    assert.equal(plan.editions.create.length, 3)
+  })
+
+  test("una versión 2 conserva ejemplares, edición compartida, comprobación y obra con sus IDs salvo los ajenos", () => {
+    const edition = "40000000-0000-4000-8000-000000000001", work = "50000000-0000-4000-8000-000000000001"
+    const v2 = (n: number, verified: boolean): SnapshotBookEntry => ({ ...book(n), isbn: "9780306406157", edition_id: edition, work_id: work, work_title: "Obra", verification: { isbnVerified: verified, checkedAt: "2026-10-01T10:00:00Z" } })
+    const content: SnapshotContent = { shelves: snapshot.shelves, books: [v2(1, true), v2(2, false)] }
+    const rows = snapshotRows(content)
+    assert.deepEqual([...rows.values()].map((row) => [row.edition!.id, row.catalogue!.isbnVerified, row.verification?.checkedAt]), [[edition, true, "2026-10-01T10:00:00Z"], [edition, false, "2026-10-01T10:00:00Z"]])
+    const current = { shelves: [{ id: DEFAULT, title: "Predeterminada", isDefault: true }], books: [] }
+    const plan = buildRestorePlan({ snapshot: content, current, foreign: new Set(), allocateId: allocator })
+    assert.deepEqual(plan.editions.create.map((entry) => [entry.id, entry.workId]), [[edition, work]])
+    assert.deepEqual(plan.works.create.map((entry) => entry.id), [work])
+    const foreign = buildRestorePlan({ snapshot: content, current, foreign: new Set([edition, work]), allocateId: allocator })
+    assert.equal(foreign.editions.create[0].id, allocator("edition", edition), "una edición ocupada por otra cuenta recibe otro ID")
+    assert.equal(foreign.works.create[0].id, allocator("work", work))
+    assert.deepEqual(foreign.books.insert.map((entry) => entry.id), [book(1).id, book(2).id], "los ejemplares conservan los suyos")
   })
 })

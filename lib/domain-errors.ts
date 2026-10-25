@@ -1,6 +1,7 @@
 export type DomainErrorCode =
   | "INVALID_INPUT" | "UNAUTHORIZED" | "NOT_FOUND" | "CONFLICT" | "PROVIDER_UNAVAILABLE" | "RATE_LIMITED"
   | "REVISION_CONFLICT" | "PREVIEW_EXPIRED" | "IDEMPOTENCY_CONFLICT" | "JOB_CONFLICT" | "JOB_EXPIRED" | "LIMIT_EXCEEDED" | "MANIFEST_MISMATCH" | "ASSET_REJECTED"
+  | "EDITION_SHARED"
 
 /**
  * Solo los fallos transitorios admiten reintento automático. Un conflicto de revisión, una
@@ -21,6 +22,7 @@ const RETRYABLE: Readonly<Record<DomainErrorCode, boolean>> = {
   LIMIT_EXCEEDED: false,
   MANIFEST_MISMATCH: false,
   ASSET_REJECTED: false,
+  EDITION_SHARED: false,
 }
 
 export function isRetryable(code: DomainErrorCode): boolean {
@@ -43,6 +45,8 @@ const HTTP_STATUS: Readonly<Record<DomainErrorCode, number>> = {
   LIMIT_EXCEEDED: 413,
   MANIFEST_MISMATCH: 422,
   ASSET_REJECTED: 422,
+  // U-DAT-06: el cambio afecta a varios ejemplares de una edición y la persona no lo ha confirmado.
+  EDITION_SHARED: 409,
 }
 
 export function httpStatusForDomainError(code: DomainErrorCode): number {
@@ -64,8 +68,8 @@ export function previewExpired(): DomainError {
   return new DomainError("PREVIEW_EXPIRED", "La revisión de la importación ha caducado. Vuelve a prepararla para comprobar los datos actuales.")
 }
 
-export function idempotencyConflict(): DomainError {
-  return new DomainError("IDEMPOTENCY_CONFLICT", "Esta confirmación ya se usó con otro archivo o modo de importación. No se ha aplicado nada; prepara una revisión nueva.")
+export function idempotencyConflict(message = "Esta confirmación ya se usó con otro archivo o modo de importación. No se ha aplicado nada; prepara una revisión nueva."): DomainError {
+  return new DomainError("IDEMPOTENCY_CONFLICT", message)
 }
 
 /** El trabajo cambió de estado o de versión: hay que consultar su estado actual antes de repetir la acción. */
@@ -77,6 +81,11 @@ export function jobExpired(): DomainError {
   return new DomainError("JOB_EXPIRED", "El trabajo ha caducado y ya no se puede continuar. Su resultado confirmado se conserva; inicia uno nuevo si lo necesitas.")
 }
 
+/** Cambiar una edición compartida exige confirmar cuántos ejemplares cambian. */
+export function editionShared(copies: number): DomainError {
+  return new DomainError("EDITION_SHARED", `Estos datos son de la edición, que comparten ${copies} ejemplares de tu biblioteca: si los guardas, cambiarán en todos. Confírmalo para continuar.`)
+}
+
 export function databaseErrorCode(error: unknown): string | undefined {
   if (!error || typeof error !== "object") return undefined
   if ("code" in error && typeof error.code === "string") return error.code
@@ -85,7 +94,8 @@ export function databaseErrorCode(error: unknown): string | undefined {
 
 export function translateDatabaseError(error: unknown): never {
   if (error instanceof DomainError) throw error
-  if (databaseErrorCode(error) === "23505") throw new DomainError("CONFLICT", "Ya existe un libro con ese ISBN o una estantería con ese nombre.")
+  if (databaseErrorCode(error) === "23505") throw new DomainError("CONFLICT", "Ya existe una edición con ese ISBN o una estantería con ese nombre.")
+  if (databaseErrorCode(error) === "BM003") throw new DomainError("EDITION_SHARED", "Esa edición la comparten varios ejemplares: cámbiala desde la ficha, confirmando cuántos ejemplares afecta.")
   if (databaseErrorCode(error) === "23503") throw new DomainError("CONFLICT", "La estantería ha cambiado. Actualiza los datos e inténtalo de nuevo.")
   if (databaseErrorCode(error) === "40P01") throw new DomainError("PROVIDER_UNAVAILABLE", "Otra operación estaba modificando tu biblioteca. No se ha aplicado nada; inténtalo de nuevo.")
   throw new DomainError("PROVIDER_UNAVAILABLE", "No se pudo guardar el cambio. Inténtalo de nuevo.")

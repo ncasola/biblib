@@ -1,0 +1,13 @@
+
+> biblib@1.0.0 db:local:down C:\Users\ncaso\orca\workspaces\biblib\u-inf-03
+> node scripts/local-stack.mjs down "--profile" "scratch"
+
+BibLib local · scratch · ea260283d87954c1c405cb5ee4875867dd8b103c86084460f3a74244e06b13fa
+[ok] down: Perfil parado; volúmenes conservados.
+postgres: stopped
+auth: stopped
+rest: stopped
+storage: stopped
+studio: stopped
+mailpit: stopped
+exit=0

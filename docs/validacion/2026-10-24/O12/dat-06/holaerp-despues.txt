@@ -1,0 +1,24 @@
+# Después (fin de U-DAT-06, 2026-10-25T05:17:46Z)
+supabase_studio_holaerp Up 20 hours (healthy)
+supabase_pg_meta_holaerp Up 20 hours (healthy)
+supabase_edge_runtime_holaerp Exited (255) 42 hours ago
+supabase_storage_holaerp Up 20 hours (healthy)
+supabase_rest_holaerp Up 20 hours
+supabase_realtime_holaerp Up 20 hours (healthy)
+supabase_inbucket_holaerp Up 20 hours (healthy)
+supabase_auth_holaerp Up 20 hours (healthy)
+supabase_kong_holaerp Up 20 hours (healthy)
+supabase_db_holaerp Up 20 hours (healthy)
+holaerp-local-redis Exited (0) 20 hours ago
+--- volúmenes
+holaerp-ps_db-data
+holaerp-ps_ps-data
+holaerp-woo_db-data
+holaerp-woo_wp-data
+supabase_db_holaerp
+supabase_edge_runtime_holaerp
+supabase_storage_holaerp
+--- redes
+holaerp-web_holaerp-local-network
+holaerp-woo_default
+supabase_network_holaerp

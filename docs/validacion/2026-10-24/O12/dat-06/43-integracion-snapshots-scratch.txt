@@ -1,0 +1,20 @@
+Grupo snapshots · perfil scratch · biblib-scratch · run 13fb06a9053b
+✔ reemplazar A crea exactamente una versión coherente; fusionar no crea ninguna y repetir la clave no duplica (10707.358ms)
+✔ B no puede listar, descargar, comparar, restaurar ni borrar la versión de A (611.2874ms)
+✔ deshacer devuelve datos y referencias con IDs propios y versiones nuevas; repetir la clave recupera el resultado (509.83ms)
+✔ una segunda pestaña que edita antes de confirmar provoca conflicto; comparar de nuevo permite restaurar (4288.524ms)
+✔ un fallo entre la captura y la publicación conserva la colección original sin versión válida parcial (648.6403ms)
+✔ caducidad: una versión vencida no se lista ni se restaura y la siguiente captura la retira (691.5121ms)
+✔ cuota agotada: bloquea reemplazar y restaurar con un mensaje claro sin borrar ninguna versión (835.3342ms)
+✔ borrar la versión mientras se prepara la restauración: confirmar no aplica nada (494.4642ms)
+✔ una cuenta bloqueada no admite versiones nuevas: ni restaurar ni reemplazar aplican nada (525.3972ms)
+✔ el restore administrativo comprueba en Postgres la integridad de las versiones restauradas (264.315ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 21361.7524
+exit=0

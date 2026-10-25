@@ -1,0 +1,1032 @@
+{
+  "escala": 10000,
+  "dataset": {
+    "id": "biblib-escala-v1",
+    "hash": "6e9b3738de18bd6d695f605e18cefaed384db736596ef61cd71a06188f3d97fe",
+    "libros": 10000,
+    "estanterias": 41,
+    "porEstado": {
+      "read": 3963,
+      "to-read": 3060,
+      "unread": 2179,
+      "reading": 798
+    },
+    "estanteriaMayor": 1534,
+    "isbnManuales": 1420
+  },
+  "consultas": [
+    {
+      "id": "resumen.totales",
+      "ejecucionMs": {
+        "n": 30,
+        "min": 6.828,
+        "p50": 7.143,
+        "p95": 7.361,
+        "p99": 7.419,
+        "max": 7.43,
+        "mean": 7.14
+      },
+      "planificacionMs": {
+        "n": 30,
+        "min": 0.288,
+        "p50": 0.316,
+        "p95": 0.358,
+        "p99": 0.378,
+        "max": 0.384,
+        "mean": 0.32
+      },
+      "nodos": [
+        "Aggregate",
+        "Result",
+        "Hash Join",
+        "Seq Scan",
+        "Hash"
+      ],
+      "jit": false,
+      "accion": "getLibrarySummaryAction",
+      "pantalla": "Inicio",
+      "limite": false
+    },
+    {
+      "id": "resumen.recientes",
+      "ejecucionMs": {
+        "n": 30,
+        "min": 0.107,
+        "p50": 0.112,
+        "p95": 0.141,
+        "p99": 0.154,
+        "max": 0.159,
+        "mean": 0.118
+      },
+      "planificacionMs": {
+        "n": 30,
+        "min": 0.485,
+        "p50": 0.506,
+        "p95": 0.612,
+        "p99": 0.638,
+        "max": 0.638,
+        "mean": 0.52
+      },
+      "nodos": [
+        "Limit",
+        "Result",
+        "Nested Loop",
+        "Index Scan (copies_user_created_idx)",
+        "Index Scan (editions_pkey)",
+        "Index Scan (works_user_id_id_unique)",
+        "Materialize",
+        "Seq Scan"
+      ],
+      "jit": false,
+      "accion": "getLibrarySummaryAction",
+      "pantalla": "Inicio",
+      "limite": true
+    },
+    {
+      "id": "resumen.leyendo",
+      "ejecucionMs": {
+        "n": 30,
+        "min": 7.263,
+        "p50": 7.635,
+        "p95": 8.092,
+        "p99": 8.239,
+        "max": 8.295,
+        "mean": 7.693
+      },
+      "planificacionMs": {
+        "n": 30,
+        "min": 0.533,
+        "p50": 0.568,
+        "p95": 0.629,
+        "p99": 0.655,
+        "max": 0.659,
+        "mean": 0.574
+      },
+      "nodos": [
+        "Limit",
+        "Result",
+        "Sort",
+        "Hash Join",
+        "Seq Scan",
+        "Hash",
+        "Nested Loop",
+        "Index Scan (copies_user_shelf_idx)",
+        "Bitmap Heap Scan",
+        "Bitmap Index Scan (works_user_id_id_unique)"
+      ],
+      "jit": false,
+      "accion": "getLibrarySummaryAction",
+      "pantalla": "Inicio",
+      "limite": true
+    },
+    {
+      "id": "listado.recuento",
+      "ejecucionMs": {
+        "n": 30,
+        "min": 5.248,
+        "p50": 5.704,
+        "p95": 6.01,
+        "p99": 6.347,
+        "max": 6.482,
+        "mean": 5.679
+      },
+      "planificacionMs": {
+        "n": 30,
+        "min": 0.263,
+        "p50": 0.306,
+        "p95": 0.372,
+        "p99": 0.383,
+        "max": 0.386,
+        "mean": 0.311
+      },
+      "nodos": [
+        "Aggregate",
+        "Result",
+        "Hash Join",
+        "Seq Scan",
+        "Hash"
+      ],
+      "jit": false,
+      "accion": "listBooksAction",
+      "pantalla": "Colección",
+      "limite": false
+    },
+    {
+      "id": "listado.pagina-1",
+      "ejecucionMs": {
+        "n": 30,
+        "min": 0.065,
+        "p50": 0.077,
+        "p95": 0.117,
+        "p99": 0.125,
+        "max": 0.128,
+        "mean": 0.081
+      },
+      "planificacionMs": {
+        "n": 30,
+        "min": 0.237,
+        "p50": 0.263,
+        "p95": 0.337,
+        "p99": 0.345,
+        "max": 0.347,
+        "mean": 0.273
+      },
+      "nodos": [
+        "Limit",
+        "Result",
+        "Incremental Sort",
+        "Nested Loop",
+        "Index Scan (editions_user_title_idx)",
+        "Index Scan (copies_user_edition_idx)"
+      ],
+      "jit": false,
+      "accion": "listBooksAction",
+      "pantalla": "Colección",
+      "limite": true
+    },
+    {
+      "id": "listado.ultima-pagina",
+      "ejecucionMs": {
+        "n": 30,
+        "min": 17.007,
+        "p50": 17.572,
+        "p95": 18.925,
+        "p99": 20.422,
+        "max": 20.972,
+        "mean": 17.868
+      },
+      "planificacionMs": {
+        "n": 30,
+        "min": 0.32,
+        "p50": 0.333,
+        "p95": 0.424,
+        "p99": 0.466,
+        "max": 0.467,
+        "mean": 0.345
+      },
+      "nodos": [
+        "Limit",
+        "Result",
+        "Sort",
+        "Hash Join",
+        "Seq Scan",
+        "Hash"
+      ],
+      "jit": false,
+      "accion": "listBooksAction",
+      "pantalla": "Colección",
+      "limite": true
+    },
+    {
+      "id": "listado.filas",
+      "ejecucionMs": {
+        "n": 30,
+        "min": 0.775,
+        "p50": 0.823,
+        "p95": 1.223,
+        "p99": 1.521,
+        "max": 1.56,
+        "mean": 0.88
+      },
+      "planificacionMs": {
+        "n": 30,
+        "min": 0.86,
+        "p50": 0.935,
+        "p95": 1.123,
+        "p99": 1.486,
+        "max": 1.628,
+        "mean": 0.972
+      },
+      "nodos": [
+        "Result",
+        "Nested Loop",
+        "Seq Scan",
+        "Aggregate",
+        "Limit",
+        "Incremental Sort",
+        "Index Scan (editions_user_title_idx)",
+        "Index Scan (copies_user_edition_idx)",
+        "Index Scan (copies_user_id_id_unique)",
+        "Index Scan (editions_pkey)",
+        "Index Scan (works_user_id_id_unique)"
+      ],
+      "jit": false,
+      "accion": "listBooksAction",
+      "pantalla": "Colección",
+      "limite": true
+    },
+    {
+      "id": "filtrado.recuento",
+      "ejecucionMs": {
+        "n": 30,
+        "min": 2.073,
+        "p50": 3.565,
+        "p95": 5.577,
+        "p99": 6.923,
+        "max": 7.29,
+        "mean": 3.673
+      },
+      "planificacionMs": {
+        "n": 30,
+        "min": 0.256,
+        "p50": 0.427,
+        "p95": 0.561,
+        "p99": 0.621,
+        "max": 0.645,
+        "mean": 0.415
+      },
+      "nodos": [
+        "Aggregate",
+        "Result",
+        "Hash Join",
+        "Seq Scan",
+        "Hash",
+        "Bitmap Heap Scan",
+        "Bitmap Index Scan (copies_user_shelf_idx)"
+      ],
+      "jit": false,
+      "accion": "listBooksAction",
+      "pantalla": "Colección filtrada",
+      "limite": false
+    },
+    {
+      "id": "filtrado.pagina",
+      "ejecucionMs": {
+        "n": 30,
+        "min": 2.184,
+        "p50": 3.203,
+        "p95": 4.373,
+        "p99": 5.332,
+        "max": 5.667,
+        "mean": 3.341
+      },
+      "planificacionMs": {
+        "n": 30,
+        "min": 0.266,
+        "p50": 0.365,
+        "p95": 0.483,
+        "p99": 0.512,
+        "max": 0.524,
+        "mean": 0.375
+      },
+      "nodos": [
+        "Limit",
+        "Result",
+        "Sort",
+        "Hash Join",
+        "Seq Scan",
+        "Hash",
+        "Bitmap Heap Scan",
+        "Bitmap Index Scan (copies_user_shelf_idx)"
+      ],
+      "jit": false,
+      "accion": "listBooksAction",
+      "pantalla": "Colección filtrada",
+      "limite": true
+    },
+    {
+      "id": "orden.autor",
+      "ejecucionMs": {
+        "n": 30,
+        "min": 8.923,
+        "p50": 9.459,
+        "p95": 11.52,
+        "p99": 12.483,
+        "max": 12.677,
+        "mean": 9.742
+      },
+      "planificacionMs": {
+        "n": 30,
+        "min": 0.318,
+        "p50": 0.343,
+        "p95": 0.398,
+        "p99": 0.454,
+        "max": 0.476,
+        "mean": 0.351
+      },
+      "nodos": [
+        "Limit",
+        "Result",
+        "Sort",
+        "Hash Join",
+        "Seq Scan",
+        "Hash"
+      ],
+      "jit": false,
+      "accion": "listBooksAction",
+      "pantalla": "Colección ordenada",
+      "limite": true
+    },
+    {
+      "id": "orden.fecha",
+      "ejecucionMs": {
+        "n": 30,
+        "min": 17.558,
+        "p50": 18.479,
+        "p95": 20.638,
+        "p99": 23.535,
+        "max": 24.411,
+        "mean": 18.734
+      },
+      "planificacionMs": {
+        "n": 30,
+        "min": 0.315,
+        "p50": 0.332,
+        "p95": 0.451,
+        "p99": 0.494,
+        "max": 0.507,
+        "mean": 0.344
+      },
+      "nodos": [
+        "Limit",
+        "Result",
+        "Sort",
+        "Hash Join",
+        "Seq Scan",
+        "Hash"
+      ],
+      "jit": false,
+      "accion": "listBooksAction",
+      "pantalla": "Colección ordenada",
+      "limite": true
+    },
+    {
+      "id": "busqueda.recuento",
+      "ejecucionMs": {
+        "n": 30,
+        "min": 11.538,
+        "p50": 11.913,
+        "p95": 12.428,
+        "p99": 12.675,
+        "max": 12.734,
+        "mean": 11.938
+      },
+      "planificacionMs": {
+        "n": 30,
+        "min": 0.322,
+        "p50": 0.336,
+        "p95": 0.425,
+        "p99": 0.47,
+        "max": 0.476,
+        "mean": 0.351
+      },
+      "nodos": [
+        "Aggregate",
+        "Result",
+        "Hash Join",
+        "Seq Scan",
+        "Hash"
+      ],
+      "jit": false,
+      "accion": "listBooksAction",
+      "pantalla": "Búsqueda local",
+      "limite": false
+    },
+    {
+      "id": "busqueda.pagina",
+      "ejecucionMs": {
+        "n": 30,
+        "min": 0.675,
+        "p50": 0.786,
+        "p95": 0.958,
+        "p99": 1.013,
+        "max": 1.032,
+        "mean": 0.799
+      },
+      "planificacionMs": {
+        "n": 30,
+        "min": 0.261,
+        "p50": 0.282,
+        "p95": 0.387,
+        "p99": 0.407,
+        "max": 0.408,
+        "mean": 0.302
+      },
+      "nodos": [
+        "Limit",
+        "Result",
+        "Incremental Sort",
+        "Nested Loop",
+        "Index Scan (editions_user_title_idx)",
+        "Index Scan (copies_user_edition_idx)"
+      ],
+      "jit": false,
+      "accion": "listBooksAction",
+      "pantalla": "Búsqueda local",
+      "limite": true
+    },
+    {
+      "id": "busqueda.isbn",
+      "ejecucionMs": {
+        "n": 30,
+        "min": 12.115,
+        "p50": 12.974,
+        "p95": 19.587,
+        "p99": 20.837,
+        "max": 21.301,
+        "mean": 14.093
+      },
+      "planificacionMs": {
+        "n": 30,
+        "min": 0.328,
+        "p50": 0.369,
+        "p95": 0.489,
+        "p99": 0.791,
+        "max": 0.908,
+        "mean": 0.398
+      },
+      "nodos": [
+        "Limit",
+        "Result",
+        "Sort",
+        "Hash Join",
+        "Seq Scan",
+        "Hash"
+      ],
+      "jit": false,
+      "accion": "listBooksAction",
+      "pantalla": "Búsqueda local",
+      "limite": true
+    },
+    {
+      "id": "busqueda.isbn-exacto",
+      "ejecucionMs": {
+        "n": 30,
+        "min": 12.676,
+        "p50": 13.038,
+        "p95": 14.207,
+        "p99": 15.634,
+        "max": 16.137,
+        "mean": 13.216
+      },
+      "planificacionMs": {
+        "n": 30,
+        "min": 0.328,
+        "p50": 0.35,
+        "p95": 0.452,
+        "p99": 0.552,
+        "max": 0.589,
+        "mean": 0.369
+      },
+      "nodos": [
+        "Limit",
+        "Result",
+        "Sort",
+        "Hash Join",
+        "Seq Scan",
+        "Hash"
+      ],
+      "jit": false,
+      "accion": "listBooksAction",
+      "pantalla": "Búsqueda local",
+      "limite": true
+    },
+    {
+      "id": "detalle",
+      "ejecucionMs": {
+        "n": 30,
+        "min": 0.089,
+        "p50": 0.098,
+        "p95": 0.139,
+        "p99": 0.146,
+        "max": 0.148,
+        "mean": 0.105
+      },
+      "planificacionMs": {
+        "n": 30,
+        "min": 0.481,
+        "p50": 0.535,
+        "p95": 0.631,
+        "p99": 0.659,
+        "max": 0.667,
+        "mean": 0.54
+      },
+      "nodos": [
+        "Limit",
+        "Result",
+        "Nested Loop",
+        "Index Scan (copies_user_id_id_unique)",
+        "Index Scan (editions_user_id_id_unique)",
+        "Index Scan (works_user_id_id_unique)",
+        "Seq Scan",
+        "Aggregate",
+        "Index Only Scan (copies_user_edition_idx)"
+      ],
+      "jit": false,
+      "accion": "getBookDetailAction",
+      "pantalla": "Ficha",
+      "limite": true
+    },
+    {
+      "id": "estanterias",
+      "ejecucionMs": {
+        "n": 30,
+        "min": 4.54,
+        "p50": 4.905,
+        "p95": 5.113,
+        "p99": 5.278,
+        "max": 5.338,
+        "mean": 4.842
+      },
+      "planificacionMs": {
+        "n": 30,
+        "min": 0.167,
+        "p50": 0.208,
+        "p95": 0.24,
+        "p99": 0.263,
+        "max": 0.271,
+        "mean": 0.203
+      },
+      "nodos": [
+        "Sort",
+        "Result",
+        "Aggregate",
+        "Nested Loop",
+        "Seq Scan",
+        "Index Scan (copies_user_shelf_idx)"
+      ],
+      "jit": false,
+      "accion": "getShelvesAction",
+      "pantalla": "Estanterías / filtros / 3D",
+      "limite": false
+    },
+    {
+      "id": "3d.pagina",
+      "ejecucionMs": {
+        "n": 30,
+        "min": 1.26,
+        "p50": 1.394,
+        "p95": 1.792,
+        "p99": 1.817,
+        "max": 1.818,
+        "mean": 1.475
+      },
+      "planificacionMs": {
+        "n": 30,
+        "min": 0.244,
+        "p50": 0.289,
+        "p95": 0.364,
+        "p99": 0.381,
+        "max": 0.388,
+        "mean": 0.294
+      },
+      "nodos": [
+        "Limit",
+        "Result",
+        "Incremental Sort",
+        "Nested Loop",
+        "Index Scan (editions_user_title_idx)",
+        "Index Scan (copies_user_edition_idx)"
+      ],
+      "jit": false,
+      "accion": "listBooksAction",
+      "pantalla": "Estantería 3D (48)",
+      "limite": true
+    },
+    {
+      "id": "exportacion.todo",
+      "ejecucionMs": {
+        "n": 30,
+        "min": 34.955,
+        "p50": 36.264,
+        "p95": 39.635,
+        "p99": 40.428,
+        "max": 40.466,
+        "mean": 36.745
+      },
+      "planificacionMs": {
+        "n": 30,
+        "min": 0.5,
+        "p50": 0.521,
+        "p95": 0.594,
+        "p99": 0.621,
+        "max": 0.628,
+        "mean": 0.534
+      },
+      "nodos": [
+        "Result",
+        "Hash Join",
+        "Nested Loop",
+        "Seq Scan",
+        "Index Scan (copies_user_shelf_idx)",
+        "Hash",
+        "Bitmap Heap Scan",
+        "Bitmap Index Scan (works_user_id_id_unique)"
+      ],
+      "jit": false,
+      "accion": "prepareLibraryExportAction / descarga de partes (servidor)",
+      "pantalla": "Ajustes (exportación por partes)",
+      "limite": false
+    },
+    {
+      "id": "exportacion.orden",
+      "ejecucionMs": {
+        "n": 30,
+        "min": 17.424,
+        "p50": 17.834,
+        "p95": 22.696,
+        "p99": 30.147,
+        "max": 32.174,
+        "mean": 18.68
+      },
+      "planificacionMs": {
+        "n": 30,
+        "min": 0.312,
+        "p50": 0.338,
+        "p95": 0.478,
+        "p99": 0.511,
+        "max": 0.511,
+        "mean": 0.351
+      },
+      "nodos": [
+        "Sort",
+        "Result",
+        "Hash Join",
+        "Seq Scan",
+        "Hash"
+      ],
+      "jit": false,
+      "accion": "prepareLibraryExportAction (orden por IDs)",
+      "pantalla": "Ajustes (exportación por partes)",
+      "limite": false
+    },
+    {
+      "id": "isbn.igualdad",
+      "ejecucionMs": {
+        "n": 30,
+        "min": 0.069,
+        "p50": 0.074,
+        "p95": 0.097,
+        "p99": 0.1,
+        "max": 0.101,
+        "mean": 0.077
+      },
+      "planificacionMs": {
+        "n": 30,
+        "min": 0.521,
+        "p50": 0.542,
+        "p95": 0.657,
+        "p99": 0.674,
+        "max": 0.678,
+        "mean": 0.561
+      },
+      "nodos": [
+        "Limit",
+        "Result",
+        "Sort",
+        "Nested Loop",
+        "Index Scan (editions_user_isbn13_unique)",
+        "Index Scan (copies_user_edition_idx)",
+        "Index Scan (works_user_id_id_unique)",
+        "Index Scan (shelves_user_id_id_unique)",
+        "Aggregate",
+        "Index Only Scan (copies_user_edition_idx)"
+      ],
+      "jit": false,
+      "accion": "getBookByIsbnAction / alta",
+      "pantalla": "Añadir libro",
+      "limite": true
+    },
+    {
+      "id": "importacion.instantanea",
+      "ejecucionMs": {
+        "n": 30,
+        "min": 8.672,
+        "p50": 9.066,
+        "p95": 9.949,
+        "p99": 10.152,
+        "max": 10.163,
+        "mean": 9.156
+      },
+      "planificacionMs": {
+        "n": 30,
+        "min": 0.292,
+        "p50": 0.311,
+        "p95": 0.416,
+        "p99": 0.464,
+        "max": 0.475,
+        "mean": 0.326
+      },
+      "nodos": [
+        "Sort",
+        "Result",
+        "Hash Join",
+        "Seq Scan",
+        "Hash"
+      ],
+      "jit": false,
+      "accion": "prepareImportAction / confirmImportAction",
+      "pantalla": "Ajustes (importación)",
+      "limite": false
+    }
+  ],
+  "indices": [
+    {
+      "id": "idx-trigramas-edicion",
+      "propone": "editions_search_trgm_idx",
+      "motivo": "Búsqueda local `LIKE '%texto%'` sobre la columna generada (T5): sin índice recorre las ediciones de la cuenta.",
+      "ddl": [
+        "create extension if not exists pg_trgm with schema extensions",
+        "create index editions_search_trgm_idx on biblib.editions using gin (search_text extensions.gin_trgm_ops)"
+      ],
+      "aplicable": true,
+      "tamanoIndiceBytes": 1875968,
+      "tamanoTablaBytes": 11558912,
+      "antes": [
+        {
+          "id": "busqueda.recuento",
+          "ejecucionMs": {
+            "n": 30,
+            "min": 12.555,
+            "p50": 13.234,
+            "p95": 14.504,
+            "p99": 14.758,
+            "max": 14.86,
+            "mean": 13.269
+          },
+          "planificacionMs": {
+            "n": 30,
+            "min": 0.326,
+            "p50": 0.364,
+            "p95": 0.461,
+            "p99": 0.5,
+            "max": 0.515,
+            "mean": 0.372
+          },
+          "nodos": [
+            "Aggregate",
+            "Result",
+            "Hash Join",
+            "Seq Scan",
+            "Hash"
+          ],
+          "jit": false
+        },
+        {
+          "id": "busqueda.pagina",
+          "ejecucionMs": {
+            "n": 30,
+            "min": 0.686,
+            "p50": 0.76,
+            "p95": 0.947,
+            "p99": 1.056,
+            "max": 1.084,
+            "mean": 0.776
+          },
+          "planificacionMs": {
+            "n": 30,
+            "min": 0.265,
+            "p50": 0.291,
+            "p95": 0.37,
+            "p99": 0.379,
+            "max": 0.38,
+            "mean": 0.3
+          },
+          "nodos": [
+            "Limit",
+            "Result",
+            "Incremental Sort",
+            "Nested Loop",
+            "Index Scan (editions_user_title_idx)",
+            "Index Scan (copies_user_edition_idx)"
+          ],
+          "jit": false
+        },
+        {
+          "id": "busqueda.isbn",
+          "ejecucionMs": {
+            "n": 30,
+            "min": 12.725,
+            "p50": 13.067,
+            "p95": 14.92,
+            "p99": 15.405,
+            "max": 15.432,
+            "mean": 13.298
+          },
+          "planificacionMs": {
+            "n": 30,
+            "min": 0.332,
+            "p50": 0.353,
+            "p95": 0.46,
+            "p99": 0.545,
+            "max": 0.572,
+            "mean": 0.372
+          },
+          "nodos": [
+            "Limit",
+            "Result",
+            "Sort",
+            "Hash Join",
+            "Seq Scan",
+            "Hash"
+          ],
+          "jit": false
+        },
+        {
+          "id": "busqueda.isbn-exacto",
+          "ejecucionMs": {
+            "n": 30,
+            "min": 13.331,
+            "p50": 14.074,
+            "p95": 14.595,
+            "p99": 14.753,
+            "max": 14.814,
+            "mean": 13.958
+          },
+          "planificacionMs": {
+            "n": 30,
+            "min": 0.335,
+            "p50": 0.381,
+            "p95": 0.437,
+            "p99": 0.443,
+            "max": 0.444,
+            "mean": 0.379
+          },
+          "nodos": [
+            "Limit",
+            "Result",
+            "Sort",
+            "Hash Join",
+            "Seq Scan",
+            "Hash"
+          ],
+          "jit": false
+        }
+      ],
+      "despues": [
+        {
+          "id": "busqueda.recuento",
+          "ejecucionMs": {
+            "n": 30,
+            "min": 11.787,
+            "p50": 12.099,
+            "p95": 12.51,
+            "p99": 12.614,
+            "max": 12.648,
+            "mean": 12.141
+          },
+          "planificacionMs": {
+            "n": 30,
+            "min": 0.326,
+            "p50": 0.336,
+            "p95": 0.377,
+            "p99": 0.425,
+            "max": 0.444,
+            "mean": 0.348
+          },
+          "nodos": [
+            "Aggregate",
+            "Result",
+            "Hash Join",
+            "Seq Scan",
+            "Hash"
+          ],
+          "jit": false
+        },
+        {
+          "id": "busqueda.pagina",
+          "ejecucionMs": {
+            "n": 30,
+            "min": 0.681,
+            "p50": 0.736,
+            "p95": 1.043,
+            "p99": 1.083,
+            "max": 1.097,
+            "mean": 0.791
+          },
+          "planificacionMs": {
+            "n": 30,
+            "min": 0.268,
+            "p50": 0.292,
+            "p95": 0.414,
+            "p99": 0.416,
+            "max": 0.416,
+            "mean": 0.314
+          },
+          "nodos": [
+            "Limit",
+            "Result",
+            "Incremental Sort",
+            "Nested Loop",
+            "Index Scan (editions_user_title_idx)",
+            "Index Scan (copies_user_edition_idx)"
+          ],
+          "jit": false
+        },
+        {
+          "id": "busqueda.isbn",
+          "ejecucionMs": {
+            "n": 30,
+            "min": 11.767,
+            "p50": 12.264,
+            "p95": 13.505,
+            "p99": 14.035,
+            "max": 14.11,
+            "mean": 12.42
+          },
+          "planificacionMs": {
+            "n": 30,
+            "min": 0.335,
+            "p50": 0.363,
+            "p95": 0.414,
+            "p99": 0.436,
+            "max": 0.444,
+            "mean": 0.367
+          },
+          "nodos": [
+            "Limit",
+            "Result",
+            "Sort",
+            "Hash Join",
+            "Seq Scan",
+            "Hash"
+          ],
+          "jit": false
+        },
+        {
+          "id": "busqueda.isbn-exacto",
+          "ejecucionMs": {
+            "n": 30,
+            "min": 12.424,
+            "p50": 13.534,
+            "p95": 17.618,
+            "p99": 17.897,
+            "max": 17.898,
+            "mean": 13.998
+          },
+          "planificacionMs": {
+            "n": 30,
+            "min": 0.344,
+            "p50": 0.386,
+            "p95": 0.532,
+            "p99": 0.572,
+            "max": 0.586,
+            "mean": 0.403
+          },
+          "nodos": [
+            "Limit",
+            "Result",
+            "Sort",
+            "Hash Join",
+            "Seq Scan",
+            "Hash"
+          ],
+          "jit": false
+        }
+      ],
+      "planes": {
+        "busqueda.recuento": "Aggregate  (cost=2172.40..2172.41 rows=1 width=8) (actual time=13.023..13.028 rows=1 loops=1)\n  Buffers: shared hit=1846\n  InitPlan 1\n    ->  Result  (cost=0.00..0.03 rows=1 width=16) (actual time=0.001..0.001 rows=1 loops=1)\n  InitPlan 2\n    ->  Result  (cost=0.00..0.03 rows=1 width=16) (actual time=0.004..0.005 rows=1 loops=1)\n  InitPlan 3\n    ->  Result  (cost=0.00..0.03 rows=1 width=16) (never executed)\n  ->  Result  (cost=1662.61..2172.11 rows=78 width=0) (actual time=6.354..13.000 rows=417 loops=1)\n        One-Time Filter: (((InitPlan 2).col1 = '<uuid>'::uuid) AND ((InitPlan 1).col1 = '<uuid>'::uuid))\n        Buffers: shared hit=1846\n        ->  Hash Join  (cost=1662.61..2172.11 rows=78 width=0) (actual time=6.347..12.963 rows=417 loops=1)\n              Hash Cond: (c.edition_id = e.id)\n              Join Filter: ((e.search_text ~~ '%faro%'::text) OR (lower(COALESCE(c.legacy_identifier, ''::text)) ~~ '%faro%'::text))\n              Rows Removed by Join Filter: 9583\n              Buffers: shared hit=1846\n              ->  Seq Scan on copies c  (cost=0.00..496.71 rows=4874 width=52) (actual time=0.223..1.440 rows=10000 loops=1)\n                    Filter: (user_id = '<uuid>'::uuid)\n                    Rows Removed by Filter: 130\n                    Buffers: shared hit=435\n              ->  Hash  (cost=1537.60..1537.60 rows=10000 width=135) (actual time=6.087..6.087 rows=10000 loops=1)\n                    Buckets: 16384  Batches: 1  Memory Usage: 1612kB\n                    Buffers: shared hit=1411\n                    ->  Seq Scan on editions e  (cost=0.00..1537.60 rows=10000 width=135) (actual time=0.384..4.481 rows=10000 loops=1)\n                          Filter: (user_id = '<uuid>'::uuid)\n                          Rows Removed by Filter: 128\n                          Buffers: shared hit=1411\nSettings: effective_cache_size = '128MB', search_path = '\"\\$user\", public, extensions'\nPlanning:\n  Buffers: shared hit=9\nPlanning Time: 0.348 ms\nExecution Time: 13.082 ms",
+        "busqueda.pagina": "Limit  (cost=132.85..1436.84 rows=10 width=43) (actual time=0.773..0.775 rows=10 loops=1)\n  Buffers: shared hit=1055\n  InitPlan 1\n    ->  Result  (cost=0.00..0.03 rows=1 width=16) (actual time=0.001..0.001 rows=1 loops=1)\n  InitPlan 2\n    ->  Result  (cost=0.00..0.03 rows=1 width=16) (actual time=0.002..0.003 rows=1 loops=1)\n  InitPlan 3\n    ->  Result  (cost=0.00..0.03 rows=1 width=16) (never executed)\n  ->  Incremental Sort  (cost=132.75..10303.83 rows=78 width=43) (actual time=0.773..0.773 rows=10 loops=1)\n        Sort Key: e.title, c.id\n        Presorted Key: e.title\n        Full-sort Groups: 1  Sort Method: quicksort  Average Memory: 25kB  Peak Memory: 25kB\n        Buffers: shared hit=1055\n        ->  Result  (cost=0.70..10300.32 rows=78 width=43) (actual time=0.740..0.765 rows=11 loops=1)\n              One-Time Filter: (((InitPlan 2).col1 = '<uuid>'::uuid) AND ((InitPlan 1).col1 = '<uuid>'::uuid))\n              Buffers: shared hit=1055\n              ->  Nested Loop  (cost=0.70..10300.32 rows=78 width=43) (actual time=0.735..0.760 rows=11 loops=1)\n                    Buffers: shared hit=1055\n                    ->  Index Scan using editions_user_title_idx on editions e  (cost=0.41..4648.31 rows=10000 width=162) (actual time=0.006..0.124 rows=262 loops=1)\n                          Index Cond: (user_id = '<uuid>'::uuid)\n                          Buffers: shared hit=269\n                    ->  Index Scan using copies_user_edition_idx on copies c  (cost=0.28..0.56 rows=1 width=68) (actual time=0.002..0.002 rows=0 loops=262)\n                          Index Cond: ((user_id = '<uuid>'::uuid) AND (edition_id = e.id))\n                          Filter: ((e.search_text ~~ '%faro%'::text) OR (lower(COALESCE(legacy_identifier, ''::text)) ~~ '%faro%'::text))\n                          Rows Removed by Filter: 1\n                          Buffers: shared hit=786\nSettings: effective_cache_size = '128MB', search_path = '\"\\$user\", public, extensions'\nPlanning:\n  Buffers: shared hit=9\nPlanning Time: 0.303 ms\nExecution Time: 0.804 ms",
+        "busqueda.isbn": "Limit  (cost=2172.22..2172.22 rows=1 width=43) (actual time=13.766..13.770 rows=10 loops=1)\n  Buffers: shared hit=1846\n  InitPlan 1\n    ->  Result  (cost=0.00..0.03 rows=1 width=16) (actual time=0.001..0.001 rows=1 loops=1)\n  InitPlan 2\n    ->  Result  (cost=0.00..0.03 rows=1 width=16) (actual time=0.003..0.004 rows=1 loops=1)\n  InitPlan 3\n    ->  Result  (cost=0.00..0.03 rows=1 width=16) (never executed)\n  ->  Sort  (cost=2172.12..2172.13 rows=1 width=43) (actual time=13.764..13.766 rows=10 loops=1)\n        Sort Key: e.title, c.id\n        Sort Method: top-N heapsort  Memory: 26kB\n        Buffers: shared hit=1846\n        ->  Result  (cost=1662.61..2172.11 rows=1 width=43) (actual time=6.351..12.375 rows=8580 loops=1)\n              One-Time Filter: (((InitPlan 2).col1 = '<uuid>'::uuid) AND ((InitPlan 1).col1 = '<uuid>'::uuid))\n              Buffers: shared hit=1846\n              ->  Hash Join  (cost=1662.61..2172.11 rows=1 width=43) (actual time=6.345..11.694 rows=8580 loops=1)\n                    Hash Cond: (c.edition_id = e.id)\n                    Join Filter: ((e.search_text ~~ '%9790000%'::text) OR (lower(COALESCE(c.legacy_identifier, ''::text)) ~~ '%9790000%'::text))\n                    Rows Removed by Join Filter: 1420\n                    Buffers: shared hit=1846\n                    ->  Seq Scan on copies c  (cost=0.00..496.71 rows=4874 width=68) (actual time=0.215..1.360 rows=10000 loops=1)\n                          Filter: (user_id = '<uuid>'::uuid)\n                          Rows Removed by Filter: 130\n                          Buffers: shared hit=435\n                    ->  Hash  (cost=1537.60..1537.60 rows=10000 width=162) (actual time=6.113..6.113 rows=10000 loops=1)\n                          Buckets: 16384  Batches: 1  Memory Usage: 1886kB\n                          Buffers: shared hit=1411\n                          ->  Seq Scan on editions e  (cost=0.00..1537.60 rows=10000 width=162) (actual time=0.376..4.375 rows=10000 loops=1)\n                                Filter: (user_id = '<uuid>'::uuid)\n                                Rows Removed by Filter: 128\n                                Buffers: shared hit=1411\nSettings: effective_cache_size = '128MB', search_path = '\"\\$user\", public, extensions'\nPlanning:\n  Buffers: shared hit=9\nPlanning Time: 0.386 ms\nExecution Time: 13.818 ms",
+        "busqueda.isbn-exacto": "Limit  (cost=2172.22..2172.22 rows=1 width=43) (actual time=13.736..13.740 rows=0 loops=1)\n  Buffers: shared hit=1846\n  InitPlan 1\n    ->  Result  (cost=0.00..0.03 rows=1 width=16) (actual time=0.001..0.001 rows=1 loops=1)\n  InitPlan 2\n    ->  Result  (cost=0.00..0.03 rows=1 width=16) (actual time=0.004..0.004 rows=1 loops=1)\n  InitPlan 3\n    ->  Result  (cost=0.00..0.03 rows=1 width=16) (never executed)\n  ->  Sort  (cost=2172.12..2172.13 rows=1 width=43) (actual time=13.735..13.737 rows=0 loops=1)\n        Sort Key: e.title, c.id\n        Sort Method: quicksort  Memory: 25kB\n        Buffers: shared hit=1846\n        ->  Result  (cost=1662.61..2172.11 rows=1 width=43) (actual time=13.729..13.731 rows=0 loops=1)\n              One-Time Filter: (((InitPlan 2).col1 = '<uuid>'::uuid) AND ((InitPlan 1).col1 = '<uuid>'::uuid))\n              Buffers: shared hit=1846\n              ->  Hash Join  (cost=1662.61..2172.11 rows=1 width=43) (actual time=13.723..13.724 rows=0 loops=1)\n                    Hash Cond: (c.edition_id = e.id)\n                    Join Filter: ((e.search_text ~~ '%9790000000070%'::text) OR (lower(COALESCE(c.legacy_identifier, ''::text)) ~~ '%9790000000070%'::text))\n                    Rows Removed by Join Filter: 10000\n                    Buffers: shared hit=1846\n                    ->  Seq Scan on copies c  (cost=0.00..496.71 rows=4874 width=68) (actual time=0.226..1.415 rows=10000 loops=1)\n                          Filter: (user_id = '<uuid>'::uuid)\n                          Rows Removed by Filter: 130\n                          Buffers: shared hit=435\n                    ->  Hash  (cost=1537.60..1537.60 rows=10000 width=162) (actual time=6.267..6.268 rows=10000 loops=1)\n                          Buckets: 16384  Batches: 1  Memory Usage: 1886kB\n                          Buffers: shared hit=1411\n                          ->  Seq Scan on editions e  (cost=0.00..1537.60 rows=10000 width=162) (actual time=0.405..4.508 rows=10000 loops=1)\n                                Filter: (user_id = '<uuid>'::uuid)\n                                Rows Removed by Filter: 128\n                                Buffers: shared hit=1411\nSettings: effective_cache_size = '128MB', search_path = '\"\\$user\", public, extensions'\nPlanning:\n  Buffers: shared hit=9\nPlanning Time: 0.372 ms\nExecution Time: 13.788 ms"
+      },
+      "escrituraConIndiceMs": 343
+    }
+  ],
+  "escrituraSinIndiceMs": 282.2,
+  "redExterna": {
+    "guardCargado": true,
+    "hostsBloqueadosDelServidor": [],
+    "hostsAbortadosDelNavegador": []
+  }
+}
