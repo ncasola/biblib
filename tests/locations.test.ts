@@ -6,14 +6,15 @@ import {
   buildLocationTree, formatLocationPath, locationPath, locationPhotoUrl, moveTargets, parseLocationKind, parseLocationName, parsePosition, parseShelfLabel,
   subtreeHeight, subtreeIds, type LocationView,
 } from "../lib/locations"
-import { MEDIA_OUTPUT_MAX_SIDE, normalizeMedia } from "../lib/media/images"
+import { normalizeMediaImage } from "../lib/media/image-validation"
 import { isProtectedPath } from "../lib/auth-navigation"
-import { LOCATION_LIMITS } from "../lib/product/contracts"
+import { LOCATION_LIMITS, MEDIA_LIMITS } from "../lib/product/contracts"
 
 // U-PRO-03 · Ubicación física: validación de entradas, árbol, ruta legible, destinos de un movimiento y fotos sin EXIF ni GPS.
 
 const invalidInput = (error: unknown) => error instanceof DomainError && error.code === "INVALID_INPUT"
 const rejected = (error: unknown) => error instanceof DomainError && error.code === "ASSET_REJECTED"
+const normalizeMedia = normalizeMediaImage
 
 let sequence = 0
 function location(name: string, parentId: string | null = null, extra: Partial<LocationView> = {}): LocationView {
@@ -109,10 +110,10 @@ describe("árbol y ruta", () => {
     assert.deepEqual(forMiddle, ["Caja", "Tapa", "Hondo 1", "Hondo 2", "Hondo 3"])
   })
 
-  test("la foto se lee por la ruta autenticada del propio origen y cambia de URL al sustituirla", () => {
+  test("la foto se lee por la ruta autenticada del propio origen (/api/media) y cambia de URL al sustituirla", () => {
     assert.equal(locationPhotoUrl(location("Sin foto")), null)
     const withPhoto = location("Con foto", null, { photoAssetId: "22222222-2222-4222-8222-222222222222" })
-    assert.equal(locationPhotoUrl(withPhoto), `/api/locations/${withPhoto.id}/photo?v=22222222-2222-4222-8222-222222222222`)
+    assert.equal(locationPhotoUrl(withPhoto), "/api/media/22222222-2222-4222-8222-222222222222")
   })
 
   test("/locations es una ruta privada", () => {
@@ -141,11 +142,12 @@ describe("foto de ubicación", () => {
     assert.match(image.sha256, /^[0-9a-f]{64}$/)
   })
 
-  test("el lado mayor se limita sin ampliar y el tipo declarado debe coincidir con la firma", async () => {
-    const large = await sharp({ create: { width: 3000, height: 1000, channels: 3, background: "#336699" } }).png().toBuffer()
+  test("hasta 4096 px por lado sin ampliar; más grande se rechaza; el tipo declarado debe coincidir con la firma", async () => {
+    const large = await sharp({ create: { width: MEDIA_LIMITS.maxSide.location, height: 1000, channels: 3, background: "#336699" } }).png().toBuffer()
     const image = await normalizeMedia("location", large, "image/png")
-    assert.equal(image.width, MEDIA_OUTPUT_MAX_SIDE.location)
-    assert.ok(image.height < 1000)
+    assert.deepEqual([image.width, image.height], [MEDIA_LIMITS.maxSide.location, 1000])
+    const tooWide = await sharp({ create: { width: MEDIA_LIMITS.maxSide.location + 1, height: 10, channels: 3, background: "#336699" } }).png().toBuffer()
+    await assert.rejects(() => normalizeMedia("location", tooWide, "image/png"), rejected)
     const small = await normalizeMedia("location", await withExif(40, 30))
     assert.deepEqual([small.width, small.height], [40, 30])
     await assert.rejects(() => normalizeMedia("location", large, "image/jpeg"), rejected)

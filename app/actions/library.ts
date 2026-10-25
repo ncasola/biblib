@@ -44,6 +44,7 @@ export async function getLibrarySummaryAction() {
 const listSchema = z.object({
   q: z.string().max(500).default(""), status: z.enum(["all", "read", "reading", "unread", "to-read"]).default("all"),
   shelf: z.union([z.literal("all"), z.uuid()]).default("all"),
+  series: z.union([z.literal("all"), z.uuid()]).default("all"),
   sort: z.enum(["title", "-title", "author", "-author", "pages", "-pages", "date", "-date", "status", "-status"]).default("title"),
   page: z.number().int().min(1).max(100_000).default(1), pageSize: z.number().int().min(1).max(100).default(10),
 })
@@ -58,6 +59,8 @@ export async function listBooksAction(input: unknown = {}) {
   const escaped = `%${query.replace(/[\\%_]/g, "\\$&")}%`
   const conditions = and(eq(books.userId, userId), filter.status !== "all" ? eq(books.status, filter.status) : undefined,
     filter.shelf !== "all" ? eq(books.shelfId, filter.shelf) : undefined,
+    // U-PRO-05: la serie es de la edición; el dueño sale de la sesión y la FK compuesta impide vínculos ajenos.
+    filter.series !== "all" ? sql`exists (select 1 from biblib.series_editions se where se.user_id = ${userId} and se.series_id = ${filter.series} and se.edition_id = ${books.editionId})` : undefined,
     // Tarea T5 (U-DAT-06): el texto de búsqueda de la edición se calcula al escribir (columna generada de 0010); el
     // identificador legacy es del ejemplar y se busca aparte.
     query ? sql`(${books.searchText} like ${escaped} or lower(coalesce(${books.legacyIdentifier}, '')) like ${escaped})` : undefined)

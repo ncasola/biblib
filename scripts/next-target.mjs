@@ -30,6 +30,7 @@ export function nextEnv(ctx, command) {
   return { ...appEnv(ctx), NODE_ENV: command === "dev" ? "development" : "production",
     // Capacidad de UI, sin credenciales: excepción explícita al filtrado de BIBLIB heredadas.
     BIBLIB_ISBN_CAMERA: process.env.BIBLIB_ISBN_CAMERA === "1" ? "1" : "",
+    BIBLIB_PRIVATE_MEDIA_UPLOADS: process.env.BIBLIB_PRIVATE_MEDIA_UPLOADS === "1" ? "1" : "",
   }
 }
 

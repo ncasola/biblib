@@ -1,0 +1,8 @@
+✔ cabecera
+✔ filtro por motivo desde la URL
+✔ vuelta desde la ficha con foco
+✔ tabla de comparación
+✔ decisión individual
+✔ lote con vista previa
+estados [ 'ignored', 'ignored' ]
+sin desbordamiento a 320 px: true

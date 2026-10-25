@@ -10,7 +10,7 @@ import {
   DELETE_CONTENTS, LOCATION_CONTENTS_PAGE_SIZE, locationIdSchema, locationPath, locationVersionSchema, parseLocationKind, parseLocationName,
   parsePosition, parseShelfLabel, type CopyLocationView, type LocationView,
 } from "@/lib/locations"
-import { discard, normalizeMedia, storeImage } from "@/lib/media/server"
+import { beginUpload, discard, register, upload } from "@/lib/media/server"
 import {
   LOCATION_CYCLE_SQLSTATE, LOCATION_DEPTH_SQLSTATE, LOCATION_LIMITS, MEDIA_LIMITS, MEDIA_REFERENCE_SQLSTATE, PRODUCT_LIMIT_SQLSTATE, type LocationKind,
 } from "@/lib/product/contracts"
@@ -89,7 +89,7 @@ async function releasePhoto(owner: string, assetId: string | null): Promise<void
       select exists (select 1 from biblib.library_snapshot_chunks as sc where sc.user_id = ${owner}::uuid and sc.kind in ('books', 'locations')
         and strpos(sc.payload::text, ${assetId}) > 0) as cited`))[0]?.cited)
     // Citada por una versión anterior: se conserva; la purga administrativa la retira cuando ya nada la cite.
-    if (!cited) await discard(owner, assetId)
+    if (!cited) await discard(assetId)
   } catch { /* Sin citas pendientes, la purga administrativa la encuentra (media_asset_purge_candidates). */ }
 }
 
@@ -382,6 +382,23 @@ export async function clearCopyLocationAction(input: { copyId: string; expectedV
 
 // ── Foto de la ubicación ────────────────────────────────────────────────────────────────────────────
 
+/**
+ * Reserva, sube y registra la foto con el flujo de imágenes privadas de U-EXP-06 (`lib/media/server.ts`): `upload` valida y
+ * reencodifica a WebP sin metadatos antes de subir con la sesión del dueño. Si algo falla, la reserva se descarta y no
+ * queda cuarentena ni objeto; la foto que la ubicación cite hasta ahora no cambia.
+ */
+async function storeLocationPhoto(bytes: Uint8Array, declaredType: string): Promise<string> {
+  const asset = await beginUpload("location")
+  try {
+    const image = await upload(asset, bytes, declaredType)
+    await register(asset.assetId, image)
+    return asset.assetId
+  } catch (error) {
+    await discard(asset.assetId).catch(() => null)
+    throw error
+  }
+}
+
 const ACCEPTED_PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"] as const
 const photoSchema = z.object({ locationId: locationIdSchema, expectedVersion: locationVersionSchema, mime: z.enum(ACCEPTED_PHOTO_TYPES), bytes: z.coerce.number().int().min(1) })
 
@@ -403,21 +420,20 @@ export async function uploadLocationPhotoAction(form: FormData): Promise<ActionR
     const seen = await withRlsContext(owner, (tx) => readLocation(tx, owner, fields.locationId))
     if (seen.version !== fields.expectedVersion) throw new DomainError("CONFLICT", LOCATION_CHANGED)
 
-    const image = await normalizeMedia("location", new Uint8Array(await file.arrayBuffer()), fields.mime)
-    const stored = await storeImage(owner, "location", image)
+    const photoId = await storeLocationPhoto(new Uint8Array(await file.arrayBuffer()), fields.mime)
     let previous: string | null = null
     let updated: LocationView
     try {
       updated = await withRlsContext(owner, async (tx) => {
         await lockLibrary(tx)
         const row = await lockLocation(tx, owner, fields.locationId, fields.expectedVersion)
-        await tx.execute(sql`update biblib.locations set photo_asset_id = ${stored.assetId}::uuid, updated_at = now() where user_id = ${owner}::uuid and id = ${fields.locationId}::uuid`)
+        await tx.execute(sql`update biblib.locations set photo_asset_id = ${photoId}::uuid, updated_at = now() where user_id = ${owner}::uuid and id = ${fields.locationId}::uuid`)
         previous = row.photo_asset_id
         return readLocation(tx, owner, fields.locationId)
       })
     } catch (error) {
       // La nueva no llegó a citarse: se descarta y la anterior sigue citada.
-      await discard(owner, stored.assetId).catch(() => null)
+      await discard(photoId).catch(() => null)
       locationError(error)
     }
     await releasePhoto(owner, previous)

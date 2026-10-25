@@ -2,7 +2,7 @@ import "server-only"
 import { createHash, randomUUID } from "node:crypto"
 import { and, asc, count, eq, inArray, sql } from "drizzle-orm"
 import type { DatabaseTransaction } from "./client"
-import { bookFields, books, copies, editions, libraryOperations, shelves, type LibraryOperationKind } from "./schema"
+import { bibliographicEvidence, bookFields, books, copies, editions, libraryOperations, shelves, type LibraryOperationKind } from "./schema"
 import { lockLibrary, mapRowToBook } from "./library"
 import { copyVerification, editionValues } from "./model"
 import { canonicalJson } from "../import-plan"
@@ -236,6 +236,9 @@ export async function mergeEditions(tx: DatabaseTransaction, userId: string, req
   const assets = distinct(sources.map((row) => row.coverAssetId))
   const legacy = isbns.length ? await tx.select({ id: copies.id, legacyIdentifier: copies.legacyIdentifier }).from(copies)
     .where(and(eq(copies.userId, userId), inArray(copies.editionId, ids), sql`${copies.legacyIdentifier} is not null`)) : []
+  // 0014 (U-DAT-07): las evidencias de las ediciones de origen pasan antes al destino; la poda las retiraría en cascada.
+  await tx.update(bibliographicEvidence).set({ editionId: target.id, updatedAt: new Date() })
+    .where(and(eq(bibliographicEvidence.userId, userId), inArray(bibliographicEvidence.editionId, sourceIds)))
   const moved = await tx.update(copies).set({ editionId: target.id, ...(isbns.length ? { legacyIdentifier: null } : {}), updatedAt: new Date() })
     .where(and(eq(copies.userId, userId), inArray(copies.editionId, sourceIds))).returning({ id: copies.id })
   if (isbns.length) await tx.update(copies).set({ legacyIdentifier: null }).where(and(eq(copies.userId, userId), eq(copies.editionId, target.id), sql`${copies.legacyIdentifier} is not null`))

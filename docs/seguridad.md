@@ -33,6 +33,7 @@ La protección la decide `isProtectedPath` (`lib/auth-navigation.ts`) en `proxy.
 | `/auth/callback` | Route handler | Pública | Canjea el código PKCE | Destino `next` saneado; sin código o con `error` vuelve a `/login?error=oauth`. |
 | `/api/books/search` | Route handler (GET) | Sesión exigida en el handler (401) | Catálogo | Fuera del proxy. |
 | `/api/books/add` | Route handler (POST) | Sesión exigida por la acción (401) | Alta | Fuera del proxy. |
+| `/api/media/[id]` | Route handler (GET) | Sesión exigida en el handler (401 JSON) | Imagen privada propia de O13 | RLS y Storage con la sesión del dueño; UUID ajeno o ausente: 404. |
 | `/api/internal/jobs/run` | Route handler (POST) | Token del ejecutor (401) | Trabajos | No lee sesión ni cuerpo; el dueño sale de la fila reclamada. |
 | `/signup`, `/forgot-password` | Redirección (`next.config.mjs`) | Pública | — | Retiradas: llevan a `/login`. |
 | Server Actions (`app/actions/*`) | POST a la página que las incluye | Privadas: el proxy las intercepta y cada acción exige usuario | Dominio | Sin sesión: 307 al acceso, la acción no se ejecuta. |
@@ -242,3 +243,7 @@ Ninguno de estos puntos se ha verificado en local; no se presentan como superado
 5. **Repetición al integrar U-EXP-05 (cámara):** `Permissions-Policy: camera=(self)` solo en su ruta; repetir la matriz y la prueba en navegador de esa área.
 6. **Repetición al integrar U-EXP-08 (offline):** service worker sin HTML autenticado, acciones ni respuestas con cookies en caché; repetir aislamiento A/B y matriz.
 7. **Rol de base dedicado** para el servidor en preproducción/producción, en lugar de la URL con acceso total (fuera de U-OPS-04).
+
+## Avatar e imágenes privadas de O13 (U-EXP-06)
+
+`GET /api/media/[id]` figura en la matriz como API anónima (401 JSON, `private, no-store`, `Vary: Cookie`). Una lectura autorizada devuelve WebP con `nosniff`, `Cross-Origin-Resource-Policy: same-origin` y `Content-Security-Policy: default-src 'none'; sandbox`. No añade hosts a la CSP; el navegador usa el mismo origen. El helper vuelve a comprobar dueño y estado con RLS, y descarga con la sesión del dueño. La subida reencodifica sin metadatos y la sustitución publica solo después del registro; la metadata OAuth permanece intacta. La edición está desactivada salvo `BIBLIB_PRIVATE_MEDIA_UPLOADS=1`; retirarla no borra imágenes. La purga administrativa se ejecuta fuera de Next (`media:purge:local`), como las portadas. Detalles y pruebas en [operación](operacion.md#avatar-personal-e-imágenes-privadas--u-exp-06-o13).

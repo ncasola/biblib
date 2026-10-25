@@ -42,7 +42,7 @@ for (const mode of ["light", "dark"] as const) {
     const id = stack.fixtureBookId("a", "isla")
     const routes = [
       ["inicio", "/"], ["tabla", "/books"], ["cuadricula", "/books?view=grid"],
-      ["busqueda", "/books/search"], ["alta", "/books/add"], ["ficha", `/book/${id}`],
+      ["busqueda", "/books/search"], ["revision", "/books/review"], ["alta", "/books/add"], ["ficha", `/book/${id}`],
       ["estanterias", "/shelves"], ["3d", "/shelves/3d"], ["perfil", "/profile"],
     ] as const
     for (const [name, route] of routes) {
@@ -93,7 +93,7 @@ async function noOverflow(page: Page) {
 
 test("reflujo: 320, 375, 768, 1440 y zoom equivalente 200/400 % en ambos temas", async ({ page, stack }, info) => {
   test.setTimeout(300_000)
-  const routes = ["/", "/books", "/books?view=grid", "/books/search", "/books/add", `/book/${stack.fixtureBookId("a", "isla")}`, "/shelves", "/shelves/3d", "/profile"]
+  const routes = ["/", "/books", "/books?view=grid", "/books/search", "/books/review", "/books/add", `/book/${stack.fixtureBookId("a", "isla")}`, "/shelves", "/shelves/3d", "/profile"]
   for (const mode of ["light", "dark"] as const) {
     await theme(page, mode)
     for (const width of [320, 375, 768, 1440, 640]) {

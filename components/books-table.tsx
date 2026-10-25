@@ -5,6 +5,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { ChevronLeft, ChevronRight, Filter, LayoutGrid, List, Plus, Search, X } from "lucide-react"
 import { getShelvesAction } from "@/app/actions/shelves"
+import { listSeriesAction } from "@/app/actions/series"
 import { listBooksAction } from "@/app/actions/library"
 import { moveBooksShelfAction } from "@/app/actions/books"
 import { BookCover } from "@/components/book-cover"
@@ -55,7 +56,7 @@ function getBookSortLabel(sort: BookSort): string {
 }
 
 function requestKey(filters: BookSearchFilters): string {
-  return JSON.stringify([filters.q, filters.status, filters.shelf, filters.sort, filters.page, filters.pageSize ?? BOOK_PAGE_SIZE])
+  return JSON.stringify([filters.q, filters.status, filters.shelf, filters.series ?? "all", filters.sort, filters.page, filters.pageSize ?? BOOK_PAGE_SIZE])
 }
 
 export function BooksTable({ initialView = "table" }: BooksTableProps) {
@@ -70,6 +71,7 @@ export function BooksTable({ initialView = "table" }: BooksTableProps) {
   const [shelves, setShelves] = useState<Shelf[]>([])
   const [shelvesLoading, setShelvesLoading] = useState(true)
   const [shelvesError, setShelvesError] = useState(false)
+  const [seriesOptions, setSeriesOptions] = useState<Array<{ id: string; title: string }>>([])
   const [loading, setLoading] = useState(true)
   const [listError, setListError] = useState(false)
   const [hasLoaded, setHasLoaded] = useState(false)
@@ -83,7 +85,8 @@ export function BooksTable({ initialView = "table" }: BooksTableProps) {
   const searchInput = useRef<HTMLInputElement>(null)
   const pageSelection = useRef<HTMLInputElement>(null)
   const restoreMoveFocus = useRef(false)
-  const { q: filterQuery, status: filterStatus, shelf: filterShelf, sort: filterSort, page: filterPage } = filters
+  const { q: filterQuery, status: filterStatus, shelf: filterShelf, series: filterSeriesValue, sort: filterSort, page: filterPage } = filters
+  const filterSeries = filterSeriesValue ?? "all"
 
   useEffect(() => {
     if (loading || movePending || !restoreMoveFocus.current) return
@@ -124,6 +127,11 @@ export function BooksTable({ initialView = "table" }: BooksTableProps) {
 
   useEffect(() => { void loadShelves() }, [loadShelves])
 
+  // U-PRO-05: el filtro por serie solo aparece si la cuenta tiene series; un fallo aquí no bloquea el catálogo.
+  useEffect(() => {
+    void listSeriesAction().then((result) => { if (result.ok) setSeriesOptions(result.value.map((item) => ({ id: item.id, title: item.title }))) }).catch(() => setSeriesOptions([]))
+  }, [])
+
   // Al volver desde una ficha la URL trae `#book-row-<id>`: cuando ya está el listado se muestra esa fila
   // una sola vez y se retira el fragmento. Si la fila no está en esta página, simplemente se ignora.
   useEffect(() => {
@@ -151,12 +159,13 @@ export function BooksTable({ initialView = "table" }: BooksTableProps) {
 
   useEffect(() => {
     if (!ready) return
-    requestedFilters.current = JSON.stringify([filterQuery, filterStatus, filterShelf, filterSort, filterPage, pageSize])
+    requestedFilters.current = JSON.stringify([filterQuery, filterStatus, filterShelf, filterSeries, filterSort, filterPage, pageSize])
     const requestId = ++requestSequence.current
     void listBooksAction({
       q: normalizeBookSearchQuery(filterQuery),
       status: filterStatus,
       shelf: filterShelf,
+      series: filterSeries,
       sort: filterSort,
       page: filterPage,
       pageSize,
@@ -184,7 +193,7 @@ export function BooksTable({ initialView = "table" }: BooksTableProps) {
     return () => {
       if (requestSequence.current === requestId) requestSequence.current += 1
     }
-  }, [filterQuery, filterStatus, filterShelf, filterSort, filterPage, pageSize, ready, retryToken, initialView])
+  }, [filterQuery, filterStatus, filterShelf, filterSeries, filterSort, filterPage, pageSize, ready, retryToken, initialView])
 
   const updateFilters = useCallback((update: Partial<BookSearchFilters>, resetPage = true) => {
     if (update.view === undefined) setLoading(true)
@@ -197,7 +206,7 @@ export function BooksTable({ initialView = "table" }: BooksTableProps) {
   }, [initialView])
 
   const clearFilters = () => {
-    const next: BookSearchFilters = { ...filters, q: "", status: "all", shelf: "all", sort: "title", page: 1 }
+    const next: BookSearchFilters = { ...filters, q: "", status: "all", shelf: "all", series: "all", sort: "title", page: 1 }
     setQueryInput("")
     setFilters(next)
     setSelectedIds([])
@@ -208,6 +217,7 @@ export function BooksTable({ initialView = "table" }: BooksTableProps) {
   const changeQuery = (value: string) => setQueryInput(value.slice(0, 500))
   const changeStatus = (status: BookStatusFilter) => updateFilters({ status })
   const changeShelf = (shelf: string) => updateFilters({ shelf })
+  const changeSeries = (series: string) => updateFilters({ series })
   const changeSort = (sort: BookSort) => updateFilters({ sort })
   const changeView = (view: BookView) => updateFilters({ view }, false)
   const retryList = () => { setLoading(true); setRetryToken((current) => current + 1) }
@@ -258,7 +268,7 @@ export function BooksTable({ initialView = "table" }: BooksTableProps) {
   const pageCount = Math.ceil(total / pageSize)
   const firstResult = total === 0 ? 0 : (filters.page - 1) * pageSize + 1
   const lastResult = Math.min(filters.page * pageSize, total)
-  const hasCriteria = Boolean(filters.q || filters.status !== "all" || filters.shelf !== "all")
+  const hasCriteria = Boolean(filters.q || filters.status !== "all" || filters.shelf !== "all" || filterSeries !== "all")
   const canClear = hasCriteria || filters.sort !== "title"
   const columns = [
     { key: "title" as const, label: "Título" },
@@ -301,12 +311,16 @@ export function BooksTable({ initialView = "table" }: BooksTableProps) {
           <label htmlFor="book-shelf" className="mb-2 block text-sm font-medium text-foreground">Estantería</label>
           <Select value={filters.shelf} onValueChange={changeShelf} disabled={shelvesLoading || shelvesError}><SelectTrigger id="book-shelf" aria-label="Filtrar por estantería" className="w-full border-border bg-surface"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">Todas las estanterías</SelectItem>{shelves.map((shelf) => <SelectItem key={shelf.id} value={shelf.id}>{shelf.title}</SelectItem>)}</SelectContent></Select>
         </div>
+        {(seriesOptions.length > 0 || filterSeries !== "all") && <div id="book-series-filters" className={showFilters ? "" : "hidden sm:block"}>
+          <label htmlFor="book-series" className="mb-2 block text-sm font-medium text-foreground">Serie</label>
+          <Select value={filterSeries} onValueChange={changeSeries}><SelectTrigger id="book-series" aria-label="Filtrar por serie" className="w-full border-border bg-surface"><SelectValue placeholder="Serie no disponible" /></SelectTrigger><SelectContent><SelectItem value="all">Todas las series</SelectItem>{seriesOptions.map((item) => <SelectItem key={item.id} value={item.id}>{item.title}</SelectItem>)}</SelectContent></Select>
+        </div>}
       </div>
 
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
         <div id="book-sort-filters" className={showFilters ? "w-full sm:max-w-xs" : "hidden w-full sm:block sm:max-w-xs"}><label htmlFor="book-sort" className="mb-2 block text-sm font-medium text-foreground">Ordenar por</label><Select value={filters.sort} onValueChange={(value) => changeSort(value as BookSort)}><SelectTrigger id="book-sort" aria-label="Ordenar libros" className="w-full border-border bg-surface"><SelectValue>{getBookSortLabel(filters.sort)}</SelectValue></SelectTrigger><SelectContent>{SORT_OPTIONS.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent></Select></div>
         <div className="flex items-center justify-between gap-3">
-          <Button className="sm:hidden" variant="outline" size="sm" onClick={() => setShowFilters((current) => !current)} aria-expanded={showFilters} aria-controls="book-status-filters book-shelf-filters book-sort-filters"><Filter aria-hidden="true" />Filtros{hasCriteria ? " activos" : ""}</Button>
+          <Button className="sm:hidden" variant="outline" size="sm" onClick={() => setShowFilters((current) => !current)} aria-expanded={showFilters} aria-controls={`book-status-filters book-shelf-filters ${seriesOptions.length > 0 || filterSeries !== "all" ? "book-series-filters " : ""}book-sort-filters`}><Filter aria-hidden="true" />Filtros{hasCriteria ? " activos" : ""}</Button>
           <div className="flex items-center rounded-lg border border-border p-1" role="group" aria-label="Vista de la colección"><Button type="button" size="sm" variant={filters.view === "table" ? "secondary" : "ghost"} aria-pressed={filters.view === "table"} aria-label="Vista de tabla" onClick={() => changeView("table")}><List aria-hidden="true" /></Button><Button type="button" size="sm" variant={filters.view === "grid" ? "secondary" : "ghost"} aria-pressed={filters.view === "grid"} aria-label="Vista de cuadrícula" onClick={() => changeView("grid")}><LayoutGrid aria-hidden="true" /></Button></div>
           {canClear && <Button variant="ghost" size="sm" onClick={clearFilters}><X aria-hidden="true" />Limpiar filtros</Button>}
         </div>

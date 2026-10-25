@@ -57,9 +57,9 @@ test("B manipula IDs de A en cada acción: responde como si no existieran y A no
 })
 
 test("la foto de A no se sirve a B ni sin sesión, aunque se conozca la ruta", async () => {
-  assert.equal((await ctx.get(`/api/locations/${roomA.id}/photo`, sessionA)).status, 200)
-  assert.equal((await ctx.get(`/api/locations/${roomA.id}/photo`, sessionB)).status, 404)
-  assert.equal((await ctx.get(`/api/locations/${roomA.id}/photo`, null)).status, 401)
+  assert.equal((await ctx.get(`/api/media/${roomA.photoAssetId}`, sessionA)).status, 200)
+  assert.equal((await ctx.get(`/api/media/${roomA.photoAssetId}`, sessionB)).status, 404)
+  assert.equal((await ctx.get(`/api/media/${roomA.photoAssetId}`, null)).status, 401)
   // Con su propio JWT, B tampoco descarga el objeto de A directamente de Storage.
   const [key] = await ctx.objects(a.id)
   const storageB = (await import("@supabase/supabase-js")).createClient(ctx.env.SUPABASE_URL, ctx.env.SUPABASE_ANON_KEY, {

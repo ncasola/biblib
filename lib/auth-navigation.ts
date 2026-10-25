@@ -14,7 +14,7 @@ export function getSafeRedirectPath(value: string | null | undefined): string {
 }
 
 export function isProtectedPath(pathname: string): boolean {
-  return pathname === "/" || ["/profile", "/book", "/books", "/shelves", "/locations", "/settings"].some(
+  return pathname === "/" || ["/profile", "/book", "/books", "/shelves", "/series", "/locations", "/settings"].some(
     (route) => pathname === route || pathname.startsWith(`${route}/`),
   )
 }

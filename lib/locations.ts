@@ -171,7 +171,7 @@ export function locationKindLabel(kind: LocationKind): string {
   return LOCATION_KIND_LABELS[kind]
 }
 
-/** Ruta autenticada del propio origen para la foto de una ubicación; `v` cambia al sustituirla. */
+/** Lectura autenticada del propio origen (`/api/media/:id` de U-EXP-06); la URL cambia al sustituir la foto (otro asset). */
 export function locationPhotoUrl(location: Pick<LocationView, "id" | "photoAssetId">): string | null {
-  return location.photoAssetId ? `/api/locations/${location.id}/photo?v=${location.photoAssetId}` : null
+  return location.photoAssetId ? `/api/media/${location.photoAssetId}` : null
 }

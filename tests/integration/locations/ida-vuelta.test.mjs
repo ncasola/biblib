@@ -60,7 +60,7 @@ test("reemplazar desde esa copia devuelve el árbol, la ubicación del ejemplar 
   assert.notDeepEqual({ locations: await ctx.locations(a.id), copies: await ctx.copyLocations(a.id) }, original)
   await importFile(sessionA, exported, "replace")
   assert.deepEqual({ locations: await ctx.locations(a.id), copies: await ctx.copyLocations(a.id) }, original)
-  assert.equal((await ctx.get(`/api/locations/${room.id}/photo`, sessionA)).status, 200, "la foto sigue citada y legible")
+  assert.equal((await ctx.get(`/api/media/${room.photoAssetId}`, sessionA)).status, 200, "la foto sigue citada y legible")
 })
 
 test("sustituir una foto que cita una versión anterior la conserva para poder restaurarla", async () => {

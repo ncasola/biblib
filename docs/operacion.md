@@ -1495,6 +1495,77 @@ Sin detector compatible, contexto seguro o permiso, se informa de la alternativa
 
 El runner `test:e2e:local` activa la capacidad en su entorno aislado para poder simular permiso denegado, lectura y parada. `tests/e2e/flujos/alta-consecutiva.spec.ts` añade esos recorridos junto a consecutiva, borrador tras error, doble envío y duplicado. No sustituye una prueba con cámara física ni lectores reales. Evidencia y pendientes de integración en [O13/exp-05](validacion/2026-10-25/O13/exp-05/README.md).
 
+## Series y orden de volúmenes · U-PRO-05 (O13)
+
+Una **serie** es privada y describe una edición, no un libro: agrupa ediciones (`series_editions`, cero o una serie por edición) con una posición exacta, una etiqueta de volumen y una nota de orden. No hay schema ni migración nuevos: la tabla y sus políticas son las de `0014_product_batch_o13` ([contrato](spec-pendientes/contratos-o13.md#u-pro-05--series)).
+
+- **Rutas.** `/series` (listado y alta) y `/series/[id]` (detalle, edición, borrado y volúmenes). La ficha del libro (`/book/[id]`) tiene la sección «Serie» (`components/edition-series-panel.tsx`) para vincular, cambiar o quitar la serie de la edición; un libro sin serie solo muestra una línea y el botón «Añadir a una serie». En `/books` y `/books/search` aparece el filtro «Serie» solo si la cuenta tiene series (`?series=<uuid>`; sin él, la URL y los filtros no cambian).
+- **Acciones** (`app/actions/series.ts`, todas `ActionResult`, dueño siempre de la sesión): `listSeriesAction`, `getSeriesAction`, `getEditionSeriesAction`, `createSeriesAction`, `updateSeriesAction`, `deleteSeriesAction`, `linkEditionToSeriesAction`, `moveSeriesVolumeAction` y `unlinkEditionFromSeriesAction`. Cada escritura bloquea la colección y compara la `version` del registro (`CONFLICT` si cambió). Una edición o serie de otra cuenta responde «no disponible», igual que un identificador inexistente.
+- **Posición exacta.** Viaja y se lee como **texto decimal** (`SERIES_POSITION_PATTERN`: 0 ≤ p < 1000000, hasta 4 decimales, sin ceros a la izquierda; «1,5» se acepta al escribir y se guarda «1.5»; «01.50», negativos y texto se rechazan). La base usa `NUMERIC`; se lee con `trim_scale(position)::text`. Nunca un `float`.
+- **Orden.** `position asc nulls last`, con título y edición como desempate estable. Un volumen sin posición se muestra como «Orden desconocido» y queda al final: **no se infiere de la fecha de publicación ni del título**. Una serie incompleta (faltan volúmenes o posiciones) es válida.
+- **Borrar.** Borrar una serie retira sus vínculos (cascada de `series_editions`); las ediciones y los ejemplares se conservan. Quitar un volumen solo retira el vínculo. Los vínculos entran en la exportación v2 (`editions.series`), en las versiones anteriores, el respaldo y la eliminación de cuenta con lo ya hecho por el lote D.
+- **Retirada.** Ocultar `/series`, la sección de la ficha y el filtro no borra datos: la relación y la exportación se conservan.
+
+### Pruebas
+
+- `pnpm test`: `tests/series.test.ts` (posiciones 1, 1.5, 2, «01.50», negativas y no numéricas; entradas estrictas; filtro aditivo).
+- `pnpm test:integration:series [--profile scratch|test]` (también dentro de `test:integration:local`): `tests/integration/series/{volumenes,permisos,ida-vuelta}.test.mjs` con GoTrue, Postgres y la app reales — crear/mover/quitar, orden exacto y desconocido al final, título repetido en otra cuenta, borrar la serie, permisos y enlace de una edición ajena (acción y SQL con los claims de B) e ida y vuelta v2.
+- E2E: `tests/e2e/flujos/series.spec.ts` (`pnpm test:e2e:local --grep series`).
+
+## Bandeja de revisión bibliográfica · U-DAT-07 (O13)
+
+`/books/review` (enlace «Revisar fichas» en Libros) reúne las incidencias de la colección: **sin ISBN**, **ISBN provisional** (ni ficha bibliográfica que coincida ni comprobación en el ejemplar), **sin portada**, **duda de foto** (evidencia `photo` provisional) y **posible duplicado** (mismo título y autoría sin diacríticos ni mayúsculas; nunca homónimos, ni dos ISBN u obras distintas). Cada una tiene una `dedupe_key` estable (`missing_isbn:<edición>`, `photo_doubt:<evidencia>`, `duplicate_candidate:<edición menor>:<n>:<huella>`…) y hay como mucho una abierta por clave. La primera página de la bandeja las sincroniza desde el modelo y las evidencias: crea las que faltan, cierra solas las que ya no se dan (sin borrar evidencias) y reabre esas mismas si vuelven. Una incidencia ignorada o resuelta por la persona no se reabre sola. La sincronización no crea evidencias ni toca comprobaciones físicas: la importación de referencia de 111 registros produce 9 sin ISBN, 9 sin portada, 76 ISBN provisionales y ninguna comprobación física.
+
+- **Listado:** cursor opaco por `(created_at, id)` descendente, 20 por página (máx. 50); filtros por motivo, fuente (tipos de evidencia o la fuente primaria de la edición) y resolución, en la URL (`motivo`, `fuente`, `estado`, `desde`). Al abrir una ficha o una comparación y volver se recupera la misma selección y el foco en la incidencia.
+- **Comparación** (`/books/review/[id]`): tabla con cabeceras de fila y columna; cada celda lleva el valor y su fuente (procedencia por campo de U-BIB, evidencia y su confianza, o ficha de proveedor consultada ahora por el orquestador, fuera de cualquier transacción). Google Books aparece solo como vista previa: sus datos no se pueden aceptar ni se guardan. Las fotos citadas se indican como «foto privada propia», sin URL ni ruta.
+- **Decisiones:** `accept_fields` (solo cambian los campos elegidos; la fuente queda en `catalogue.fields` y, para un proveedor, como evidencia `bibliographic_match` con lo aceptado), `ignore` (conserva evidencias), `confirm_physical` (solo con `confirmed: true` explícito; crea la evidencia `physically_checked` del ejemplar), `merge` (con las versiones de U-DAT-06; las evidencias de origen se mueven antes al destino, el destino conserva sus valores y las discrepancias abren una incidencia `source_conflict` con los valores de origen como evidencia) y `reopen`. Cada decisión queda en `review_decisions` con su `operation_id`.
+- **Lotes** de hasta 50: `prepareReviewBatchAction` devuelve altas, modificaciones y fusiones por fila; `applyReviewBatchAction({ previewId, expectedRevision, idempotencyKey, preview, mode })` aplica todo o nada (`REVISION_CONFLICT`, `CONFLICT`, `PREVIEW_EXPIRED` a los 15 minutos). `mode: "partial"` es una elección explícita: aplica las filas que siguen valiendo, cada una en su punto de guardado, e informa de cada fila.
+- **Sin schema nuevo:** la vista previa no se guarda. `previewId` es la huella sha256 de dueño, revisión, caducidad, decisiones y la huella de cada fila; el cliente devuelve `preview` tal cual y el servidor recalcula el plan. No es una autorización: cada escritura vuelve a comprobar versiones, dueño y RLS. La idempotencia usa `review_decisions.operation_id` (UUID derivado de dueño, operación y clave) con IDs de decisión deterministas: repetir devuelve el resultado durable (`status: "replayed"`) y la misma clave con otras decisiones da `IDEMPOTENCY_CONFLICT`. Si el lote D añade `review.apply` a `library_operations` y un almacén de vistas previas, se puede migrar sin cambiar la interfaz.
+- **Concurrencia:** lotes y sincronización toman un bloqueo consultivo de la bandeja por cuenta (`pg_advisory_xact_lock`), además del bloqueo de colección en las escrituras. Las escrituras de incidencias y decisiones no rotan la revisión de colección; las de ediciones, ejemplares y evidencias sí.
+- **Fotos nuevas:** esta unidad solo cita assets `evidence` existentes; la subida de fotos llegará con el helper `lib/media/server.ts` de U-EXP-06.
+
+### Pruebas
+
+- `pnpm test`: `tests/catalogue-review.test.ts` (importación de referencia, homónimos, sincronización, cursor, comparación con proveedores contradictorios, plan de decisiones y huellas).
+- `pnpm test:integration:review --profile scratch|test [--reuse-build]`: grupo `tests/integration/review` con cuentas desechables y la app compilada: importación de referencia por las acciones reales, paginación y filtros, aislamiento A/B (incidencias, fuentes, evidencias y fotos), decisiones individuales con el proveedor fixture, dos revisores de la misma cuenta, fuente eliminada tras la vista previa, fusión con discrepancias y vistas previas alteradas o ajenas. También corre en `pnpm test:integration:local`.
+- E2E: `tests/e2e/flujos/revision.spec.ts` (filtro, vuelta desde la ficha con foco, tabla de comparación, decisión individual y lote con vista previa).
+
+## Avatar personal e imágenes privadas · U-EXP-06 (O13)
+
+El avatar propio se guarda en `biblib.profiles` y `biblib.media_assets`, con objetos privados en `biblib-media` según el [contrato O13](spec-pendientes/contratos-o13.md). El correo continúa como información de Google y ninguna acción de avatar modifica la metadata OAuth. Perfil y cabecera (también el menú móvil) muestran la imagen propia, la de Google o las iniciales; si falla la lectura privada se usa el siguiente fallback sin borrar el asset.
+
+La edición se activa exclusivamente con **`BIBLIB_PRIVATE_MEDIA_UPLOADS=1`**, una capacidad de servidor que los wrappers de Next permiten expresamente. Ausencia, `0` o cualquier otro valor ocultan el editor y rechazan sus acciones; las imágenes existentes siguen leyéndose. Activarla solo después de verificar las políticas con `test:integration:media` en el perfil autorizado. Para retirarla, quitar la variable del proceso y reiniciar Next; no hay migración inversa ni eliminación de datos.
+
+```powershell
+$env:BIBLIB_PRIVATE_MEDIA_UPLOADS = '1'
+pnpm dev:local --profile scratch
+# Solo en un perfil propio cuyo uso esté autorizado.
+Remove-Item Env:BIBLIB_PRIVATE_MEDIA_UPLOADS -ErrorAction SilentlyContinue
+```
+
+El formulario admite JPEG, PNG y WebP de hasta **1 MiB y 1024 × 1024 píxeles**; permite previsualizar y desplazar un recorte cuadrado antes de guardar. El helper compartido `lib/media/server.ts` sirve también a ubicaciones y evidencias (hasta 5 MiB y 4096 px por lado), valida firma, tipo declarado, dimensiones, animación y datos añadidos, y reencodifica con `sharp` a WebP sin EXIF/GPS. No redimensiona silenciosamente un original fuera de los límites. El cliente prepara el recorte, pero el servidor vuelve a validar y reencodificar los bytes recibidos.
+
+Flujo: `beginUpload(kind)` → `upload(asset, bytes, declaredType?)` → `register(assetId, image)` → publicar la referencia con la versión leída → `discard(previousId)`. La reserva y el registro pasan por `withRlsContext`; Storage usa la sesión del dueño con `upsert: false`. `signedUrl(assetId)` tiene TTL de 60 segundos; la UI usa `GET /api/media/[id]`, autenticado en cada lectura, con `private, no-store`. Nunca se envía una URL pública ni una ruta elegida por el cliente.
+
+Un fallo antes de publicar conserva la referencia y los bytes anteriores. Un conflicto descarta solo el asset nuevo; un fallo al limpiar después de guardar no convierte el guardado confirmado en un error. Si la capacidad o el servicio fallan, se oculta el editor y se conserva el fallback. Las cuentas en eliminación reciben `ACCOUNT_INACTIVE`. Los avatares quedan fuera del JSON de colección por contrato; el respaldo administrativo y la eliminación de cuenta ya los cubren desde 0014.
+
+### Purga local
+
+```powershell
+pnpm media:purge:local --profile scratch --limit 200 --grace-seconds 86400 --json
+```
+
+El script administrativo `scripts/jobs/purge-media-assets.mjs`, fuera de Next, sigue el patrón de `assets:purge:local`: `media_asset_purge_candidates(null, límite, gracia)` → `media_asset_purge_confirm(null, ids, gracia)` bajo bloqueo → eliminación de objetos por Storage. Respeta referencias actuales y versiones anteriores. Recoge cuarentenas vencidas, imágenes sin referencias tras la gracia (por defecto 24 horas) y objetos sin fila de más de 10 minutos. Un borrado de Storage fallido sale con 8; el objeto queda huérfano y se recoge en una ejecución posterior. Solo informa cantidades, nunca rutas, IDs ni credenciales; solo admite destino local y perfiles `main|scratch|test` con las guardas de identidad existentes. Su programación periódica en despliegue corresponde a F4.
+
+### Validación
+
+- `pnpm test`: formatos admitidos y rechazados, límites por tipo, EXIF/GPS eliminados y publicación/limpieza del avatar ante fallos.
+- `pnpm test:scripts`: argumentos, bandera estricta y purga confirmada/reintentable.
+- `pnpm test:integration:media --profile scratch|test [--reuse-build]`: acciones reales de subida, reemplazo y retirada, persistencia, metadata intacta, dos usuarios, ruta manipulada, versión antigua, red de Storage simulada (sin parar servicios), purga y cuenta inactiva. Usa cuentas desechables del harness de producto; está registrado en `SUITES` y el runner activa la capacidad solo en su proceso aislado.
+- `tests/e2e/flujos/avatar.spec.ts`: previsualización, recorte, persistencia, foto de cabecera, fallo de red que conserva el avatar, menú móvil y retirada. El runner E2E activa la capacidad. La prueba exige que la cuenta ficticia no tenga un avatar ajeno al ensayo y limpia sus filas y objetos en `finally`.
+
+Evidencia y resultados: [O13/exp-06](validacion/2026-10-25/O13/exp-06/informe.md). Los recorridos de integración y E2E los ejecuta el coordinador con su stack autorizado.
+
 ## Ubicación física y fotos de referencia · U-PRO-03 (O13)
 
 `/locations` organiza dónde están los libros en casa: un árbol propio de la cuenta (habitación, estantería, armario, caja, balda u otra) de hasta 8 niveles y 500 ubicaciones. Es un **complemento** de la estantería lógica: ninguna acción de ubicaciones toca `copies.shelf_id`, el estado de lectura ni la versión de la ficha. Contrato de datos: [contratos-o13 → U-PRO-03](spec-pendientes/contratos-o13.md#u-pro-03--ubicación-física) (tablas `locations` y `copy_locations` de 0014; esta unidad no añade schema).
@@ -1514,11 +1585,11 @@ La ficha (`/book/[id]`) muestra la sección **Ubicación física** (`components/
 
 ### Fotos privadas
 
-- Flujo de 0014 en `lib/media/server.ts` (`beginUpload` → `upload` con la sesión del dueño → `register` → cita → `discard`, y `signedUrl` de 60 s): **versión mínima creada por U-PRO-03** con la ruta y firma acordadas; se concilia con la de U-EXP-06 al integrar. La normalización está en `lib/media/images.ts`.
-- El servidor valida firma, marcado y políglotas, decodifica con `sharp` (hasta 5 MiB y 16 MP de entrada) y **reencodifica a WebP de 2048 px como máximo sin EXIF, GPS, XMP ni ICC**. Solo esos bytes llegan al bucket privado `biblib-media` (`<dueño>/location/<asset>`).
+- Usa el flujo de imágenes privadas de U-EXP-06 (`lib/media/server.ts`): `beginUpload("location")` → `upload` (normaliza y sube con la sesión del dueño) → `register` → cita en `locations.photo_asset_id`; `discard` si algo falla o al soltar la anterior.
+- El servidor valida firma, marcado y políglotas, decodifica con `sharp` (`normalizeMediaImage`: hasta 5 MiB y 4096 px por lado) y **reencodifica a WebP sin EXIF, GPS, XMP ni ICC**. Solo esos bytes llegan al bucket privado `biblib-media` (`<dueño>/location/<asset>`).
 - La foto anterior solo se suelta cuando la nueva está registrada y citada con la versión vista; si algo falla, se descarta la nueva y la anterior sigue. La sustituida o la de una ubicación borrada se descarta y su objeto se retira con la sesión del dueño, **salvo que la cite una versión anterior** de la biblioteca: entonces se conserva para poder restaurarla.
-- Lectura: `GET /api/locations/<id>/photo` (sesión, RLS, sha256 verificado, `private, no-store`, `CSP sandbox`). Ajena, inexistente o sin foto: 404. Nunca hay URL pública ni viaja a Open Library u otro proveedor.
-- **Purga:** el script administrativo que borra objetos huérfanos de `biblib-media` (sobre `media_asset_purge_candidates`/`_confirm`) no lo crea esta unidad, para no duplicar el de U-EXP-06. Mientras no exista, un objeto que no se pudo retirar queda como candidato de esa purga.
+- Lectura: la ruta autenticada común `GET /api/media/<asset>` de U-EXP-06 (sesión, asset propio y listo, `private, no-store`, `CSP sandbox`). Ajena, inexistente o ya descartada: 404; sin sesión: 401. Nunca hay URL pública ni viaja a Open Library u otro proveedor.
+- **Purga:** un objeto que no se pudo retirar con la sesión del dueño, o una foto sustituida que solo citaba una versión anterior, la recoge `pnpm media:purge:local` (U-EXP-06) cuando ya nada la cita.
 
 ### Formatos y eliminación
 

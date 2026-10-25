@@ -38,11 +38,11 @@ test("subir: se guarda un WebP sin EXIF ni GPS, solo en la ruta del dueño, y se
   assert.equal(stored.includes(Buffer.from("Exif")), false)
   assert.equal(stored.includes(Buffer.from("GPS")), false)
 
-  const served = await ctx.get(`/api/locations/${location.id}/photo?v=${updated.photoAssetId}`, session)
+  const served = await ctx.get(`/api/media/${updated.photoAssetId}`, session)
   assert.equal(served.status, 200)
   assert.equal(served.contentType, "image/webp")
   assert.equal(sha(served.body), asset.sha256)
-  assert.equal((await ctx.get(`/api/locations/${location.id}/photo`, null)).status, 401, "sin sesión no se sirve")
+  assert.equal((await ctx.get(`/api/media/${updated.photoAssetId}`, null)).status, 401, "sin sesión no se sirve")
   const publicUrl = ctx.admin.storage.from(MEDIA_BUCKET).getPublicUrl(asset.storage_key).data.publicUrl
   assert.notEqual((await fetch(publicUrl)).status, 200, "el bucket no es público")
   location = updated
@@ -74,7 +74,8 @@ test("sustituir retira la anterior; una sustitución con versión antigua falla 
   const assets = await ctx.mediaAssets(a.id)
   assert.deepEqual(assets.map((asset) => asset.id), [replaced.photoAssetId], "el asset anterior se descarta")
   assert.deepEqual(await ctx.objects(a.id), [`${a.id}/location/${replaced.photoAssetId}`], "y su objeto se retira")
-  assert.equal((await ctx.get(`/api/locations/${location.id}/photo`, session)).status, 200)
+  assert.equal((await ctx.get(`/api/media/${replaced.photoAssetId}`, session)).status, 200)
+  assert.equal((await ctx.get(`/api/media/${previous.id}`, session)).status, 404, "la anterior ya no se sirve")
 
   // Versión antigua: la nueva imagen se descarta y la vigente sigue citada y legible.
   const stale = await ctx.uploadPhoto(session, location, await photoWithExif({ color: { r: 200, g: 200, b: 0 } }))
@@ -90,7 +91,7 @@ test("quitar la foto la descarta; borrar una ubicación con foto también retira
   assert.equal(removed.photoAssetId, null)
   assert.deepEqual(await ctx.mediaAssets(a.id), [])
   assert.deepEqual(await ctx.objects(a.id), [])
-  assert.equal((await ctx.get(`/api/locations/${location.id}/photo`, session)).status, 404)
+  assert.equal((await ctx.get(`/api/media/${location.photoAssetId}`, session)).status, 404)
   const withPhoto = value(await ctx.uploadPhoto(session, removed, await photoWithExif()))
   value(await ctx.call("deleteLocationAction", [{ id: location.id, expectedVersion: withPhoto.version }], session))
   assert.deepEqual(await ctx.mediaAssets(a.id), [])

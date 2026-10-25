@@ -118,7 +118,7 @@ test("ubicaciones: foto de referencia con vista previa, guardada sin URL públic
     await expect(page.getByRole("status").filter({ hasText: "Foto guardada." })).toBeVisible()
     const photo = page.getByRole("img", { name: `Foto de ${room}` })
     await expect(photo).toBeVisible()
-    await expect(photo).toHaveAttribute("src", /^\/api\/locations\/[0-9a-f-]{36}\/photo\?v=/)
+    await expect(photo).toHaveAttribute("src", /^\/api\/media\/[0-9a-f-]{36}$/)
     // La imagen llega de la ruta autenticada del propio origen y se decodifica (no es un enlace roto).
     await expect.poll(() => photo.evaluate((image: HTMLImageElement) => image.complete ? image.naturalWidth : 0)).toBeGreaterThan(0)
     await capture(page, testInfo, "foto-ubicacion")
