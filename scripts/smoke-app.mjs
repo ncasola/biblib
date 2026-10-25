@@ -71,7 +71,7 @@ async function cleanup() {
   browserSocket?.close()
   await Promise.all([...children].map(stop))
   if (authServer) await new Promise((resolve) => authServer.close(resolve))
-  if (containerStarted) await command(docker, ["rm", "--force", containerName]).catch(() => {})
+  if (containerStarted) await command(docker, ["rm", "--force", "--volumes", containerName]).catch(() => {})
   if (workspace) {
     const resolved = await realpath(workspace)
     const temporaryRoot = await realpath(tmpdir())

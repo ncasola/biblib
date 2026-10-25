@@ -13,6 +13,17 @@ export async function docker(ctx, args, options = {}) {
   return result.stdout
 }
 
+// Windows limita la línea de comandos (~32 KiB): con cientos de volúmenes un solo `inspect` falla con
+// «Argument list too long». Se inspecciona por lotes; los lotes son secuenciales para no saturar el motor.
+const INSPECT_BATCH = 64
+async function inspectAll(ctx, kind, names, format) {
+  const result = []
+  for (let i = 0; i < names.length; i += INSPECT_BATCH) {
+    result.push(...records(await docker(ctx, [kind, "inspect", ...names.slice(i, i + INSPECT_BATCH), "--format", format])))
+  }
+  return result
+}
+
 // Lista blanca de campos: nunca se inspeccionan Config.Env, comandos ni logs.
 export async function inventory(ctx) {
   const [containerIds, networkNames, volumeNames] = await Promise.all([
@@ -21,9 +32,9 @@ export async function inventory(ctx) {
     docker(ctx, ["volume", "ls", "--format", "{{.Name}}"]),
   ])
   const [containers, networks, volumes] = await Promise.all([
-    lines(containerIds).length ? docker(ctx, ["container", "inspect", ...lines(containerIds), "--format", '{"id":{{json .Id}},"name":{{json .Name}},"labels":{{json .Config.Labels}},"status":{{json .State.Status}},"health":{{with index .State "Health"}}{{json .Status}}{{else}}null{{end}},"ports":{{json .NetworkSettings.Ports}},"networks":{{json .NetworkSettings.Networks}},"mounts":{{json .Mounts}}}']).then(records) : [],
-    lines(networkNames).length ? docker(ctx, ["network", "inspect", ...lines(networkNames), "--format", '{"id":{{json .Id}},"name":{{json .Name}},"labels":{{json .Labels}}}']).then(records) : [],
-    lines(volumeNames).length ? docker(ctx, ["volume", "inspect", ...lines(volumeNames), "--format", '{"id":{{json .Name}},"name":{{json .Name}},"createdAt":{{json .CreatedAt}},"labels":{{json .Labels}}}']).then(records) : [],
+    inspectAll(ctx, "container", lines(containerIds), '{"id":{{json .Id}},"name":{{json .Name}},"labels":{{json .Config.Labels}},"status":{{json .State.Status}},"health":{{with index .State "Health"}}{{json .Status}}{{else}}null{{end}},"ports":{{json .NetworkSettings.Ports}},"networks":{{json .NetworkSettings.Networks}},"mounts":{{json .Mounts}}}'),
+    inspectAll(ctx, "network", lines(networkNames), '{"id":{{json .Id}},"name":{{json .Name}},"labels":{{json .Labels}}}'),
+    inspectAll(ctx, "volume", lines(volumeNames), '{"id":{{json .Name}},"name":{{json .Name}},"createdAt":{{json .CreatedAt}},"labels":{{json .Labels}}}'),
   ])
   return { containers: containers.map((c) => ({ ...c, name: c.name.replace(/^\//, "") })), networks, volumes }
 }

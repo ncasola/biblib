@@ -15,7 +15,7 @@ function cleanup() {
   if (!containerId) return
   const ownedId = containerId
   containerId = undefined
-  spawnSync("docker", ["rm", "--force", ownedId], { stdio: "ignore" })
+  spawnSync("docker", ["rm", "--force", "--volumes", ownedId], { stdio: "ignore" })
 }
 
 process.once("SIGINT", () => { cleanup(); process.exit(130) })
