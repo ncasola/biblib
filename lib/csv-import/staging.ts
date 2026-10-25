@@ -1,11 +1,11 @@
 import { createHash, randomUUID } from "node:crypto"
-import { and, asc, eq, sql } from "drizzle-orm"
+import { and, asc, desc, eq, inArray, sql } from "drizzle-orm"
 import { withRlsContext, type DatabaseTransaction } from "../db/client"
 import { ensureDefaultShelf } from "../db/library"
 import { importPreviews, importSessionChunks, importSessionParts, importSessionRows, importSessions } from "../db/schema"
 import { DomainError } from "../domain-errors"
 import { createBackupV2 } from "../backup-v2"
-import { buildImportPlan, canonicalJson, IMPORT_RULES_VERSION, previewTtlMinutes } from "../import-plan"
+import { buildImportPlan, canonicalJson, IMPORT_RULES_VERSION, MAX_ACTIVE_PREVIEWS, previewTtlMinutes } from "../import-plan"
 import { lockCollection, previewAllocator, readCollectionSnapshot } from "../import-publisher"
 import { parseLibraryImport } from "../library-import"
 import { normalizeCsv, type NormalizedCsv } from "./normalization"
@@ -207,6 +207,11 @@ export async function prepareCsv(owner: string, input: PrepareCsvImportInput): P
       if (previous?.inputDigest === digest && previous.revision === revision) return { ...binding, version: current.version, previewId: previous.id, revision, digest, expiresAt: previous.expiresAt.toISOString(), plan: previous.plan, issues: normalized.issues.slice(0, 200), issueCount: normalized.issues.length }
       await tx.update(importPreviews).set({ expiresAt: sql`now()` }).where(eq(importPreviews.id, current.previewId))
     }
+    // Mismo cupo y retención de vistas previas que JSON, bajo el bloqueo de colección compartido.
+    await tx.delete(importPreviews).where(and(eq(importPreviews.userId, owner), sql`${importPreviews.expiresAt} < now() - interval '1 day'`))
+    const surplus = await tx.select({ id: importPreviews.id }).from(importPreviews).where(eq(importPreviews.userId, owner))
+      .orderBy(desc(importPreviews.createdAt), desc(importPreviews.id)).offset(MAX_ACTIVE_PREVIEWS - 1)
+    if (surplus.length) await tx.delete(importPreviews).where(and(eq(importPreviews.userId, owner), inArray(importPreviews.id, surplus.map((row) => row.id))))
     const previewId = randomUUID()
     const plan = buildImportPlan({ imported: library, current: await readCollectionSnapshot(tx, owner), mode: input.mode, duplicatePolicy: input.duplicatePolicy, allocateId: previewAllocator(session.id) })
     plan.csv = binding
