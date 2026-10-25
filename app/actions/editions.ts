@@ -9,7 +9,7 @@ import { normalizeIsbn } from "@/lib/isbn"
 import { createCopy, createEdition, editionCopies, findBook, findBookByIsbn, mergeEditions, updateEdition, type MergeEditionsResult, type UpdateEditionResult } from "@/lib/db/editions"
 import { editionCatalogue } from "@/lib/db/model"
 import { getRequiredUserId } from "@/lib/server-user"
-import { idempotencyKeySchema, parseBookInput, parseUuid, statusSchema, uuidSchema } from "@/lib/book-validation"
+import { idempotencyKeySchema, parseBookInput, parseUuid, statusSchema, uuidSchema, versionTokenSchema } from "@/lib/book-validation"
 import { DomainError, translateDatabaseError } from "@/lib/domain-errors"
 import { domainMutation } from "@/lib/server-action"
 import { readCatalogConfig } from "@/lib/bibliographic-catalog/config"
@@ -37,7 +37,7 @@ const createCopySchema = z.object({
 const mergeSchema = z.object({
   sourceIds: z.array(uuidSchema).min(1).max(20),
   targetId: uuidSchema,
-  expectedVersions: z.record(uuidSchema, uuidSchema),
+  expectedVersions: z.record(uuidSchema, versionTokenSchema),
   expectedRevision: uuidSchema,
   idempotencyKey: idempotencyKeySchema,
 }).strict()
@@ -89,7 +89,7 @@ export async function createEditionAction(input: unknown) {
 export async function updateEditionAction(input: unknown) {
   return domainMutation(async (): Promise<UpdateEditionResult> => {
     const userId = await getRequiredUserId()
-    const envelope = parse(z.object({ editionId: uuidSchema, expectedVersion: uuidSchema, confirmCopies: z.number().int().min(2).optional(), idempotencyKey: idempotencyKeySchema.optional() }).passthrough(), input,
+    const envelope = parse(z.object({ editionId: uuidSchema, expectedVersion: versionTokenSchema, confirmCopies: z.number().int().min(2).optional(), idempotencyKey: idempotencyKeySchema.optional() }).passthrough(), input,
       "Indica la edición y la versión que revisaste.")
     const book = parseBookInput({ ...(input as Record<string, unknown>), status: "unread" })
     try {

@@ -3,6 +3,7 @@
 import { createHash } from "node:crypto"
 import { and, eq } from "drizzle-orm"
 import { z } from "zod"
+import { versionTokenSchema } from "@/lib/book-validation"
 import type { ActionResult } from "@/lib/action-result"
 import { OPEN_LIBRARY_COVERS_HOST } from "@/lib/bibliographic-catalog/providers/endpoints"
 import { assertBookVersion, bookVersionConflict } from "@/lib/book-version"
@@ -28,11 +29,11 @@ import { ownerStorage, purgeOwnerAssets, runAssetJob } from "@/lib/assets/server
 // cambia hasta que la imagen está validada, registrada y adjunta con la versión de la ficha.
 
 const keySchema = z.string().regex(IDEMPOTENCY_KEY_PATTERN)
-const requestSchema = z.object({ entityId: z.uuid(), expectedVersion: z.uuid(), providerCoverKey: z.string().max(80), idempotencyKey: keySchema })
+const requestSchema = z.object({ entityId: z.uuid(), expectedVersion: versionTokenSchema, providerCoverKey: z.string().max(80), idempotencyKey: keySchema })
 const jobSchema = z.object({ jobId: z.uuid() })
 const controlSchema = z.object({ jobId: z.uuid(), expectedVersion: z.uuid() })
-const attachSchema = z.object({ assetId: z.uuid(), entityId: z.uuid(), expectedVersion: z.uuid() })
-const detachSchema = z.object({ entityId: z.uuid(), expectedVersion: z.uuid() })
+const attachSchema = z.object({ assetId: z.uuid(), entityId: z.uuid(), expectedVersion: versionTokenSchema })
+const detachSchema = z.object({ entityId: z.uuid(), expectedVersion: versionTokenSchema })
 const uploadSchema = z.object({ entityId: z.uuid(), mime: z.enum(ACCEPTED_IMAGE_TYPES), bytes: z.coerce.number().int().min(1) })
 
 function parse<T>(schema: z.ZodType<T>, input: unknown, message: string): T {

@@ -35,6 +35,13 @@ test("permite fichas sin ISBN sin inventarles un identificador y acepta los manu
   assert.throws(() => parseBookInput(input({ isbn: "manual-no-valido" })), invalidInput)
 })
 
+test("acepta los tokens de ficha, ejemplar y edición con forma de UUID (el plano es md5) y rechaza otros", () => {
+  const flat = "0cc175b9-c0f1-b6a8-31c3-99e269772661"
+  const parsed = parseBookInput(input({ version: flat, copyVersion: "10000000-0000-4000-8000-000000000001", editionVersion: flat }))
+  assert.deepEqual([parsed.version, parsed.editionVersion], [flat, flat])
+  assert.throws(() => parseBookInput(input({ version: "no-es-un-token" })), invalidInput)
+})
+
 test("recorta títulos y nombres y rechaza texto vacío, cantidades negativas y arrays malformados", () => {
   const parsed = parseBookInput(input({ title: "  Una ficha  ", authors: [{ name: "  Una autora  " }] }))
   assert.equal(parsed.title, "Una ficha")

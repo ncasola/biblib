@@ -5,6 +5,11 @@ import { DomainError } from "./domain-errors"
 import { catalogueProblem, catalogueSchema, normalizeCatalogue } from "./catalogue-provenance"
 
 export const uuidSchema = z.uuid({ message: "El identificador no es válido." })
+/**
+ * Token de concurrencia. El de la ficha plana (U-DAT-06) se deriva de los de ejemplar y edición con md5, así que tiene
+ * forma de UUID pero no su versión ni variante: se valida la forma, no el RFC.
+ */
+export const versionTokenSchema = z.guid({ message: "La versión de la ficha no es válida." })
 export const statusSchema = z.enum(["read", "reading", "unread", "to-read"])
 export const shelfTitleSchema = z.string().trim().min(1).max(120)
 /** Clave de idempotencia de una operación de la persona (formulario o reintento). */
@@ -16,9 +21,9 @@ const coverUrl = z.string().max(2048).refine((value) => {
 
 const bookInputSchema = z.object({
   /** Token plano de la ficha que se editó (U-DAT-02); con U-DAT-06, junto a los de ejemplar y edición. */
-  version: uuidSchema.optional(),
-  copyVersion: uuidSchema.optional(),
-  editionVersion: uuidSchema.optional(),
+  version: versionTokenSchema.optional(),
+  copyVersion: versionTokenSchema.optional(),
+  editionVersion: versionTokenSchema.optional(),
   /** Número de ejemplares de la edición compartida que la persona ha confirmado que cambian. */
   confirmSharedCopies: z.number().int().min(2).max(100_000).optional(),
   idempotencyKey: idempotencyKeySchema.optional(),
