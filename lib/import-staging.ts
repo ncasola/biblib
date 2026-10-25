@@ -329,7 +329,7 @@ async function crossValidate(tx: DatabaseTransaction, sessionId: string): Promis
         group by data->>'legacyIdentifier' having count(*) > 1) l) as legacy_dupes,
       (select count(*)::int from (select 1 from biblib.import_session_rows where session_id = ${sessionId}::uuid and kind = 'book'
         group by coalesce(data->'edition'->>'id', row_key)
-        having count(distinct (data - 'id' - 'status' - 'shelf_id' - 'shelf_name' - 'legacyIdentifier' - 'verification' - 'catalogue') || jsonb_build_object('catalogue', data->'catalogue' - 'isbnVerified')) > 1) e) as edition_conflicts,
+        having count(distinct (data - 'id' - 'status' - 'shelf_id' - 'shelf_name' - 'legacyIdentifier' - 'verification' - 'catalogue') || jsonb_build_object('catalogue', (data->'catalogue') - 'isbnVerified')) > 1) e) as edition_conflicts,
       (select count(*)::int from (select 1 from biblib.import_session_rows where session_id = ${sessionId}::uuid and kind = 'shelf' group by lower(data->>'title') having count(*) > 1) t) as title_dupes,
       (select count(*)::int from biblib.import_session_rows b where b.session_id = ${sessionId}::uuid and b.kind = 'book'
         and not exists (select 1 from biblib.import_session_rows s where s.session_id = b.session_id and s.kind = 'shelf' and s.row_key = b.data->>'shelf_id')) as orphans`)
