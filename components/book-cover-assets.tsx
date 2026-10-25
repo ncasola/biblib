@@ -110,7 +110,7 @@ export function BookCoverAssets({ book, disabled, onBookChange }: BookCoverAsset
 
   const current = book.coverAssetId ? state.current : null
   return (
-    <section aria-labelledby={`${id}-title`} className="space-y-3 rounded-2xl border border-border bg-card/80 p-4 text-sm shadow-lg">
+    <section aria-labelledby={`${id}-title`} className="surface-card space-y-3 rounded-2xl p-4 text-sm">
       <h2 id={`${id}-title`} className="font-semibold">Portada privada</h2>
       <p className="text-xs text-muted-foreground">
         {current

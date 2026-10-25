@@ -61,7 +61,7 @@ export function EditionSeriesPanel({ editionId }: { editionId: string }) {
 
   const link = state?.link
   return (
-    <section aria-labelledby="edition-series-title" className="rounded-2xl border border-border bg-card/80 p-5 shadow-lg space-y-3">
+    <section aria-labelledby="edition-series-title" className="surface-card rounded-2xl p-5 space-y-3">
       <h2 id="edition-series-title" className="text-sm font-semibold flex items-center gap-2"><Library aria-hidden="true" className="h-4 w-4" />Serie</h2>
       {loadError ? <div role="alert" className="space-y-2"><p className="text-sm text-destructive">{loadError}</p><Button type="button" variant="outline" onClick={() => { setLoadError(""); void load() }}>Reintentar</Button></div>
         : !state ? <p aria-live="polite" className="text-sm text-muted-foreground">Cargando serie...</p>

@@ -14,7 +14,7 @@ import type { Book, Shelf } from "@/lib/types"
 // Ejemplares de una edición (U-DAT-06). Añadir un ejemplar es siempre una acción explícita: la respuesta a
 // «ya existe» ofrece abrir el ejemplar guardado o añadir otro, nunca lo hace sola.
 
-const selectClass = "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base text-foreground focus-visible:outline-2 focus-visible:outline-ring"
+const selectClass = "flex h-10 w-full rounded-md border border-input bg-input px-3 py-2 text-base text-foreground focus-visible:outline-2 focus-visible:outline-ring"
 const statusLabels: Record<Book["status"], string> = { unread: "Sin leer", reading: "Leyendo", read: "Leído", "to-read": "Por leer" }
 
 /** Identificador visible: ISBN-13, o «Sin ISBN» y el identificador anterior si no es un `manual-…`. */
@@ -62,7 +62,7 @@ export function ExistingEditionPanel({ book, shelves }: { book: Book; shelves: S
   const [created, setCreated] = useState<Book | null>(null)
   const copies = book.edition?.copies ?? 1
   return (
-    <section className="rounded-2xl border border-border bg-card/80 p-6 shadow-xl space-y-4" aria-labelledby="existing-edition-title">
+    <section className="surface-card rounded-2xl p-6 space-y-4" aria-labelledby="existing-edition-title">
       <p id="existing-edition-title" role="status" className="flex items-center gap-2 font-semibold"><CheckCircle aria-hidden="true" className="h-5 w-5" />{created ? "Ejemplar añadido a tu biblioteca" : "Esta edición ya está en tu biblioteca"}</p>
       <BookCover cover={displayCover(created ?? book)} title={book.title} className="w-28" sizes="112px" />
       <h2 className="text-xl font-bold">{book.title}</h2>
@@ -89,7 +89,7 @@ export function EditionCopiesPanel({ book, shelves }: { book: Book; shelves: She
   }, [book.id, count, added])
   const others = (copies ?? []).filter((copy) => copy.id !== book.id)
   return (
-    <section className="rounded-2xl border border-border bg-card/80 p-5 shadow-lg space-y-3" aria-labelledby="edition-copies-title">
+    <section className="surface-card rounded-2xl p-5 space-y-3" aria-labelledby="edition-copies-title">
       <h2 id="edition-copies-title" className="text-sm font-semibold">Ejemplares de esta edición</h2>
       <p className="text-sm text-muted-foreground">{count + (added ? 1 : 0) === 1 ? "Tienes un ejemplar de esta edición." : `Tienes ${count + (added ? 1 : 0)} ejemplares de esta edición. Los datos bibliográficos son comunes; estado, estantería y comprobación son de cada uno.`}</p>
       {failed && <p role="alert" className="text-sm text-destructive">No se pudieron cargar los otros ejemplares.</p>}
