@@ -162,7 +162,7 @@ function LocationDetails({ entry, tree, onChanged, onDeleted }: { entry: Locatio
       const result = unwrapAction(await deleteLocationAction({ id: entry.id, expectedVersion: entry.version, contents }))
       setDeleteOpen(false)
       const moved = [
-        result.movedChildren ? `${result.movedChildren} ${result.movedChildren === 1 ? "ubicación pasó" : "ubicaciones pasaron"} a ${parentName ? `«${parentName}»` : "el nivel superior"}` : "",
+        result.movedChildren ? `${result.movedChildren} ${result.movedChildren === 1 ? "ubicación pasó" : "ubicaciones pasaron"} ${parentName ? `a «${parentName}»` : "al nivel superior"}` : "",
         result.movedCopies ? `${result.movedCopies} ${result.movedCopies === 1 ? "ejemplar pasó" : "ejemplares pasaron"} a «${parentName}» con su hueco y posición` : "",
         result.unassignedCopies ? `${result.unassignedCopies} ${result.unassignedCopies === 1 ? "ejemplar quedó" : "ejemplares quedaron"} sin ubicación física` : "",
       ].filter(Boolean).join("; ")
@@ -204,7 +204,7 @@ function LocationDetails({ entry, tree, onChanged, onDeleted }: { entry: Locatio
         <AlertDialogHeader>
           <AlertDialogTitle>¿Borrar «{entry.name}»?</AlertDialogTitle>
           <AlertDialogDescription>{occupied
-            ? `No está vacía: contiene ${contentsLabel(entry).toLowerCase()}. Puedes cancelar y vaciarla antes, o pasar su contenido a ${parentName ? `«${parentName}»` : "el nivel superior"}${entry.copies && !parentName ? " (sus ejemplares quedarán sin ubicación física)" : ""}. Ningún libro se borra ni cambia de estantería.`
+            ? `No está vacía: contiene ${contentsLabel(entry).toLowerCase()}. Puedes cancelar y vaciarla antes, o pasar su contenido ${parentName ? `a «${parentName}»` : "al nivel superior"}${entry.copies && !parentName ? " (sus ejemplares quedarán sin ubicación física)" : ""}. Ningún libro se borra ni cambia de estantería.`
             : "Está vacía. Ningún libro cambia."}</AlertDialogDescription>
         </AlertDialogHeader>
         {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
