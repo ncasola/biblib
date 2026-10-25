@@ -81,6 +81,9 @@ Todas son propiedad de `postgres`, fijan `search_path=pg_catalog` y no conceden 
 | 0005 | `library_job_create(...)`, `library_job_control(...)` | **Sí** (el dueño sale de `auth.uid()`) |
 | 0005 | `library_job_claim`, `library_job_fence`, `library_job_renew`, `account_is_active`, `account_set_state` | No (worker y ciclo de cuenta) |
 
+| 0013 | `account_write_allowed()`, `account_deletion_request(text)`, `account_deletion_status()` | **Sí** (guarda de las políticas RESTRICTIVE; solicitar y consultar la propia eliminación con `auth.uid()`) |
+| 0013 | `account_deletion_claim`, `_renew`, `_lease`, `_purge`, `_objects`, `_advance`, `_fail`, `_complete`, `_retry`, `_suppress`, `_purge_marks`, `_step_remaining`, `account_residue` | No (worker administrativo y restore) |
+
 `biblib.rotate_book_version()` (0002) no es definer; es la función del trigger de versión y no se puede invocar fuera de un trigger.
 
 **Cómo accede la app:** el servidor de Next abre Postgres con `SUPABASE_DB_URL` y ejecuta cada acción en una transacción con el rol `authenticated` local a la transacción (`set_config('role', 'authenticated', true)`, equivalente a `set local role`) y los claims del usuario (`lib/db/client.ts`), de modo que RLS y los grants anteriores se aplican igual que a una sesión real. La credencial de base sigue siendo un secreto de servidor con acceso total: un rol dedicado para producción queda como mejora fuera de esta unidad.
@@ -218,6 +221,14 @@ Esto no prueba un CDN: localmente no hay caché compartida. La garantía local e
 - **SSRF.** La adquisición nunca recibe una URL. Usa hosts HTTPS fijos por proveedor, la IP resuelta una vez y fijada, y bloquea redes privadas, link-local, metadatos cloud, IPv4 mapeada, NAT64 y 6to4. No sigue redirecciones, solo admite el puerto 443 y tiene límites de 5 MiB y 8 s ([operación](operacion.md#portadas-privadas--u-dat-10-o11)).
 - **Funciones `SECURITY DEFINER` para `authenticated`** (lista de `tests/integration/security/exposicion.test.mjs`): `cover_asset_request`, `cover_asset_begin_upload`, `cover_asset_authorize`, `cover_asset_register`, `cover_asset_discard`, `cover_asset_revalidate` y `cover_object_access` (la guarda de las políticas). Todas toman el dueño de `auth.uid()`. La purga, la cuota y el restore no se conceden a ningún rol de cliente.
 - **Huella de plataforma de la promoción** (`platformFingerprint`): excluye las políticas `biblib_*` de `storage.objects`, que son del dominio y comprueba el manifest de objetos. Cualquier otro cambio en `auth` o `storage` sigue haciendo fallar la promoción.
+## Eliminación de cuenta (U-OPS-03)
+
+- **Cuenta de la sesión, nunca del cliente.** `requestAccountDeletionAction` toma la cuenta de `getRequiredUserId()` y rechaza cualquier campo adicional; `account_deletion_request` no tiene parámetro de cuenta (`auth.uid()`). Exige la frase escrita y un inicio de sesión de hace menos de 15 minutos según el claim `amr` del JWT verificado con el JWKS de GoTrue.
+- **Revocación.** La acción cierra todas las sesiones con el logout global de GoTrue usando el token del propio usuario (Next sigue sin `service_role`). El worker administrativo, fuera de Next, bloquea la cuenta en GoTrue (`ban_duration`) para que un refresh token superviviente o un inicio de sesión nuevo (también con Google) fallen, y al final borra la identidad. `admin.signOut(jwt, "global")` exige un JWT del usuario que el proceso administrativo no tiene y que no se guarda: por eso se combina el logout del propio usuario con el bloqueo (decisión de U-OPS-03, propuesta al coordinador).
+- **JWT antiguo.** Hasta que caduca (1 h) un JWT emitido antes de la solicitud sigue siendo criptográficamente válido para la Data API y Storage, que no consultan las sesiones de GoTrue. No escribe: `biblib` no está expuesto en la Data API; las políticas RESTRICTIVE `*_insert|update|delete_active` de todas las tablas con escritura de cliente, `lock_library()` y las funciones definer de escritura llaman a `account_write_allowed()` (BD001); `cover_object_access` exige cuenta activa para subir y retirar en `storage.objects`. Una cuenta ya borrada tampoco escribe: su marca basta para la guarda y las FK a `auth.users` impiden recrear filas. Lee lo suyo hasta que el worker lo retira.
+- **Sin vía de reactivación.** `account_lifecycle` y `account_deletions` no tienen privilegios de escritura para clientes (`account_deletions` ni siquiera de lectura: el estado sale de `account_deletion_status()` sin códigos técnicos); `account_set_state` no es ejecutable por clientes y rechaza una cuenta en eliminación (BD002).
+- **Prueba:** `tests/db/account-deletion.sql` (guardas, permisos e inventario), `tests/integration/account/` (acciones, Data API y Storage con el JWT antiguo, GoTrue) y la lista de definers de `tests/integration/security/exposicion.test.mjs`.
+
 ## Pendientes
 
 Ninguno de estos puntos se ha verificado en local; no se presentan como superados.

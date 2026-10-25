@@ -131,9 +131,19 @@ Desde 0011 la colección vive en `biblib.works`, `biblib.editions` y `biblib.cop
 
 **Recuperación del cambio de modelo.** Hasta aplicar 0011 la aplicación anterior sigue funcionando sobre 0010 (la sincronización mantiene el modelo al día) y `biblib.model_compare(null)` informa de cualquier diferencia. Después de 0011 no se promete volver al escritor anterior: con varias copias por edición o libros sin ISBN, `books` ya no puede representarlos. Si algo falla, se detienen las escrituras y se corrige hacia delante o se restaura el respaldo ensayado (el de antes del cambio, con su head, y se repite la migración).
 
+#### Supresiones de cuentas al restaurar (U-OPS-03)
+
+Un respaldo anterior a una eliminación de cuenta contiene esa cuenta entera. Restore la retira **antes de terminar y de abrir el destino** (fase `suppress`, tras `rotate`), con las supresiones que conoce: las marcas de `biblib.account_deletions` que trae el propio respaldo (también solicitudes a medias), el registro privado del perfil (`.biblib/state/<perfil>-suppressions.json`, que mantienen `account:deletions:local` y `db:backup:local` y que sobrevive a `db:reset:local`) y, si se indica, `--suppressions <registro.json>` exportado de otro entorno. Para cada cuenta que vuelve: retira sus objetos de Storage, borra su identidad con la API admin de GoTrue (la cascada de `auth.users` retira sus filas) y deja su marca `completed` con `account_deletion_suppress`. Si queda cualquier resto, falla con **11** y el destino no se abre. El recibo guarda solo cantidades y los hechos de las tablas que cambian; nunca IDs.
+
+- **Respaldo anterior a 0013.** Las identidades se retiran igual; la marca no se puede escribir hasta migrar (el recibo lo avisa en `review`) y el registro del perfil la conserva.
+- **Otro entorno.** Restaurar en un perfil una copia de otro exige su registro: `--suppressions .biblib/state/<perfil de origen>-suppressions.json`. En producción (U-INF-07) el registro es parte del procedimiento: se exporta con cada respaldo y se aplica a cualquier copia anterior.
+- **Trabajos y eliminaciones en ejecución en el respaldo.** La fase `rotate` los reanuda como reintento (`waiting_retry`, sin lease, fencing nuevo): un trabajador los reclama de nuevo tras el restore y revalida la cuenta.
+
+Ensayo G12 en scratch: [O12/ops-03](validacion/2026-10-25/O12/ops-03/informe.md).
+
 ### Verificación (`db:restore:verify`)
 
-Comprueba los archivos del respaldo; que hay un restore completado de ese respaldo; el ledger idéntico; el manifest de objetos de U-INF-04 (RLS, políticas, grants, FK, índices, columnas, función y trigger de versión) y los hechos de catálogo idénticos al origen; cantidades, claves y contenido por tabla (dominio y ledger completos salvo el token rotado; Auth y Storage por cantidad y claves); que ningún token coincide con el respaldo; la muestra de fichas; sesiones GoTrue reales de A y B con `tests/integration/support/session.mjs`, sus IDs restaurados y RLS con sus claims (solo ven lo suyo, actualizar lo ajeno afecta 0 filas); buckets y cada objeto Storage con su sha256. Escribe el informe en `<respaldo>/rehearsals/` con duración del restore, de la verificación y total, discrepancias y la ventana de datos perdidos, y lo enlaza desde el recibo. Cualquier discrepancia sale con **11**.
+Comprueba los archivos del respaldo; que hay un restore completado de ese respaldo; el ledger idéntico; el manifest de objetos de U-INF-04 (RLS, políticas, grants, FK, índices, columnas, función y trigger de versión) y los hechos de catálogo idénticos al origen; cantidades, claves y contenido por tabla (dominio y ledger completos salvo el token rotado; Auth y Storage por cantidad y claves); que ningún token coincide con el respaldo; la muestra de fichas; sesiones GoTrue reales de A y B con `tests/integration/support/session.mjs`, sus IDs restaurados y RLS con sus claims (solo ven lo suyo, actualizar lo ajeno afecta 0 filas); buckets y cada objeto Storage con su sha256. Con supresiones (U-OPS-03), las tablas que cambió la fase `suppress` se comparan con los hechos que registró tras aplicarla, los tokens y la muestra descuentan lo suprimido, los objetos de esas cuentas no se esperan y `suppressions.applied` comprueba que ninguna cuenta suprimida tiene identidad, filas ni objetos. Escribe el informe en `<respaldo>/rehearsals/` con duración del restore, de la verificación y total, discrepancias y la ventana de datos perdidos, y lo enlaza desde el recibo. Cualquier discrepancia sale con **11**.
 
 | Código | Significado en estos comandos |
 | --- | --- |
@@ -150,7 +160,7 @@ Comprueba los archivos del respaldo; que hay un restore completado de ese respal
 ## Antes de abrir tráfico tras una restauración
 
 1. Ejecutar `db:restore:verify` sin discrepancias.
-2. Aplicar las supresiones de cuentas posteriores al respaldo (U-OPS-03).
+2. Comprobar que la fase `suppress` aplicó las supresiones de cuentas posteriores al respaldo (U-OPS-03): `suppressions.applied` en verify. Si el respaldo viene de otro entorno, repetir el restore con su registro (`--suppressions`).
 3. Registrar qué escrituras posteriores a `createdAt` del recibo se pierden o se recuperan por otra vía.
 4. Revisar la lista `review` de la rotación y decidir qué trabajos pueden reanudarse.
 5. Migraciones pendientes tras restaurar (respaldo de un head anterior): `db:plan:local` y `db:migrate:local`.
