@@ -236,7 +236,12 @@ export function ShelfViewer3D({ books, returnPath, shelfTitle, wood = "nogal" }:
     setActiveId(bookId)
     setSelectedId(next)
     if (book) setAnnouncement(next ? `«${book.title}» fuera de la balda; su ficha está en el panel.` : `«${book.title}» devuelto a la balda.`)
-  }, [books, selectedId])
+    // De frente (móvil) el panel queda al pie: el lomo sacado se centra por encima de él.
+    if (next && view === "frente") {
+      const behavior = window.matchMedia(REDUCED_MOTION_QUERY).matches ? "auto" : "smooth"
+      requestAnimationFrame(() => spines.current.get(next)?.scrollIntoView({ block: "center", behavior }))
+    }
+  }, [books, selectedId, view])
 
   const putBack = useCallback(() => {
     if (!selectedId) return
@@ -352,7 +357,7 @@ export function ShelfViewer3D({ books, returnPath, shelfTitle, wood = "nogal" }:
                 <dd data-estado={selected.book.status}>{SCENE_STATUS_LABELS[selected.book.status]}</dd>
               </div>
             </dl>
-            <div className="flex flex-col gap-2.5">
+            <div className="s3-actions">
               <Link
                 className="s3-action"
                 href={buildBookDetailHref(selected.book.id, `${returnPath}#${bookRowAnchor(selected.book.id)}`)}

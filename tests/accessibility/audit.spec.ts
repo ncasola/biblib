@@ -64,7 +64,8 @@ for (const mode of ["light", "dark"] as const) {
       }
       if (name === "3d") {
         const island = page.getByRole("button", { name: /^La isla de papel, de Bruno Ficticio./ })
-        await island.click()
+        // Se pulsa la cara visible del lomo: la caja del botón incluye la profundidad proyectada del libro.
+        await island.locator(".s3-spine").click()
         await expect(island).toHaveAttribute("aria-pressed", "true")
         await expect(page.getByRole("link", { name: "Abrir ficha" })).toBeVisible()
         await audit(page, info, `${mode}-3d-seleccion`)

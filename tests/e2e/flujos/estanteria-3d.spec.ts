@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto"
 import { mkdirSync } from "node:fs"
 import path from "node:path"
 import type { Locator, Page } from "@playwright/test"
@@ -21,6 +22,16 @@ async function seedShelf(data: Data, slug: string, count: number) {
 
 function spine(page: Page, title: string): Locator {
   return page.getByRole("button", { name: new RegExp(`^${title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}, de `) })
+}
+
+/**
+ * Pulsa la cara visible del lomo, como haría una persona. La caja del botón incluye la
+ * profundidad del libro (92 px) proyectada, y con el mueble en ángulo su centro cae sobre
+ * el lomo vecino.
+ */
+async function pull(book: Locator, how: "click" | "tap" = "click") {
+  const face = book.locator(".s3-spine")
+  await (how === "tap" ? face.tap() : face.click())
 }
 
 function panel(page: Page): Locator {
@@ -50,7 +61,7 @@ test("estantería 3D: sacar un libro, abrir su ficha y volver con el foco en el 
   await expect(panel(page).getByRole("heading", { level: 2 })).toHaveText("Saca un libro de la balda")
   await expect(page.getByText("arrastr", { exact: false })).toHaveCount(0)
 
-  await book.click()
+  await pull(book)
   await expect(book).toHaveAttribute("aria-pressed", "true")
   await expect(panel(page).getByRole("heading", { level: 2 })).toHaveText(titles[2])
   await expect(panel(page)).toContainText("Autora 3")
@@ -68,7 +79,7 @@ test("estantería 3D: sacar un libro, abrir su ficha y volver con el foco en el 
   await expect(spine(page, titles[2])).toBeFocused()
 
   // Atrás desde la ficha también recupera el lomo (el historial lo recuerda).
-  await spine(page, titles[1]).click()
+  await pull(spine(page, titles[1]))
   await panel(page).getByRole("link", { name: "Abrir ficha" }).click()
   await expect(page).toHaveURL(new RegExp(`/book/${ids[1]}`))
   await page.goBack()
@@ -130,7 +141,7 @@ test.describe("movimiento reducido", () => {
     expect(await cabinet.evaluate((element) => getComputedStyle(element).transitionDuration)).toBe("0s")
 
     const book = spine(page, titles[1])
-    await book.click()
+    await pull(book)
     await expect(book).toHaveAttribute("aria-pressed", "true")
     // El libro aparece ya fuera de la balda: sin transición ni animaciones en curso.
     expect(await book.evaluate((element) => {
@@ -153,7 +164,7 @@ test.describe("móvil", () => {
     expect(await noPageOverflow(page)).toBe(true)
 
     const book = spine(page, titles[4])
-    await book.tap()
+    await pull(book, "tap")
     await expect(book).toHaveAttribute("aria-pressed", "true")
     await expect(panel(page).getByRole("link", { name: "Abrir ficha" })).toBeVisible()
     expect(await noPageOverflow(page)).toBe(true)
@@ -212,23 +223,54 @@ test("estantería 3D vacía: estado propio, sin mueble y con acceso al alta", as
 })
 
 // Evidencia visual de U-UX-02 (opt-in): `UX02_CAPTURAS=1 pnpm test:e2e:local --grep "capturas U-UX-02"`.
+// Siembra en A una estantería «Salón» con títulos de dominio público, sin la marca del run para que
+// no ocupe los lomos, y la borra al terminar (también si la prueba falla).
+const SALON: Array<[string, string, number, "read" | "reading" | "unread" | "to-read"]> = [
+  ["Alicia en el país de las maravillas", "Lewis Carroll", 180, "read"], ["Ana Karénina", "León Tolstói", 1000, "to-read"],
+  ["Bodas de sangre", "Federico García Lorca", 150, "read"], ["Campos de Castilla", "Antonio Machado", 230, "reading"],
+  ["Crimen y castigo", "Fiódor Dostoievski", 680, "read"], ["Cumbres borrascosas", "Emily Brontë", 420, "reading"],
+  ["Don Quijote de la Mancha", "Miguel de Cervantes", 1376, "read"], ["Drácula", "Bram Stoker", 520, "read"],
+  ["El conde de Montecristo", "Alexandre Dumas", 1300, "unread"], ["Fausto", "J. W. von Goethe", 500, "to-read"],
+  ["Fortunata y Jacinta", "Benito Pérez Galdós", 1100, "reading"], ["Frankenstein", "Mary Shelley", 300, "reading"],
+  ["Grandes esperanzas", "Charles Dickens", 600, "read"], ["Hamlet", "William Shakespeare", 260, "read"],
+  ["Jane Eyre", "Charlotte Brontë", 560, "read"], ["La Celestina", "Fernando de Rojas", 360, "unread"],
+  ["La divina comedia", "Dante Alighieri", 800, "unread"], ["La Odisea", "Homero", 520, "read"],
+  ["La Regenta", "Leopoldo Alas «Clarín»", 960, "read"], ["Lazarillo de Tormes", "Anónimo", 140, "read"],
+  ["Los miserables", "Victor Hugo", 1450, "to-read"], ["Madame Bovary", "Gustave Flaubert", 470, "unread"],
+  ["Moby Dick", "Herman Melville", 720, "to-read"], ["Niebla", "Miguel de Unamuno", 280, "read"],
+  ["Orgullo y prejuicio", "Jane Austen", 430, "read"], ["Platero y yo", "Juan Ramón Jiménez", 190, "read"],
+  ["Robinson Crusoe", "Daniel Defoe", 380, "read"], ["Ulises", "James Joyce", 980, "unread"],
+]
+
 test("capturas U-UX-02: 1440 y 375 px, ambos temas, con un libro sacado de la balda", async ({ page, stack }) => {
   test.skip(process.env.UX02_CAPTURAS !== "1", "Solo bajo demanda: escribe en docs/validacion.")
   const dir = path.resolve("docs/validacion/2026-10-26/UX/ux-02")
   mkdirSync(dir, { recursive: true })
-  const id = stack.fixtureBookId("a", "isla")
-  const [{ shelf_id: shelfId }] = await stack.sql<{ shelf_id: string }[]>`select shelf_id from biblib.books where id = ${id}`
-  for (const theme of ["light", "dark"] as const) {
-    await page.goto("/books")
-    await page.evaluate((value) => localStorage.setItem("theme", value), theme)
-    for (const [width, height] of [[1440, 1000], [375, 812]] as const) {
-      await page.setViewportSize({ width, height })
-      await openScene(page, shelfId)
-      const island = page.getByRole("button", { name: /^La isla de papel, de / })
-      await island.click()
-      await expect(island).toHaveAttribute("aria-pressed", "true")
-      await page.waitForTimeout(700)
-      await page.screenshot({ path: path.join(dir, `estanteria-3d-${width}-${theme === "light" ? "claro" : "oscuro"}.png`), fullPage: true })
+  const shelfId = randomUUID()
+  await stack.sql`insert into biblib.shelves (id, user_id, title) values (${shelfId}, ${stack.users.a}, 'Salón')`
+  try {
+    for (const [title, author, pages, status] of SALON) {
+      const id = randomUUID()
+      await stack.sql`insert into biblib.books (id, user_id, isbn, title, authors, number_of_pages, publish_date, status, shelf_id, catalogue)
+        values (${id}, ${stack.users.a}, ${`manual-${id}`}, ${title}, ${stack.sql.json([{ name: author }])}, ${pages}, '', ${status}, ${shelfId},
+          ${stack.sql.json({ source: "manual", isbnVerified: false })})`
     }
+    for (const theme of ["light", "dark"] as const) {
+      await page.goto("/books")
+      await page.evaluate((value) => localStorage.setItem("theme", value), theme)
+      for (const [width, height] of [[1440, 1000], [375, 812]] as const) {
+        await page.setViewportSize({ width, height })
+        await openScene(page, shelfId)
+        const book = page.getByRole("button", { name: /^Don Quijote de la Mancha, de / })
+        await pull(book)
+        await expect(book).toHaveAttribute("aria-pressed", "true")
+        await page.waitForTimeout(800)
+        // En 375 el panel queda fijo al pie: se captura la pantalla tal como se ve.
+        await page.screenshot({ path: path.join(dir, `estanteria-3d-${width}-${theme === "light" ? "claro" : "oscuro"}.png`), fullPage: width !== 375 })
+      }
+    }
+  } finally {
+    await stack.sql`delete from biblib.books where shelf_id = ${shelfId} and user_id = ${stack.users.a}`
+    await stack.sql`delete from biblib.shelves where id = ${shelfId} and user_id = ${stack.users.a}`
   }
 })
