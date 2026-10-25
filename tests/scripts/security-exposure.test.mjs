@@ -5,7 +5,7 @@ import { test } from "node:test"
 import { fileURLToPath } from "node:url"
 import { APP_EXCLUDED_KEYS, appEnv, childEnv } from "../../scripts/db/environment.mjs"
 import { nextEnv } from "../../scripts/next-target.mjs"
-import { checkCsp, checkNonce, checkResponse, GLOBAL_HEADERS, REQUESTS, RESPONSE_TYPES } from "../../scripts/security/headers-matrix.mjs"
+import { ADD_BOOK_PERMISSIONS, permissionsPolicy, checkCsp, checkNonce, checkResponse, GLOBAL_HEADERS, REQUESTS, RESPONSE_TYPES } from "../../scripts/security/headers-matrix.mjs"
 import { parseArgs, resolveRoute } from "../../scripts/security/headers-local.mjs"
 
 // U-OPS-04 · Exposición sin stack: la credencial administrativa no llega al proceso de Next, ningún
@@ -36,6 +36,19 @@ test("service_role: tampoco se hereda del shell que lanza el wrapper", () => {
   } finally {
     if (previous === undefined) delete process.env.SUPABASE_SERVICE_ROLE_KEY
     else process.env.SUPABASE_SERVICE_ROLE_KEY = previous
+  }
+})
+
+test("nextEnv permite solo el valor explícito 1 de la bandera de cámara, sin ampliar otras variables heredadas", () => {
+  const previous = process.env.BIBLIB_ISBN_CAMERA
+  try {
+    for (const value of ["1", "0", "true", ""]) {
+      process.env.BIBLIB_ISBN_CAMERA = value
+      assert.equal(nextEnv(context(), "start").BIBLIB_ISBN_CAMERA, value === "1" ? "1" : "")
+    }
+  } finally {
+    if (previous === undefined) delete process.env.BIBLIB_ISBN_CAMERA
+    else process.env.BIBLIB_ISBN_CAMERA = previous
   }
 })
 
@@ -86,6 +99,19 @@ test("la matriz cubre todas las rutas de app/ (si se añade una, el inventario d
 
 const csp = "default-src 'self'; script-src 'self' 'nonce-QUJDREVGR0hJSktMTU5PUA==' 'strict-dynamic'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://covers.openlibrary.org; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
 const response = (status, extra = {}, body = null) => ({ status, body, headers: new Headers({ ...GLOBAL_HEADERS, ...extra }) })
+
+test("la matriz exige camera=(self) solo en /books/add y detecta una concesión en cualquier otra ruta", () => {
+  assert.equal(permissionsPolicy("/books/add?from=catalogo"), ADD_BOOK_PERMISSIONS)
+  for (const route of ["/", "/books", "/books/additional", "/books/add/child", "/api/books/add"]) {
+    assert.equal(permissionsPolicy(route), GLOBAL_HEADERS["permissions-policy"])
+    const result = checkResponse({ route, type: "estatico-public" }, response(200, { "cache-control": "public, max-age=0", "permissions-policy": ADD_BOOK_PERMISSIONS }))
+    assert.ok(result.some((problem) => problem.includes("permissions-policy")), route)
+  }
+  const add = { route: "/books/add", type: "estatico-public" }
+  const extra = { "cache-control": "public, max-age=0" }
+  assert.ok(checkResponse(add, response(200, extra)).some((problem) => problem.includes("permissions-policy")))
+  assert.deepEqual(checkResponse(add, response(200, { ...extra, "permissions-policy": ADD_BOOK_PERMISSIONS })), [])
+})
 
 test("checkResponse acepta una respuesta conforme y detecta caché compartida, CSP aplicada y cabeceras ausentes", () => {
   const html = `<script nonce="QUJDREVGR0hJSktMTU5PUA==">a</script><script src="/x.js" nonce="QUJDREVGR0hJSktMTU5PUA=="></script>`

@@ -56,7 +56,7 @@ async function headerRules(): Promise<HeaderRule[]> {
   return loaded.default.headers()
 }
 
-test("next.config: cabeceras globales con Permissions-Policy que prohíbe la cámara", async () => {
+test("next.config: cámara denegada por defecto y permitida solo en la ruta exacta de alta", async () => {
   const [global] = await headerRules()
   assert.equal(global.source, "/(.*)")
   const values = Object.fromEntries(global.headers.map(({ key, value }) => [key, value]))
@@ -66,6 +66,8 @@ test("next.config: cabeceras globales con Permissions-Policy que prohíbe la cá
   assert.equal(values["Cross-Origin-Opener-Policy"], "same-origin")
   assert.match(values["Permissions-Policy"], /(^|, )camera=\(\)/)
   assert.ok(!("Content-Security-Policy" in values), "La CSP la publica el proxy, en modo informe.")
+  const exceptions = (await headerRules()).slice(1).filter((rule) => rule.headers.some(({ key }) => key === "Permissions-Policy"))
+  assert.deepEqual(exceptions, [{ source: "/books/add", headers: [{ key: "Permissions-Policy", value: "camera=(self), microphone=(), geolocation=(), payment=(), usb=()" }] }])
 })
 
 test("next.config: caché privada y Vary: Cookie en todo salvo estáticos con hash y archivos de public/", async () => {
