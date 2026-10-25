@@ -330,7 +330,7 @@ async function crossValidate(tx: DatabaseTransaction, sessionId: string): Promis
   // U-DAT-06: varias copias de una edición pueden venir en partes distintas; dos ediciones nunca comparten
   // ISBN-13, un identificador legacy es de un solo ejemplar y la misma edición trae los mismos datos en cada parte.
   // 0014: las notas, ubicación y evidencias son del ejemplar (no cuentan para la edición) y dos etiquetas de partes distintas no
-  // pueden ser la misma por nombre normalizado.
+  // pueden ser la misma por nombre normalizado. 0015: la lectura y los préstamos también son del ejemplar.
   const [facts] = await tx.execute<{ books: number; shelves: number; defaults: number; isbn_dupes: number; legacy_dupes: number; edition_conflicts: number; title_dupes: number; orphans: number; tag_dupes: number }>(sql`
     select
       (select count(*)::int from biblib.import_session_rows where session_id = ${sessionId}::uuid and kind = 'book') as books,
@@ -342,7 +342,7 @@ async function crossValidate(tx: DatabaseTransaction, sessionId: string): Promis
         group by data->>'legacyIdentifier' having count(*) > 1) l) as legacy_dupes,
       (select count(*)::int from (select 1 from biblib.import_session_rows where session_id = ${sessionId}::uuid and kind = 'book'
         group by coalesce(data->'edition'->>'id', row_key)
-        having count(distinct (data - 'id' - 'status' - 'shelf_id' - 'shelf_name' - 'legacyIdentifier' - 'verification' - 'catalogue' - 'personal' - 'location' - 'evidence') || jsonb_build_object('catalogue', (data->'catalogue') - 'isbnVerified')) > 1) e) as edition_conflicts,
+        having count(distinct (data - 'id' - 'status' - 'shelf_id' - 'shelf_name' - 'legacyIdentifier' - 'verification' - 'catalogue' - 'personal' - 'location' - 'evidence' - 'reading' - 'loans') || jsonb_build_object('catalogue', (data->'catalogue') - 'isbnVerified')) > 1) e) as edition_conflicts,
       (select count(*)::int from (select 1 from biblib.import_session_rows where session_id = ${sessionId}::uuid and kind = 'tag' group by biblib.tag_normalize(data->>'name') having count(*) > 1) g) as tag_dupes,
       (select count(*)::int from (select 1 from biblib.import_session_rows where session_id = ${sessionId}::uuid and kind = 'shelf' group by lower(data->>'title') having count(*) > 1) t) as title_dupes,
       (select count(*)::int from biblib.import_session_rows b where b.session_id = ${sessionId}::uuid and b.kind = 'book'

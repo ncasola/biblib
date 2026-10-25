@@ -5,6 +5,9 @@ import {
   canonicalSeriesPosition, isValidTagName, LOCATION_KINDS, LOCATION_LIMITS, NOTES_MAX, normalizeTagName, SERIES_LIMITS, TAG_LIMITS,
   type CopyLocationRef, type CopyPersonal, type EditionSeriesRef, type LocationEntry, type MediaRef, type SeriesEntry, type TagEntry,
 } from "./product/contracts"
+import {
+  isCivilDate, isOpenReadingStatus, isValidBorrowerLabel, LOAN_LIMITS, READING_CYCLE_STATUSES, READING_LIMITS, type Loan, type ReadingCycle,
+} from "./product/reading-loans"
 import { CONFIDENCE_LABELS, EVIDENCE_LIMITS, EVIDENCE_ORIGINS, EVIDENCE_SOURCE_KINDS, EVIDENCE_SOURCE_REF_PATTERN, type EvidenceEntry } from "./review/contracts"
 import type { Author, Book, CatalogueMetadata, CopyVerification, EditionIdentifiers, LibraryData, Publisher } from "./types"
 
@@ -16,13 +19,15 @@ import type { Author, Book, CatalogueMetadata, CopyVerification, EditionIdentifi
 // O13 (0014) añade secciones opcionales declaradas: nota, valoración y etiquetas de cada copia, su ubicación
 // física, la serie de cada edición y las evidencias bibliográficas, más las etiquetas, ubicaciones y series de
 // la cuenta. Un archivo anterior no las trae y se importa con esos datos vacíos.
+// O14 (0015) añade, por copia, los ciclos de lectura con sus entradas y los préstamos (capacidades `copies.reading` y
+// `copies.loans`). Un archivo anterior se importa sin lectura ni préstamos: nunca se deducen del estado `read`.
 
 export const BACKUP_V2_FORMAT_VERSION = 2
 
 /** Capacidades que este lector sabe conservar. */
 export const BACKUP_V2_SUPPORTED_CAPABILITIES = [
   "catalogue.provenance-v2", "works.entities", "copies.multiple-per-edition", "copies.verification-evidence", "editions.identifiers",
-  "copies.personal", "copies.locations", "editions.series", "bibliographic.evidence",
+  "copies.personal", "copies.locations", "editions.series", "bibliographic.evidence", "copies.reading", "copies.loans",
 ] as const
 
 export type BackupV2Capability = typeof BACKUP_V2_SUPPORTED_CAPABILITIES[number]
@@ -37,6 +42,8 @@ const capabilityLabels: Record<BackupV2Capability, string> = {
   "copies.locations": "ubicaciones físicas",
   "editions.series": "series",
   "bibliographic.evidence": "evidencias bibliográficas",
+  "copies.reading": "ciclos y sesiones de lectura",
+  "copies.loans": "préstamos",
 }
 
 /** Procedencia bibliográfica de la edición: la de `Book.catalogue` sin la comprobación física. */
@@ -83,6 +90,10 @@ export interface PortableCopyV2 {
   personal?: CopyPersonal
   location?: CopyLocationRef
   evidence?: PortableEvidenceV2[]
+  /** Ciclos de lectura con sus entradas (instantes UTC); nunca deducidos del estado. */
+  reading?: ReadingCycle[]
+  /** Préstamos con fechas civiles `AAAA-MM-DD`. */
+  loans?: Loan[]
 }
 
 export interface PortableShelfV2 {
@@ -138,6 +149,12 @@ function portablePersonal(personal: CopyPersonal | undefined): CopyPersonal | un
   }
 }
 
+/** Copia de los ciclos sin claves vacías (el escritor no comparte referencias con la colección). */
+function portableReading(cycles: readonly ReadingCycle[] | undefined): ReadingCycle[] | undefined {
+  if (!cycles?.length) return undefined
+  return cycles.map(({ entries, ...cycle }) => ({ ...cycle, ...(entries?.length ? { entries: entries.map((entry) => ({ ...entry })) } : {}) }))
+}
+
 /** Edición y copia de una fila: la edición es la de `book.edition` o, en una ficha legacy, la del propio `book.id`. */
 export function bookToEditionAndCopy(book: Book): { edition: PortableEditionV2; copy: PortableCopyV2 } {
   const isbn13 = book.isbn ? normalizeIsbn(book.isbn) : null
@@ -146,6 +163,7 @@ export function bookToEditionAndCopy(book: Book): { edition: PortableEditionV2; 
   const personal = portablePersonal(book.personal)
   const editionEvidence = portableEvidence(book.edition?.evidence)
   const copyEvidence = portableEvidence(book.evidence)
+  const reading = portableReading(book.reading)
   return {
     edition: {
       id: editionId, work_id: book.edition?.workId ?? null, isbn13, title: book.title,
@@ -170,6 +188,8 @@ export function bookToEditionAndCopy(book: Book): { edition: PortableEditionV2; 
       ...(personal ? { personal } : {}),
       ...(book.location ? { location: { ...book.location } } : {}),
       ...(copyEvidence ? { evidence: copyEvidence } : {}),
+      ...(reading ? { reading } : {}),
+      ...(book.loans?.length ? { loans: book.loans.map((loan) => ({ ...loan })) } : {}),
     },
   }
 }
@@ -190,6 +210,8 @@ export function requiredCapabilitiesFor(books: readonly Book[], product: Account
     "copies.locations": books.some((book) => Boolean(book.location)) || Boolean(product.locations?.length),
     "editions.series": books.some((book) => Boolean(book.edition?.series)) || Boolean(product.series?.length),
     "bibliographic.evidence": books.some((book) => Boolean(book.evidence?.length || book.edition?.evidence?.length)),
+    "copies.reading": books.some((book) => Boolean(book.reading?.length)),
+    "copies.loans": books.some((book) => Boolean(book.loans?.length)),
   }
   return BACKUP_V2_SUPPORTED_CAPABILITIES.filter((capability) => used[capability])
 }
@@ -296,6 +318,23 @@ const seriesEntrySchema = z.object({
   id, title: trimmedText(SERIES_LIMITS.titleMax), description: chars(1, SERIES_LIMITS.descriptionMax).optional(),
 }).strict()
 
+// Secciones de 0015: estructura y límites de la base; las reglas entre campos y entre copias las comprueba
+// `assertReadingAndLoans` con un mensaje para la persona.
+const instant = z.iso.datetime({ offset: true })
+const page = z.number().int().min(0).max(READING_LIMITS.pageMax)
+const civilDate = z.string().refine(isCivilDate, "Fecha no válida.")
+export const readingEntrySchema = z.object({
+  id, occurredAt: instant, pageFrom: page.optional(), pageTo: page.optional(), note: chars(1, READING_LIMITS.noteMax).optional(),
+}).strict()
+export const readingCycleSchema = z.object({
+  id, cycleNumber: z.number().int().min(1).max(READING_LIMITS.cycleNumberMax), status: z.enum(READING_CYCLE_STATUSES),
+  startedAt: instant.optional(), finishedAt: instant.optional(), entries: z.array(readingEntrySchema).min(1).max(READING_LIMITS.entriesPerCycle).optional(),
+}).strict()
+export const loanSchema = z.object({
+  id, borrowerLabel: z.string().refine(isValidBorrowerLabel, "Alias no válido."), loanedOn: civilDate, dueOn: civilDate.optional(), returnedOn: civilDate.optional(),
+  note: chars(1, LOAN_LIMITS.noteMax).optional(),
+}).strict()
+
 const workSchema = z.object({ id, title: z.string().trim().min(1).max(500) }).strict()
 
 const editionSchema = z.object({
@@ -324,6 +363,8 @@ const copySchema = z.object({
   personal: personalSchema.optional(),
   location: locationRefSchema.optional(),
   evidence: evidenceListSchema.optional(),
+  reading: z.array(readingCycleSchema).min(1).max(READING_LIMITS.cyclesPerCopy).optional(),
+  loans: z.array(loanSchema).min(1).max(LOAN_LIMITS.perCopy).optional(),
 }).strict()
 
 const shelfSchema = z.object({ id, title: z.string().trim().min(1).max(120), isDefault: z.boolean().optional() }).strict()
@@ -407,6 +448,52 @@ export function assertProductReferences(books: readonly Book[], product: Account
 }
 
 /**
+ * Reglas de lectura y préstamos de cada copia (las mismas de 0015): ciclos con número único y como mucho uno abierto, sin
+ * fin en uno abierto ni fin antes del inicio; entradas con página o nota, desde ≤ hasta y nunca por encima del total
+ * conocido de la edición; préstamos con vencimiento y devolución no anteriores a la salida y como mucho uno activo; IDs
+ * únicos en todo el archivo. Lanza `BackupFormatError` con explicación.
+ */
+export function assertReadingAndLoans(books: readonly Book[]): void {
+  const ids = new Set<string>()
+  const once = (value: string, label: string) => {
+    if (ids.has(value)) throw new BackupFormatError(`El archivo contiene ${label} con el mismo identificador.`)
+    ids.add(value)
+  }
+  for (const book of books) {
+    const numbers = new Set<number>()
+    let open = 0
+    for (const cycle of book.reading ?? []) {
+      once(`cycle:${cycle.id}`, "ciclos de lectura")
+      if (numbers.has(cycle.cycleNumber)) throw new BackupFormatError(`La copia de «${book.title}» repite la lectura número ${cycle.cycleNumber}.`)
+      numbers.add(cycle.cycleNumber)
+      if (isOpenReadingStatus(cycle.status) && ++open > 1) throw new BackupFormatError(`La copia de «${book.title}» tiene más de una lectura en curso: solo puede haber una.`)
+      if (isOpenReadingStatus(cycle.status) && cycle.finishedAt) throw new BackupFormatError(`La lectura en curso de «${book.title}» tiene fecha de fin.`)
+      if (cycle.startedAt && cycle.finishedAt && Date.parse(cycle.finishedAt) < Date.parse(cycle.startedAt)) {
+        throw new BackupFormatError(`Una lectura de «${book.title}» termina antes de empezar.`)
+      }
+      for (const entry of cycle.entries ?? []) {
+        once(`entry:${entry.id}`, "entradas de lectura")
+        if (entry.pageTo === undefined && entry.note === undefined) throw new BackupFormatError(`Una entrada de lectura de «${book.title}» no tiene página ni nota.`)
+        if (entry.pageFrom !== undefined && (entry.pageTo === undefined || entry.pageFrom > entry.pageTo)) {
+          throw new BackupFormatError(`Una entrada de lectura de «${book.title}» empieza en una página posterior a la final.`)
+        }
+        if (entry.pageTo !== undefined && book.number_of_pages > 0 && entry.pageTo > book.number_of_pages) {
+          throw new BackupFormatError(`Una entrada de lectura de «${book.title}» llega a la página ${entry.pageTo}, por encima de las ${book.number_of_pages} de su edición.`)
+        }
+      }
+    }
+    let active = 0
+    for (const loan of book.loans ?? []) {
+      once(`loan:${loan.id}`, "préstamos")
+      if ((loan.dueOn && loan.dueOn < loan.loanedOn) || (loan.returnedOn && loan.returnedOn < loan.loanedOn)) {
+        throw new BackupFormatError(`Un préstamo de «${book.title}» vence o se devuelve antes de prestarse.`)
+      }
+      if (loan.returnedOn === undefined && ++active > 1) throw new BackupFormatError(`La copia de «${book.title}» tiene más de un préstamo activo: solo puede haber uno.`)
+    }
+  }
+}
+
+/**
  * Lector v2. Devuelve filas planas (una por ejemplar, con la clave de su edición y su obra) que pasan por
  * las mismas validaciones que v1 (duplicados, estanterías, límites), y las etiquetas, ubicaciones y series de
  * la cuenta. Rechaza con explicación lo que no puede conservar o no declara, en lugar de truncarlo.
@@ -461,6 +548,8 @@ export function readBackupV2(input: unknown): Required<Pick<LibraryData, "books"
     ["copies.locations", copies.some((copy) => copy.location !== undefined) || locations !== undefined],
     ["editions.series", editions.some((edition) => edition.series !== undefined) || series !== undefined],
     ["bibliographic.evidence", editions.some((edition) => edition.evidence !== undefined) || copies.some((copy) => copy.evidence !== undefined)],
+    ["copies.reading", copies.some((copy) => copy.reading !== undefined)],
+    ["copies.loans", copies.some((copy) => copy.loans !== undefined)],
   ]
   for (const [capability, used] of uses) {
     if (used && !declared.has(capability)) throw new BackupFormatError(`El archivo usa ${capabilityLabels[capability]} sin declarar la capacidad «${capability}».`)
@@ -501,10 +590,13 @@ export function readBackupV2(input: unknown): Required<Pick<LibraryData, "books"
       ...(copy.personal ? { personal: copy.personal } : {}),
       ...(copy.location ? { location: copy.location } : {}),
       ...(copy.evidence ? { evidence: copy.evidence } : {}),
+      ...(copy.reading ? { reading: copy.reading } : {}),
+      ...(copy.loans ? { loans: copy.loans } : {}),
     }
   })
   const product: AccountProduct = { ...(tags ? { tags } : {}), ...(locations ? { locations } : {}), ...(series ? { series } : {}) }
   assertProductReferences(books, product)
+  assertReadingAndLoans(books)
   return { books, shelves: shelves.map((shelf) => ({ ...shelf, book_count: 0 })), ...product }
 }
 

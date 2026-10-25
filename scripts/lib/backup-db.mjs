@@ -11,8 +11,9 @@ const MARK_EXCLUDED = Object.freeze({ "auth.users": ["last_sign_in_at", "updated
 // Tokens que restore rota deliberadamente: se excluyen al comparar contenido. Rotar books.version
 // dispara el trigger de 0003, que también renueva rotated_xact y updated_at de library_state.
 // Desde 0011 (U-DAT-06) los tokens viven en obras, ediciones y ejemplares; books_legacy está congelada y no se rota.
-// O13 (0014): los tokens de los datos de producto también se rotan (PRODUCT_TOKEN_TABLES).
-export const PRODUCT_TOKEN_TABLES = Object.freeze(["tags", "copy_annotations", "locations", "copy_locations", "series", "series_editions", "bibliographic_evidence", "review_issues", "profiles", "csv_mapping_profiles", "media_assets"])
+// O13 (0014): los tokens de los datos de producto también se rotan (PRODUCT_TOKEN_TABLES); O14 (0015), los de lectura y préstamos.
+export const PRODUCT_TOKEN_TABLES = Object.freeze(["tags", "copy_annotations", "locations", "copy_locations", "series", "series_editions", "bibliographic_evidence", "review_issues", "profiles", "csv_mapping_profiles", "media_assets",
+  "reading_cycles", "reading_entries", "loans"])
 export const ROTATING_COLUMNS = Object.freeze({ "biblib.books": ["version"], "biblib.works": ["version"], "biblib.editions": ["version"], "biblib.copies": ["version"], "biblib.library_state": ["revision", "rotated_xact", "updated_at"],
   ...Object.fromEntries(PRODUCT_TOKEN_TABLES.map((table) => [`biblib.${table}`, ["version"]])) })
 // Clave natural de cada tabla para comparar presencia cuando el contenido cambia legítimamente.

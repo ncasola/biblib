@@ -4,8 +4,8 @@ import { EXIT } from "../lib/exit-codes.mjs"
 // Manifest de objetos deliberados de BibLib. Se comprueba con metadatos de pg_catalog e
 // information_schema y con expresiones normalizadas, nunca comparando el pretty-print.
 // `since`/`until` indican la migración que introduce o retira cada objeto.
-const M0 = "0000_biblib_init", M1 = "0001_library_integrity", M2 = "0002_book_versions", M3 = "0003_library_revision", M4 = "0004_catalogue_coordination", M5 = "0005_library_jobs", M6 = "0006_library_snapshots", M7 = "0007_saved_views", M8 = "0008_restore_sessions", M9 = "0009_cover_assets", M10 = "0010_works_editions_copies", M11 = "0011_copies_cutover", M12 = "0012_model_account_deletion", M13 = "0013_account_deletion", M14 = "0014_product_batch_o13"
-export const MANIFEST_MIGRATIONS = [M0, M1, M2, M3, M4, M5, M6, M7, M8, M9, M10, M11, M12, M13, M14]
+const M0 = "0000_biblib_init", M1 = "0001_library_integrity", M2 = "0002_book_versions", M3 = "0003_library_revision", M4 = "0004_catalogue_coordination", M5 = "0005_library_jobs", M6 = "0006_library_snapshots", M7 = "0007_saved_views", M8 = "0008_restore_sessions", M9 = "0009_cover_assets", M10 = "0010_works_editions_copies", M11 = "0011_copies_cutover", M12 = "0012_model_account_deletion", M13 = "0013_account_deletion", M14 = "0014_product_batch_o13", M15 = "0015_reading_and_loans"
+export const MANIFEST_MIGRATIONS = [M0, M1, M2, M3, M4, M5, M6, M7, M8, M9, M10, M11, M12, M13, M14, M15]
 
 const own = "user_id=auth.uid"
 const ownNotDefault = "user_id=auth.uidandnotis_default"
@@ -124,10 +124,19 @@ const ownerFk = (table, name, columns, references, onDelete) => ({ table, name, 
 const MEDIA_BUCKET = "biblib-media"
 const mediaCondition = (action) => normalizeExpression(`bucket_id = '${MEDIA_BUCKET}' and biblib.media_object_access(name, '${action}')`)
 const mediaStoragePolicy = (name, cmd, action) => ({ name, cmd, roles: ["authenticated"], using: cmd === "INSERT" ? null : mediaCondition(action), check: cmd === "INSERT" ? mediaCondition(action) : null, since: M14 })
+// Lectura y préstamos de O14 (0015): mismas guardas que 0014 (RLS del dueño, cuenta activa en cada escritura, FK con la
+// copia del mismo dueño, version y revisión de colección). Las funciones de las acciones son SECURITY INVOKER con
+// search_path fijo y EXECUTE solo para authenticated. Sustituye la captura (esquema 4), los IDs ajenos y los pasos de eliminación.
+const READING = migrationBodies(M15)
+const readingTables = ["reading_cycles", "reading_entries", "loans"]
+const readingPolicies = (table) => productPolicies(table, ALL_WRITES).map((entry) => ({ ...entry, since: M15 }))
+const readingFunction = (name, returns, args, { authenticated = false, securityDefiner = false } = {}) => ({ name, language: "plpgsql", returns, args, searchPath: "search_path=pg_catalog", securityDefiner, body: READING[name], execute: { authenticated, anon: false }, since: M15 })
+const readingTrigger = (table, name, fn, timing, events, level, tgtype) => ({ table, name, function: `biblib.${fn}`, timing, events, level, tgtype, since: M15 })
+const readingFk = (table, name, columns, references) => ({ table, name, type: "f", columns: ["user_id", ...columns], references: `biblib.${references}`, refColumns: ["user_id", "id"], onDelete: "c", since: M15 })
 const jobStateTokens = ["'queued'", "'running'", "'waiting_retry'", "'needs_review'", "'paused'", "'succeeded'", "'partially_succeeded'", "'failed'", "'cancelled'", "'expired'"]
 
 export const MANIFEST = Object.freeze({
-  tables: [{ name: "shelves", since: M0 }, { name: "books", since: M0, until: M11 }, { name: "books_legacy", since: M11 }, { name: "library_state", since: M3 }, { name: "import_previews", since: M3 }, { name: "library_operations", since: M3 }, ...catalogueTables.map((name) => ({ name, since: M4 })), ...jobTables.map((name) => ({ name, since: M5 })), ...snapshotTables.map((name) => ({ name, since: M6 })), { name: "saved_book_views", since: M7 }, ...restoreTables.map((name) => ({ name, since: M8 })), { name: "cover_assets", since: M9 }, ...[...modelTables, "model_migration_report"].map((name) => ({ name, since: M10 })), { name: "account_deletions", since: M13 }, ...productTables.map((name) => ({ name, since: M14 }))],
+  tables: [{ name: "shelves", since: M0 }, { name: "books", since: M0, until: M11 }, { name: "books_legacy", since: M11 }, { name: "library_state", since: M3 }, { name: "import_previews", since: M3 }, { name: "library_operations", since: M3 }, ...catalogueTables.map((name) => ({ name, since: M4 })), ...jobTables.map((name) => ({ name, since: M5 })), ...snapshotTables.map((name) => ({ name, since: M6 })), { name: "saved_book_views", since: M7 }, ...restoreTables.map((name) => ({ name, since: M8 })), { name: "cover_assets", since: M9 }, ...[...modelTables, "model_migration_report"].map((name) => ({ name, since: M10 })), { name: "account_deletions", since: M13 }, ...productTables.map((name) => ({ name, since: M14 })), ...readingTables.map((name) => ({ name, since: M15 }))],
   policies: [
     policy("shelves", "shelves_select_own", "SELECT", own, null),
     policy("shelves", "shelves_insert_own", "INSERT", null, own),
@@ -173,6 +182,7 @@ export const MANIFEST = Object.freeze({
     ...productPolicies("copy_tags", ["INSERT", "DELETE"]),
     ...productPolicies("review_decisions", ["INSERT"]),
     ...productPolicies("media_assets", []),
+    ...readingTables.flatMap(readingPolicies),
   ],
   // library_state solo se lee: la revisión cambia por lock_library()/triggers, nunca por escritura directa.
   // La caché compartida, las consultas en vuelo y las cuotas no tienen ningún privilegio de cliente.
@@ -180,11 +190,31 @@ export const MANIFEST = Object.freeze({
     authenticated: { shelves: ["DELETE", "INSERT", "SELECT", "UPDATE"], books: ["DELETE", "INSERT", "SELECT", "UPDATE"], library_state: ["SELECT"], import_previews: ["DELETE", "INSERT", "SELECT"], library_operations: ["INSERT", "SELECT"], catalogue_cache: [], catalogue_inflight: [], catalogue_quota_buckets: [], catalogue_quota_reservations: [], catalogue_private_cache: ["DELETE", "SELECT"], library_jobs: ["SELECT"], library_job_items: ["SELECT"], account_lifecycle: ["SELECT"], library_snapshots: ["SELECT"], library_snapshot_chunks: ["SELECT"], saved_book_views: ["DELETE", "INSERT", "SELECT", "UPDATE"],
       ...Object.fromEntries(restoreFullTables.map((name) => [name, ["DELETE", "INSERT", "SELECT", "UPDATE"]])), ...Object.fromEntries(restoreImmutableTables.map((name) => [name, ["DELETE", "INSERT", "SELECT"]])), cover_assets: ["SELECT"],
       ...Object.fromEntries(modelTables.map((name) => [name, ["DELETE", "INSERT", "SELECT", "UPDATE"]])), model_migration_report: ["SELECT"], books_legacy: [], account_deletions: [],
-      ...Object.fromEntries(productFullTables.map((name) => [name, ["DELETE", "INSERT", "SELECT", "UPDATE"]])), copy_tags: ["DELETE", "INSERT", "SELECT"], review_decisions: ["INSERT", "SELECT"], media_assets: ["SELECT"] },
+      ...Object.fromEntries(productFullTables.map((name) => [name, ["DELETE", "INSERT", "SELECT", "UPDATE"]])), copy_tags: ["DELETE", "INSERT", "SELECT"], review_decisions: ["INSERT", "SELECT"], media_assets: ["SELECT"],
+      ...Object.fromEntries(readingTables.map((name) => [name, ["DELETE", "INSERT", "SELECT", "UPDATE"]])) },
     // books (vista desde 0011) y books_legacy se comprueban en `views` y con la tabla congelada.
-    anon: { shelves: [], books: [], library_state: [], import_previews: [], library_operations: [], ...Object.fromEntries([...catalogueTables, ...jobTables, ...snapshotTables, "saved_book_views", ...restoreTables, "cover_assets", ...modelTables, "model_migration_report", "books_legacy", "account_deletions", ...productTables].map((name) => [name, []])) },
+    anon: { shelves: [], books: [], library_state: [], import_previews: [], library_operations: [], ...Object.fromEntries([...catalogueTables, ...jobTables, ...snapshotTables, "saved_book_views", ...restoreTables, "cover_assets", ...modelTables, "model_migration_report", "books_legacy", "account_deletions", ...productTables, ...readingTables].map((name) => [name, []])) },
   },
   constraints: [
+    // Lectura y préstamos (0015): FK con la copia (o el ciclo) del mismo dueño en cascada (la copia borrada se lleva su historia),
+    // un estado de ciclo conocido sin fin mientras está abierto, páginas acotadas, alias sin correo ni teléfono y fechas civiles.
+    ...readingTables.flatMap((table) => [
+      { table, name: `${table}_pkey`, type: "p", columns: ["id"], since: M15 },
+      { table, name: `${table}_user_id_users_id_fk`, type: "f", columns: ["user_id"], references: "auth.users", refColumns: ["id"], onDelete: "c", since: M15 },
+    ]),
+    readingFk("reading_cycles", "reading_cycles_owner_copy_fk", ["copy_id"], "copies"),
+    readingFk("reading_entries", "reading_entries_owner_cycle_fk", ["cycle_id"], "reading_cycles"),
+    readingFk("loans", "loans_owner_copy_fk", ["copy_id"], "copies"),
+    { table: "reading_cycles", name: "reading_cycles_status_check", type: "c", columns: ["status"], tokens: ["'reading'", "'paused'", "'finished'", "'abandoned'"], since: M15 },
+    { table: "reading_cycles", name: "reading_cycles_number_check", type: "c", columns: ["cycle_number"], tokens: ["cycle_number>=1", "cycle_number<=1000"], since: M15 },
+    { table: "reading_cycles", name: "reading_cycles_open_check", type: "c", columns: ["status", "finished_at"], tokens: ["'finished'", "'abandoned'", "finished_at is null"], since: M15 },
+    { table: "reading_cycles", name: "reading_cycles_dates_check", type: "c", columns: ["started_at", "finished_at"], tokens: ["finished_at>=started_at"], since: M15 },
+    { table: "reading_entries", name: "reading_entries_pages_check", type: "c", columns: ["page_from", "page_to"], tokens: ["page_from>=0", "page_to>=0", "page_from<=page_to"], since: M15 },
+    { table: "reading_entries", name: "reading_entries_content_check", type: "c", columns: ["page_to", "note"], tokens: ["page_to is not null", "note is not null"], since: M15 },
+    { table: "reading_entries", name: "reading_entries_note_check", type: "c", columns: ["note"], tokens: ["char_length(note)<=1000"], since: M15 },
+    { table: "loans", name: "loans_borrower_label_check", type: "c", columns: ["borrower_label"], tokens: ["char_length(borrower_label)<=40", "'@'", "<=6"], since: M15 },
+    { table: "loans", name: "loans_dates_check", type: "c", columns: ["loaned_on", "due_on", "returned_on"], tokens: ["due_on>=loaned_on", "returned_on>=loaned_on"], since: M15 },
+    { table: "loans", name: "loans_note_check", type: "c", columns: ["note"], tokens: ["char_length(note)<=500"], since: M15 },
     // Lote de producto (0014): FK con el mismo dueño (borrar el ejemplar, la edición, la etiqueta o la serie arrastra el vínculo;
     // una ubicación ocupada o con hijas, o una imagen citada, no se borra), unicidad normalizada y límites del contrato.
     ...["tags", "locations", "series", "media_assets", "bibliographic_evidence", "review_issues", "review_decisions", "csv_mapping_profiles"].flatMap((table) => [
@@ -399,6 +429,13 @@ export const MANIFEST = Object.freeze({
     { table: "library_snapshot_chunks", name: "library_snapshot_chunks_digest_check", type: "c", columns: ["digest"], tokens: ["'^[0-9a-f]{64}$'"], since: M6 },
   ],
   indexes: [
+    // 0015: un ciclo abierto por ejemplar y un préstamo activo por ejemplar (índices parciales), números de ciclo únicos.
+    ...readingTables.map((table) => ({ table, name: `${table}_user_id_id_unique`, unique: true, columns: ["user_id", "id"], partial: false, since: M15 })),
+    { table: "reading_cycles", name: "reading_cycles_copy_number_unique", unique: true, columns: ["user_id", "copy_id", "cycle_number"], partial: false, since: M15 },
+    { table: "reading_cycles", name: "reading_cycles_open_unique", unique: true, columns: ["user_id", "copy_id"], partial: true, since: M15 },
+    { table: "reading_entries", name: "reading_entries_cycle_idx", unique: false, columns: ["user_id", "cycle_id", "occurred_at"], partial: false, since: M15 },
+    { table: "loans", name: "loans_active_unique", unique: true, columns: ["user_id", "copy_id"], partial: true, since: M15 },
+    { table: "loans", name: "loans_copy_idx", unique: false, columns: ["user_id", "copy_id", "loaned_on"], partial: false, since: M15 },
     ...["tags", "locations", "series", "media_assets", "bibliographic_evidence", "review_issues", "review_decisions", "csv_mapping_profiles"].map((table) => ({ table, name: `${table}_user_id_id_unique`, unique: true, columns: ["user_id", "id"], partial: false, since: M14 })),
     { table: "tags", name: "tags_user_normalized_unique", unique: true, columns: ["user_id", "normalized_name"], partial: false, since: M14 },
     { table: "review_issues", name: "review_issues_open_dedupe_unique", unique: true, columns: ["user_id", "dedupe_key"], partial: true, since: M14 },
@@ -472,6 +509,14 @@ export const MANIFEST = Object.freeze({
     { table: "library_snapshots", name: "library_snapshots_expires_at_idx", unique: false, columns: ["expires_at"], partial: false, since: M6 },
   ],
   columns: [
+    // 0015: fechas civiles como DATE (sin zona) e instantes como timestamptz; el instante de una entrada es obligatorio.
+    { table: "loans", name: "loaned_on", type: "date", notNull: true, since: M15 },
+    { table: "loans", name: "due_on", type: "date", notNull: false, since: M15 },
+    { table: "loans", name: "returned_on", type: "date", notNull: false, since: M15 },
+    { table: "reading_entries", name: "occurred_at", type: "timestamp with time zone", notNull: true, since: M15 },
+    { table: "reading_cycles", name: "started_at", type: "timestamp with time zone", notNull: false, since: M15 },
+    { table: "reading_cycles", name: "status", type: "text", notNull: true, defaultTokens: ["'reading'"], since: M15 },
+    ...readingTables.map((table) => ({ table, name: "version", type: "uuid", notNull: true, defaultTokens: ["gen_random_uuid()"], since: M15 })),
     { table: "tags", name: "normalized_name", type: "text", notNull: true, since: M14 },
     { table: "series_editions", name: "position", type: "numeric", notNull: false, since: M14 },
     { table: "copy_annotations", name: "rating", type: "smallint", notNull: false, since: M14 },
@@ -562,8 +607,16 @@ export const MANIFEST = Object.freeze({
     { ...cutoverFunction("library_snapshot_capture", "jsonb", 2, { authenticated: true }), until: M14 },
     { ...cutoverFunction("library_snapshot_foreign_ids", "uuid[]", 1, { authenticated: true }), until: M14 },
     // 0014: versiones anteriores con datos de producto (schema_version 3) e IDs ajenos de etiquetas, ubicaciones, series y evidencias.
-    productFunction("library_snapshot_capture", "jsonb", 2, { authenticated: true }),
-    productFunction("library_snapshot_foreign_ids", "uuid[]", 1, { authenticated: true }),
+    { ...productFunction("library_snapshot_capture", "jsonb", 2, { authenticated: true }), until: M15 },
+    { ...productFunction("library_snapshot_foreign_ids", "uuid[]", 1, { authenticated: true }), until: M15 },
+    // 0015: versiones anteriores con lectura y préstamos (schema_version 4) y sus IDs ajenos; funciones invoker de las acciones.
+    readingFunction("library_snapshot_capture", "jsonb", 2, { authenticated: true, securityDefiner: true }),
+    readingFunction("library_snapshot_foreign_ids", "uuid[]", 1, { authenticated: true, securityDefiner: true }),
+    readingFunction("reading_cycle_start", "jsonb", 2, { authenticated: true }),
+    readingFunction("reading_cycle_close", "jsonb", 4, { authenticated: true }),
+    readingFunction("loan_open", "jsonb", 5, { authenticated: true }),
+    readingFunction("loan_return", "jsonb", 3, { authenticated: true }),
+    readingFunction("guard_reading_entry_pages", "trigger", 0),
     productFunction("tag_normalize", "text", 1, { authenticated: true, securityDefiner: false }),
     productFunction("enforce_row_limit", "trigger", 0, { securityDefiner: false }),
     productFunction("guard_location_tree", "trigger", 0, { securityDefiner: false }),
@@ -592,7 +645,8 @@ export const MANIFEST = Object.freeze({
     deletionFunction("account_deletion_request", "jsonb", 1, true),
     deletionFunction("account_deletion_status", "jsonb", 0, true),
     { ...deletionFunction("account_deletion_step_tables", "text[]", 1, false, false), until: M14 },
-    productFunction("account_deletion_step_tables", "text[]", 1, { securityDefiner: false }),
+    { ...productFunction("account_deletion_step_tables", "text[]", 1, { securityDefiner: false }), until: M15 },
+    readingFunction("account_deletion_step_tables", "text[]", 1),
     deletionFunction("account_deletion_step_remaining", "integer", 2),
     deletionFunction("account_deletion_lease", "jsonb", 2),
     deletionFunction("account_deletion_renew", "boolean", 3),
@@ -688,6 +742,16 @@ export const MANIFEST = Object.freeze({
     productTrigger("profiles", "profiles_guard_avatar", "guard_media_reference", "BEFORE", ["INSERT", "UPDATE"], "ROW", 23),
     productTrigger("locations", "locations_guard_photo", "guard_media_reference", "BEFORE", ["INSERT", "UPDATE"], "ROW", 23),
     productTrigger("bibliographic_evidence", "bibliographic_evidence_guard_photo", "guard_media_reference", "BEFORE", ["INSERT", "UPDATE"], "ROW", 23),
+    // Lectura y préstamos (0015): versión, revisión, límites por ejemplar o ciclo y por cuenta, y la guarda de páginas.
+    ...readingTables.flatMap((table) => [
+      readingTrigger(table, `${table}_rotate_version`, "rotate_book_version", "BEFORE", ["INSERT", "UPDATE"], "ROW", 23),
+      readingTrigger(table, `${table}_rotate_library_revision`, "rotate_library_revision", "AFTER", ["INSERT", "UPDATE", "DELETE"], "ROW", 29),
+      readingTrigger(table, `${table}_limit`, "enforce_row_limit", "BEFORE", ["INSERT"], "ROW", 7),
+    ]),
+    readingTrigger("reading_cycles", "reading_cycles_limit_copy", "enforce_row_limit", "BEFORE", ["INSERT"], "ROW", 7),
+    readingTrigger("reading_entries", "reading_entries_limit_cycle", "enforce_row_limit", "BEFORE", ["INSERT"], "ROW", 7),
+    readingTrigger("loans", "loans_limit_copy", "enforce_row_limit", "BEFORE", ["INSERT"], "ROW", 7),
+    readingTrigger("reading_entries", "reading_entries_guard_pages", "guard_reading_entry_pages", "BEFORE", ["INSERT", "UPDATE"], "ROW", 23),
   ],
   // Vista plana books (0011): security_invoker (RLS de las tablas para quien consulta) y privilegios del dueño.
   views: [{ name: "books", securityInvoker: true, grants: { authenticated: ["DELETE", "INSERT", "SELECT", "UPDATE"], anon: [] }, since: M11 }],

@@ -1632,3 +1632,29 @@ Exportación v2 (`copies.locations`), versiones anteriores, respaldo, restauraci
 - E2E: `tests/e2e/flujos/ubicaciones.spec.ts` (`pnpm test:e2e:local --grep "ubicaciones:"`).
 
 Evidencia: [O13/pro-03](validacion/2026-10-25/O13/pro-03/informe.md).
+
+## Lectura y préstamos · migración `0015` (O14, lote D)
+
+Único lote de schema de O14: ciclos y entradas de lectura (U-PRO-02) y préstamos (U-PRO-04). Contrato para las unidades: [contratos-o14](spec-pendientes/contratos-o14.md). Evidencia: [validación O14/d](validacion/2026-10-26/O14/d/informe.md).
+
+### Esquema
+
+- **Tablas nuevas** (RLS del dueño, FK compuestas `(user_id, …)` con la copia o el ciclo en cascada, política RESTRICTIVE de cuenta activa en cada escritura, `version` y revisión de colección): `reading_cycles`, `reading_entries`, `loans`.
+- **Índices parciales:** un ciclo abierto (`reading`/`paused`) por ejemplar y un préstamo activo (`returned_on is null`) por ejemplar.
+- **Funciones** (`SECURITY INVOKER`, `authenticated`): `reading_cycle_start`, `reading_cycle_close`, `loan_open`, `loan_return`; trigger `guard_reading_entry_pages` (BR001) y límites con `enforce_row_limit` (BP001). Sustituye `library_snapshot_capture` (schema_version 4), `library_snapshot_foreign_ids` y `account_deletion_step_tables`.
+- **Sin backfill:** el estado `read` legado no se convierte en ciclos ni fechas; las tablas nacen vacías. Ensayado en `scratch` con datos: ningún ejemplar cambia de estado, versión ni fecha.
+
+### Aplicar y recuperar
+
+- **Aplicar:** respaldo ensayado → `pnpm db:plan:local --profile <perfil> --out o14.json` → `pnpm db:migrate:local --plan … --expect-project … --expect-plan …` → `pnpm db:status:local` sin drift. Ensayado 0014 → 0015 con datos en `scratch` y desde vacío con `db:reset:local`.
+- **Funciones desactivables** sin borrar datos: ocultar los widgets de lectura o préstamos no toca sus filas, que siguen en la exportación v2, las versiones anteriores, el respaldo y la eliminación de cuenta. Nunca se «recupera» una estadística convirtiendo los libros leídos antiguos en lecturas terminadas hoy.
+- **Retirar 0015** no está previsto: una corrección se hace hacia delante en una migración nueva.
+- **Respaldo y restore:** las tablas entran por esquema; `db:restore:local` rota sus versiones y `db:restore:verify` compara sin ellas.
+- **Eliminación de cuenta:** las tres tablas, al principio del paso `product`. Inventario en [retención](retencion.md).
+
+### Pruebas
+
+- `pnpm test`: `tests/reading-loans.test.ts` (progreso sin porcentaje falso, fechas civiles por zona, alias, ida y vuelta v2, archivos anteriores sin datos inventados, rechazos con explicación, partes, versión anterior de esquema 4 y planificador).
+- `pnpm test:db`: `tests/db/reading-loans-legacy.sql` + `tests/db/reading-loans.sql` (sin backfill, ciclos y relectura, páginas y BR001, préstamos y fechas civiles en varios husos, aislamiento A/B también por las funciones, límites, copia borrada, versiones anteriores, cuenta en eliminación e inventario).
+- `pnpm test:scripts`: manifest de 0015 con hechos reales (`tests/fixtures/migrations/objects-0015.json`).
+- `pnpm test:integration:reading-loans --profile scratch|test [--reuse-build]`: grupo `tests/integration/reading-loans` con cuentas desechables (aislamiento A/B y cuenta en eliminación, dos conexiones que inician o prestan a la vez, relectura, páginas fuera de rango y total desconocido, fechas civiles con varios husos de sesión, copia borrada por la app, ida y vuelta v2 por la app con reemplazo, versión anterior, fusión en otra cuenta y archivo v1, y eliminación con el worker real). También corre en `pnpm test:integration:local`.
