@@ -1,7 +1,7 @@
 import { z } from "zod"
 import { DEFAULT_BOOK_COVER, normalizeBookCover } from "./book-covers"
 import { normalizeIsbn, normalizedBookIdentifier } from "./isbn"
-import { editionFingerprint, libraryRequiresV2, readBackupV2 } from "./backup-v2"
+import { editionFingerprint, libraryRequiresV2, readBackupV2, type AccountProduct } from "./backup-v2"
 import { catalogueProblem, catalogueSchema, normalizeCatalogue, toCatalogueV1 } from "./catalogue-provenance"
 import { copyIdentity, editionKey } from "./import-plan"
 import { emitSafely, noopTelemetry, type TelemetryEmitter } from "./observability/emitter"
@@ -101,6 +101,7 @@ function validateLibraryImport(input: unknown): LibraryData {
   }
   let rows: Book[]
   let shelves: Shelf[]
+  let product: AccountProduct = {}
   if (input && typeof input === "object" && "formatVersion" in input && input.formatVersion === 2) {
     if ("copies" in input && Array.isArray(input.copies) && input.copies.length > MAX_IMPORT_BOOKS) {
       throw new Error("El archivo supera el límite de 2000 libros por importación.")
@@ -112,6 +113,7 @@ function validateLibraryImport(input: unknown): LibraryData {
     const parsed = readBackupV2(input)
     rows = parsed.books.map((book) => ({ ...book, cover: normalizeBookCover(book.cover) }))
     shelves = parsed.shelves
+    product = { ...(parsed.tags ? { tags: parsed.tags } : {}), ...(parsed.locations ? { locations: parsed.locations } : {}), ...(parsed.series ? { series: parsed.series } : {}) }
   } else {
     if (input && typeof input === "object" && "formatVersion" in input && input.formatVersion !== 1) {
       throw new Error("Esta versión del formato de biblioteca no es compatible. Se admiten las versiones 1 y 2 y el formato antiguo.")
@@ -178,6 +180,7 @@ function validateLibraryImport(input: unknown): LibraryData {
   return {
     shelves: shelves.map((shelf) => ({ ...shelf, book_count: counts.get(shelf.id) ?? 0 })),
     books: normalizedBooks,
+    ...product,
   }
 }
 

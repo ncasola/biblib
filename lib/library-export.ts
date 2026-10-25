@@ -6,7 +6,7 @@ import {
   toV1Book,
   type LibraryExport,
 } from "./library-import"
-import { bookToEditionAndCopy, createBackupV2, libraryRequiresV2, type PortableBackupV2 } from "./backup-v2"
+import { accountProduct, bookToEditionAndCopy, createBackupV2, libraryRequiresV2, type PortableBackupV2 } from "./backup-v2"
 import { backupFileNames, createBackupSetManifest, payloadCounts, serializeBackupSetManifest, type BackupSetManifest, type PartCounts } from "./import-manifest"
 import type { Book, LibraryData, Shelf } from "./types"
 
@@ -128,16 +128,21 @@ export function fragmentLibraryExport(data: LibraryData, exportedAt = new Date()
   })
 }
 
-/** Divide una biblioteca en archivos `formatVersion: 2` independientes y válidos por sí solos. */
+/**
+ * Divide una biblioteca en archivos `formatVersion: 2` independientes y válidos por sí solos. Las etiquetas,
+ * ubicaciones y series de la cuenta (0014) viajan completas en cada parte (su tamaño se reserva en el sobre): así
+ * cada parte resuelve sus referencias y las que nadie cita también se conservan.
+ */
 export function fragmentBackupV2(data: LibraryData, exportedAt = new Date()): PortableBackupV2[] {
-  const capabilitiesUpperBound = createBackupV2({ books: data.books, shelves: [] }, exportedAt).requiredCapabilities
-  const empty = { ...createBackupV2({ books: [], shelves: [] }, exportedAt), requiredCapabilities: capabilitiesUpperBound }
+  const product = accountProduct(data)
+  const capabilitiesUpperBound = createBackupV2({ books: data.books, shelves: [], ...product }, exportedAt).requiredCapabilities
+  const empty = { ...createBackupV2({ books: [], shelves: [], ...product }, exportedAt), requiredCapabilities: capabilitiesUpperBound }
   return fragment<PortableBackupV2>(data, {
     envelopeBytes: jsonByteLength(empty),
     arraysPerBook: 2,
     bookBytes: (book) => { const { edition, copy } = bookToEditionAndCopy(book); return jsonByteLength(edition) + jsonByteLength(copy) },
     shelfBytes: (shelf) => jsonByteLength({ id: shelf.id, title: shelf.title, isDefault: Boolean(shelf.isDefault) }),
-    build: (books, shelves) => createBackupV2({ books, shelves }, exportedAt),
+    build: (books, shelves) => createBackupV2({ books, shelves, ...product }, exportedAt),
   })
 }
 

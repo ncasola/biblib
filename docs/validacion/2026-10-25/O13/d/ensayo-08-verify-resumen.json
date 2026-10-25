@@ -1,0 +1,22 @@
+{
+ "passed": true,
+ "checks": 62,
+ "ok": 62,
+ "product": [
+  "table.biblib.bibliographic_evidence:ok",
+  "table.biblib.copy_annotations:ok",
+  "table.biblib.copy_locations:ok",
+  "table.biblib.copy_tags:ok",
+  "table.biblib.csv_mapping_profiles:ok",
+  "table.biblib.import_previews:ok",
+  "table.biblib.locations:ok",
+  "table.biblib.media_assets:ok",
+  "table.biblib.profiles:ok",
+  "table.biblib.review_decisions:ok",
+  "table.biblib.review_issues:ok",
+  "table.biblib.series:ok",
+  "table.biblib.series_editions:ok",
+  "table.biblib.tags:ok",
+  "storage.bucket.biblib-media:ok"
+ ]
+}

@@ -3,6 +3,7 @@ import { and, asc, eq, sql } from "drizzle-orm"
 import type { DatabaseTransaction } from "./db/client"
 import { books, importPreviews, libraryOperations, librarySnapshots, shelves } from "./db/schema"
 import { deleteAllCopies, insertPlannedCopies } from "./db/model"
+import { applyProductData, deleteAccountProduct, readProductTargets } from "./db/product"
 import { DomainError, idempotencyConflict, previewExpired, revisionConflict } from "./domain-errors"
 import { parseLibraryImport } from "./library-import"
 import {
@@ -78,10 +79,14 @@ export async function readCollectionSnapshot(tx: DatabaseTransaction, userId: st
   return { shelves: shelfRows, books: bookRows }
 }
 
-async function applyPlan(tx: DatabaseTransaction, userId: string, payload: LibraryData, plan: ImportPlan): Promise<void> {
+async function applyPlan(tx: DatabaseTransaction, userId: string, payload: LibraryData, plan: ImportPlan, allocateId: IdAllocator): Promise<void> {
+  // Datos de producto (0014): qué es del dueño se lee antes de retirar nada; al reemplazar, la colección resultante es la
+  // del archivo también en etiquetas, ubicaciones y series (un archivo anterior las deja vacías).
+  const targets = await readProductTargets(tx, userId, payload, plan.mode)
   if (plan.mode === "replace") {
     await deleteAllCopies(tx, userId)
     await tx.delete(shelves).where(and(eq(shelves.userId, userId), eq(shelves.isDefault, false)))
+    await deleteAccountProduct(tx, userId)
   }
   if (plan.shelves.create.length) {
     await tx.insert(shelves).values(plan.shelves.create.map((shelf) => ({ id: shelf.id, userId, title: shelf.title, isDefault: false })))
@@ -89,6 +94,7 @@ async function applyPlan(tx: DatabaseTransaction, userId: string, payload: Libra
   const source = new Map(payload.books.map((book) => [book.id, book]))
   if (plan.books.insert.some((entry) => !source.has(entry.sourceId))) throw revisionConflict()
   await insertPlannedCopies(tx, userId, plan, source)
+  await applyProductData(tx, userId, payload, plan, plan.mode, targets, allocateId)
 }
 
 /**
@@ -138,7 +144,7 @@ export async function publishImport(tx: DatabaseTransaction, request: PublishReq
     snapshotId = (await captureSnapshot(tx, { operationId, reason: "import.replace" })).id
     await hooks.afterCapture?.(snapshotId)
   }
-  await applyPlan(tx, userId, payload, plan)
+  await applyPlan(tx, userId, payload, plan, previewAllocator(stored.id))
   return { operationId, result, replayed: false, insertedBookIds: plan.books.insert.map((entry) => entry.id), snapshotId }
 }
 
@@ -190,7 +196,8 @@ export async function publishSnapshotRestore(tx: DatabaseTransaction, request: P
   if (header.expired) throw snapshotExpired()
   if (header.digest !== stored.inputDigest) throw revisionConflict()
   const content = await readSnapshotContent(tx, userId, header)
-  const plan = buildRestorePlan({ snapshot: content, current: await readCollectionSnapshot(tx, userId), foreign: await foreignSnapshotIds(tx, header.id), allocateId: previewAllocator(stored.id) })
+  const foreign = await foreignSnapshotIds(tx, header.id)
+  const plan = buildRestorePlan({ snapshot: content, current: await readCollectionSnapshot(tx, userId), foreign, allocateId: previewAllocator(stored.id) })
   if (canonicalJson(plan) !== canonicalJson(stored.plan)) throw revisionConflict()
   const result = operationResult(plan)
   const operationId = randomUUID()
@@ -199,6 +206,6 @@ export async function publishSnapshotRestore(tx: DatabaseTransaction, request: P
   })
   const snapshotId = (await captureSnapshot(tx, { operationId, reason: "snapshot.restore" })).id
   await hooks.afterCapture?.(snapshotId)
-  await applyRestorePlan(tx, userId, content, plan)
+  await applyRestorePlan(tx, userId, content, plan, { foreign, allocateId: previewAllocator(stored.id) })
   return { operationId, result, replayed: false, insertedBookIds: [], snapshotId }
 }

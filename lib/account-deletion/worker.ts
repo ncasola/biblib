@@ -8,7 +8,7 @@ import type postgres from "postgres"
 // Node lo cargue tal cual desde los scripts .mjs.
 
 /** Pasos en orden: primero las sesiones y los objetos, después las filas (hijas antes que padres) y al final Auth. */
-export const DELETION_STEPS = ["sessions", "storage", "covers", "snapshots", "staging", "jobs", "views", "previews", "operations", "private_cache", "copies", "editions", "works", "shelves", "state", "auth", "verify"] as const
+export const DELETION_STEPS = ["sessions", "storage", "covers", "snapshots", "staging", "jobs", "views", "previews", "operations", "private_cache", "product", "media", "copies", "editions", "works", "shelves", "state", "auth", "verify"] as const
 export type DeletionStep = (typeof DELETION_STEPS)[number]
 export type DatabaseStep = Exclude<DeletionStep, "sessions" | "storage" | "auth" | "verify">
 
@@ -23,12 +23,13 @@ export interface InventoryEntry {
 
 /**
  * Inventario de limpieza. Toda tabla de `biblib` con dueño debe estar aquí y en `account_deletion_step_tables`
- * (0013); la prueba SQL y tests/account-deletion.test.ts fallan si una tabla nueva queda fuera. Préstamos, notas y
- * lectura (F3) se añadirán con su migración.
+ * (0013, ampliada en 0014); la prueba SQL y tests/account-deletion.test.ts fallan si una tabla nueva queda fuera. Lectura
+ * y préstamos (O14) se añadirán con su migración.
  */
 export const ACCOUNT_DATA_INVENTORY: readonly InventoryEntry[] = [
   { name: "auth.sessions", kind: "auth", step: "sessions", contents: "Sesiones y refresh tokens de GoTrue: se cierran al solicitar y la cuenta se bloquea para nuevos inicios de sesión." },
   { name: "biblib-covers", kind: "storage", step: "storage", contents: "Imágenes de portadas privadas (`<dueño>/<asset>/<intento>.webp`)." },
+  { name: "biblib-media", kind: "storage", step: "storage", contents: "Avatar propio, fotos de ubicaciones y fotos fuente de evidencias (`<dueño>/<tipo>/<asset>`)." },
   { name: "storage.objects", kind: "storage", step: "storage", contents: "Cualquier otro objeto con prefijo o propietario de la cuenta, en cualquier bucket." },
   { name: "cover_assets", kind: "table", step: "covers", contents: "Metadatos de portadas privadas (clave, hash, tamaño, origen); antes se sueltan de sus ediciones." },
   { name: "library_snapshot_chunks", kind: "table", step: "snapshots", contents: "Trozos de versiones anteriores de la colección." },
@@ -44,6 +45,19 @@ export const ACCOUNT_DATA_INVENTORY: readonly InventoryEntry[] = [
   { name: "library_operations", kind: "table", step: "operations", contents: "Resultados idempotentes de operaciones confirmadas." },
   { name: "catalogue_private_cache", kind: "table", step: "private_cache", contents: "Caché privada de búsquedas por título o autor (consulta reducida a HMAC)." },
   { name: "catalogue_quota_reservations", kind: "table", step: "private_cache", contents: "Reservas de cuota de proveedores a nombre de la cuenta." },
+  { name: "review_decisions", kind: "table", step: "product", contents: "Decisiones de revisión bibliográfica (campos elegidos y evidencias citadas)." },
+  { name: "review_issues", kind: "table", step: "product", contents: "Incidencias de revisión (motivo, IDs de las entidades y estado)." },
+  { name: "bibliographic_evidence", kind: "table", step: "product", contents: "Evidencias bibliográficas de ediciones y ejemplares (fuente, afirmaciones, confianza, foto citada)." },
+  { name: "copy_tags", kind: "table", step: "product", contents: "Etiquetas de cada ejemplar." },
+  { name: "copy_annotations", kind: "table", step: "product", contents: "Notas privadas y valoración de cada ejemplar." },
+  { name: "copy_locations", kind: "table", step: "product", contents: "Ubicación física actual de cada ejemplar." },
+  { name: "series_editions", kind: "table", step: "product", contents: "Ediciones en series con su posición." },
+  { name: "tags", kind: "table", step: "product", contents: "Etiquetas de la cuenta." },
+  { name: "locations", kind: "table", step: "product", contents: "Árbol de ubicaciones físicas (se retira de las hojas a la raíz)." },
+  { name: "series", kind: "table", step: "product", contents: "Series privadas." },
+  { name: "csv_mapping_profiles", kind: "table", step: "product", contents: "Perfiles de mapeo CSV guardados (sin muestras de filas)." },
+  { name: "profiles", kind: "table", step: "product", contents: "Perfil privado: referencia al avatar propio." },
+  { name: "media_assets", kind: "table", step: "media", contents: "Metadatos de imágenes privadas (ruta, hash, tamaño), tras retirar quien las cita." },
   { name: "copies", kind: "table", step: "copies", contents: "Ejemplares: estado, estantería, comprobación física e identificador legacy." },
   { name: "editions", kind: "table", step: "editions", contents: "Ediciones: descripción bibliográfica, ISBN-13 y portada (las huérfanas ya las poda la cascada)." },
   { name: "works", kind: "table", step: "works", contents: "Obras." },

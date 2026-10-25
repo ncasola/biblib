@@ -3,7 +3,7 @@ import path from "node:path"
 import { pathToFileURL } from "node:url"
 import { createClient } from "@supabase/supabase-js"
 import { authExclusions, BACKUP_KIND, backupFilePath, checkBackupFiles, encrypt, ENCRYPTION, MANIFEST_FILE, newBackupId, objectFile, readKeyFile, readManifest, resolveBackupDir, resolveBackupsRoot, sealManifest, sha256 } from "../lib/backup-files.mjs"
-import { bookSample, classifyCoverAssets, contentDigests, COVERS_BUCKET, coverAssetInventory, excludedCoverKeys, fixtureAccounts, objectFacts, scopeTables, stateMark, storageInventory, tokenHashes, verifyCoverObjects } from "../lib/backup-db.mjs"
+import { bookSample, classifyCoverAssets, contentDigests, COVERS_BUCKET, coverAssetInventory, excludedCoverKeys, fixtureAccounts, mediaAssetInventory, objectFacts, scopeTables, stateMark, storageInventory, tokenHashes, verifyCoverObjects, verifyMediaObjects } from "../lib/backup-db.mjs"
 import { streamCommand } from "../lib/backup-process.mjs"
 import { inventory } from "../lib/docker.mjs"
 import { BiblibError, EXIT } from "../lib/exit-codes.mjs"
@@ -204,7 +204,7 @@ export async function runBackup({ profile, out, keyFile, root = REPO_ROOT, signa
       const domain = await (deps.dumpDomain ?? dumpDomain)(stack, db, id, signal)
       // Misma huella que el plan de db:reset:local: así su --backup-receipt acredita este estado.
       const discarded = await (deps.discardedState ?? discardedState)({ ...stack, fetch: deps.fetch ?? globalThis.fetch, signal }, resolved.target, { sql: tx })
-      return { inspection, scope, mark, domain, discarded, digests: await contentDigests(tx, scope.tables), objects: await objectFacts(tx), tokens: await tokenHashes(tx), sample: await bookSample(tx), accounts: await fixtureAccounts(tx, census), storage: await storageInventory(tx), assets: classifyCoverAssets(await coverAssetInventory(tx)), marks: await readMarks(tx) }
+      return { inspection, scope, mark, domain, discarded, digests: await contentDigests(tx, scope.tables), objects: await objectFacts(tx), tokens: await tokenHashes(tx), sample: await bookSample(tx), accounts: await fixtureAccounts(tx, census), storage: await storageInventory(tx), assets: classifyCoverAssets(await coverAssetInventory(tx)), media: await mediaAssetInventory(tx), marks: await readMarks(tx) }
     })
     const excludedAuth = authExclusions(snapshot.scope.authTables)
     const auth = await (deps.dumpAuth ?? dumpAuth)(stack, excludedAuth, signal)
@@ -237,6 +237,8 @@ export async function runBackup({ profile, out, keyFile, root = REPO_ROOT, signa
     })
     const coverProblems = verifyCoverObjects(snapshot.assets, storageObjects)
     if (coverProblems.length) fail(EXIT.VERIFICATION_FAILED, `Las portadas privadas no coinciden con su registro (${coverProblems.length}: ${coverProblems[0]}); el respaldo no se guarda.`, "storage")
+    const mediaProblems = verifyMediaObjects(snapshot.media, storageObjects)
+    if (mediaProblems.length) fail(EXIT.VERIFICATION_FAILED, `Las imágenes privadas no coinciden con su registro (${mediaProblems.length}: ${mediaProblems[0]}); el respaldo no se guarda.`, "storage")
     for (const message of mail) add("mailpit-message", `mailpit/${sha256(message.id).slice(0, 40)}.eml`, message.raw)
     const { inspection } = snapshot
     const applied = compareLedger(journal.entries, inspection.ledger.rows).migrations.filter((m) => m.status === "applied").map((m) => ({ tag: m.tag, hash: m.hash, created_at: m.when }))
@@ -262,6 +264,8 @@ export async function runBackup({ profile, out, keyFile, root = REPO_ROOT, signa
       storage: { buckets: snapshot.storage.buckets, objects: storageObjects },
       // Manifiesto de portadas privadas (desde 0009): asset, clave, sha256 y tamaño, separado de los bytes.
       ...(snapshot.assets ? { assets: snapshot.assets } : {}),
+      // Inventario de imágenes privadas (desde 0014): asset, clave, sha256 y tamaño.
+      ...(snapshot.media ? { media: snapshot.media } : {}),
       files,
       encryption: key ? { algorithm: ENCRYPTION.algorithm, keyFingerprint: key.fingerprint, key: "externa: no se guarda con el respaldo" } : null,
       restoreVerification: null,

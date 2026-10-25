@@ -150,11 +150,12 @@ describe("worker de eliminación", () => {
 })
 
 describe("inventario de limpieza", () => {
-  const migration = readFileSync("drizzle/0013_account_deletion.sql", "utf8")
+  // La definición vigente de account_deletion_step_tables es la de 0014 (pasos product y media).
+  const migration = readFileSync("drizzle/0014_product_batch_o13.sql", "utf8")
   const stepTables = migration.slice(migration.indexOf('FUNCTION "biblib"."account_deletion_step_tables"'), migration.indexOf("ELSE NULL", migration.indexOf('FUNCTION "biblib"."account_deletion_step_tables"')))
   const sqlSteps = Object.fromEntries([...stepTables.matchAll(/WHEN '(\w+)' THEN ARRAY\[([^\]]*)\]/g)].map(([, step, list]) => [step, [...list.matchAll(/'(\w+)'/g)].map((match) => match[1])]))
 
-  test("cada tabla del inventario tiene el mismo paso que la función de 0013, en el mismo orden", () => {
+  test("cada tabla del inventario tiene el mismo paso que la función vigente (0014), en el mismo orden", () => {
     const tables = ACCOUNT_DATA_INVENTORY.filter((entry) => entry.kind === "table" && entry.name !== "account_lifecycle")
     const fromInventory: Record<string, string[]> = {}
     for (const entry of tables) (fromInventory[entry.step] ??= []).push(entry.name)

@@ -109,7 +109,9 @@ test("los exports antiguos v1 y legacy {books, shelves} siguen importando igual"
 test("el lector v2 declara sus capacidades y rechaza con explicación lo no representable", () => {
   const base = v2(library([book()]))
   // U-DAT-06 activa la capacidad completa del formato 2.
-  assert.deepEqual([...BACKUP_V2_SUPPORTED_CAPABILITIES], ["catalogue.provenance-v2", "works.entities", "copies.multiple-per-edition", "copies.verification-evidence", "editions.identifiers"])
+  // O13 (0014) añade notas/etiquetas, ubicaciones, series y evidencias como secciones opcionales declaradas.
+  assert.deepEqual([...BACKUP_V2_SUPPORTED_CAPABILITIES], ["catalogue.provenance-v2", "works.entities", "copies.multiple-per-edition", "copies.verification-evidence", "editions.identifiers",
+    "copies.personal", "copies.locations", "editions.series", "bibliographic.evidence"])
   const shared = { id: "00000000-0000-4000-8003-000000000009" }
   const twoCopies = v2(library([book({ edition: shared }), book({ id: "00000000-0000-4000-8002-000000000009", edition: shared })]))
   const cases: [unknown, RegExp][] = [
