@@ -2,8 +2,8 @@ import { createHash, randomUUID } from "node:crypto"
 import { and, asc, eq, sql } from "drizzle-orm"
 import type { DatabaseTransaction } from "./db/client"
 import { books, importPreviews, libraryOperations, librarySnapshots, shelves } from "./db/schema"
+import { deleteAllCopies, insertPlannedCopies } from "./db/model"
 import { DomainError, idempotencyConflict, previewExpired, revisionConflict } from "./domain-errors"
-import { normalizedBookIdentifier } from "./isbn"
 import { parseLibraryImport } from "./library-import"
 import {
   buildImportPlan, canonicalJson, confirmationInput, decideConfirmation, operationResult,
@@ -20,6 +20,7 @@ import type { LibraryData } from "./types"
 // revisión, mapeo de IDs, SQL por conjuntos y resultado durable. U-DAT-02 añade la versión anterior:
 // un reemplazo o una restauración capturan el estado que sustituyen en esta misma transacción, antes
 // de escribir; si la captura falla no se publica nada. U-DAT-04 añadirá los conjuntos multiparte.
+// U-DAT-06: cada fila es un ejemplar; la publicación crea sus obras y ediciones en las tablas del modelo.
 
 export interface PublishRequest {
   userId: string
@@ -71,29 +72,23 @@ export async function lockCollection(tx: DatabaseTransaction): Promise<string> {
 export async function readCollectionSnapshot(tx: DatabaseTransaction, userId: string): Promise<CollectionSnapshot> {
   const shelfRows = await tx.select({ id: shelves.id, title: shelves.title, isDefault: shelves.isDefault }).from(shelves)
     .where(eq(shelves.userId, userId)).orderBy(asc(shelves.createdAt), asc(shelves.id))
-  const bookRows = await tx.select({ id: books.id, isbn: books.isbn }).from(books)
+  // Vista plana: un elemento por ejemplar con su identificador, su edición y su obra.
+  const bookRows = await tx.select({ id: books.id, isbn: books.isbn, editionId: books.editionId, workId: books.workId }).from(books)
     .where(eq(books.userId, userId)).orderBy(asc(books.id))
   return { shelves: shelfRows, books: bookRows }
 }
 
 async function applyPlan(tx: DatabaseTransaction, userId: string, payload: LibraryData, plan: ImportPlan): Promise<void> {
   if (plan.mode === "replace") {
-    await tx.delete(books).where(eq(books.userId, userId))
+    await deleteAllCopies(tx, userId)
     await tx.delete(shelves).where(and(eq(shelves.userId, userId), eq(shelves.isDefault, false)))
   }
   if (plan.shelves.create.length) {
     await tx.insert(shelves).values(plan.shelves.create.map((shelf) => ({ id: shelf.id, userId, title: shelf.title, isDefault: false })))
   }
   const source = new Map(payload.books.map((book) => [book.id, book]))
-  const values = plan.books.insert.map((entry) => {
-    const book = source.get(entry.sourceId)
-    if (!book) throw revisionConflict()
-    return { id: entry.id, userId, isbn: normalizedBookIdentifier(book.isbn), title: book.title, subtitle: book.subtitle ?? null,
-      authors: book.authors, publishers: book.publishers ?? [], numberOfPages: book.number_of_pages, publishDate: book.publish_date,
-      coverSmall: book.cover.small, coverMedium: book.cover.medium, coverLarge: book.cover.large, status: book.status, shelfId: entry.shelfId,
-      catalogue: book.catalogue ?? { source: "import" as const, isbnVerified: false } }
-  })
-  for (let offset = 0; offset < values.length; offset += 100) await tx.insert(books).values(values.slice(offset, offset + 100))
+  if (plan.books.insert.some((entry) => !source.has(entry.sourceId))) throw revisionConflict()
+  await insertPlannedCopies(tx, userId, plan, source)
 }
 
 /**
@@ -117,7 +112,7 @@ export async function publishImport(tx: DatabaseTransaction, request: PublishReq
     preview: preview ? { id: preview.preview.id, revision: preview.preview.revision, expired: preview.expired, rulesVersion: preview.preview.rulesVersion, confirmed: Boolean(consumed) } : null,
     previewId, digest, expectedRevision, currentRevision,
   })
-  if (decision.kind === "replay") return { operationId: existing!.id, result: existing!.result, replayed: true, insertedBookIds: [], snapshotId: null }
+  if (decision.kind === "replay") return { operationId: existing!.id, result: existing!.result as ImportOperationResult, replayed: true, insertedBookIds: [], snapshotId: null }
   if (decision.kind === "reject") rejectConfirmation(decision.code, {
     notFound: "La revisión de la importación no está disponible. Prepárala de nuevo.",
     alreadyConfirmed: "Esta revisión ya se confirmó. Prepara una nueva si quieres volver a importar el archivo.",
@@ -181,7 +176,7 @@ export async function publishSnapshotRestore(tx: DatabaseTransaction, request: P
   if (decision.kind === "replay") {
     const [snapshot] = await tx.select({ id: librarySnapshots.id }).from(librarySnapshots)
       .where(and(eq(librarySnapshots.userId, userId), eq(librarySnapshots.sourceOperationId, existing!.id))).limit(1)
-    return { operationId: existing!.id, result: existing!.result, replayed: true, insertedBookIds: [], snapshotId: snapshot?.id ?? null }
+    return { operationId: existing!.id, result: existing!.result as ImportOperationResult, replayed: true, insertedBookIds: [], snapshotId: snapshot?.id ?? null }
   }
   // Borrar la versión borra sus vistas previas: una restauración en preparación responde «no disponible».
   if (decision.kind === "reject") rejectConfirmation(decision.code, {

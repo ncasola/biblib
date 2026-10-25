@@ -2,7 +2,7 @@ import "server-only"
 import { createHash } from "node:crypto"
 import { and, asc, count, eq, sql } from "drizzle-orm"
 import type { DatabaseTransaction } from "@/lib/db/client"
-import { books, libraryState, shelves } from "@/lib/db/schema"
+import { bookFields, books, libraryState, shelves } from "@/lib/db/schema"
 import { ensureDefaultShelf, mapRowToBook } from "@/lib/db/library"
 import { buildBackupSet, type BackupSet } from "@/lib/library-export"
 import type { LibraryData } from "@/lib/types"
@@ -37,7 +37,7 @@ export async function readExportLibrary(tx: DatabaseTransaction, userId: string)
   await ensureDefaultShelf(tx, userId)
   const before = await revisionOf(tx, userId)
   const userShelves = await tx.select().from(shelves).where(eq(shelves.userId, userId)).orderBy(asc(shelves.createdAt), asc(shelves.id))
-  const bookRows = await tx.select({ book: books, shelfTitle: shelves.title }).from(books)
+  const bookRows = await tx.select({ book: bookFields, shelfTitle: shelves.title }).from(books)
     .innerJoin(shelves, and(eq(books.shelfId, shelves.id), eq(shelves.userId, userId)))
     .where(eq(books.userId, userId)).orderBy(asc(books.title), asc(books.id))
   // Una escritura confirmada entre medias rota la revisión: la lectura no sería de un único estado.

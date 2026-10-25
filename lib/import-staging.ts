@@ -316,16 +316,25 @@ async function validatePart(tx: DatabaseTransaction, userId: string, session: Se
 
 /** Comprobaciones globales sobre todas las filas: ISBN repetidos, nombres contradictorios, una sola predeterminada y límites. */
 async function crossValidate(tx: DatabaseTransaction, sessionId: string): Promise<RestoreSessionTotals> {
-  const [facts] = await tx.execute<{ books: number; shelves: number; defaults: number; isbn_dupes: number; title_dupes: number; orphans: number }>(sql`
+  // U-DAT-06: varias copias de una edición pueden venir en partes distintas; dos ediciones nunca comparten
+  // ISBN-13, un identificador legacy es de un solo ejemplar y la misma edición trae los mismos datos en cada parte.
+  const [facts] = await tx.execute<{ books: number; shelves: number; defaults: number; isbn_dupes: number; legacy_dupes: number; edition_conflicts: number; title_dupes: number; orphans: number }>(sql`
     select
       (select count(*)::int from biblib.import_session_rows where session_id = ${sessionId}::uuid and kind = 'book') as books,
       (select count(*)::int from biblib.import_session_rows where session_id = ${sessionId}::uuid and kind = 'shelf') as shelves,
       (select count(*)::int from biblib.import_session_rows where session_id = ${sessionId}::uuid and kind = 'shelf' and (data->>'isDefault')::boolean) as defaults,
-      (select count(*)::int from (select 1 from biblib.import_session_rows where session_id = ${sessionId}::uuid and kind = 'book' group by data->>'isbn' having count(*) > 1) d) as isbn_dupes,
+      (select count(*)::int from (select 1 from biblib.import_session_rows where session_id = ${sessionId}::uuid and kind = 'book' and data->>'isbn' is not null
+        group by data->>'isbn' having count(distinct coalesce(data->'edition'->>'id', row_key)) > 1) d) as isbn_dupes,
+      (select count(*)::int from (select 1 from biblib.import_session_rows where session_id = ${sessionId}::uuid and kind = 'book' and data->>'legacyIdentifier' is not null
+        group by data->>'legacyIdentifier' having count(*) > 1) l) as legacy_dupes,
+      (select count(*)::int from (select 1 from biblib.import_session_rows where session_id = ${sessionId}::uuid and kind = 'book'
+        group by coalesce(data->'edition'->>'id', row_key)
+        having count(distinct (data - 'id' - 'status' - 'shelf_id' - 'shelf_name' - 'legacyIdentifier' - 'verification' - 'catalogue') || jsonb_build_object('catalogue', data->'catalogue' - 'isbnVerified')) > 1) e) as edition_conflicts,
       (select count(*)::int from (select 1 from biblib.import_session_rows where session_id = ${sessionId}::uuid and kind = 'shelf' group by lower(data->>'title') having count(*) > 1) t) as title_dupes,
       (select count(*)::int from biblib.import_session_rows b where b.session_id = ${sessionId}::uuid and b.kind = 'book'
         and not exists (select 1 from biblib.import_session_rows s where s.session_id = b.session_id and s.kind = 'shelf' and s.row_key = b.data->>'shelf_id')) as orphans`)
-  if (facts.isbn_dupes) throw new ManifestError("MANIFEST_MISMATCH", "Varias partes contienen libros con el mismo ISBN o identificador. No se ha modificado nada.")
+  if (facts.isbn_dupes || facts.legacy_dupes) throw new ManifestError("MANIFEST_MISMATCH", "Varias partes contienen libros con el mismo ISBN o identificador. No se ha modificado nada.")
+  if (facts.edition_conflicts) throw new ManifestError("MANIFEST_MISMATCH", "Una misma edición aparece con datos bibliográficos distintos en varias partes: el conjunto no es coherente. No se ha modificado nada.")
   if (facts.title_dupes) throw new ManifestError("MANIFEST_MISMATCH", "Varias partes contienen estanterías distintas con el mismo nombre. Resuelve la contradicción antes de restaurar.")
   if (facts.defaults > 1) throw new ManifestError("MANIFEST_MISMATCH", "Las partes tienen más de una estantería predeterminada: no parecen de la misma copia.")
   if (facts.orphans) throw new ManifestError("MANIFEST_MISMATCH", "Hay libros que hacen referencia a una estantería inexistente en el conjunto.")
@@ -514,7 +523,7 @@ export async function publishRestoreSession(tx: DatabaseTransaction, request: Co
   if (decision.kind === "replay") {
     const [snapshot] = await step(() => tx.select({ id: librarySnapshots.id }).from(librarySnapshots)
       .where(and(eq(librarySnapshots.userId, userId), eq(librarySnapshots.sourceOperationId, existing!.id))).limit(1))
-    return { operationId: existing!.id, result: existing!.result, replayed: true, snapshotId: snapshot?.id ?? null }
+    return { operationId: existing!.id, result: existing!.result as ImportOperationResult, replayed: true, snapshotId: snapshot?.id ?? null }
   }
   if (decision.kind === "reject") {
     if (decision.code === "IDEMPOTENCY_CONFLICT") throw idempotencyConflict()
@@ -530,23 +539,37 @@ export async function publishRestoreSession(tx: DatabaseTransaction, request: Co
   await step(() => tx.insert(libraryOperations).values({ id: operationId, userId, operation: RESTORE_OPERATION, idempotencyKey, inputDigest: digest!, previewId, status: "committed", result }))
   const snapshot = await step(() => captureSnapshot(tx, { operationId, reason: "import.replace" }))
   await hooks.afterCapture?.(snapshot.id)
-  await step(() => tx.delete(books).where(eq(books.userId, userId)))
+  // Retirar los ejemplares poda sus ediciones y obras (0010).
+  await step(() => tx.execute(sql`delete from biblib.copies where user_id = ${userId}::uuid`))
   await step(() => tx.delete(shelves).where(and(eq(shelves.userId, userId), eq(shelves.isDefault, false))))
   await step(() => tx.execute(sql`insert into biblib.shelves (id, user_id, title, is_default)
     select p.id, s.user_id, p.title, false from biblib.import_sessions s
     cross join lateral jsonb_to_recordset(s.plan->'shelves'->'create') as p(id uuid, title text)
     where s.id = ${sessionId}::uuid and s.user_id = ${userId}::uuid`))
-  const [{ inserted }] = await step(() => tx.execute<{ inserted: number }>(sql`with added as (
-    insert into biblib.books (id, user_id, isbn, title, subtitle, authors, publishers, catalogue, number_of_pages, publish_date, cover_small, cover_medium, cover_large, status, shelf_id)
-    select p.id, s.user_id, r.data->>'isbn', r.data->>'title', r.data->>'subtitle', coalesce(r.data->'authors', '[]'::jsonb), coalesce(r.data->'publishers', '[]'::jsonb),
-      coalesce(r.data->'catalogue', '{"source":"import","isbnVerified":false}'::jsonb), (r.data->>'number_of_pages')::integer, r.data->>'publish_date',
-      r.data#>>'{cover,small}', r.data#>>'{cover,medium}', r.data#>>'{cover,large}', r.data->>'status', p."shelfId"
-    from biblib.import_sessions s
-    cross join lateral jsonb_to_recordset(s.plan->'books'->'insert') as p("sourceId" text, id uuid, "shelfId" uuid)
+  // Obras, ediciones y ejemplares por conjuntos desde staging, en el orden de las FK con dueño.
+  const fromPlan = (section: string, columns: ReturnType<typeof sql>) => sql`from biblib.import_sessions s
+    cross join lateral jsonb_to_recordset(s.plan#>${`{${section}}`}::text[]) as p(${columns})
     join biblib.import_session_rows r on r.session_id = s.id and r.user_id = s.user_id and r.kind = 'book' and r.row_key = p."sourceId"
-    where s.id = ${sessionId}::uuid and s.user_id = ${userId}::uuid
+    where s.id = ${sessionId}::uuid and s.user_id = ${userId}::uuid`
+  const [{ works: worksInserted }] = await step(() => tx.execute<{ works: number }>(sql`with added as (
+    insert into biblib.works (id, user_id, title)
+    select p.id, s.user_id, coalesce(r.data->'edition'->>'workTitle', r.data->>'title') ${fromPlan("works,create", sql`id uuid, "sourceId" text`)}
+    returning 1) select count(*)::int as works from added`))
+  const [{ editions: editionsInserted }] = await step(() => tx.execute<{ editions: number }>(sql`with added as (
+    insert into biblib.editions (id, user_id, work_id, isbn13, title, subtitle, authors, publishers, publish_date, number_of_pages, language, identifiers, catalogue, cover_small, cover_medium, cover_large)
+    select p.id, s.user_id, p."workId", r.data->>'isbn', r.data->>'title', r.data->>'subtitle', coalesce(r.data->'authors', '[]'::jsonb), coalesce(r.data->'publishers', '[]'::jsonb),
+      r.data->>'publish_date', (r.data->>'number_of_pages')::integer, r.data->'edition'->>'language', coalesce(r.data->'edition'->'identifiers', '{}'::jsonb),
+      coalesce(r.data->'catalogue', '{"source":"import"}'::jsonb) - 'isbnVerified' - 'isbnChecksumValid', r.data#>>'{cover,small}', r.data#>>'{cover,medium}', r.data#>>'{cover,large}'
+    ${fromPlan("editions,create", sql`id uuid, "sourceId" text, "workId" uuid`)}
+    returning 1) select count(*)::int as editions from added`))
+  const [{ inserted }] = await step(() => tx.execute<{ inserted: number }>(sql`with added as (
+    insert into biblib.copies (id, user_id, edition_id, status, shelf_id, edition_verification, legacy_identifier)
+    select p.id, s.user_id, p."editionId", r.data->>'status', p."shelfId",
+      jsonb_build_object('isbnVerified', r.data->>'isbn' is not null and coalesce(r.data->'catalogue'->'isbnVerified' = 'true'::jsonb, false)) || coalesce(r.data->'verification', '{}'::jsonb),
+      case when r.data->>'isbn' is null then r.data->>'legacyIdentifier' end
+    ${fromPlan("books,insert", sql`"sourceId" text, id uuid, "shelfId" uuid, "editionId" uuid`)}
     returning 1) select count(*)::int as inserted from added`))
-  if (inserted !== plan.books.insert.length) throw revisionConflict()
+  if (inserted !== plan.books.insert.length || editionsInserted !== plan.editions.create.length || worksInserted !== plan.works.create.length) throw revisionConflict()
   await hooks.beforeFinalize?.()
   await step(() => tx.update(importSessions).set({ state: "committed", operationId, updatedAt: sql`now()` }).where(eq(importSessions.id, sessionId)))
   return { operationId, result, replayed: false, snapshotId: snapshot.id }

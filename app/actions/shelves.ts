@@ -2,7 +2,7 @@
 
 import { and, eq, sql, asc } from "drizzle-orm"
 import { withRlsContext } from "@/lib/db/client"
-import { books, shelves } from "@/lib/db/schema"
+import { copies, shelves } from "@/lib/db/schema"
 import { ensureDefaultShelf, lockLibrary } from "@/lib/db/library"
 import { getRequiredUserId } from "@/lib/server-user"
 import { parseShelfTitle, parseUuid } from "@/lib/book-validation"
@@ -15,8 +15,8 @@ export async function getShelvesAction(): Promise<Shelf[]> {
   return withRlsContext(userId, async (tx) => {
     await ensureDefaultShelf(tx, userId)
     return tx.select({ id: shelves.id, title: shelves.title, isDefault: shelves.isDefault,
-      book_count: sql<number>`count(${books.id})::int` }).from(shelves)
-      .leftJoin(books, and(eq(books.shelfId, shelves.id), eq(books.userId, userId)))
+      book_count: sql<number>`count(${copies.id})::int` }).from(shelves)
+      .leftJoin(copies, and(eq(copies.shelfId, shelves.id), eq(copies.userId, userId)))
       .where(eq(shelves.userId, userId)).groupBy(shelves.id).orderBy(asc(shelves.createdAt), asc(shelves.id))
   })
 }
@@ -60,8 +60,9 @@ async function deleteShelf(shelfId: string): Promise<void> {
       await lockLibrary(tx)
       const defaultId = await ensureDefaultShelf(tx, userId)
       if (id === defaultId) throw new DomainError("CONFLICT", "No se puede eliminar la estantería predeterminada.")
-      await tx.update(books).set({ shelfId: defaultId, updatedAt: new Date() })
-        .where(and(eq(books.userId, userId), eq(books.shelfId, id)))
+      // Los ejemplares de la estantería pasan a la predeterminada (U-DAT-06: la ubicación es del ejemplar).
+      await tx.update(copies).set({ shelfId: defaultId, updatedAt: new Date() })
+        .where(and(eq(copies.userId, userId), eq(copies.shelfId, id)))
       const removed = await tx.delete(shelves).where(and(eq(shelves.id, id), eq(shelves.userId, userId), eq(shelves.isDefault, false))).returning({ id: shelves.id })
       if (!removed.length) throw new DomainError("NOT_FOUND", "La estantería ya no está disponible.")
     })

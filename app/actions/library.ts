@@ -3,7 +3,7 @@
 import { and, eq, sql, asc, desc, count } from "drizzle-orm"
 import { z } from "zod"
 import { withRlsContext } from "@/lib/db/client"
-import { books, shelves } from "@/lib/db/schema"
+import { bookFields, books, shelves } from "@/lib/db/schema"
 import { ensureDefaultShelf, mapRowToBook } from "@/lib/db/library"
 import { getRequiredUserId } from "@/lib/server-user"
 import { DomainError } from "@/lib/domain-errors"
@@ -31,10 +31,10 @@ export async function getLibrarySummaryAction() {
       const [recounted] = await tx.select({ totalShelves: count() }).from(shelves).where(eq(shelves.userId, userId))
       shelfTotals = recounted
     }
-    const recent = await tx.select({ book: books, shelfTitle: shelves.title }).from(books)
+    const recent = await tx.select({ book: bookFields, shelfTitle: shelves.title }).from(books)
       .innerJoin(shelves, and(eq(books.shelfId, shelves.id), eq(shelves.userId, userId)))
       .where(eq(books.userId, userId)).orderBy(desc(books.createdAt), desc(books.id)).limit(5)
-    const reading = await tx.select({ book: books, shelfTitle: shelves.title }).from(books)
+    const reading = await tx.select({ book: bookFields, shelfTitle: shelves.title }).from(books)
       .innerJoin(shelves, and(eq(books.shelfId, shelves.id), eq(shelves.userId, userId)))
       .where(and(eq(books.userId, userId), eq(books.status, "reading"))).orderBy(desc(books.updatedAt), asc(books.id)).limit(5)
     return { ...totals, totalShelves: shelfTotals.totalShelves, recent: recent.map(mapRowToBook), currentlyReading: reading.map(mapRowToBook) }
@@ -58,14 +58,16 @@ export async function listBooksAction(input: unknown = {}) {
   const escaped = `%${query.replace(/[\\%_]/g, "\\$&")}%`
   const conditions = and(eq(books.userId, userId), filter.status !== "all" ? eq(books.status, filter.status) : undefined,
     filter.shelf !== "all" ? eq(books.shelfId, filter.shelf) : undefined,
-    query ? sql`translate(lower(${books.title} || ' ' || coalesce(${books.subtitle}, '') || ' ' || ${books.authors}::text || ' ' || ${books.isbn}), 'áéíóúüñ', 'aeiouun') like ${escaped}` : undefined)
+    // Tarea T5 (U-DAT-06): el texto de búsqueda de la edición se calcula al escribir (columna generada de 0010); el
+    // identificador legacy es del ejemplar y se busca aparte.
+    query ? sql`(${books.searchText} like ${escaped} or lower(coalesce(${books.legacyIdentifier}, '')) like ${escaped})` : undefined)
   return withRlsContext(userId, async (tx) => {
     const [{ total }] = await tx.select({ total: count() }).from(books).where(conditions)
     const page = Math.min(filter.page, Math.max(1, Math.ceil(total / filter.pageSize)))
     const key = filter.sort.replace(/^-/, "")
     const orderColumn = key === "author" ? sql`${books.authors}->0->>'name'` : key === "pages" ? books.numberOfPages
       : key === "date" ? sql`coalesce(substring(${books.publishDate} from '[0-9]{4}'), '0000')` : key === "status" ? books.status : books.title
-    const rows = await tx.select({ book: books, shelfTitle: shelves.title }).from(books)
+    const rows = await tx.select({ book: bookFields, shelfTitle: shelves.title }).from(books)
       .innerJoin(shelves, and(eq(books.shelfId, shelves.id), eq(shelves.userId, userId))).where(conditions)
       .orderBy(filter.sort.startsWith("-") ? desc(orderColumn) : asc(orderColumn), asc(books.id))
       .limit(filter.pageSize).offset((page - 1) * filter.pageSize)

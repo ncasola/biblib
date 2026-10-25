@@ -1,4 +1,4 @@
-import { sql } from "drizzle-orm"
+import { getViewSelectedFields, sql } from "drizzle-orm"
 import { authenticatedRole } from "drizzle-orm/supabase"
 import { pgSchema, uuid, text, timestamp, boolean, integer, bigint, jsonb, uniqueIndex, index, check, pgPolicy, foreignKey, primaryKey, customType, type AnyPgColumn } from "drizzle-orm/pg-core"
 import type { Author, Publisher, Book, CatalogueMetadata, CopyVerification, EditionCatalogue, EditionIdentifiers, LibraryData } from "@/lib/types"
@@ -258,6 +258,9 @@ export const books = biblibSchema.view("books", {
   searchText: text("search_text"),
   editionCopies: integer("edition_copies").notNull(),
 }).existing()
+
+/** Columnas de la vista para seleccionarla anidada (`select({ book: bookFields, … })`). */
+export const bookFields = getViewSelectedFields(books)
 
 export type ModelMigrationReportKind = "summary" | "normalized" | "invalid" | "conflict" | "grouped"
 

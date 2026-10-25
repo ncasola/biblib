@@ -125,7 +125,7 @@ async function coversStep(deps: Required<Pick<WorkerDeps, "repo" | "random" | "n
       decisions.push({ update: { itemKey: item.itemKey, state: "skipped", attempt: false, delayMs: 0, errorCode: book ? "CHANGED" : "MISSING" } })
       continue
     }
-    const isbn = normalizeIsbn(book.isbn)
+    const isbn = book.isbn ? normalizeIsbn(book.isbn) : null
     if (!isbn) {
       decisions.push({ update: { itemKey: item.itemKey, state: "skipped", attempt: false, delayMs: 0, errorCode: "NO_ISBN" } })
       continue

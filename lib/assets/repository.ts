@@ -2,7 +2,8 @@ import { createHash } from "node:crypto"
 import type { SupabaseClient } from "@supabase/supabase-js"
 import { and, eq, inArray, isNotNull, ne, sql } from "drizzle-orm"
 import type { DatabaseTransaction } from "../db/client"
-import { books, coverAssets } from "../db/schema"
+import { coverAssets, editions } from "../db/schema"
+import { editionOfCopy } from "../db/model"
 import { DomainError, databaseErrorCode } from "../domain-errors"
 import { ASSET_QUOTAS, COVER_BUCKET, coverAssetUrl, PURGE_GRACE_SECONDS, type CoverAssetView } from "./contracts"
 
@@ -146,8 +147,9 @@ export type AttachOutcome = "attached" | "changed" | "unavailable"
  */
 export async function attachAsset(tx: DatabaseTransaction, owner: string, input: { bookId: string; expectedVersion: string; assetId: string }): Promise<AttachOutcome> {
   try {
-    const rows = await tx.update(books).set({ coverAssetId: input.assetId, updatedAt: new Date() })
-      .where(and(eq(books.id, input.bookId), eq(books.userId, owner), eq(books.version, input.expectedVersion))).returning({ id: books.id })
+    // La portada privada es de la edición del ejemplar (U-DAT-06), con el token plano de la ficha vista.
+    const rows = await tx.update(editions).set({ coverAssetId: input.assetId, updatedAt: new Date() })
+      .where(editionOfCopy(owner, input.bookId, input.expectedVersion)).returning({ id: editions.id })
     return rows.length ? "attached" : "changed"
   } catch (error) {
     const code = databaseErrorCode(error)
@@ -157,8 +159,8 @@ export async function attachAsset(tx: DatabaseTransaction, owner: string, input:
 }
 
 export async function detachAsset(tx: DatabaseTransaction, owner: string, input: { bookId: string; expectedVersion: string }): Promise<boolean> {
-  const rows = await tx.update(books).set({ coverAssetId: null, updatedAt: new Date() })
-    .where(and(eq(books.id, input.bookId), eq(books.userId, owner), eq(books.version, input.expectedVersion), isNotNull(books.coverAssetId))).returning({ id: books.id })
+  const rows = await tx.update(editions).set({ coverAssetId: null, updatedAt: new Date() })
+    .where(and(editionOfCopy(owner, input.bookId, input.expectedVersion), isNotNull(editions.coverAssetId))).returning({ id: editions.id })
   return rows.length > 0
 }
 

@@ -8,7 +8,7 @@ import type { Book } from "../types"
  * Bloqueo de colección (U-DAT-01): fila del propietario en `biblib.library_state`, tomada con
  * `biblib.lock_library()` antes de escribir. El propietario sale de `auth.uid()` (claims de la
  * sesión en `withRlsContext`), nunca de un argumento. Devuelve la revisión vigente; los triggers de
- * `books`/`shelves` la rotan al confirmar cualquier escritura de la transacción.
+ * obras, ediciones, ejemplares y estanterías la rotan al confirmar cualquier escritura de la transacción.
  */
 export async function lockLibrary(tx: DatabaseTransaction): Promise<string> {
   const rows = await tx.execute<{ revision: string }>(sql`select biblib.lock_library() as revision`)
@@ -38,15 +38,30 @@ export async function ensureDefaultShelf(tx: DatabaseTransaction, userId: string
   throw new Error("No se pudo crear la estantería predeterminada.")
 }
 
-export function mapRowToBook(row: { book: typeof books.$inferSelect; shelfTitle: string }): Book {
+export type BookRow = typeof books.$inferSelect
+
+/** Fila de la vista plana `books` (ejemplar + edición, U-DAT-06) en el DTO de la interfaz. */
+export function mapRowToBook(row: { book: BookRow; shelfTitle: string }): Book {
+  const book = row.book
+  const { checkedAt, evidenceRefs } = book.editionVerification
+  const evidence = { ...(checkedAt ? { checkedAt } : {}), ...(evidenceRefs?.length ? { evidenceRefs } : {}) }
   return {
-    version: row.book.version,
-    id: row.book.id, isbn: row.book.isbn, title: row.book.title, subtitle: row.book.subtitle ?? undefined,
-    authors: row.book.authors, number_of_pages: row.book.numberOfPages, publish_date: row.book.publishDate,
-    publishers: row.book.publishers,
-    cover: { small: row.book.coverSmall, medium: row.book.coverMedium, large: row.book.coverLarge },
-    status: row.book.status, shelf_id: row.book.shelfId, shelf_name: row.shelfTitle,
-    catalogue: row.book.catalogue,
-    ...(row.book.coverAssetId ? { coverAssetId: row.book.coverAssetId } : {}),
+    version: book.version, copyVersion: book.copyVersion,
+    id: book.id, isbn: book.isbn13,
+    ...(book.legacyIdentifier ? { legacyIdentifier: book.legacyIdentifier } : {}),
+    title: book.title, subtitle: book.subtitle ?? undefined,
+    authors: book.authors, number_of_pages: book.numberOfPages, publish_date: book.publishDate,
+    publishers: book.publishers,
+    cover: { small: book.coverSmall, medium: book.coverMedium, large: book.coverLarge },
+    status: book.status, shelf_id: book.shelfId, shelf_name: row.shelfTitle,
+    catalogue: book.catalogue,
+    ...(book.coverAssetId ? { coverAssetId: book.coverAssetId } : {}),
+    edition: {
+      id: book.editionId, version: book.editionVersion, copies: book.editionCopies,
+      ...(book.workId ? { workId: book.workId, ...(book.workTitle ? { workTitle: book.workTitle } : {}) } : {}),
+      ...(book.language ? { language: book.language } : {}),
+      ...(Object.keys(book.identifiers).length ? { identifiers: book.identifiers } : {}),
+    },
+    ...(Object.keys(evidence).length ? { verification: evidence } : {}),
   }
 }

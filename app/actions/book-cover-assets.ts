@@ -8,7 +8,7 @@ import { OPEN_LIBRARY_COVERS_HOST } from "@/lib/bibliographic-catalog/providers/
 import { assertBookVersion, bookVersionConflict } from "@/lib/book-version"
 import { withRlsContext, type DatabaseTransaction } from "@/lib/db/client"
 import { lockLibrary, mapRowToBook } from "@/lib/db/library"
-import { books, libraryJobs, shelves } from "@/lib/db/schema"
+import { bookFields, books, libraryJobs, shelves } from "@/lib/db/schema"
 import { DomainError, idempotencyConflict, jobConflict } from "@/lib/domain-errors"
 import { IDEMPOTENCY_KEY_PATTERN, isTerminal } from "@/lib/jobs/contracts"
 import { controlJob } from "@/lib/jobs/server"
@@ -52,7 +52,7 @@ const quotaExceeded = (quota: "quarantine" | "stored") => new DomainError("LIMIT
   : "Has alcanzado el espacio de portadas privadas (500 imágenes o 200 MiB). Retira alguna antes de añadir otra.")
 
 async function findBook(tx: DatabaseTransaction, userId: string, id: string): Promise<Book | null> {
-  const [row] = await tx.select({ book: books, shelfTitle: shelves.title }).from(books)
+  const [row] = await tx.select({ book: bookFields, shelfTitle: shelves.title }).from(books)
     .innerJoin(shelves, and(eq(books.shelfId, shelves.id), eq(shelves.userId, userId)))
     .where(and(eq(books.id, id), eq(books.userId, userId))).limit(1)
   return row ? mapRowToBook(row) : null
