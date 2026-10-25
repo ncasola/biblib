@@ -10,6 +10,7 @@ import { editionFingerprint } from "./backup-v2"
 import { canonicalJson, IMPORT_RULES_VERSION, planEditions, type CollectionSnapshot, type IdAllocator, type ImportMode, type ImportPlan } from "./import-plan"
 import { normalizeIsbn } from "./isbn"
 import type { CopyRating, LocationKind } from "./product/contracts"
+import { READING_CYCLE_STATUSES, type Loan, type ReadingCycle, type ReadingCycleStatus } from "./product/reading-loans"
 import type { ConfidenceLabel, EvidenceEntry, EvidenceOrigin, EvidenceSourceKind } from "./review/contracts"
 import type { Author, Book, CatalogueMetadata, CopyVerification, EditionIdentifiers, LibraryData, Publisher } from "./types"
 
@@ -31,9 +32,10 @@ export const SNAPSHOT_LIMITS = Object.freeze({
 /**
  * 1: ficha legacy (0006–0010). 2: ejemplar con su edición, obra y comprobación (0011, U-DAT-06). 3 (0014, O13): además
  * nota, valoración y etiquetas, ubicación, serie de la edición y evidencias, con las etiquetas, ubicaciones y series de la
- * cuenta en trozos propios tras los libros.
+ * cuenta en trozos propios tras los libros. 4 (0015, O14): además los ciclos de lectura con sus entradas y los préstamos de
+ * cada ejemplar.
  */
-export const SNAPSHOT_SCHEMA_VERSION = 3
+export const SNAPSHOT_SCHEMA_VERSION = 4
 
 /** Tablas privadas que la limpieza de cuenta (U-OPS-03) debe incluir; todas cuelgan de `auth.users`. */
 export const SNAPSHOT_INVENTORY = Object.freeze(["biblib.library_snapshots", "biblib.library_snapshot_chunks", "biblib.import_previews (snapshot_id)"])
@@ -52,6 +54,17 @@ export interface SnapshotEvidenceEntry {
   confidence: ConfidenceLabel
   origin: EvidenceOrigin
 }
+/** Ciclo de lectura tal como lo guarda una versión anterior (0015): instantes como texto ISO, sin claves nulas. */
+export interface SnapshotReadingCycleEntry {
+  id: string
+  cycle_number: number
+  status: ReadingCycleStatus
+  started_at?: string
+  finished_at?: string
+  entries?: { id: string; occurred_at: string; page_from?: number; page_to?: number; note?: string }[]
+}
+/** Préstamo tal como lo guarda una versión anterior (0015): fechas civiles `AAAA-MM-DD`. */
+export interface SnapshotLoanEntry { id: string; borrower_label: string; loaned_on: string; due_on?: string; returned_on?: string; note?: string }
 export interface SnapshotTagEntry { id: string; name: string; created_at: string }
 export interface SnapshotLocationEntry { id: string; parent_id: string | null; name: string; kind: LocationKind; photo_asset_id: string | null; created_at: string }
 export interface SnapshotSeriesEntry { id: string; title: string; description: string | null; created_at: string }
@@ -90,6 +103,9 @@ export interface SnapshotBookEntry {
   series?: { series_id: string; position?: string; volume_label?: string; order_note?: string }
   evidence?: SnapshotEvidenceEntry[]
   edition_evidence?: SnapshotEvidenceEntry[]
+  /** schema_version 4 (0015): lectura y préstamos del ejemplar. */
+  reading?: SnapshotReadingCycleEntry[]
+  loans?: SnapshotLoanEntry[]
 }
 export interface SnapshotContent {
   shelves: SnapshotShelfEntry[]
@@ -296,6 +312,12 @@ const bookEntrySchema = z.object({
   series: z.object({ series_id: uuidText, position: z.string().optional(), volume_label: z.string().optional(), order_note: z.string().optional() }).optional(),
   evidence: jsonArray<SnapshotEvidenceEntry>().optional(),
   edition_evidence: jsonArray<SnapshotEvidenceEntry>().optional(),
+  // schema_version 4 (0015): lectura y préstamos; los valida la base al volver a escribirlos.
+  reading: z.array(z.object({
+    id: uuidText, cycle_number: z.number().int(), status: z.enum(READING_CYCLE_STATUSES), started_at: z.string().optional(), finished_at: z.string().optional(),
+    entries: z.array(z.object({ id: uuidText, occurred_at: z.string(), page_from: z.number().int().optional(), page_to: z.number().int().optional(), note: z.string().optional() })).optional(),
+  })).optional(),
+  loans: z.array(z.object({ id: uuidText, borrower_label: z.string(), loaned_on: z.string(), due_on: z.string().optional(), returned_on: z.string().optional(), note: z.string().optional() })).optional(),
 })
 const tagEntrySchema = z.object({ id: uuidText, name: z.string(), created_at: z.string() })
 const locationEntrySchema = z.object({ id: uuidText, parent_id: uuidText.nullable(), name: z.string(), kind: z.enum(["room", "bookcase", "cabinet", "box", "shelf", "other"]),
@@ -426,9 +448,32 @@ export function snapshotRows(content: SnapshotContent): Map<string, Book> {
       ...(entry.location ? { location: { locationId: entry.location.location_id, ...(entry.location.shelf_label !== undefined ? { shelfLabel: entry.location.shelf_label } : {}),
         ...(entry.location.position !== undefined ? { position: entry.location.position } : {}) } } : {}),
       ...(entry.evidence?.length ? { evidence: entry.evidence.map(snapshotEvidence) } : {}),
+      ...(entry.reading?.length ? { reading: entry.reading.map(snapshotCycle) } : {}),
+      ...(entry.loans?.length ? { loans: entry.loans.map(snapshotLoan) } : {}),
     })
   }
   return rows
+}
+
+/** Instante de una versión (texto de `timestamptz` en jsonb, con su desplazamiento) en ISO UTC, como la exportación. */
+const isoInstant = (value: string) => new Date(value).toISOString()
+
+function snapshotCycle(entry: SnapshotReadingCycleEntry): ReadingCycle {
+  return {
+    id: entry.id, cycleNumber: entry.cycle_number, status: entry.status,
+    ...(entry.started_at !== undefined ? { startedAt: isoInstant(entry.started_at) } : {}), ...(entry.finished_at !== undefined ? { finishedAt: isoInstant(entry.finished_at) } : {}),
+    ...(entry.entries?.length ? { entries: entry.entries.map((item) => ({
+      id: item.id, occurredAt: isoInstant(item.occurred_at), ...(item.page_from !== undefined ? { pageFrom: item.page_from } : {}),
+      ...(item.page_to !== undefined ? { pageTo: item.page_to } : {}), ...(item.note !== undefined ? { note: item.note } : {}),
+    })) } : {}),
+  }
+}
+
+function snapshotLoan(entry: SnapshotLoanEntry): Loan {
+  return {
+    id: entry.id, borrowerLabel: entry.borrower_label, loanedOn: entry.loaned_on, ...(entry.due_on !== undefined ? { dueOn: entry.due_on } : {}),
+    ...(entry.returned_on !== undefined ? { returnedOn: entry.returned_on } : {}), ...(entry.note !== undefined ? { note: entry.note } : {}),
+  }
 }
 
 function snapshotEvidence(entry: SnapshotEvidenceEntry): EvidenceEntry {
@@ -452,8 +497,9 @@ export function snapshotLibrary(content: SnapshotContent): LibraryData {
 
 /**
  * Sustituye la colección por la versión según el plan ya comprobado. Los ejemplares y ediciones reciben versiones nuevas.
- * Desde schema_version 3 también vuelven sus etiquetas, notas, ubicaciones, series y evidencias, con sus IDs salvo los que
- * hoy usa otra cuenta (`foreign`); una foto citada solo vuelve si su asset sigue siendo del dueño.
+ * Desde schema_version 3 también vuelven sus etiquetas, notas, ubicaciones, series y evidencias, y desde la 4 su lectura y
+ * sus préstamos, con sus IDs salvo los que hoy usa otra cuenta (`foreign`); una foto citada solo vuelve si su asset sigue
+ * siendo del dueño.
  */
 export async function applyRestorePlan(tx: DatabaseTransaction, userId: string, content: SnapshotContent, plan: ImportPlan,
   options: { foreign: ReadonlySet<string>; allocateId: IdAllocator }): Promise<void> {

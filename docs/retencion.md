@@ -14,7 +14,7 @@ Inventario de lo que BibLib guarda de cada cuenta, cómo se elimina cuando la pe
 
 ## Inventario
 
-Orden de los pasos: sesiones → Storage → filas (hijas antes que padres) → identidad → verificación. Es el mismo en `ACCOUNT_DATA_INVENTORY` (`lib/account-deletion/worker.ts`) y en `biblib.account_deletion_step_tables` (0013, ampliada en 0014 con los pasos `product` y `media`); `tests/account-deletion.test.ts` y `tests/db/account-deletion.sql` fallan si una tabla con dueño queda fuera o si una tabla con escritura de cliente no exige cuenta activa.
+Orden de los pasos: sesiones → Storage → filas (hijas antes que padres) → identidad → verificación. Es el mismo en `ACCOUNT_DATA_INVENTORY` (`lib/account-deletion/worker.ts`) y en `biblib.account_deletion_step_tables` (0013, ampliada en 0014 con los pasos `product` y `media` y en 0015 con la lectura y los préstamos); `tests/account-deletion.test.ts` y `tests/db/account-deletion.sql` fallan si una tabla con dueño queda fuera o si una tabla con escritura de cliente no exige cuenta activa.
 
 | Recurso | Tipo | Contenido | Paso y tratamiento |
 | --- | --- | --- | --- |
@@ -36,6 +36,9 @@ Orden de los pasos: sesiones → Storage → filas (hijas antes que padres) → 
 | `library_operations` | tabla | Resultados idempotentes de operaciones. | `operations`. |
 | `catalogue_private_cache` | tabla | Caché privada de búsquedas por título o autor (consulta reducida a HMAC). | `private_cache`. |
 | `catalogue_quota_reservations` | tabla | Reservas de cuota de proveedores a nombre de la cuenta. | `private_cache`. |
+| `reading_entries` | tabla | Sesiones y cambios de progreso de lectura (U-PRO-02): instante, páginas y nota. | `product` (antes que sus ciclos). |
+| `reading_cycles` | tabla | Ciclos de lectura y relecturas de cada ejemplar: estado y fechas que constan. | `product`. |
+| `loans` | tabla | Préstamos de cada ejemplar (U-PRO-04): alias corto de quien lo tiene (nunca correo ni teléfono), fechas civiles y nota. | `product`. |
 | `review_decisions` | tabla | Decisiones de revisión bibliográfica (U-DAT-07): campos elegidos y evidencias citadas. | `product` (antes que sus incidencias). |
 | `review_issues` | tabla | Incidencias de revisión: motivo, IDs de las entidades y estado. | `product`. |
 | `bibliographic_evidence` | tabla | Evidencias de ediciones y ejemplares: fuente, afirmaciones por campo, confianza y foto citada. | `product`. |
@@ -62,7 +65,7 @@ Orden de los pasos: sesiones → Storage → filas (hijas antes que padres) → 
 
 Sin datos de la cuenta, y por tanto fuera del inventario: la caché compartida de metadatos públicos (`catalogue_cache`, `catalogue_inflight`), los buckets de cuota por proveedor (`catalogue_quota_buckets`) y el ledger de migraciones. Los registros operativos (U-OPS-01) no llevan datos de biblioteca ni IDs de cuenta en claro (solo `accountRef` seudónimo).
 
-**Ampliación.** O13 (0014) incorporó notas, etiquetas, valoración, ubicaciones, series, perfil con avatar, imágenes privadas, revisión bibliográfica y perfiles CSV; el staging CSV vive en `import_sessions`/`import_session_rows` (paso `staging`). **Futuros (O14):** sesiones y ciclos de lectura (U-PRO-02) y préstamos (U-PRO-04) no existen todavía. Cada tabla o bucket privado nuevo entra en la misma migración que lo crea: un paso en `account_deletion_step_tables`, su fila aquí y en `ACCOUNT_DATA_INVENTORY`, y la política RESTRICTIVE de cuenta activa si tiene escritura de cliente. Una referencia a otra cuenta (p. ej., un préstamo a un contacto) nunca se borra en cascada desde la cuenta eliminada: sus FK incluyen al dueño.
+**Ampliación.** O13 (0014) incorporó notas, etiquetas, valoración, ubicaciones, series, perfil con avatar, imágenes privadas, revisión bibliográfica y perfiles CSV; el staging CSV vive en `import_sessions`/`import_session_rows` (paso `staging`). O14 (0015) incorporó los ciclos y entradas de lectura (U-PRO-02) y los préstamos (U-PRO-04) al paso `product`; un préstamo guarda solo el alias que escribe la persona, sin datos de contacto, y se retira con la cuenta del dueño. Cada tabla o bucket privado nuevo entra en la misma migración que lo crea: un paso en `account_deletion_step_tables`, su fila aquí y en `ACCOUNT_DATA_INVENTORY`, y la política RESTRICTIVE de cuenta activa si tiene escritura de cliente. Una referencia a otra cuenta (p. ej., un préstamo a un contacto) nunca se borra en cascada desde la cuenta eliminada: sus FK incluyen al dueño.
 
 ## Plazos
 

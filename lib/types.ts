@@ -1,4 +1,5 @@
 import type { CopyLocationRef, CopyPersonal, EditionSeriesRef, LocationEntry, SeriesEntry, TagEntry } from "./product/contracts"
+import type { Loan, ReadingCycle } from "./product/reading-loans"
 import type { EvidenceEntry } from "./review/contracts"
 
 export interface Author {
@@ -139,6 +140,13 @@ export interface Book {
   location?: CopyLocationRef
   /** Evidencias bibliográficas del ejemplar, como su comprobación física (U-DAT-07, 0014). */
   evidence?: EvidenceEntry[]
+  /**
+   * Ciclos de lectura del ejemplar con sus entradas (U-PRO-02, 0015), por número de ciclo. Independientes de `status`:
+   * un libro `read` legado no tiene ciclos ni fechas inventadas.
+   */
+  reading?: ReadingCycle[]
+  /** Préstamos del ejemplar, activos y devueltos (U-PRO-04, 0015). Independientes del estado de lectura. */
+  loans?: Loan[]
 }
 
 export interface Shelf {

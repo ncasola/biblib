@@ -2,11 +2,13 @@ import type { IdAllocator, ImportPlan } from "../import-plan"
 import type { ConfidenceLabel, EvidenceEntry, EvidenceOrigin, EvidenceSourceKind } from "../review/contracts"
 import type { Book, LibraryData } from "../types"
 import { normalizeTagName, type LocationKind, type MediaKind, type MediaRef } from "./contracts"
+import type { ReadingCycleStatus } from "./reading-loans"
 
 // Datos de producto de una colección portable (v2, partes o versión anterior) → filas de 0014 con los IDs finales. Función
 // pura: la publicación (importar, restaurar partes o una versión anterior) la llama con el plan ya comprobado y escribe el
 // resultado en la misma transacción. Solo los ejemplares y ediciones que crea el plan reciben datos por ejemplar o por
-// edición; al fusionar, los ejemplares omitidos conservan los suyos.
+// edición; al fusionar, los ejemplares omitidos conservan los suyos. Desde 0015 (O14) también los ciclos de lectura con sus
+// entradas y los préstamos de cada ejemplar nuevo.
 
 /**
  * `merge`: fusión; las etiquetas se reutilizan por nombre normalizado y las ubicaciones y series propias por ID. `replace`:
@@ -40,6 +42,34 @@ export interface EvidenceRow {
   origin: EvidenceOrigin
 }
 
+export interface ReadingCycleRow {
+  id: string
+  copyId: string
+  cycleNumber: number
+  status: ReadingCycleStatus
+  startedAt: string | null
+  finishedAt: string | null
+}
+
+export interface ReadingEntryRow {
+  id: string
+  cycleId: string
+  occurredAt: string
+  pageFrom: number | null
+  pageTo: number | null
+  note: string | null
+}
+
+export interface LoanRow {
+  id: string
+  copyId: string
+  borrowerLabel: string
+  loanedOn: string
+  dueOn: string | null
+  returnedOn: string | null
+  note: string | null
+}
+
 export interface ProductRows {
   tags: { id: string; name: string; createdAt?: string }[]
   locations: { id: string; parentId: string | null; name: string; kind: LocationKind; photoAssetId: string | null; createdAt?: string }[]
@@ -49,6 +79,10 @@ export interface ProductRows {
   copyLocations: { copyId: string; locationId: string; shelfLabel: string | null; position: number | null }[]
   seriesEditions: { editionId: string; seriesId: string; position: string | null; volumeLabel: string | null; orderNote: string | null }[]
   evidence: EvidenceRow[]
+  /** 0015: ciclos (antes que sus entradas), entradas y préstamos de los ejemplares nuevos. */
+  readingCycles: ReadingCycleRow[]
+  readingEntries: ReadingEntryRow[]
+  loans: LoanRow[]
   /** Referencias a fotos que no se conservan: el asset ya no es del dueño, no está listo, es de otro tipo o tiene otros bytes. */
   droppedPhotos: number
 }
@@ -56,7 +90,7 @@ export interface ProductRows {
 /** Ningún dato de producto en el origen: la publicación no lee ni escribe nada de 0014 (salvo retirar al reemplazar). */
 export function hasProductData(library: LibraryData): boolean {
   return Boolean(library.tags?.length || library.locations?.length || library.series?.length || library.books.some((book) =>
-    book.personal || book.location || book.evidence?.length || book.edition?.series || book.edition?.evidence?.length))
+    book.personal || book.location || book.evidence?.length || book.edition?.series || book.edition?.evidence?.length || book.reading?.length || book.loans?.length))
 }
 
 /** IDs de assets de imagen que cita el origen (para comprobar cuáles siguen siendo del dueño). */
@@ -68,8 +102,9 @@ export function referencedMedia(library: LibraryData): string[] {
 }
 
 export function planProductRows(library: LibraryData, plan: Pick<ImportPlan, "books" | "editions">, mode: ProductApplyMode, targets: ProductTargets, allocateId: IdAllocator): ProductRows {
-  const rows: ProductRows = { tags: [], locations: [], series: [], copyTags: [], annotations: [], copyLocations: [], seriesEditions: [], evidence: [], droppedPhotos: 0 }
-  const finalId = (kind: "tag" | "location" | "series" | "evidence", sourceId: string) => mode !== "merge" && targets.keep(sourceId) ? sourceId : allocateId(kind, sourceId)
+  const rows: ProductRows = { tags: [], locations: [], series: [], copyTags: [], annotations: [], copyLocations: [], seriesEditions: [], evidence: [],
+    readingCycles: [], readingEntries: [], loans: [], droppedPhotos: 0 }
+  const finalId = (kind: "tag" | "location" | "series" | "evidence" | "reading_cycle" | "reading_entry" | "loan", sourceId: string) => mode !== "merge" && targets.keep(sourceId) ? sourceId : allocateId(kind, sourceId)
   const photo = (ref: MediaRef | undefined, kind: MediaKind): string | null => {
     if (!ref) return null
     const asset = targets.media.get(ref.assetId)
@@ -132,6 +167,18 @@ export function planProductRows(library: LibraryData, plan: Pick<ImportPlan, "bo
       rows.copyLocations.push({ copyId: entry.id, locationId, shelfLabel: row.location.shelfLabel ?? null, position: row.location.position ?? null })
     }
     for (const evidence of row.evidence ?? []) rows.evidence.push(evidenceRow(evidence, { editionId: null, copyId: entry.id }))
+    // Lectura y préstamos (0015): tal como constan, sin deducir nada del estado del ejemplar.
+    for (const cycle of row.reading ?? []) {
+      const cycleId = finalId("reading_cycle", cycle.id)
+      rows.readingCycles.push({ id: cycleId, copyId: entry.id, cycleNumber: cycle.cycleNumber, status: cycle.status, startedAt: cycle.startedAt ?? null, finishedAt: cycle.finishedAt ?? null })
+      for (const item of cycle.entries ?? []) {
+        rows.readingEntries.push({ id: finalId("reading_entry", item.id), cycleId, occurredAt: item.occurredAt, pageFrom: item.pageFrom ?? null, pageTo: item.pageTo ?? null, note: item.note ?? null })
+      }
+    }
+    for (const loan of row.loans ?? []) {
+      rows.loans.push({ id: finalId("loan", loan.id), copyId: entry.id, borrowerLabel: loan.borrowerLabel, loanedOn: loan.loanedOn, dueOn: loan.dueOn ?? null,
+        returnedOn: loan.returnedOn ?? null, note: loan.note ?? null })
+    }
   }
   for (const edition of plan.editions.create) {
     const row = book(edition.sourceId)
