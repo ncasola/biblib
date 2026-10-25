@@ -49,13 +49,14 @@ function ProfileForm({ user }: { user: User }) {
 
   return (
     <div className="mx-auto max-w-4xl">
-        <h1 className="text-4xl font-bold heading-vintage mb-8 text-vintage-red">Mi perfil</h1>
+        <p className="eyebrow mb-2">Cuenta</p>
+        <h1 className="heading-vintage text-3xl leading-[1.08] md:text-5xl mb-8">Mi perfil</h1>
 
         <div className="grid gap-8 md:grid-cols-[300px_minmax(0,1fr)]">
-          <Card className="p-6 bg-card/80 backdrop-blur-xl border-2 border-border/50 rounded-2xl h-fit">
+          <Card className="h-fit p-6">
             <div className="flex flex-col items-center">
               <div className="relative mb-4">
-                <UserAvatar user={user} className="w-32 h-32 border-4 border-vintage-yellow text-3xl" />
+                <UserAvatar user={user} className="w-32 h-32 border-4 border-brass text-3xl shadow-lg" />
               </div>
               <h2 className="max-w-full break-words text-xl font-bold">{user.name || user.email}</h2>
               <p className="text-muted-foreground text-sm break-all">{user.email}</p>
@@ -102,7 +103,6 @@ function ProfileForm({ user }: { user: User }) {
                 <Button
                   type="submit"
                   disabled={loading || !name.trim() || name.trim() === user.name}
-                  className="bg-vintage-red hover:bg-vintage-red/90 text-white rounded-xl"
                 >
                   {loading ? (
                     <>

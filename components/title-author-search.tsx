@@ -83,7 +83,7 @@ export function TitleAuthorSearch() {
       setManual(manualTitleAuthorDraft(title, author))
     })
   }
-  return <section aria-labelledby={`${id}-heading`} className="mx-auto mt-8 max-w-6xl rounded-2xl border border-border bg-card/80 backdrop-blur-xl p-5 sm:p-6 shadow-xl space-y-6">
+  return <section aria-labelledby={`${id}-heading`} className="surface-card mx-auto mt-8 max-w-6xl rounded-2xl p-5 sm:p-6 space-y-6">
     <h2 id={`${id}-heading`} className="text-2xl font-bold heading-vintage">Buscar por título y autor</h2>
     <p className="text-sm text-muted-foreground">¿No conoces el ISBN? Busca una obra y consulta sus ediciones. Solo se consulta al pulsar Buscar; nada se guarda hasta confirmar la revisión.</p>
     <form onSubmit={submit} aria-busy={busy} className="space-y-4">
@@ -91,7 +91,7 @@ export function TitleAuthorSearch() {
         <div className="space-y-2"><Label htmlFor={`${id}-title`}>Título</Label><Input id={`${id}-title`} maxLength={300} value={title} onChange={(event) => setTitle(event.target.value)} /></div>
         <div className="space-y-2"><Label htmlFor={`${id}-author`}>Autoría</Label><Input id={`${id}-author`} maxLength={200} value={author} onChange={(event) => setAuthor(event.target.value)} /></div>
         <div className="space-y-2"><Label htmlFor={`${id}-language`}>Idioma en Open Library (código opcional, por ejemplo spa)</Label><Input id={`${id}-language`} minLength={2} maxLength={3} value={language} onChange={(event) => setLanguage(event.target.value)} /></div>
-        <div className="space-y-2"><Label htmlFor={`${id}-limit`}>Resultados por fuente</Label><select id={`${id}-limit`} value={limit} onChange={(event) => setLimit(Number(event.target.value) as 10 | 20)} className="h-10 w-full rounded-md border border-input bg-background px-3"><option value={10}>10</option><option value={20}>20</option></select></div>
+        <div className="space-y-2"><Label htmlFor={`${id}-limit`}>Resultados por fuente</Label><select id={`${id}-limit`} value={limit} onChange={(event) => setLimit(Number(event.target.value) as 10 | 20)} className="h-10 w-full rounded-md border border-input bg-input px-3"><option value={10}>10</option><option value={20}>20</option></select></div>
       </div>
       <div className="flex flex-wrap gap-3"><Button type="submit">Buscar</Button><Button type="button" variant="outline" onClick={goManual}>Completar manualmente con este texto</Button>{busy && <Button type="button" variant="outline" onClick={() => { latest.current?.cancel(); setBusy(false) }}>Cancelar consulta</Button>}</div>
     </form>

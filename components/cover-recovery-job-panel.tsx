@@ -57,7 +57,7 @@ export function CoverRecoveryJobPanel({ disabled, onRunningChange, onFinish }: P
   }
 
   const done = job && (job.state === "succeeded" || job.state === "partially_succeeded")
-  return <section aria-labelledby="covers-title" aria-busy={running} className="rounded-2xl border border-border bg-card/80 backdrop-blur-xl p-5 md:p-8 shadow-xl space-y-4">
+  return <section aria-labelledby="covers-title" aria-busy={running} className="surface-card rounded-2xl p-5 md:p-8 space-y-4">
     <div><h2 id="covers-title" className="text-2xl font-bold mb-2">Portadas pendientes</h2><p className="text-muted-foreground">Busca en el catálogo bibliográfico las portadas genéricas de tu colección, en pasos de hasta 20 libros. Conserva las portadas existentes y los cambios hechos durante la búsqueda.</p></div>
     <p className="text-sm text-muted-foreground">La búsqueda continúa en el servidor aunque recargues o cierres esta página, y puedes pausarla o cancelarla. Los libros sin ISBN válido requieren revisión manual.</p>
     {(!job || isTerminal(job.state)) && <Button disabled={disabled || starting} onClick={() => void start()}>{starting ? <LoaderCircle aria-hidden="true" className="animate-spin" /> : <RefreshCw aria-hidden="true" />}{starting ? "Iniciando…" : job ? "Buscar portadas de nuevo" : "Recuperar portadas pendientes"}</Button>}

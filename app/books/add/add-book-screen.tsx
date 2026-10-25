@@ -147,10 +147,11 @@ export function AddBookScreen({ reviewEnabled, cameraEnabled = false }: { review
   }
 
   return <div className="mx-auto max-w-6xl">
-      <Button asChild variant="outline" className="mb-5"><Link href="/books"><ArrowLeft aria-hidden="true" className="w-4 h-4 mr-2" />Volver a libros</Link></Button>
-      <h1 className="text-3xl sm:text-4xl font-bold heading-vintage mb-2">Agregar nuevo libro</h1>
-      <p className="text-muted-foreground mb-8">Busca una edición por ISBN o completa su ficha manualmente.</p>
-      {previous && <div className="mb-6 rounded-xl border border-border bg-card/80 p-4"><p role="status">Se ha guardado «{previous.title}». Puedes añadir el siguiente libro.</p><Link tabIndex={0} className="text-primary underline underline-offset-4" href={`/book/${previous.id}`}>Ver libro guardado</Link></div>}
+      <Button asChild variant="outline" className="mb-5"><Link href="/books"><ArrowLeft aria-hidden="true" className="w-4 h-4" />Volver a libros</Link></Button>
+      <p className="eyebrow mb-2">Colección</p>
+      <h1 className="heading-vintage text-3xl leading-[1.08] md:text-5xl mb-3">Agregar nuevo libro</h1>
+      <p className="mb-8 text-lg text-foreground-light">Busca una edición por ISBN o completa su ficha manualmente.</p>
+      {previous && <div className="mb-6 rounded-xl border border-l-4 border-border border-l-[var(--status-read)] bg-card p-4 shadow-sm"><p role="status">Se ha guardado «{previous.title}». Puedes añadir el siguiente libro.</p><Link tabIndex={0} className="link-quiet" href={`/book/${previous.id}`}>Ver libro guardado</Link></div>}
       {loadingShelves ? <p role="status">Cargando estanterías...</p> : shelfError ? <div role="alert" className="space-y-4"><p className="text-destructive">{shelfError}</p><Button variant="outline" onClick={() => setAttempt((current) => current + 1)}>Reintentar</Button></div> : (
         <div ref={entryRegion}><Tabs value={tab} onValueChange={setTab} className="w-full">
           <TabsList className="grid w-full max-w-md grid-cols-2 mb-6"><TabsTrigger value="isbn">Buscar por ISBN</TabsTrigger><TabsTrigger value="manual">Entrada manual</TabsTrigger></TabsList>
@@ -162,11 +163,11 @@ export function AddBookScreen({ reviewEnabled, cameraEnabled = false }: { review
                 {error && <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 space-y-3"><p role="alert" className="text-destructive">{error}</p><Button type="button" variant="outline" onClick={() => setTab("manual")}>Completar ficha manual con este ISBN</Button></div>}
                 <div className="space-y-2 text-sm text-muted-foreground"><h3 className="font-semibold text-foreground">Dónde encontrar el ISBN</h3><p>Consulta la contraportada o la página de créditos. Comprueba que corresponde a tu edición.</p><p>Por ejemplo: 9780747532699. Se admiten guiones y espacios.</p></div>
               </div>
-              {review ? <BibliographyReview key={review.key} isbn={review.isbn} result={review.result} covers={review.covers} failure={review.failure} shelves={shelves} onSave={saveReviewed} entryDefaults={entryDefaults} onSavedAnother={savedAnother} onRetry={() => void handleSearch(review.isbn)} /> : searchResult ? <BookSearchResult key={searchResult.isbn} book={searchResult} shelves={shelves} existing={existingBook} entryDefaults={entryDefaults} onSavedAnother={savedAnother} /> : <div className="rounded-2xl border border-border bg-card/80 p-8 text-center space-y-3"><p aria-hidden="true" className="text-4xl">📚</p><h2 className="text-xl font-bold">{isSearching ? "Buscando la edición..." : "Revisa antes de guardar"}</h2><p role={isSearching ? "status" : undefined} className="text-muted-foreground">Aquí podrás corregir los datos encontrados, elegir estado y estantería y guardar el libro.</p></div>}
+              {review ? <BibliographyReview key={review.key} isbn={review.isbn} result={review.result} covers={review.covers} failure={review.failure} shelves={shelves} onSave={saveReviewed} entryDefaults={entryDefaults} onSavedAnother={savedAnother} onRetry={() => void handleSearch(review.isbn)} /> : searchResult ? <BookSearchResult key={searchResult.isbn} book={searchResult} shelves={shelves} existing={existingBook} entryDefaults={entryDefaults} onSavedAnother={savedAnother} /> : <div className="surface-card rounded-2xl p-8 text-center space-y-3"><p aria-hidden="true" className="text-4xl">📚</p><h2 className="text-xl font-bold">{isSearching ? "Buscando la edición..." : "Revisa antes de guardar"}</h2><p role={isSearching ? "status" : undefined} className="text-muted-foreground">Aquí podrás corregir los datos encontrados, elegir estado y estantería y guardar el libro.</p></div>}
             </div>
           </TabsContent>
           <TabsContent value="manual">
-            <section className="max-w-2xl rounded-2xl border border-border bg-card/80 backdrop-blur-md p-5 sm:p-6 shadow-xl"><h2 className="text-2xl font-bold mb-5">Ficha del libro</h2><ManualBookForm key={`${generation}-${lastIsbn || "manual"}`} shelves={shelves} initialIsbn={lastIsbn} entryDefaults={entryDefaults} onSavedAnother={savedAnother} /></section>
+            <section className="surface-card max-w-2xl rounded-2xl p-5 sm:p-6"><h2 className="text-2xl font-bold mb-5">Ficha del libro</h2><ManualBookForm key={`${generation}-${lastIsbn || "manual"}`} shelves={shelves} initialIsbn={lastIsbn} entryDefaults={entryDefaults} onSavedAnother={savedAnother} /></section>
           </TabsContent>
         </Tabs></div>
       )}

@@ -12,7 +12,7 @@ import type { Book } from "@/lib/types"
 
 const TARGET_LABELS: Record<CsvTargetField, string> = { title: "Título", authors: "Autores", isbn: "ISBN", publishers: "Editoriales", pages: "Páginas", publishDate: "Fecha de publicación", status: "Estado", shelf: "Estantería", ignore: "Ignorar" }
 const STATUS_LABELS: Record<Book["status"], string> = { read: "Leído", reading: "Leyendo", unread: "Sin leer", "to-read": "Por leer" }
-const control = "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+const control = "w-full rounded-md border border-border bg-input px-3 py-2 text-sm"
 type StateRule = { source: string; status: Book["status"] }
 type OpenSession = Extract<Awaited<ReturnType<typeof listCsvSessionsAction>>, { ok: true }>["value"][number]
 
@@ -132,7 +132,7 @@ export function CsvImportPanel({ disabled, onCommitted, onJob }: { disabled?: bo
   const issues = receipt?.issues ?? session?.issues ?? []
   const issueCount = receipt?.issueCount ?? session?.issueCount ?? issues.length
 
-  return <section aria-labelledby="csv-import-title" aria-busy={busy} className="rounded-2xl border border-border bg-card/80 backdrop-blur-xl p-5 md:p-8 shadow-xl space-y-5">
+  return <section aria-labelledby="csv-import-title" aria-busy={busy} className="surface-card rounded-2xl p-5 md:p-8 space-y-5">
     <h2 id="csv-import-title" className="text-2xl font-bold">Importar CSV</h2>
     <p id="csv-limits" className="text-sm text-muted-foreground">CSV UTF-8 con cabecera, hasta 8 MiB y 2000 registros. Los saltos de línea dentro de comillas pertenecen al mismo registro. Elegir un archivo permite revisarlo; no añade libros.</p>
     <div className="flex flex-wrap items-end gap-3">

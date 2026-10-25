@@ -78,7 +78,7 @@ export function CopyLocationSection({ copyId, disabled = false }: CopyLocationSe
     finally { setBusy(null) }
   }
 
-  return <section aria-labelledby={`${id}-title`} className="rounded-2xl border border-border bg-card/80 p-5 shadow-lg space-y-3">
+  return <section aria-labelledby={`${id}-title`} className="surface-card rounded-2xl p-5 space-y-3">
     <div className="flex items-center gap-2"><MapPin aria-hidden="true" className="h-4 w-4 text-primary" /><h2 id={`${id}-title`} className="text-sm font-semibold">Ubicación física</h2></div>
     {loadError ? <div role="alert" className="space-y-2 text-sm text-destructive"><p>{loadError}</p><Button type="button" variant="outline" onClick={() => setAttempt((value) => value + 1)}>Reintentar</Button></div>
       : !state ? <p className="text-sm text-muted-foreground" aria-busy="true">Cargando la ubicación física…</p>
@@ -87,7 +87,7 @@ export function CopyLocationSection({ copyId, disabled = false }: CopyLocationSe
         {state.locations.length === 0 ? <p className="text-sm text-muted-foreground">Aún no tienes ubicaciones. <Link href="/locations" className="font-semibold text-primary underline underline-offset-4">Crea tus muebles y baldas en Ubicaciones</Link>.</p> : (
           <form className="grid gap-3 sm:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,7rem)]" onSubmit={(event) => { event.preventDefault(); void save() }} aria-busy={busy !== null}>
             <div className="space-y-1 sm:col-span-3"><label htmlFor={`${id}-location`} className="text-sm font-medium">Mueble o balda</label>
-              <select id={`${id}-location`} value={locationId} disabled={locked} onChange={(event) => setLocationId(event.target.value)} className="w-full min-w-0 rounded-lg border border-input bg-background p-2 text-foreground">
+              <select id={`${id}-location`} value={locationId} disabled={locked} onChange={(event) => setLocationId(event.target.value)} className="w-full min-w-0 rounded-md border border-input bg-input px-3 py-2 text-foreground">
                 <option value="">Elige una ubicación…</option>
                 {tree.map((entry) => <option key={entry.id} value={entry.id}>{`${"  ".repeat(entry.depth - 1)}${entry.depth > 1 ? "└ " : ""}${entry.name} (${locationKindLabel(entry.kind)})`}</option>)}
               </select>

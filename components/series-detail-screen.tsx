@@ -58,7 +58,7 @@ export function SeriesDetailScreen({ seriesId }: { seriesId: string }) {
 
   if (state === "loading") return <LoadingState message="Cargando serie..." />
   if (state === "error") return <div>{back}<div role="alert" className="space-y-3"><p className="text-destructive">No se pudo cargar la serie. Comprueba la conexión e inténtalo de nuevo.</p><Button variant="outline" onClick={() => { setState("loading"); void load() }}>Reintentar</Button></div></div>
-  if (state === "missing" || !detail) return <div>{back}<div className="space-y-3"><h1 className="text-2xl font-bold">Serie no encontrada</h1><p className="text-muted-foreground">Esta serie ya no está disponible en tu biblioteca.</p></div></div>
+  if (state === "missing" || !detail) return <div>{back}<div className="space-y-3"><h1 className="heading-vintage text-3xl">Serie no encontrada</h1><p className="text-muted-foreground">Esta serie ya no está disponible en tu biblioteca.</p></div></div>
 
   const run = async (key: string, work: () => Promise<void>, fallback: string) => {
     if (pending) return
@@ -95,8 +95,8 @@ export function SeriesDetailScreen({ seriesId }: { seriesId: string }) {
     <div className="mx-auto max-w-4xl">
       {back}
       {editing ? (
-        <section aria-labelledby="edit-series-title" className="mb-8 max-w-2xl rounded-2xl border border-border bg-card/80 p-5 shadow-xl">
-          <h1 id="edit-series-title" className="mb-4 text-2xl font-bold">Editar serie</h1>
+        <section aria-labelledby="edit-series-title" className="surface-card mb-8 max-w-2xl rounded-2xl p-5">
+          <h1 id="edit-series-title" className="heading-vintage mb-4 text-3xl">Editar serie</h1>
           <SeriesForm initial={{ title: detail.title, description: detail.description }} submitLabel="Guardar serie" pendingLabel="Guardando..." onCancel={() => setEditing(false)} onSubmit={async (values) => {
             try { unwrapAction(await updateSeriesAction({ id: detail.id, expectedVersion: detail.version, ...values })) }
             catch (caught) { if (caught instanceof DomainError && caught.code === "CONFLICT") void load(); throw caught }
@@ -106,7 +106,7 @@ export function SeriesDetailScreen({ seriesId }: { seriesId: string }) {
       ) : (
         <div className="mb-8 flex flex-col items-start justify-between gap-4 sm:flex-row">
           <div className="min-w-0">
-            <h1 className="break-words text-3xl font-bold heading-vintage sm:text-4xl">{detail.title}</h1>
+            <h1 className="heading-vintage text-3xl leading-[1.08] md:text-5xl break-words">{detail.title}</h1>
             {detail.description && <p className="mt-2 whitespace-pre-line text-muted-foreground">{detail.description}</p>}
             <p className="mt-2 text-sm text-muted-foreground">{detail.items.length} {detail.items.length === 1 ? "volumen" : "volúmenes"}. Una serie puede estar incompleta.</p>
           </div>
@@ -134,14 +134,14 @@ export function SeriesDetailScreen({ seriesId }: { seriesId: string }) {
       {error && !deleteOpen && <p role="alert" className="mb-4 rounded-xl border border-destructive/30 p-3 text-sm text-destructive">{error}</p>}
 
       {detail.items.length === 0 ? (
-        <div className="rounded-2xl border border-border bg-card p-10 text-center shadow-xl">
+        <div className="surface-card rounded-2xl p-10 text-center">
           <p className="mb-2 text-muted-foreground">Esta serie aún no tiene volúmenes.</p>
           <p className="text-sm text-muted-foreground">Abre la ficha de un libro y usa «Añadir a una serie».</p>
         </div>
       ) : (
         <ol aria-label="Volúmenes de la serie" className="space-y-4">
           {detail.items.map((volume) => (
-            <li key={volume.editionId} className="rounded-2xl border border-border bg-card/80 p-4 shadow-lg">
+            <li key={volume.editionId} className="surface-card rounded-2xl p-4">
               <div className="flex items-start gap-4">
                 <BookCover cover={{ small: volume.cover, medium: volume.cover, large: volume.cover }} title={volume.title} className="w-16 shrink-0 sm:w-20" sizes="80px" />
                 <div className="min-w-0 flex-1 space-y-1">

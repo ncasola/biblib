@@ -54,8 +54,8 @@ function outcomeText(outcome: ProviderOutcome): string {
   }
 }
 
-const selectClass = "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base text-foreground focus-visible:outline-2 focus-visible:outline-ring"
-const textareaClass = "flex min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-base text-foreground focus-visible:outline-2 focus-visible:outline-ring"
+const selectClass = "flex h-10 w-full rounded-md border border-input bg-input px-3 py-2 text-base text-foreground focus-visible:outline-2 focus-visible:outline-ring"
+const textareaClass = "flex min-h-20 w-full rounded-md border border-input bg-input px-3 py-2 text-base text-foreground focus-visible:outline-2 focus-visible:outline-ring"
 const emptyDraft: Record<ReviewField, string> = { title: "", subtitle: "", authors: "", publishers: "", publish_date: "", number_of_pages: "" }
 const lines = (text: string) => text.split("\n").map((line) => line.trim()).filter(Boolean)
 
@@ -188,7 +188,7 @@ export function BibliographyReview({ isbn, result, covers, failure, shelves, onS
   }
 
   if (saved) return (
-    <section className="rounded-2xl border border-border bg-card/80 backdrop-blur-xl p-6 shadow-xl space-y-4">
+    <section className="surface-card rounded-2xl p-6 space-y-4">
       <p role="status" className="flex items-center gap-2 font-semibold"><CheckCircle aria-hidden="true" className="h-5 w-5" />Libro agregado a la biblioteca</p>
       <BookCover cover={saved.cover} title={saved.title} className="w-28" sizes="112px" />
       <h2 className="text-xl font-bold">{saved.title}</h2>
@@ -203,7 +203,7 @@ export function BibliographyReview({ isbn, result, covers, failure, shelves, onS
     : "No se pudo completar la consulta. Puedes reintentar o completar la ficha manualmente.") : ""
 
   return (
-    <section aria-labelledby={`${id}-heading`} className="rounded-2xl border border-border bg-card/80 backdrop-blur-xl p-5 sm:p-6 shadow-xl space-y-6 min-w-0">
+    <section aria-labelledby={`${id}-heading`} className="surface-card rounded-2xl p-5 sm:p-6 space-y-6 min-w-0">
       <header className="space-y-2">
         <h2 id={`${id}-heading`} className="text-2xl font-bold">Revisar fuentes bibliográficas</h2>
         <p className="text-sm text-muted-foreground">ISBN buscado: <span className="font-mono">{isbn}</span>. Nada se guarda hasta que confirmes el resumen. Las fuentes describen una edición; solo tú puedes comprobar que es la de tu ejemplar.</p>

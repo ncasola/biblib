@@ -7,7 +7,7 @@ export function GoogleBooksNotice({ enabled, onDisable }: { enabled: boolean; on
   const titleId = useId()
   if (!enabled) return null
   return (
-    <aside aria-labelledby={titleId} className="bg-card/80 backdrop-blur-xl border border-border rounded-2xl p-4 space-y-3 text-sm text-foreground">
+    <aside aria-labelledby={titleId} className="surface-card rounded-2xl p-4 space-y-3 text-sm text-foreground">
       <h2 id={titleId} className="font-semibold">Consultas opcionales a Google Books</h2>
       <p>Si seleccionas Google Books, se envía el ISBN o el texto de título y autor que buscas. No se envían tu nombre, alias, notas, fotos, préstamos, perfil ni tu colección completa.</p>
       <p>Según las condiciones de Google Books, el contenido enviado a través de su API podría hacerse público en los servicios de Google. Las portadas se ofrecen solo como previsualización temporal.</p>

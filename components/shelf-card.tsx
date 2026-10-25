@@ -1,4 +1,5 @@
 "use client"
+import { ShelfSpines } from "@/components/shelf-spines"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
@@ -49,14 +50,15 @@ export function ShelfCard({ shelf, bookCount, onUpdate, onDelete, isDefault }: S
   }
 
   return (
-    <div className="rounded-2xl border border-border bg-card p-6 shadow-xl flex flex-col gap-4 relative hover:shadow-2xl transition-shadow">
+    <div className="surface-card rounded-2xl p-5 flex flex-col gap-4 relative transition-shadow duration-300 hover:shadow-xl">
+      <ShelfSpines id={shelf.id} count={bookCount} className="h-20" />
       {isDefault && (
-        <div className="absolute top-3 right-3 bg-primary text-white text-xs px-2 py-1 rounded">Predeterminada</div>
+        <div className="absolute top-7 right-7 rounded-full bg-brass px-2.5 py-0.5 text-xs font-semibold text-[#1b130d] shadow-sm">Predeterminada</div>
       )}
 
       <div className="flex items-start justify-between gap-4 pr-12">
         <div className="flex-1">
-          <h2 className="mb-1 text-lg font-bold text-foreground"><Link tabIndex={0} href={`/books?shelf=${encodeURIComponent(shelf.id)}`} className="rounded-sm underline-offset-4 hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">{shelf.title}</Link></h2>
+          <h2 className="mb-1 text-xl font-bold"><Link tabIndex={0} href={`/books?shelf=${encodeURIComponent(shelf.id)}`} className="rounded-sm underline-offset-4 hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">{shelf.title}</Link></h2>
           <div className="flex items-center gap-2 text-muted-foreground text-sm">
             <BookOpen className="w-4 h-4" />
             <span>
@@ -68,17 +70,17 @@ export function ShelfCard({ shelf, bookCount, onUpdate, onDelete, isDefault }: S
 
       <div className="h-px bg-border" />
 
-      <Link tabIndex={0} href={`/books?shelf=${encodeURIComponent(shelf.id)}`} className="text-sm font-medium text-primary underline-offset-4 hover:underline">Ver libros de esta estantería<span className="sr-only">: {shelf.title}</span></Link>
+      <Link tabIndex={0} href={`/books?shelf=${encodeURIComponent(shelf.id)}`} className="link-quiet inline-flex min-h-11 items-center text-sm">Ver libros de esta estantería<span className="sr-only">: {shelf.title}</span></Link>
 
       <div className="flex gap-2">
         <Dialog open={isEditDialogOpen} onOpenChange={(open) => { if (!pending) { setIsEditDialogOpen(open); setError(null) } }}>
           {isDefault ? (
-            <Button type="button" variant="outline" size="sm" className="flex-1 border-border bg-transparent" disabled title="El nombre de esta estantería es inmutable." aria-label="Renombrar estantería predeterminada, acción deshabilitada">
+            <Button type="button" variant="outline" size="sm" className="flex-1" disabled title="El nombre de esta estantería es inmutable." aria-label="Renombrar estantería predeterminada, acción deshabilitada">
               <Edit2 className="mr-2 h-4 w-4" />
               Renombrar
             </Button>
           ) : <DialogTrigger asChild>
-            <Button variant="outline" size="sm" className="flex-1 border-border bg-transparent" disabled={pending}>
+            <Button variant="outline" size="sm" className="flex-1" disabled={pending}>
               <Edit2 className="w-4 h-4 mr-2" />
               Renombrar
             </Button>
@@ -104,7 +106,7 @@ export function ShelfCard({ shelf, bookCount, onUpdate, onDelete, isDefault }: S
                 <Button
                   onClick={() => void handleUpdate()}
                   disabled={pending || !editedName.trim() || editedName.trim() === shelf.title}
-                  className="bg-primary text-primary-foreground px-4 py-2 rounded-xl font-semibold hover:scale-105 transition-all shadow-lg shadow-primary/30"
+                  className="px-4"
                 >
                   {pending ? "Guardando…" : "Guardar"}
                 </Button>
@@ -118,7 +120,7 @@ export function ShelfCard({ shelf, bookCount, onUpdate, onDelete, isDefault }: S
           <Button
             variant="outline"
             size="sm"
-            className="flex-1 border-destructive text-destructive hover:bg-destructive/10 bg-transparent"
+            className="flex-1 border-destructive/50 text-destructive hover:bg-destructive/10 hover:text-destructive"
             disabled={pending}
             onClick={() => {
               if (window.confirm(`¿Eliminar la estantería "${shelf.title}"? Los libros se moverán a la predeterminada.`)) {

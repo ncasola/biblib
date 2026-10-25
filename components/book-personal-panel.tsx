@@ -7,6 +7,7 @@ import { createTagAction, deleteTagAction, getTagsAction, renameTagAction } from
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { PersonalFields } from "@/components/personal-fields"
+import { RatingStars } from "@/components/rating-stars"
 import { unwrapAction } from "@/lib/action-result"
 import { DomainError } from "@/lib/domain-errors"
 import type { PersonalInput } from "@/lib/personal-validation"
@@ -49,11 +50,11 @@ export function BookPersonalPanel({ book, onChange }: { book: Book; onChange: (b
     } catch (caught) { setConflict(caught instanceof DomainError && caught.code === "CONFLICT"); setError(caught instanceof DomainError ? caught.message : "No se pudieron guardar los datos personales. El borrador se conserva.") }
     finally { saving.current = false; setPending(false) }
   }
-  return <section aria-label="Datos personales" className="space-y-4 rounded-2xl border border-border bg-card/80 p-5 shadow-lg">
+  return <section aria-label="Datos personales" className="surface-card space-y-4 p-5 md:p-6">
     <h2 className="text-xl font-semibold">Notas, etiquetas y valoración</h2>
     {editing ? <form onSubmit={(event) => { event.preventDefault(); void save() }}><fieldset disabled={pending} className="min-w-0 space-y-4"><PersonalFields value={draft} onChange={setDraft} /><div className="flex flex-wrap gap-2"><Button disabled={pending || conflict}>Guardar datos personales</Button><Button type="button" variant="outline" onClick={() => { setEditing(false); setError(""); setConflict(false) }}>Cancelar</Button></div></fieldset></form> : <>
-      <p className="whitespace-pre-wrap break-words">{book.personal?.notes || "Sin notas privadas."}</p>
-      <p>{book.personal?.rating ? `Valoración: ${book.personal.rating} de 5` : "Sin valoración"}</p>
+      <p className="whitespace-pre-wrap break-words rounded-xl border-l-4 border-brass bg-surface/60 px-4 py-3 text-foreground-light">{book.personal?.notes || "Sin notas privadas."}</p>
+      <p className="flex items-center gap-2">{book.personal?.rating ? <RatingStars value={book.personal.rating} /> : null}{book.personal?.rating ? `Valoración: ${book.personal.rating} de 5` : "Sin valoración"}</p>
       <p className="text-sm">Etiquetas: {book.personal?.tagIds?.map((id) => tags.find((tag) => tag.id === id)?.name ?? "Etiqueta").join(", ") || "Sin etiquetas"}</p>
       <Button type="button" variant="outline" disabled={pending} onClick={begin}>Editar datos personales</Button>
     </>}

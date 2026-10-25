@@ -21,7 +21,7 @@ export function BookSearchResult({ book, shelves, existing = false, entryDefault
   // «Ya existe» (U-DAT-06): abrir el ejemplar guardado o añadir otro de la misma edición, a elección.
   if (found) return <ExistingEditionPanel book={found} shelves={shelves} />
   if (saved) return (
-    <section className="rounded-2xl border border-border bg-card/80 p-6 shadow-xl space-y-4">
+    <section className="surface-card rounded-2xl p-6 space-y-4">
       <p role="status" className="flex items-center gap-2 font-semibold"><CheckCircle aria-hidden="true" className="h-5 w-5" />Libro agregado a la biblioteca</p>
       <BookCover cover={saved.cover} title={saved.title} className="w-28" sizes="112px" />
       <h2 className="text-xl font-bold">{saved.title}</h2>
@@ -44,7 +44,7 @@ export function BookSearchResult({ book, shelves, existing = false, entryDefault
     }
   }
   return (
-    <section className="rounded-2xl border border-border bg-card/80 backdrop-blur-md p-5 sm:p-6 shadow-xl space-y-5">
+    <section className="surface-card rounded-2xl p-5 sm:p-6 space-y-5">
       <div><h2 className="text-2xl font-bold">Revisar libro encontrado</h2><p className="text-sm text-muted-foreground mt-2">Datos de {sourceName}. Comprueba que el ISBN y la edición coinciden con tu ejemplar y corrige lo necesario antes de guardar.</p>
         {!legacyCatalogue && <p role="note" className="mt-2 rounded-xl border border-border bg-muted/40 p-3 text-sm">Esta fuente todavía no se puede registrar como procedencia de la ficha: se guardará como entrada manual con los datos que confirmes.</p>}</div>
       <BookForm initialBook={{ ...book, catalogue: legacyCatalogue ?? { source: "manual", isbnVerified: false } }} shelves={shelves} entryDefaults={entryDefaults} onSubmit={save} onSaveAndAddAnother={onSavedAnother ? (input) => save(input, true) : undefined} />
