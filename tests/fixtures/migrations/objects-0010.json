@@ -119,7 +119,7 @@
       "roles": [
         "authenticated"
       ],
-      "using": "( SELECT (auth.uid() = works.user_id))",
+      "using": "(user_id = ( SELECT auth.uid() AS uid))",
       "check": null
     },
     {
@@ -130,8 +130,8 @@
       "roles": [
         "authenticated"
       ],
-      "using": "( SELECT (auth.uid() = works.user_id))",
-      "check": "( SELECT (auth.uid() = works.user_id))"
+      "using": "(user_id = ( SELECT auth.uid() AS uid))",
+      "check": "(user_id = ( SELECT auth.uid() AS uid))"
     },
     {
       "name": "works_insert_own",
@@ -142,7 +142,7 @@
         "authenticated"
       ],
       "using": null,
-      "check": "( SELECT (auth.uid() = works.user_id))"
+      "check": "(user_id = ( SELECT auth.uid() AS uid))"
     },
     {
       "name": "works_select_own",
@@ -152,7 +152,7 @@
       "roles": [
         "authenticated"
       ],
-      "using": "( SELECT (auth.uid() = works.user_id))",
+      "using": "(user_id = ( SELECT auth.uid() AS uid))",
       "check": null
     },
     {
@@ -163,7 +163,7 @@
       "roles": [
         "authenticated"
       ],
-      "using": "( SELECT (auth.uid() = editions.user_id))",
+      "using": "(user_id = ( SELECT auth.uid() AS uid))",
       "check": null
     },
     {
@@ -174,8 +174,8 @@
       "roles": [
         "authenticated"
       ],
-      "using": "( SELECT (auth.uid() = editions.user_id))",
-      "check": "( SELECT (auth.uid() = editions.user_id))"
+      "using": "(user_id = ( SELECT auth.uid() AS uid))",
+      "check": "(user_id = ( SELECT auth.uid() AS uid))"
     },
     {
       "name": "editions_insert_own",
@@ -186,7 +186,7 @@
         "authenticated"
       ],
       "using": null,
-      "check": "( SELECT (auth.uid() = editions.user_id))"
+      "check": "(user_id = ( SELECT auth.uid() AS uid))"
     },
     {
       "name": "editions_select_own",
@@ -196,7 +196,7 @@
       "roles": [
         "authenticated"
       ],
-      "using": "( SELECT (auth.uid() = editions.user_id))",
+      "using": "(user_id = ( SELECT auth.uid() AS uid))",
       "check": null
     },
     {
@@ -207,7 +207,7 @@
       "roles": [
         "authenticated"
       ],
-      "using": "( SELECT (auth.uid() = copies.user_id))",
+      "using": "(user_id = ( SELECT auth.uid() AS uid))",
       "check": null
     },
     {
@@ -218,8 +218,8 @@
       "roles": [
         "authenticated"
       ],
-      "using": "( SELECT (auth.uid() = copies.user_id))",
-      "check": "( SELECT (auth.uid() = copies.user_id))"
+      "using": "(user_id = ( SELECT auth.uid() AS uid))",
+      "check": "(user_id = ( SELECT auth.uid() AS uid))"
     },
     {
       "name": "copies_insert_own",
@@ -230,7 +230,7 @@
         "authenticated"
       ],
       "using": null,
-      "check": "( SELECT (auth.uid() = copies.user_id))"
+      "check": "(user_id = ( SELECT auth.uid() AS uid))"
     },
     {
       "name": "copies_select_own",
@@ -240,7 +240,7 @@
       "roles": [
         "authenticated"
       ],
-      "using": "( SELECT (auth.uid() = copies.user_id))",
+      "using": "(user_id = ( SELECT auth.uid() AS uid))",
       "check": null
     },
     {
@@ -251,7 +251,7 @@
       "roles": [
         "authenticated"
       ],
-      "using": "( SELECT (auth.uid() = model_migration_report.user_id))",
+      "using": "(user_id = ( SELECT auth.uid() AS uid))",
       "check": null
     },
     {
