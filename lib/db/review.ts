@@ -468,6 +468,8 @@ export async function applyReviewDecisions(tx: DatabaseTransaction, userId: stri
   if (request.mode === "atomic" && matches.some((ok) => !ok)) {
     const stale = matches.filter((ok) => !ok).length
     const first = rows.find((row, index) => !matches[index])
+    // Una decisión individual responde con el motivo concreto de su fila.
+    if (!request.previewId && first?.message) throw new DomainError(first.status === "invalid" ? "INVALID_INPUT" : "CONFLICT", `${first.message} No se ha aplicado nada.`)
     throw new DomainError("CONFLICT", `${stale === 1 ? "Una decisión del lote ya no coincide" : `${stale} decisiones del lote ya no coinciden`} con los datos actuales${first?.message ? ` (${first.message.replace(/\.$/, "")})` : ""}. No se ha aplicado nada: vuelve a preparar la vista previa.`)
   }
   const outcomes: ReviewRowOutcome[] = []
