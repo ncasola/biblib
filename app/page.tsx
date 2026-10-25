@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { LoadingState } from "@/components/loading-state"
 import { BookCover } from "@/components/book-cover"
 import { BookStatusBadge } from "@/components/book-status-badge"
+import { ShelfSpines } from "@/components/shelf-spines"
 import Link from "next/link"
 import { useCallback, useEffect, useState, type ReactNode } from "react"
 import { getLibrarySummaryAction } from "@/app/actions/library"
@@ -23,18 +24,6 @@ function heroTitle(total: number, reading: number): string {
   if (total === 0) return "Tu biblioteca empieza aquí."
   if (reading === 0) return `${plural(total, "libro", "libros")} esperando su turno.`
   return `${plural(total, "libro", "libros")} y ${reading === 1 ? "una lectura" : `${reading} lecturas`} a medias.`
-}
-
-// Lomos decorativos de cada estantería: colores de encuadernación y alturas deterministas a partir del ID.
-// No representan libros concretos; solo cuántos hay (hasta 18) para dar idea de lo llena que está.
-const SPINES = ["#7a1f24", "#1f3a5f", "#2f4a2c", "#5b3a29", "#c9b48a", "#3b2a4a", "#a0522d", "#22303a", "#8a6d2f", "#e8dcc4", "#0f3d3e", "#6d1a36"]
-function spines(id: string, count: number) {
-  const seed = [...id].reduce((sum, char) => (sum * 31 + char.charCodeAt(0)) % 9973, 7)
-  return Array.from({ length: Math.min(count, 18) }, (_, index) => ({
-    width: 10 + ((seed + index * 7) % 9),
-    height: 58 + ((seed * 3 + index * 13) % 30),
-    color: SPINES[(seed + index * 5) % SPINES.length],
-  }))
 }
 
 function StatCard({ value, label, tone }: { value: number; label: string; tone?: string }) {
@@ -160,9 +149,7 @@ export default function Dashboard() {
               {visibleShelves.map((shelf) => (
                 <li key={shelf.id}>
                   <Link href={`/books?shelf=${shelf.id}`} className="surface-card group flex h-full flex-col gap-3.5 p-4 transition-[transform,box-shadow] duration-300 hover:shadow-xl motion-safe:hover:-translate-y-0.5">
-                    <span aria-hidden="true" className="shelf-preview">
-                      {spines(shelf.id, shelf.book_count).map((spine, index) => <span key={index} style={{ width: spine.width, height: spine.height, backgroundColor: spine.color }} />)}
-                    </span>
+                    <ShelfSpines id={shelf.id} count={shelf.book_count} />
                     <span className="flex items-baseline justify-between gap-3">
                       <span className="font-heading text-xl font-bold text-heading group-hover:underline group-hover:decoration-brass group-hover:underline-offset-4">{shelf.title}</span>
                       <span className="shrink-0 text-sm text-muted-foreground">{plural(shelf.book_count, "libro", "libros")}</span>

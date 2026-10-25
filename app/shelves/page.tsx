@@ -33,7 +33,7 @@ function NewShelfDialog({ onCreated }: { onCreated: () => Promise<void> }) {
   }
 
   return <Dialog open={open} onOpenChange={(next) => { if (!pending) { setOpen(next); setError(null) } }}>
-    <DialogTrigger asChild><Button className="rounded-xl bg-primary px-6 py-3 font-semibold text-primary-foreground shadow-lg shadow-primary/30"><Plus aria-hidden="true" className="h-4 w-4" />Nueva estantería</Button></DialogTrigger>
+    <DialogTrigger asChild><Button><Plus aria-hidden="true" className="h-4 w-4" />Nueva estantería</Button></DialogTrigger>
     <DialogContent>
       <DialogHeader><DialogTitle>Crear nueva estantería</DialogTitle><DialogDescription>Elige un nombre para organizar tus libros.</DialogDescription></DialogHeader>
       <form onSubmit={(event) => { event.preventDefault(); void create() }} className="space-y-4" aria-busy={pending}>
@@ -94,23 +94,24 @@ export default function ShelvesPage() {
   return (
     <>
         {loadError ? (
-          <div role="alert" className="rounded-2xl border border-destructive/40 bg-card p-8 text-center shadow-xl">
-            <h1 className="mb-2 text-2xl font-bold heading-vintage">No se pudieron cargar las estanterías</h1>
+          <div role="alert" className="surface-card border-destructive/40 p-8 text-center">
+            <h1 className="heading-vintage mb-2 text-3xl">No se pudieron cargar las estanterías</h1>
             <p className="mb-4 text-muted-foreground">Inténtalo de nuevo para consultar la organización actual.</p>
             <Button onClick={() => void loadShelves()} disabled={loading}>{loading ? "Cargando…" : "Reintentar"}</Button>
           </div>
         ) : (
           <>
-            <div className="mb-8 flex flex-col gap-4 sm:mb-12 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <h1 className="mb-2 text-3xl font-bold heading-vintage md:text-4xl">Tus estanterías</h1>
-                <p className="text-base text-muted-foreground md:text-lg">Organiza tus libros en estanterías personalizadas</p>
+            <div className="mb-8 flex flex-col gap-5 sm:mb-10 sm:flex-row sm:items-end sm:justify-between">
+              <div className="flex max-w-3xl flex-col gap-2">
+                <p className="eyebrow">Organización</p>
+                <h1 className="heading-vintage text-3xl leading-[1.08] md:text-5xl">Tus estanterías</h1>
+                <p className="text-base leading-relaxed text-foreground-light md:text-lg">Organiza tus libros en estanterías personalizadas</p>
               </div>
               <NewShelfDialog onCreated={refreshShelves} />
             </div>
 
             {shelves.length === 0 ? (
-              <div className="rounded-2xl border border-border bg-card p-12 text-center shadow-xl"><p className="mb-4 text-muted-foreground">Aún no has creado estanterías.</p><p className="text-sm text-muted-foreground">Crea una estantería para organizar tus libros.</p></div>
+              <div className="rounded-2xl border border-dashed border-control-border/60 bg-surface/50 p-12 text-center"><p className="mb-4 font-heading text-xl text-heading">Aún no has creado estanterías.</p><p className="text-sm text-muted-foreground">Crea una estantería para organizar tus libros.</p></div>
             ) : (
               <div className="shelves-grid grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">{shelves.map((shelf) => <ShelfCard key={shelf.id} shelf={shelf} bookCount={shelf.book_count} onUpdate={handleUpdateShelf} onDelete={handleDeleteShelf} isDefault={shelf.isDefault ?? false} />)}</div>
             )}
