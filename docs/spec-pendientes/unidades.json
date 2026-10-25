@@ -975,7 +975,8 @@
         "OPS-02",
         "SEC-05"
       ],
-      "status": "in-progress"
+      "status": "implemented",
+      "evidence": "O12 · merge 06e76b6; 0013_account_deletion (29 políticas RESTRICTIVE de cuenta activa, Storage y definers); worker por pasos fuera de Next con ban + deleteUser; supresiones aplicadas en restore antes de abrir; grupo account en test; G12 en docs/validacion/2026-10-25/O12/g12-coordinador.md"
     },
     {
       "id": "U-OPS-04",
