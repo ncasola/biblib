@@ -27,10 +27,14 @@ const selectClass = "flex h-10 w-full rounded-md border border-input bg-backgrou
 export function BookForm({ initialBook, initialIsbn = "", shelves, onSubmit, onCancel, onReload, submitLabel = "Agregar a la biblioteca" }: BookFormProps) {
   const id = useId()
   const initialCover = initialBook?.cover.large || DEFAULT_BOOK_COVER
-  const manualIdentifier = useRef(initialBook?.isbn.startsWith("manual-") ? initialBook.isbn : "")
+  // Una clave por formulario: reintentar el mismo envío no crea dos ediciones (U-DAT-06).
+  const idempotencyKey = useRef(crypto.randomUUID())
+  const sharedCopies = initialBook?.version ? initialBook.edition?.copies ?? 1 : 1
+  const [confirmShared, setConfirmShared] = useState(false)
   const [fields, setFields] = useState({
     title: initialBook?.title ?? "", subtitle: initialBook?.subtitle ?? "",
-    isbn: initialBook?.isbn.startsWith("manual-") ? "" : initialBook?.isbn ?? initialIsbn,
+    // Un libro sin ISBN se guarda sin ISBN: nunca se le inventa un identificador.
+    isbn: initialBook ? initialBook.isbn ?? "" : initialIsbn,
     publish_date: initialBook?.publish_date ?? "", pages: initialBook?.number_of_pages ? String(initialBook.number_of_pages) : "",
     coverUrl: initialCover === DEFAULT_BOOK_COVER ? "" : initialCover,
     status: initialBook?.status ?? "unread" as Book["status"],
@@ -56,11 +60,11 @@ export function BookForm({ initialBook, initialIsbn = "", shelves, onSubmit, onC
     setError("")
     try {
       const coverUrl = fields.coverUrl.trim() || DEFAULT_BOOK_COVER
-      if (!fields.isbn.trim() && !manualIdentifier.current) manualIdentifier.current = `manual-${crypto.randomUUID()}`
       const input = parseBookInput({
-        version: initialBook?.version,
+        version: initialBook?.version, copyVersion: initialBook?.copyVersion, editionVersion: initialBook?.edition?.version,
+        ...(initialBook?.version ? (sharedCopies > 1 && confirmShared ? { confirmSharedCopies: sharedCopies } : {}) : { idempotencyKey: idempotencyKey.current }),
         title: fields.title, subtitle: fields.subtitle,
-        isbn: fields.isbn.trim() || manualIdentifier.current,
+        isbn: fields.isbn.trim() || null,
         authors: authors.filter((author) => author.name.trim()), publishers: publishers.filter((publisher) => publisher.name.trim()),
         number_of_pages: fields.pages === "" ? 0 : Number(fields.pages), publish_date: fields.publish_date,
         cover: initialBook && coverUrl === initialCover ? initialBook.cover : { small: coverUrl, medium: coverUrl, large: coverUrl },
@@ -78,6 +82,9 @@ export function BookForm({ initialBook, initialIsbn = "", shelves, onSubmit, onC
   return (
     <form onSubmit={handleSubmit} aria-busy={pending} className="space-y-5">
       {initialBook?.version && initialBook.catalogue?.schemaVersion === 2 && initialBook.catalogue.fields && <p className="rounded-xl border border-border bg-muted/40 p-3 text-sm">Esta ficha registra la fuente de cada campo. Si cambias un campo, pasará a constar como escrito por ti; los demás conservan su fuente.</p>}
+      {sharedCopies > 1 && <div className="rounded-xl border border-border bg-muted/40 p-3 text-sm space-y-2"><p>Título, autoría, editoriales, fecha, páginas, ISBN y portada son de la edición, que comparten {sharedCopies} ejemplares de tu biblioteca: si los cambias, cambiarán en todos. El estado y la estantería son solo de este ejemplar.</p>
+        <div className="flex items-start gap-2"><input id={`${id}-shared`} type="checkbox" checked={confirmShared} onChange={(event) => setConfirmShared(event.target.checked)} className="mt-1 h-4 w-4 accent-primary" /><Label htmlFor={`${id}-shared`} className="leading-6">Aplicar los cambios bibliográficos a los {sharedCopies} ejemplares</Label></div></div>}
+      {initialBook?.legacyIdentifier && !initialBook.legacyIdentifier.startsWith("manual-") && <p className="rounded-xl border border-border bg-muted/40 p-3 text-sm">Identificador anterior de este ejemplar: <span className="font-mono">{initialBook.legacyIdentifier}</span>. No es un ISBN que BibLib pueda usar; escribe el ISBN correcto si lo conoces.</p>}
       <fieldset disabled={pending} className="space-y-5 min-w-0">
         <div className="space-y-2"><Label htmlFor={`${id}-title`}>Título <span aria-hidden="true">*</span></Label><Input id={`${id}-title`} required maxLength={500} value={fields.title} onChange={(event) => update("title", event.target.value)} /></div>
         <div className="space-y-2"><Label htmlFor={`${id}-subtitle`}>Subtítulo</Label><Input id={`${id}-subtitle`} maxLength={1000} value={fields.subtitle} onChange={(event) => update("subtitle", event.target.value)} /></div>

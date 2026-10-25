@@ -11,6 +11,7 @@ import { BookCoverAssets } from "@/components/book-cover-assets"
 import { displayCover } from "@/lib/book-covers"
 import { BookStatusForm } from "@/components/book-status-form"
 import { CatalogueProvenanceDetails } from "@/components/catalogue-provenance-details"
+import { bookIdentifierLabel, EditionCopiesPanel } from "@/components/edition-copies"
 import { getBookDetailAction, updateBookAction, updateBookStatusAction, deleteBookAction, refreshBookCoverAction, moveBookShelfAction } from "@/app/actions/books"
 import { getShelvesAction } from "@/app/actions/shelves"
 import {
@@ -120,8 +121,8 @@ export function BookDetailsScreen({ bookId, returnPath }: BookDetailsScreenProps
         <div className="grid grid-cols-1 md:grid-cols-[240px_minmax(0,1fr)] gap-6 md:gap-8">
           <aside className="space-y-4">
             <BookCover cover={displayCover(book)} title={book.title} priority className="w-48 md:w-full mx-auto shadow-xl" sizes="(max-width: 768px) 192px, 240px" />
-            <Button type="button" variant="outline" className="w-full" disabled={Boolean(pending) || !normalizeIsbn(book.isbn)} onClick={() => void refreshCover()}>{pending === "cover" ? <Loader2 aria-hidden="true" className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw aria-hidden="true" className="h-4 w-4 mr-2" />}{pending === "cover" ? "Buscando portada..." : "Buscar portada"}</Button>
-            <p className="text-xs text-muted-foreground">{normalizeIsbn(book.isbn) ? "Busca y sustituye la portada con la disponible en Open Library." : "Añade un ISBN válido al editar la ficha para buscar su portada."}</p>
+            <Button type="button" variant="outline" className="w-full" disabled={Boolean(pending) || !normalizeIsbn(book.isbn ?? "")} onClick={() => void refreshCover()}>{pending === "cover" ? <Loader2 aria-hidden="true" className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw aria-hidden="true" className="h-4 w-4 mr-2" />}{pending === "cover" ? "Buscando portada..." : "Buscar portada"}</Button>
+            <p className="text-xs text-muted-foreground">{normalizeIsbn(book.isbn ?? "") ? (book.edition?.copies ?? 1) > 1 ? `Busca y sustituye la portada de la edición, común a sus ${book.edition!.copies} ejemplares.` : "Busca y sustituye la portada con la disponible en Open Library." : "Añade un ISBN válido al editar la ficha para buscar su portada."}</p>
             <BookCoverAssets book={book} disabled={Boolean(pending)} onBookChange={(updated) => { setBook(updated); setTargetShelf(updated.shelf_id); setError("") }} />
           </aside>
           <div className="space-y-5 min-w-0">
@@ -133,14 +134,15 @@ export function BookDetailsScreen({ bookId, returnPath }: BookDetailsScreenProps
               <div><dt className="text-sm text-muted-foreground font-semibold">Editoriales</dt><dd className="mt-1">{book.publishers?.length ? book.publishers.map((publisher) => publisher.name).join("; ") : "Desconocidas"}</dd></div>
               <div><dt className="text-sm text-muted-foreground font-semibold">Publicación</dt><dd className="mt-1">{book.publish_date || "Desconocida"}</dd></div>
               <div><dt className="text-sm text-muted-foreground font-semibold">Páginas</dt><dd className="mt-1">{book.number_of_pages || "Desconocidas"}</dd></div>
-              <div><dt className="text-sm text-muted-foreground font-semibold">ISBN</dt><dd className="mt-1 font-mono text-sm break-all">{book.isbn.startsWith("manual-") ? "Sin ISBN" : book.isbn}</dd></div>
+              <div><dt className="text-sm text-muted-foreground font-semibold">ISBN</dt><dd className="mt-1 font-mono text-sm break-all">{bookIdentifierLabel(book)}</dd></div>
               <div className="sm:col-span-2"><dt className="text-sm text-muted-foreground font-semibold">Procedencia y edición</dt><dd className="mt-1"><CatalogueProvenanceDetails book={book} /></dd></div>
             </dl>
             <section className="rounded-2xl border border-border bg-card/80 p-5 shadow-lg"><BookStatusForm currentStatus={book.status} onStatusChange={changeStatus} disabled={Boolean(pending)} /></section>
             <section className="rounded-2xl border border-border bg-card/80 p-5 shadow-lg space-y-3"><label htmlFor="book-shelf" className="text-sm font-semibold">Estantería</label><div className="flex flex-col sm:flex-row gap-3"><select id="book-shelf" value={targetShelf} disabled={Boolean(pending)} onChange={(event) => setTargetShelf(event.target.value)} className="min-w-0 flex-1 rounded-lg border border-input bg-background p-2 text-foreground">{shelves.map((shelf) => <option key={shelf.id} value={shelf.id}>{shelf.title}{shelf.isDefault ? " (predeterminada)" : ""}</option>)}</select><Button type="button" disabled={Boolean(pending) || targetShelf === book.shelf_id} onClick={() => void changeShelf()}>{pending === "shelf" ? "Moviendo..." : "Mover libro"}</Button></div></section>
+            <EditionCopiesPanel key={book.copyVersion} book={book} shelves={shelves} />
             <AlertDialog open={deleteOpen} onOpenChange={(open) => { if (pending !== "delete") { setDeleteOpen(open); setError("") } }}>
               <AlertDialogTrigger asChild><Button variant="outline" disabled={Boolean(pending)} className="text-destructive border-destructive/40"><Trash2 aria-hidden="true" className="w-4 h-4 mr-2" />Eliminar libro</Button></AlertDialogTrigger>
-              <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>¿Eliminar este libro?</AlertDialogTitle><AlertDialogDescription>Se eliminará «{book.title}» de tu biblioteca. Esta acción no se puede deshacer.</AlertDialogDescription></AlertDialogHeader>
+              <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>¿Eliminar este libro?</AlertDialogTitle><AlertDialogDescription>{(book.edition?.copies ?? 1) > 1 ? `Se eliminará este ejemplar de «${book.title}». La edición y sus otros ${book.edition!.copies! - 1} ejemplares se conservan.` : `Se eliminará «${book.title}» de tu biblioteca.`} Esta acción no se puede deshacer.</AlertDialogDescription></AlertDialogHeader>
                 {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
                 <AlertDialogFooter><AlertDialogCancel disabled={pending === "delete"}>Cancelar</AlertDialogCancel><AlertDialogAction disabled={pending === "delete"} onClick={(event) => { event.preventDefault(); void deleteBook() }} className="bg-destructive text-destructive-foreground">{pending === "delete" ? "Eliminando..." : "Eliminar libro"}</AlertDialogAction></AlertDialogFooter>
               </AlertDialogContent>
