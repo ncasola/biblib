@@ -85,9 +85,14 @@ test("otra cuenta importa la copia con series de IDs propios y el orden intacto"
   assert.equal(state.series[0].title, original.series[0].title)
   // Solo las ediciones nuevas reciben serie: las que B ya tenía no se tocan, y las nuevas llegan con su posición.
   assert.deepEqual(state.seriesEditions.map((row) => row.position).sort((x, y) => (x === null) - (y === null) || String(x).localeCompare(String(y))), ["1.5", "2", null])
+  // Repetir la fusión no añade volúmenes ni toca los vínculos de B: ninguna edición es nueva. Según el contrato
+  // (contratos-o13, «Fusión») solo se reutilizan las series propias por ID; la de A vuelve a llegar con un ID nuevo.
   const again = await productState(ctx.sql, b.id)
   await importFile(sessionB, exported, "merge")
-  assert.equal((await productState(ctx.sql, b.id)).series.length, again.series.length, "repetir la fusión no duplica series")
+  const repeated = await productState(ctx.sql, b.id)
+  assert.deepEqual(repeated.seriesEditions, again.seriesEditions, "repetir la fusión no duplica volúmenes")
+  assert.equal(repeated.series.length, again.series.length + 1)
+  assert.ok(repeated.series.every((entry) => entry.id !== original.series[0].id), "B tampoco hereda el ID al repetir")
 })
 
 test("un archivo v1 se importa sin series ni vínculos inventados", async () => {
