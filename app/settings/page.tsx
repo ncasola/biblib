@@ -7,6 +7,7 @@ import { Header } from "@/components/header"
 import { Button } from "@/components/ui/button"
 import { CoverRecoveryJobPanel } from "@/components/cover-recovery-job-panel"
 import { ImportJobPanel } from "@/components/import-job-panel"
+import { CsvImportPanel } from "@/components/csv-import-panel"
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
   AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -535,6 +536,8 @@ export default function SettingsPage() {
           </section>
 
           {result && <section aria-labelledby="result-title" className="rounded-2xl border border-border bg-card p-5 md:p-8"><h2 id="result-title" className="text-2xl font-bold mb-4">Resultado de la importación</h2><ul className="space-y-2"><li>Libros importados: <strong>{result.imported}</strong></li><li>Libros omitidos por estar presentes: <strong>{result.skipped}</strong></li><li>Libros eliminados: <strong>{result.deleted}</strong></li><li>Estanterías de la biblioteca resultante: <strong>{result.shelves}</strong></li><li>Libros importados con portada genérica, pendientes de búsqueda: <strong>{result.coversPending}</strong></li></ul>{result.coversPending > 0 && <p className="text-sm text-muted-foreground mt-4">La colección se ha importado. Las portadas pendientes se buscan en segundo plano, en pasos acotados y respetando los límites de cada catálogo; si alguna no aparece, la importación no se revierte.</p>}<Button asChild variant="outline" className="mt-4"><Link href="/books">Ver mi colección</Link></Button></section>}
+
+          <CsvImportPanel disabled={busy || loading || !counts} onJob={setImportJobId} onCommitted={() => { setHistoryKey((key) => key + 1); void refreshCounts() }} />
 
           <ImportJobPanel jobId={importJobId} disabled={loading} />
 

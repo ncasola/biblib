@@ -1,14 +1,29 @@
 -- U-DAT-05: coordinación del catálogo. Se ejecuta tras 0004 con las cuentas A/B de rls.sql.
 -- Cuota: plazas separadas por el intervalo, horizonte, tope por dueño, cubos por proveedor y cooldown.
 DO $test$
-DECLARE r jsonb;
+DECLARE r jsonb; previous_slot timestamptz; reserved_slot timestamptz; requested_at timestamptz; returned_at timestamptz;
 BEGIN
   r := biblib.catalogue_reserve('open-library', 'db', '10000000-0000-4000-8000-000000000001', 'interactive', 1000, 2500, 5, 10000);
   PERFORM public.assert_true(r->>'state' = 'reserved' AND (r->>'waitMs')::int = 0, 'la primera reserva de OL es inmediata');
+  SELECT q.slot_at INTO previous_slot FROM biblib.catalogue_quota_reservations q WHERE q.id = (r->>'reservationId')::uuid;
+  -- waitMs descuenta el tiempo real entre llamadas: no exigir que Postgres complete cada una en menos de 10 ms.
+  requested_at := clock_timestamp();
   r := biblib.catalogue_reserve('open-library', 'db', '10000000-0000-4000-8000-000000000001', 'interactive', 1000, 2500, 5, 10000);
-  PERFORM public.assert_true(r->>'state' = 'reserved' AND (r->>'waitMs')::int BETWEEN 990 AND 1000, 'la segunda espera el intervalo de 1 s fuera de la base');
+  returned_at := clock_timestamp();
+  SELECT q.slot_at INTO reserved_slot FROM biblib.catalogue_quota_reservations q WHERE q.id = (r->>'reservationId')::uuid;
+  PERFORM public.assert_true(r->>'state' = 'reserved' AND (r->>'waitMs')::int BETWEEN
+    greatest(0, ceil(extract(epoch FROM reserved_slot - returned_at) * 1000)) AND
+    greatest(0, ceil(extract(epoch FROM reserved_slot - requested_at) * 1000)), 'la segunda espera el tiempo restante según el reloj de la base');
+  PERFORM public.assert_true(reserved_slot >= previous_slot + interval '1 second', 'la segunda reserva conserva el intervalo mínimo de 1 s');
+  previous_slot := reserved_slot;
+  requested_at := clock_timestamp();
   r := biblib.catalogue_reserve('open-library', 'db', '10000000-0000-4000-8000-000000000002', 'interactive', 1000, 2500, 5, 10000);
-  PERFORM public.assert_true(r->>'state' = 'reserved' AND (r->>'waitMs')::int BETWEEN 1990 AND 2000, 'otro dueño comparte el mismo intervalo global');
+  returned_at := clock_timestamp();
+  SELECT q.slot_at INTO reserved_slot FROM biblib.catalogue_quota_reservations q WHERE q.id = (r->>'reservationId')::uuid;
+  PERFORM public.assert_true(r->>'state' = 'reserved' AND (r->>'waitMs')::int BETWEEN
+    greatest(0, ceil(extract(epoch FROM reserved_slot - returned_at) * 1000)) AND
+    greatest(0, ceil(extract(epoch FROM reserved_slot - requested_at) * 1000)), 'otro dueño recibe la espera restante según el reloj de la base');
+  PERFORM public.assert_true(reserved_slot >= previous_slot + interval '1 second', 'otro dueño comparte el intervalo mínimo global de 1 s');
   r := biblib.catalogue_reserve('open-library', 'db', '10000000-0000-4000-8000-000000000002', 'interactive', 1000, 2500, 5, 10000);
   PERFORM public.assert_true(r->>'state' = 'wait' AND (r->>'retryMs')::int > 0, 'fuera del horizonte se pide volver, sin conceder ni dormir');
   r := biblib.catalogue_reserve('open-library', 'db', NULL, 'batch', 1000, 250, 1, 10000);

@@ -66,7 +66,7 @@ async function publishStep(deps: Required<Pick<WorkerDeps, "repo" | "random">> &
     published = await deps.repo.fenced(job, async (context) => {
       const outcome = await context.asOwner((tx) => publishImport(tx, { userId: context.owner, previewId: job.previewId!, expectedRevision: job.expectedRevision!, idempotencyKey: job.idempotencyKey }))
       // Las portadas pendientes son una fase aparte: no revierten la publicación.
-      if (outcome.insertedBookIds.length) await context.seedCoverItems(outcome.insertedBookIds)
+      if (!outcome.skipCoverRecovery && outcome.insertedBookIds.length) await context.seedCoverItems(outcome.insertedBookIds)
       const { counts } = await context.recount()
       const state: JobState = counts.total > 0 ? "queued" : "succeeded"
       await context.finish({ state, phase: counts.total > 0 ? "covers" : "done", counts, published: true, cursor: null,

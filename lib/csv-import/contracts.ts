@@ -1,3 +1,7 @@
+import type { ActionResult } from "../action-result"
+import type { ImportMode, ImportPlan } from "../import-plan"
+import type { CsvIssue, CsvRecord } from "./parser"
+
 // Contratos persistentes de la importación CSV (U-DAT-09) en 0014: el mapeo versionado de una sesión sobre el
 // staging de 0008, la clave durable de cada registro y los perfiles de mapeo guardados (privados, versionados y
 // sin muestras). El parser, la normalización y las acciones son de la unidad. Documentación:
@@ -28,6 +32,8 @@ export interface CsvMapping {
   header: boolean
   columns: CsvColumnMapping[]
   statusMap?: Record<string, "read" | "reading" | "unread" | "to-read">
+  defaultStatus?: "read" | "reading" | "unread" | "to-read"
+  defaultShelf?: string
 }
 
 /** Incidencia de un registro CSV: código y campo, sin el contenido de la celda. */
@@ -52,4 +58,40 @@ export interface CsvMappingProfile {
   mapping: CsvMapping
   mappingVersion: number
   version: string
+}
+
+export interface BeginCsvInput { byteLength: number; sha256: string; delimiter: CsvDelimiter }
+export interface InspectCsvInput {
+  sessionId: string
+  chunk?: { ordinal: number; total: number; sha256: string; bytes: Blob }
+}
+export interface InspectedCsv {
+  sessionId: string
+  version: string
+  complete: boolean
+  headers: string[]
+  sampleRows: CsvRecord[]
+  recordCount: number | null
+  inputHash: string
+  issues: CsvIssue[]
+  issueCount: number
+  mapping: CsvMapping | null
+  mappingVersion: number | null
+}
+export interface SetCsvMappingInput { sessionId: string; expectedVersion: string; mapping: CsvMapping; mappingVersion: number }
+export interface CsvMappingReceipt {
+  sessionId: string; version: string; mappingHash: string; mappingVersion: number; issues: CsvIssue[]; issueCount: number; validRows: number; totalRows: number
+}
+export type CsvDuplicatePolicy = "skip-existing" | "another-copy"
+export interface PrepareCsvImportInput { sessionId: string; mode: ImportMode; duplicatePolicy: CsvDuplicatePolicy; invalidRows?: "block" | "skip-invalid"; enrichCovers?: boolean }
+export interface CsvImportPreview {
+  version: string
+  sessionId: string; previewId: string; revision: string; digest: string; expiresAt: string; inputHash: string; mappingHash: string
+  plan: ImportPlan; issues: CsvIssue[]; issueCount: number
+  omittedRows: { sourceRowKey: string; ordinal: number; codes: CsvIssue["code"][] }[]
+}
+export interface CsvImportActions {
+  inspectCsvAction(input: InspectCsvInput): Promise<ActionResult<InspectedCsv>>
+  setCsvMappingAction(input: SetCsvMappingInput): Promise<ActionResult<CsvMappingReceipt>>
+  prepareCsvImportAction(input: PrepareCsvImportInput): Promise<ActionResult<CsvImportPreview>>
 }
