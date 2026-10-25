@@ -1383,11 +1383,12 @@ Medido con `perf:local --profile scratch --scale 10000` (10 000 fichas, 41 estan
 | Ordenar por autor / fecha | 119.7 / 17.5 · 111.4 / 31.1 ms | 119.8 / 16.3 · 96.3 / 25.5 ms |
 | Última página | 119.0 / 46.5 ms | 97.3 / 25.5 ms |
 | Listado de 100 filas | 79.7 / 2.2 ms | 93.3 / 13.8 ms |
-| Exportación en el servidor | 492.9 / 101.8 ms | 695.9 / 149.1 ms (medición de la versión con una consulta) |
+| Exportación en el servidor | 492.9 / 101.8 ms | 737.2 / 156.1 ms |
+| Vista previa de importación (conservar / nuevos / reemplazo) | 242.9 · 297.4 · 307.1 ms | 299.7 · 410.5 · 367.5 ms |
 
 - **T7 (igualdad de ISBN indexada).** `findBookByIsbn` y `getBookByIsbnAction` comparan `isbn13 = $1` con el índice parcial `(user_id, isbn13)`, en vez de normalizar `books.isbn` fila a fila: SQL p95 8.36 → 0.13 ms.
 - **T5 (texto de búsqueda).** Adoptada la columna generada `editions.search_text` (título, subtítulo, autoría, editoriales e ISBN sin acentos ni mayúsculas), calculada al escribir: la búsqueda por texto pasa de 103.7 a 30.4 ms de SQL. **Trigramas evaluados y no adoptados**: un GIN `gin_trgm_ops` sobre `search_text` (1.8 MiB con 10 000 ediciones) no mejora la búsqueda (recuento p95 14.5 → 12.5 ms, ISBN exacto 14.6 → 17.6 ms; el planificador lo usa pero la colección por cuenta es pequeña) y encarece la escritura masiva un 22 % (282 → 343 ms). Se revisará si una cuenta supera el límite de escala.
-- **Coste del modelo.** La vista une ejemplar, edición, estantería y obra: los recuentos y páginas cortas cuestan unos milisegundos más de SQL, siempre dentro de presupuesto. Dos decisiones lo contienen: la RLS evalúa `auth.uid()` una vez por consulta (InitPlan) y el listado ordena y pagina solo IDs antes de leer las filas de la página. En la exportación ese segundo paso no ahorraba nada (lee todas las filas) y se descartó.
+- **Coste del modelo.** La vista une ejemplar, edición, estantería y obra: los recuentos y páginas cortas cuestan unos milisegundos más de SQL, y las lecturas completas (exportación, vista previa) entre un 20 y un 50 % más con una petición, y la exportación con 5 simultáneas, más del doble (p95 1.9 → 4.7 s); todo dentro de presupuesto. Es el primer candidato si F4 necesita bajar la exportación (leer las tablas sin la vista). Dos decisiones lo contienen: la RLS evalúa `auth.uid()` una vez por consulta (InitPlan) y el listado ordena y pagina solo IDs antes de leer las filas de la página. En la exportación ese segundo paso no ahorraba nada (lee todas las filas) y se descartó.
 
 ### Pruebas
 
