@@ -215,11 +215,10 @@ BEGIN
       work_id = NEW.work_id, language = NEW.language, identifiers = NEW.identifiers, updated_at = stamp
     WHERE e.user_id = OLD.user_id AND e.id = OLD.edition_id;
   END IF;
-  IF (NEW.status, NEW.shelf_id, verification, legacy, NEW.created_at) IS DISTINCT FROM (OLD.status, OLD.shelf_id, OLD.edition_verification, OLD.legacy_identifier, OLD.created_at) THEN
-    UPDATE biblib.copies AS c SET status = NEW.status, shelf_id = NEW.shelf_id, edition_verification = verification, legacy_identifier = legacy,
-      created_at = NEW.created_at, updated_at = stamp
-    WHERE c.user_id = OLD.user_id AND c.id = OLD.id;
-  END IF;
+  -- Como en la tabla anterior, toda actualización renueva el token de la ficha aunque no cambie ningún dato.
+  UPDATE biblib.copies AS c SET status = NEW.status, shelf_id = NEW.shelf_id, edition_verification = verification, legacy_identifier = legacy,
+    created_at = NEW.created_at, updated_at = stamp
+  WHERE c.user_id = OLD.user_id AND c.id = OLD.id;
   SELECT b.* INTO NEW FROM biblib.books AS b WHERE b.id = OLD.id;
   RETURN NEW;
 END;
