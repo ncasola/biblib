@@ -9,6 +9,7 @@ import ts from "typescript"
 
 const root = process.cwd()
 const stubs = {
+  "@/app/actions/tags": `export async function getTagsAction() { throw new Error("No debe consultarse al renderizar") }`,
   "next/image": `import { createElement } from "react"
 export default function Image({ src, alt, fill, sizes, priority, onError, ...rest }) { return createElement("img", { src: typeof src === "string" ? src : "", alt, ...rest }) }`,
   "next/link": `import { createElement } from "react"

@@ -12,6 +12,8 @@ import { Loader2, Plus, X } from "lucide-react"
 import { normalizeIsbn } from "@/lib/isbn"
 import { DomainError } from "@/lib/domain-errors"
 import { SubmissionGate, type BookEntryDefaults } from "@/lib/book-entry"
+import { PersonalFields } from "@/components/personal-fields"
+import type { PersonalInput } from "@/lib/personal-validation"
 
 interface BookFormProps {
   initialBook?: Book
@@ -37,6 +39,7 @@ export function BookForm({ initialBook, initialIsbn = "", shelves, onSubmit, onS
   const gate = useRef(new SubmissionGate())
   const sharedCopies = initialBook?.version ? initialBook.edition?.copies ?? 1 : 1
   const [confirmShared, setConfirmShared] = useState(false)
+  const [personal, setPersonal] = useState<PersonalInput>({})
   const [fields, setFields] = useState({
     title: initialBook?.title ?? "", subtitle: initialBook?.subtitle ?? "",
     // Un libro sin ISBN se guarda sin ISBN: nunca se le inventa un identificador.
@@ -78,6 +81,7 @@ export function BookForm({ initialBook, initialIsbn = "", shelves, onSubmit, onS
         status: fields.status, shelf_id: fields.shelf_id,
         // Se envía la procedencia tal como se cargó (v1 o v2); al editar, el servidor la recalcula desde la ficha guardada.
         catalogue: { ...(initialBook?.catalogue ?? { source: "manual" as const }), isbnVerified: Boolean(normalizeIsbn(fields.isbn)) && isbnVerified },
+        ...(!initialBook?.version && scope === "copy" ? { personal } : {}),
       })
       const another = (event.nativeEvent as SubmitEvent).submitter?.getAttribute("value") === "another"
       await (another && onSaveAndAddAnother ? onSaveAndAddAnother(input) : onSubmit(input))
@@ -117,6 +121,7 @@ export function BookForm({ initialBook, initialIsbn = "", shelves, onSubmit, onS
           <div className="space-y-2"><Label htmlFor={`${id}-shelf`}>Estantería</Label><select id={`${id}-shelf`} className={selectClass} value={fields.shelf_id} onChange={(event) => update("shelf_id", event.target.value)}>{shelves.length === 0 && <option value="">Predeterminada</option>}{shelves.map((shelf) => <option key={shelf.id} value={shelf.id}>{shelf.title}{shelf.isDefault ? " (predeterminada)" : ""}</option>)}</select></div>
         </div>}
         <div className="space-y-2"><Label htmlFor={`${id}-cover`}>URL de la portada</Label><Input id={`${id}-cover`} type="url" maxLength={2048} value={fields.coverUrl} onChange={(event) => update("coverUrl", event.target.value)} placeholder="https://…" aria-describedby={`${id}-cover-help`} /><p id={`${id}-cover-help`} className="text-xs text-muted-foreground">Usa una dirección HTTPS o déjalo vacío para usar la portada predeterminada.</p><BookCover cover={{ large: fields.coverUrl }} title={fields.title || "libro"} className="w-24" sizes="96px" /></div>
+        {!initialBook?.version && scope === "copy" && <PersonalFields value={personal} onChange={setPersonal} />}
       </fieldset>
       {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
       {conflict && onReload && <div className="space-y-2 rounded-xl border border-border bg-muted/40 p-3 text-sm"><p>El formulario conserva lo que has escrito. Copia los cambios que quieras mantener antes de cargar la ficha guardada.</p><Button type="button" variant="outline" disabled={pending} onClick={async () => {

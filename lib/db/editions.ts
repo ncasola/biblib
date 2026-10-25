@@ -8,6 +8,8 @@ import { copyVerification, editionValues } from "./model"
 import { canonicalJson } from "../import-plan"
 import { DomainError, editionShared, idempotencyConflict, revisionConflict } from "../domain-errors"
 import type { Book } from "../types"
+import { attachPersonal, savePersonal } from "../personal-server"
+import type { PersonalInput } from "../personal-validation"
 
 // Contratos del modelo obra/edición/ejemplar (U-DAT-06). Cada operación se ejecuta en una transacción con el
 // contexto RLS del dueño y el bloqueo de colección; las que crean o cambian datos admiten una clave de
@@ -21,7 +23,7 @@ export async function findBook(tx: DatabaseTransaction, userId: string, id: stri
   const [row] = await tx.select({ book: { ...bookFields, editionCopies: books.editionCopies }, shelfTitle: shelves.title }).from(books)
     .innerJoin(shelves, and(eq(books.shelfId, shelves.id), eq(shelves.userId, userId)))
     .where(and(eq(books.id, id), eq(books.userId, userId))).limit(1)
-  return row ? mapRowToBook(row) : null
+  return row ? (await attachPersonal(tx, userId, [mapRowToBook(row)]))[0] : null
 }
 
 /** Primer ejemplar de la cuenta con ese ISBN-13 (tarea T7): igualdad indexada por (dueño, ISBN-13). */
@@ -72,7 +74,7 @@ export function editionExists(): DomainError {
 }
 
 /** Datos de una edición nueva y de su primer ejemplar. */
-export type NewEditionInput = EditionPatch & Pick<Book, "status" | "edition" | "verification">
+export type NewEditionInput = EditionPatch & Pick<Book, "status" | "edition" | "verification"> & { personal?: PersonalInput }
 
 export interface CreateEditionRequest {
   book: NewEditionInput
@@ -88,7 +90,7 @@ export async function createEdition(tx: DatabaseTransaction, userId: string, req
   await lockLibrary(tx)
   const { book } = request
   const shelfId = await ownShelf(tx, userId, request.shelfId)
-  const idem: Idempotent = { operation: "edition.create", key: request.idempotencyKey, input: { edition: editionValues(book), shelfId, status: book.status, verification: copyVerification(book) } }
+  const idem: Idempotent = { operation: "edition.create", key: request.idempotencyKey, input: { edition: editionValues(book), shelfId, status: book.status, verification: copyVerification(book), ...(book.personal ? { personal: book.personal } : {}) } }
   const { digest, result } = await replayed<{ copyId: string }>(tx, userId, idem)
   if (result) {
     const again = await findBook(tx, userId, result.copyId)
@@ -103,6 +105,7 @@ export async function createEdition(tx: DatabaseTransaction, userId: string, req
   const copyId = randomUUID()
   await tx.insert(editions).values({ id: editionId, userId, ...editionValues(book) })
   await tx.insert(copies).values({ id: copyId, userId, editionId, status: book.status, shelfId, editionVerification: copyVerification(book) })
+  if (book.personal && (book.personal.notes || book.personal.rating || book.personal.tagIds?.length || book.personal.tagNames?.length)) await savePersonal(tx, userId, copyId, null, book.personal)
   await record(tx, userId, idem, digest, { copyId, editionId })
   const created = await findBook(tx, userId, copyId)
   if (!created) throw new DomainError("NOT_FOUND", "No se pudo recuperar el libro guardado.")

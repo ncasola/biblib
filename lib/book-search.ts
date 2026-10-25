@@ -16,6 +16,8 @@ export interface BookSearchFilters {
   page: number
   view: BookView
   pageSize?: number
+  tagIds?: string[]
+  tagMode?: "or" | "and"
 }
 
 export const BOOK_PAGE_SIZE = 10
@@ -44,12 +46,16 @@ export function parseBookSearchFilters(params: URLSearchParams, defaultView: Boo
     page: Number.isInteger(pageValue) && pageValue > 0 && pageValue <= 100_000 ? pageValue : 1,
     view: viewValue === "table" || viewValue === "grid" ? viewValue : defaultView,
     ...(pageSize !== BOOK_PAGE_SIZE ? { pageSize } : {}),
+    ...(params.getAll("tag").some((id) => BOOK_SHELF_ID.test(id)) ? { tagIds: [...new Set(params.getAll("tag").filter((id) => BOOK_SHELF_ID.test(id)).map((id) => id.toLowerCase()))].slice(0, 20) } : {}),
+    ...(params.get("tagMode") === "and" ? { tagMode: "and" as const } : {}),
   }
 }
 
 export function serializeBookSearchFilters(filters: BookSearchFilters, currentParams: URLSearchParams, defaultView: BookView = "table"): string {
   const params = new URLSearchParams(currentParams)
-  for (const key of ["q", "status", "shelf", "series", "sort", "page", "view", "pageSize"]) params.delete(key)
+  for (const key of ["q", "status", "shelf", "series", "sort", "page", "view", "pageSize", "tag", "tagMode"]) params.delete(key)
+  for (const id of [...new Set(filters.tagIds ?? [])].filter((id) => BOOK_SHELF_ID.test(id)).slice(0, 20)) params.append("tag", id)
+  if (filters.tagIds?.length && filters.tagMode === "and") params.set("tagMode", "and")
   if (filters.q.trim()) params.set("q", filters.q)
   if (filters.status !== "all") params.set("status", filters.status)
   if (filters.shelf !== "all") params.set("shelf", filters.shelf)

@@ -1565,3 +1565,14 @@ El script administrativo `scripts/jobs/purge-media-assets.mjs`, fuera de Next, s
 - `tests/e2e/flujos/avatar.spec.ts`: previsualización, recorte, persistencia, foto de cabecera, fallo de red que conserva el avatar, menú móvil y retirada. El runner E2E activa la capacidad. La prueba exige que la cuenta ficticia no tenga un avatar ajeno al ensayo y limpia sus filas y objetos en `finally`.
 
 Evidencia y resultados: [O13/exp-06](validacion/2026-10-25/O13/exp-06/informe.md). Los recorridos de integración y E2E los ejecuta el coordinador con su stack autorizado.
+
+
+## Notas, etiquetas y valoración por ejemplar · U-PRO-01 (O13)
+
+Las acciones de `app/actions/copy-personal.ts` y `app/actions/tags.ts` usan el contrato 0014: notas de 4000 caracteres, valoración 1–5 o vacía y hasta 20 etiquetas de 40 caracteres por ejemplar. `saveCopyPersonalAction({ copyId, expectedVersion, personal })` guarda el conjunto de forma atómica; `expectedVersion: null` solo es válido si aún no había anotación. La ficha conserva el borrador ante conflicto y permite recargar de forma explícita. Las altas incluyen los campos opcionales en la transacción y en la clave idempotente; una copia adicional empieza vacía.
+
+Las etiquetas se reutilizan por nombre normalizado, también en creaciones simultáneas; renombrar o borrar retira o cambia vínculos sin borrar libros. Los filtros de `/books` y `/books/search` usan `tag=<uuid>` repetido, OR predeterminado y `tagMode=and` explícito, combinados con la estantería. El índice `(user_id, tag_id)` filtra antes de paginar y los datos personales solo se leen para las copias de esa página.
+
+Pruebas de integración: `pnpm test:integration:personal --profile test` (también `scratch`, acreditado, y `--reuse-build`), o el grupo `personal` de `pnpm test:integration:local`. El runner exige servicios existentes y usa cuentas desechables; no levanta ni migra el stack. Los cuatro E2E nuevos están en `tests/e2e/flujos/personal.spec.ts`. Evidencia local y pendientes del coordinador: [O13/pro-01](validacion/2026-10-25/O13/pro-01/informe.md).
+
+Las vistas guardadas de 0007 aún no admiten etiquetas: mientras haya etiquetas activas no se permite guardar o sobrescribir una vista, para evitar omitir filtros en silencio. La dirección de la página conserva todos los filtros. Su ampliación requiere un cambio del contrato SQL fuera de U-PRO-01.

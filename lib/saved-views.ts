@@ -29,6 +29,7 @@ export function parseSavedViewFilters(input: unknown): SavedViewFilters {
 
 /** Solo criterios reproducibles; nunca página, selección ni datos de libros. */
 export function currentViewFilters(filters: BookSearchFilters): SavedViewFilters {
+  if (filters.tagIds?.length) throw new DomainError("INVALID_INPUT", "Las vistas guardadas todavía no admiten etiquetas. Conserva la dirección de esta página para recuperar estos filtros.")
   return parseSavedViewFilters({ q: filters.q, status: filters.status, shelf: filters.shelf, sort: filters.sort, view: filters.view, pageSize: filters.pageSize ?? BOOK_PAGE_SIZE })
 }
 

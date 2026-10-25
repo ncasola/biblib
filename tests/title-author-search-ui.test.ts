@@ -14,7 +14,7 @@ before(async () => {
   // Las acciones no se ejecutan en SSR: el stub falla si una búsqueda se lanza al renderizar.
   const source = `const prefix="biblib-search-action:";
 export async function resolve(specifier,context,next){if(specifier.startsWith("@/app/actions/"))return{url:prefix+specifier,shortCircuit:true};return next(specifier,context)}
-export async function load(url,context,next){if(url.startsWith(prefix))return{format:"module",shortCircuit:true,source:'const fail=async()=>{throw new Error("No debe consultarse al renderizar")};export const searchBibliographyAction=fail,loadEditionCandidatesAction=fail,prepareCandidateLinkAction=fail,addBookAction=fail,getShelvesAction=fail;'};return next(url,context)}`
+export async function load(url,context,next){if(url.startsWith(prefix))return{format:"module",shortCircuit:true,source:'const fail=async()=>{throw new Error("No debe consultarse al renderizar")};export const searchBibliographyAction=fail,loadEditionCandidatesAction=fail,prepareCandidateLinkAction=fail,addBookAction=fail,getShelvesAction=fail,getTagsAction=fail;'};return next(url,context)}`
   register(`data:text/javascript,${encodeURIComponent(source)}`)
   Search = (await import(pathToFileURL(path.resolve("components/title-author-search.tsx")).href)).TitleAuthorSearch
   Results = (await import(pathToFileURL(path.resolve("components/edition-candidates.tsx")).href)).EditionCandidates

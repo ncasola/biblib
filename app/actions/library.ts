@@ -3,7 +3,8 @@
 import { and, eq, inArray, sql, asc, desc, count } from "drizzle-orm"
 import { z } from "zod"
 import { withRlsContext } from "@/lib/db/client"
-import { bookFields, books, shelves } from "@/lib/db/schema"
+import { bookFields, books, shelves, copyTags } from "@/lib/db/schema"
+import { attachPersonal } from "@/lib/personal-server"
 import { ensureDefaultShelf, mapRowToBook } from "@/lib/db/library"
 import { getRequiredUserId } from "@/lib/server-user"
 import { DomainError } from "@/lib/domain-errors"
@@ -47,6 +48,7 @@ const listSchema = z.object({
   series: z.union([z.literal("all"), z.uuid()]).default("all"),
   sort: z.enum(["title", "-title", "author", "-author", "pages", "-pages", "date", "-date", "status", "-status"]).default("title"),
   page: z.number().int().min(1).max(100_000).default(1), pageSize: z.number().int().min(1).max(100).default(10),
+  tagIds: z.array(z.uuid()).max(20).default([]), tagMode: z.enum(["or", "and"]).default("or"),
 })
 
 export async function listBooksAction(input: unknown = {}) {
@@ -54,6 +56,7 @@ export async function listBooksAction(input: unknown = {}) {
   const parsed = listSchema.safeParse(input)
   if (!parsed.success) throw new DomainError("INVALID_INPUT", "Los filtros de búsqueda no son válidos.")
   const filter = parsed.data
+  const tagIds = [...new Set(filter.tagIds)]
   const searchValue = normalizeIsbn(filter.q) ?? (/^[0-9Xx\s-]+$/.test(filter.q) ? filter.q.replace(/[\s-]/g, "") : filter.q)
   const query = searchValue.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim()
   const escaped = `%${query.replace(/[\\%_]/g, "\\$&")}%`
@@ -61,6 +64,10 @@ export async function listBooksAction(input: unknown = {}) {
     filter.shelf !== "all" ? eq(books.shelfId, filter.shelf) : undefined,
     // U-PRO-05: la serie es de la edición; el dueño sale de la sesión y la FK compuesta impide vínculos ajenos.
     filter.series !== "all" ? sql`exists (select 1 from biblib.series_editions se where se.user_id = ${userId} and se.series_id = ${filter.series} and se.edition_id = ${books.editionId})` : undefined,
+    // Agrupa sobre (user_id, tag_id), índice del contrato; filtra antes de ordenar/paginar.
+    tagIds.length ? sql`${books.id} in (select ${copyTags.copyId} from ${copyTags}
+      where ${copyTags.userId} = ${userId} and ${inArray(copyTags.tagId, tagIds)}
+      group by ${copyTags.copyId} having count(*) >= ${filter.tagMode === "and" ? tagIds.length : 1})` : undefined,
     // Tarea T5 (U-DAT-06): el texto de búsqueda de la edición se calcula al escribir (columna generada de 0010); el
     // identificador legacy es del ejemplar y se busca aparte.
     query ? sql`(${books.searchText} like ${escaped} or lower(coalesce(${books.legacyIdentifier}, '')) like ${escaped})` : undefined)
@@ -80,6 +87,6 @@ export async function listBooksAction(input: unknown = {}) {
       .where(and(eq(books.userId, userId), inArray(books.id, pageIds))) : []
     const position = new Map(pageIds.map((id, index) => [id, index]))
     const ordered = [...rows].sort((left, right) => position.get(left.book.id)! - position.get(right.book.id)!)
-    return { books: ordered.map(mapRowToBook), total, page, pageSize: filter.pageSize }
+    return { books: await attachPersonal(tx, userId, ordered.map(mapRowToBook)), total, page, pageSize: filter.pageSize }
   })
 }

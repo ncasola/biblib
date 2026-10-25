@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 import { ArrowLeft, Edit2, Loader2, RefreshCw, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { BookForm } from "@/components/book-form"
+import { BookPersonalPanel } from "@/components/book-personal-panel"
 import { BookCover } from "@/components/book-cover"
 import { BookCoverAssets } from "@/components/book-cover-assets"
 import { displayCover } from "@/lib/book-covers"
@@ -155,6 +156,7 @@ export function BookDetailsScreen({ bookId, returnPath }: BookDetailsScreenProps
             <EditionConflictPanel book={book} onMerged={async () => { const latest = await getBookDetailAction(book.id); if (latest) setBook(latest); setMessage("Ediciones unidas: este ejemplar usa ahora los datos de la otra edición.") }} />
             <EditionCopiesPanel key={book.copyVersion} book={book} shelves={shelves} />
             {book.edition && <EditionSeriesPanel key={book.edition.id} editionId={book.edition.id} />}
+            <BookPersonalPanel book={book} onChange={setBook} />
             <AlertDialog open={deleteOpen} onOpenChange={(open) => { if (pending !== "delete") { setDeleteOpen(open); setError("") } }}>
               <AlertDialogTrigger asChild><Button variant="outline" disabled={Boolean(pending)} className="text-destructive border-destructive/40"><Trash2 aria-hidden="true" className="w-4 h-4 mr-2" />Eliminar libro</Button></AlertDialogTrigger>
               <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>¿Eliminar este libro?</AlertDialogTitle><AlertDialogDescription>{(book.edition?.copies ?? 1) > 1 ? `Se eliminará este ejemplar de «${book.title}». La edición y sus otros ${book.edition!.copies! - 1} ejemplares se conservan.` : `Se eliminará «${book.title}» de tu biblioteca.`} Esta acción no se puede deshacer.</AlertDialogDescription></AlertDialogHeader>

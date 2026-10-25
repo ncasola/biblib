@@ -10,6 +10,7 @@ import { createCopy, createEdition, editionCopies, findBook, findBookByIsbn, mer
 import { editionCatalogue } from "@/lib/db/model"
 import { getRequiredUserId } from "@/lib/server-user"
 import { idempotencyKeySchema, parseBookInput, parseUuid, statusSchema, uuidSchema, versionTokenSchema } from "@/lib/book-validation"
+import { personalDatabaseError } from "@/lib/personal-server"
 import { DomainError, translateDatabaseError } from "@/lib/domain-errors"
 import { domainMutation } from "@/lib/server-action"
 import { readCatalogConfig } from "@/lib/bibliographic-catalog/config"
@@ -82,7 +83,7 @@ export async function createEditionAction(input: unknown) {
         await lockLibrary(tx)
         return createEdition(tx, userId, { book: { ...book, catalogue }, shelfId: envelope.placement.shelfId, idempotencyKey: envelope.idempotencyKey })
       })
-    } catch (error) { translateDatabaseError(error) }
+    } catch (error) { personalDatabaseError(error) }
   })
 }
 

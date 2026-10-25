@@ -12,7 +12,7 @@ before(async () => {
   register(pathToFileURL(path.resolve("tests/support/tsx-loader.mjs")).href)
   const source = `const prefix="biblib-entry-action:";
 export async function resolve(specifier,context,next){if(specifier.startsWith("@/app/actions/"))return{url:prefix+specifier,shortCircuit:true};return next(specifier,context)}
-export async function load(url,context,next){if(url.startsWith(prefix))return{format:"module",shortCircuit:true,source:'const fail=async()=>{throw new Error("No se permite escribir al renderizar un duplicado")};export const addBookAction=fail,getBookByIsbnAction=fail,createCopyAction=fail,getEditionConflictAction=fail,getEditionCopiesAction=fail,mergeEditionsAction=fail;'};return next(url,context)}`
+export async function load(url,context,next){if(url.startsWith(prefix))return{format:"module",shortCircuit:true,source:'const fail=async()=>{throw new Error("No se permite escribir al renderizar un duplicado")};export const addBookAction=fail,getBookByIsbnAction=fail,createCopyAction=fail,getEditionConflictAction=fail,getEditionCopiesAction=fail,mergeEditionsAction=fail,getTagsAction=fail;'};return next(url,context)}`
   register(`data:text/javascript,${encodeURIComponent(source)}`)
   Result = (await import(pathToFileURL(path.resolve("components/book-search-result.tsx")).href)).BookSearchResult
 })
