@@ -80,8 +80,9 @@
     "test:integration:account": "node tests/integration/account/run.mjs",
     "test:integration:product": "node tests/integration/product/run.mjs",
     "test:integration:series": "node tests/integration/series/run.mjs",
-
-    "test:integration:review": "node tests/integration/review/run.mjs"
+    "test:integration:review": "node tests/integration/review/run.mjs",
+    "media:purge:local": "node scripts/jobs/purge-media-assets.mjs",
+    "test:integration:media": "node tests/integration/media/run.mjs"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "1.1.15",

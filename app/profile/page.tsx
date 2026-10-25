@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card } from "@/components/ui/card"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { UserAvatar } from "@/components/user-avatar"
+import { ProfileAvatarForm } from "@/components/profile-avatar-form"
 import { Loader2 } from "lucide-react"
 import { AccountDeletionSection } from "@/components/account-deletion"
 
@@ -54,16 +55,12 @@ function ProfileForm({ user }: { user: User }) {
           <Card className="p-6 bg-card/80 backdrop-blur-xl border-2 border-border/50 rounded-2xl h-fit">
             <div className="flex flex-col items-center">
               <div className="relative mb-4">
-                <Avatar className="w-32 h-32 border-4 border-vintage-yellow">
-                  <AvatarImage src={user.avatar} alt="Foto de tu cuenta de Google" />
-                  <AvatarFallback className="bg-accent text-accent-foreground text-3xl">
-                    {user.name?.charAt(0).toUpperCase() || user.email.charAt(0).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
+                <UserAvatar user={user} className="w-32 h-32 border-4 border-vintage-yellow text-3xl" />
               </div>
               <h2 className="max-w-full break-words text-xl font-bold">{user.name || user.email}</h2>
               <p className="text-muted-foreground text-sm break-all">{user.email}</p>
-              <p className="text-muted-foreground text-sm mt-3 text-center">Foto y correo vinculados a tu cuenta de Google.</p>
+              <p className="text-muted-foreground text-sm mt-3 text-center">Tu foto personal es independiente de Google. El correo es informativo.</p>
+              <ProfileAvatarForm />
             </div>
           </Card>
 

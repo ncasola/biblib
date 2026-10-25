@@ -12,7 +12,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { UserAvatar } from "@/components/user-avatar"
 
 const navigation = [
   { href: "/", label: "Inicio" },
@@ -70,7 +70,7 @@ export function Header() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" aria-label={`Abrir menú de cuenta de ${user.name || user.email}`} className="hidden md:flex gap-2 rounded-xl hover:bg-vintage-purple/20 max-w-52">
-                  <Avatar className="w-8 h-8 shrink-0"><AvatarImage src={user.avatar} alt="" /><AvatarFallback className="bg-accent text-accent-foreground">{(user.name || user.email || "L").charAt(0).toUpperCase()}</AvatarFallback></Avatar>
+                  <UserAvatar user={user} decorative className="w-8 h-8 shrink-0" />
                   <span className="hidden font-semibold truncate lg:inline">{user.name || user.email}</span>
                 </Button>
               </DropdownMenuTrigger>
@@ -94,7 +94,7 @@ export function Header() {
         <nav id="mobile-navigation" aria-label="Navegación móvil" className="md:hidden max-h-[calc(100dvh-5rem)] overflow-y-auto border-t-2 border-border px-4 py-4 flex flex-col gap-3 bg-card">
           {navigation.map(({ href, label }) => <Link tabIndex={0} key={href} href={href} onClick={closeMenu} aria-current={isActive(href) ? "page" : undefined} className={linkClass(href)}>{label}</Link>)}
           {loading ? <p role="status" className="text-sm text-muted-foreground">Cargando cuenta...</p> : user ? <>
-            <Link tabIndex={0} href="/profile" onClick={closeMenu} aria-current={pathname === "/profile" ? "page" : undefined} className={linkClass("/profile")}>Perfil</Link>
+            <Link tabIndex={0} href="/profile" onClick={closeMenu} aria-current={pathname === "/profile" ? "page" : undefined} className={linkClass("/profile")}><UserAvatar user={user} decorative className="mr-2 size-8 shrink-0" />Perfil</Link>
             <Button variant="ghost" disabled={signingOut} onClick={() => void handleSignOut()} className="justify-start text-destructive">{signingOut ? "Cerrando sesión..." : "Cerrar sesión"}</Button>
           </> : <Link tabIndex={0} href="/login" onClick={closeMenu} className={linkClass("/login")}>Iniciar sesión</Link>}
         </nav>

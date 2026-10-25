@@ -4,12 +4,15 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import type { Session, User as SupabaseUser } from "@supabase/supabase-js"
 import { createClient } from "@/lib/supabase/client"
 import { getSafeRedirectPath } from "@/lib/auth-navigation"
+import { getProfileAvatarAction } from "@/app/actions/profile"
 
 export interface User {
   id: string
   email: string
   name: string
   avatar?: string
+  googleAvatar?: string
+  ownAvatar?: boolean
   createdAt: string
 }
 
@@ -20,6 +23,9 @@ interface AuthContextType {
   signInWithGoogle: (nextPath?: string) => Promise<void>
   signOut: () => Promise<void>
   updateProfile: (name: string) => Promise<void>
+  refreshAvatar: (saved?: { avatar?: string; version: string }) => Promise<void>
+  avatarVersion: string | null
+  avatarEditorEnabled: boolean
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -32,6 +38,7 @@ function mapUser(user: SupabaseUser): User {
     email: user.email ?? "",
     name: typeof fullName === "string" && fullName.length > 0 ? fullName : fallbackName,
     avatar: typeof user.user_metadata.avatar_url === "string" ? user.user_metadata.avatar_url : undefined,
+    googleAvatar: typeof user.user_metadata.avatar_url === "string" ? user.user_metadata.avatar_url : undefined,
     createdAt: user.created_at,
   }
 }
@@ -41,6 +48,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
+  const [privateProfile, setPrivateProfile] = useState<{ owner: string; avatar?: string; version: string | null; editorEnabled: boolean } | null>(null)
+  const owner = user?.id
+
+  useEffect(() => {
+    if (!owner) return
+    let active = true
+    void getProfileAvatarAction().then((result) => {
+      if (active && result.ok) setPrivateProfile({ owner, ...result.value })
+    }).catch(() => undefined)
+    return () => { active = false }
+  }, [owner])
+
+  const refreshAvatar = async (saved?: { avatar?: string; version: string }) => {
+    if (!owner) return
+    // La respuesta confirmada ya contiene URL y versión: no añadir una lectura de red que pueda
+    // presentar como fallido un guardado que terminó correctamente.
+    if (saved) {
+      setPrivateProfile((current) => ({ owner, ...saved, editorEnabled: current?.owner === owner && current.editorEnabled }))
+      return
+    }
+    const result = await getProfileAvatarAction()
+    if (!result.ok) throw new Error(result.error.message)
+    setPrivateProfile({ owner, ...result.value })
+  }
+  const ownProfile = privateProfile?.owner === owner ? privateProfile : null
+  const displayedUser = user ? { ...user, avatar: ownProfile?.avatar || user.avatar, ownAvatar: Boolean(ownProfile?.avatar) } : null
 
   useEffect(() => {
     let active = true
@@ -113,12 +146,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return (
     <AuthContext.Provider
       value={{
-        user,
+        user: displayedUser,
         session,
         loading,
         signInWithGoogle,
         signOut,
         updateProfile,
+        refreshAvatar,
+        avatarVersion: ownProfile?.version ?? null,
+        avatarEditorEnabled: ownProfile?.editorEnabled ?? false,
       }}
     >
       {children}
