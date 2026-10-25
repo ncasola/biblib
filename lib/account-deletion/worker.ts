@@ -23,8 +23,7 @@ export interface InventoryEntry {
 
 /**
  * Inventario de limpieza. Toda tabla de `biblib` con dueño debe estar aquí y en `account_deletion_step_tables`
- * (0013, ampliada en 0014); la prueba SQL y tests/account-deletion.test.ts fallan si una tabla nueva queda fuera. Lectura
- * y préstamos (O14) se añadirán con su migración.
+ * (0013, ampliada en 0014 y 0015); la prueba SQL y tests/account-deletion.test.ts fallan si una tabla nueva queda fuera.
  */
 export const ACCOUNT_DATA_INVENTORY: readonly InventoryEntry[] = [
   { name: "auth.sessions", kind: "auth", step: "sessions", contents: "Sesiones y refresh tokens de GoTrue: se cierran al solicitar y la cuenta se bloquea para nuevos inicios de sesión." },
@@ -45,6 +44,9 @@ export const ACCOUNT_DATA_INVENTORY: readonly InventoryEntry[] = [
   { name: "library_operations", kind: "table", step: "operations", contents: "Resultados idempotentes de operaciones confirmadas." },
   { name: "catalogue_private_cache", kind: "table", step: "private_cache", contents: "Caché privada de búsquedas por título o autor (consulta reducida a HMAC)." },
   { name: "catalogue_quota_reservations", kind: "table", step: "private_cache", contents: "Reservas de cuota de proveedores a nombre de la cuenta." },
+  { name: "reading_entries", kind: "table", step: "product", contents: "Sesiones y cambios de progreso de lectura (instante, páginas y nota)." },
+  { name: "reading_cycles", kind: "table", step: "product", contents: "Ciclos de lectura y relecturas de cada ejemplar (estado y fechas)." },
+  { name: "loans", kind: "table", step: "product", contents: "Préstamos de cada ejemplar: alias de quien lo tiene, fechas y nota." },
   { name: "review_decisions", kind: "table", step: "product", contents: "Decisiones de revisión bibliográfica (campos elegidos y evidencias citadas)." },
   { name: "review_issues", kind: "table", step: "product", contents: "Incidencias de revisión (motivo, IDs de las entidades y estado)." },
   { name: "bibliographic_evidence", kind: "table", step: "product", contents: "Evidencias bibliográficas de ediciones y ejemplares (fuente, afirmaciones, confianza, foto citada)." },

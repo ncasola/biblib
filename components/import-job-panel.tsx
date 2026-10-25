@@ -28,7 +28,7 @@ export function ImportJobPanel({ jobId, disabled }: Props) {
 
   if (!job) return null
   const covers = job.counts.total > 0
-  return <section aria-labelledby="import-job-title" className="rounded-2xl border border-border bg-card/80 backdrop-blur-xl p-5 md:p-8 shadow-xl space-y-3">
+  return <section aria-labelledby="import-job-title" className="surface-card rounded-2xl p-5 md:p-8 space-y-3">
     <h2 id="import-job-title" className="text-2xl font-bold">Importación en segundo plano</h2>
     <p className="text-sm text-muted-foreground">{job.published
       ? "La importación está publicada en tu biblioteca. Las portadas pendientes se buscan aparte: si alguna no aparece, la importación no se revierte."

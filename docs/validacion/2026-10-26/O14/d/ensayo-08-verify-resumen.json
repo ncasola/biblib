@@ -1,0 +1,11 @@
+{
+ "passed": true,
+ "checks": 65,
+ "ok": 65,
+ "reading": [
+  "table.biblib.loans:ok",
+  "table.biblib.reading_cycles:ok",
+  "table.biblib.reading_entries:ok"
+ ],
+ "tokens": ["biblib.reading_cycles.version (4)", "biblib.reading_entries.version (4)", "biblib.loans.version (4)"]
+}

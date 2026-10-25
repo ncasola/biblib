@@ -158,7 +158,7 @@ function SnapshotHistory({ refreshKey, disabled, onNotice, onRestored }: {
   const full = page ? page.quota.used >= page.quota.limit : false
   const plan = preview?.plan
   return (
-    <section aria-labelledby="history-title" aria-busy={loading || working !== null} className="rounded-2xl border border-border bg-card/80 backdrop-blur-xl p-5 md:p-8 shadow-xl">
+    <section aria-labelledby="history-title" aria-busy={loading || working !== null} className="surface-card rounded-2xl p-5 md:p-8">
       <h2 id="history-title" className="text-2xl font-bold mb-2 flex items-center gap-2"><History aria-hidden="true" className="w-6 h-6" />Versiones anteriores</h2>
       <p className="text-muted-foreground mb-3">Antes de reemplazar tu biblioteca o de restaurar una versión, BibLib guarda automáticamente la colección que se va a sustituir. Puedes compararla con la actual y restaurarla.</p>
       <p id="history-quota" className="text-sm mb-4">{page
@@ -442,19 +442,20 @@ export default function SettingsPage() {
   const expiresAt = prepared ? new Date(prepared.expiresAt).toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" }) : ""
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <Header />
-      <main id="main-content" tabIndex={-1} className="max-w-4xl mx-auto px-4 py-8 md:py-12 outline-none">
+      <main id="main-content" tabIndex={-1} className="max-w-4xl mx-auto px-4 py-8 md:px-6 md:py-12 outline-none">
         <div className="mb-8">
-          <Button asChild variant="outline" className="mb-4 rounded-xl"><Link href="/"><ArrowLeft aria-hidden="true" />Volver al inicio</Link></Button>
-          <h1 className="text-4xl md:text-5xl font-bold heading-vintage mb-2">Ajustes</h1>
-          <p className="text-lg text-muted-foreground">Copia, revisa e importa tu biblioteca</p>
+          <Button asChild variant="outline" className="mb-5"><Link href="/"><ArrowLeft aria-hidden="true" />Volver al inicio</Link></Button>
+          <p className="eyebrow mb-2">Biblioteca</p>
+          <h1 className="heading-vintage text-3xl leading-[1.08] md:text-5xl mb-3">Ajustes</h1>
+          <p className="text-lg text-foreground-light">Copia, revisa e importa tu biblioteca</p>
         </div>
 
         {/* Región en vivo fija: los avisos no desplazan el contenido de la página (tarea T2, CLS). */}
         <div aria-live="polite" className="fixed inset-x-4 bottom-4 z-40 mx-auto max-w-2xl pointer-events-none">
-          {message && <div role={message.type === "error" ? "alert" : "status"} className={`pointer-events-auto p-4 rounded-xl border shadow-xl backdrop-blur-xl flex items-start gap-3 ${message.type === "error" ? "border-destructive bg-background/95" : "border-border bg-card/95"}`}>
-            {message.type === "success" ? <CheckCircle aria-hidden="true" className="w-5 h-5 shrink-0 mt-0.5" /> : <AlertCircle aria-hidden="true" className="w-5 h-5 text-destructive shrink-0 mt-0.5" />}
+          {message && <div role={message.type === "error" ? "alert" : "status"} className={`pointer-events-auto flex items-start gap-3 rounded-2xl border border-l-4 p-4 shadow-2xl backdrop-blur-xl ${message.type === "error" ? "border-destructive bg-popover" : "border-border border-l-[var(--status-read)] bg-popover"}`}>
+            {message.type === "success" ? <CheckCircle aria-hidden="true" className="w-5 h-5 shrink-0 mt-0.5 text-[var(--status-read)]" /> : <AlertCircle aria-hidden="true" className="w-5 h-5 text-destructive shrink-0 mt-0.5" />}
             <div className="flex-1"><p className="text-foreground">{message.text}</p>{message.reference && <p className="text-xs text-muted-foreground mt-1">Referencia para soporte: {message.reference}</p>}</div>
             <Button type="button" variant="ghost" size="icon" className="shrink-0 -mr-2 -mt-2" onClick={() => setMessage(null)} aria-label="Cerrar aviso"><X aria-hidden="true" /></Button>
           </div>}
@@ -462,7 +463,7 @@ export default function SettingsPage() {
         {!counts && !loading && <Button onClick={() => { setLoading(true); void refresh() }} disabled={busy} variant="outline" className="mb-6">Reintentar carga</Button>}
 
         <div className="space-y-6">
-          <section aria-labelledby="export-title" className="rounded-2xl border border-border bg-card/80 backdrop-blur-xl p-5 md:p-8 shadow-xl">
+          <section aria-labelledby="export-title" className="surface-card rounded-2xl p-5 md:p-8">
             <h2 id="export-title" className="text-2xl font-bold mb-2">Exportar una copia</h2>
             <p className="text-muted-foreground mb-4">Descarga un JSON con libros, estanterías, estado de lectura, versión del formato y fecha de exportación. La copia se prepara en el servidor con los datos actuales. Las colecciones grandes se dividen automáticamente en archivos que respetan los límites de importación, con un manifiesto que acredita qué partes forman la copia.</p>
             {loading ? <p role="status" className="text-sm mb-4">Cargando biblioteca…</p> : counts && <p className="text-sm mb-4">Biblioteca actual: {counts.books} libros en {counts.shelves} estanterías.</p>}
@@ -483,7 +484,7 @@ export default function SettingsPage() {
             </DialogContent>
           </Dialog>
 
-          <section aria-labelledby="import-title" aria-busy={isImporting || isValidating || isPreparing} className="rounded-2xl border border-border bg-card/80 backdrop-blur-xl p-5 md:p-8 shadow-xl">
+          <section aria-labelledby="import-title" aria-busy={isImporting || isValidating || isPreparing} className="surface-card rounded-2xl p-5 md:p-8">
             <h2 id="import-title" className="text-2xl font-bold mb-2">Importar una biblioteca</h2>
             <p className="text-muted-foreground mb-4">Selecciona un JSON para validarlo y revisar qué cambiará en tu biblioteca. Elegir el archivo todavía no modifica tus datos.</p>
             <p id="import-limits" className="text-sm text-muted-foreground mb-4">Formato antiguo de BibLib, versión 1 o versión 2. Máximo 8 MiB, {MAX_IMPORT_BOOKS.toLocaleString("es")} libros y {MAX_IMPORT_SHELVES} estanterías.</p>
@@ -535,7 +536,7 @@ export default function SettingsPage() {
             {isImporting && <p role="status" className="mt-4 flex items-start gap-2 text-sm"><LoaderCircle aria-hidden="true" className="w-4 h-4 animate-spin shrink-0 mt-0.5" />Aplicando la revisión confirmada. Mantén esta página abierta hasta recibir el resultado.</p>}
           </section>
 
-          {result && <section aria-labelledby="result-title" className="rounded-2xl border border-border bg-card p-5 md:p-8"><h2 id="result-title" className="text-2xl font-bold mb-4">Resultado de la importación</h2><ul className="space-y-2"><li>Libros importados: <strong>{result.imported}</strong></li><li>Libros omitidos por estar presentes: <strong>{result.skipped}</strong></li><li>Libros eliminados: <strong>{result.deleted}</strong></li><li>Estanterías de la biblioteca resultante: <strong>{result.shelves}</strong></li><li>Libros importados con portada genérica, pendientes de búsqueda: <strong>{result.coversPending}</strong></li></ul>{result.coversPending > 0 && <p className="text-sm text-muted-foreground mt-4">La colección se ha importado. Las portadas pendientes se buscan en segundo plano, en pasos acotados y respetando los límites de cada catálogo; si alguna no aparece, la importación no se revierte.</p>}<Button asChild variant="outline" className="mt-4"><Link href="/books">Ver mi colección</Link></Button></section>}
+          {result && <section aria-labelledby="result-title" className="surface-card rounded-2xl p-5 md:p-8"><h2 id="result-title" className="text-2xl font-bold mb-4">Resultado de la importación</h2><ul className="space-y-2"><li>Libros importados: <strong>{result.imported}</strong></li><li>Libros omitidos por estar presentes: <strong>{result.skipped}</strong></li><li>Libros eliminados: <strong>{result.deleted}</strong></li><li>Estanterías de la biblioteca resultante: <strong>{result.shelves}</strong></li><li>Libros importados con portada genérica, pendientes de búsqueda: <strong>{result.coversPending}</strong></li></ul>{result.coversPending > 0 && <p className="text-sm text-muted-foreground mt-4">La colección se ha importado. Las portadas pendientes se buscan en segundo plano, en pasos acotados y respetando los límites de cada catálogo; si alguna no aparece, la importación no se revierte.</p>}<Button asChild variant="outline" className="mt-4"><Link href="/books">Ver mi colección</Link></Button></section>}
 
           <CsvImportPanel disabled={busy || loading || !counts} onJob={setImportJobId} onCommitted={() => { setHistoryKey((key) => key + 1); void refreshCounts() }} />
 
@@ -547,7 +548,7 @@ export default function SettingsPage() {
 
           <CoverRecoveryJobPanel disabled={busy || loading || !counts} onRunningChange={setIsRecovering} onFinish={refresh} />
 
-          <section className="rounded-2xl border border-border bg-card/80 p-5 md:p-6"><h2 className="font-bold mb-3">Tus datos y copias</h2><ul className="list-disc pl-5 text-sm text-muted-foreground space-y-2"><li>Los datos están vinculados a tu cuenta y se guardan en la base de datos.</li><li>La copia JSON conserva fichas, estanterías y estado de lectura; no descarga las imágenes de las portadas.</li><li>Guarda copias periódicas y antes de reemplazar una colección.</li></ul></section>
+          <section className="surface-card rounded-2xl p-5 md:p-6"><h2 className="font-bold mb-3">Tus datos y copias</h2><ul className="list-disc pl-5 text-sm text-muted-foreground space-y-2"><li>Los datos están vinculados a tu cuenta y se guardan en la base de datos.</li><li>La copia JSON conserva fichas, estanterías y estado de lectura; no descarga las imágenes de las portadas.</li><li>Guarda copias periódicas y antes de reemplazar una colección.</li></ul></section>
         </div>
       </main>
 

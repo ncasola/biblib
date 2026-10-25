@@ -189,7 +189,7 @@ export function ReviewInbox() {
 
   return (
     <div className="space-y-6">
-      <section aria-labelledby={`${headingId}-filters`} className="space-y-4 rounded-2xl border border-border bg-card/80 p-4 shadow-xl backdrop-blur-xl md:p-6">
+      <section aria-labelledby={`${headingId}-filters`} className="surface-card space-y-4 rounded-2xl p-4 md:p-6">
         <h2 id={`${headingId}-filters`} className="text-lg font-semibold">Filtros</h2>
         <FilterGroup legend="Motivo" values={REVIEW_REASONS} labels={REVIEW_REASON_LABELS} selected={filters.reasons ?? []} counts={page?.counts}
           onChange={(reasons) => navigate({ ...filters, reasons: reasons.length ? reasons : undefined }, null)} />
@@ -224,7 +224,7 @@ export function ReviewInbox() {
           {items.map((item) => {
             const firstCopy = item.entities.find((entity) => entity.copyId)?.copyId
             return (
-              <li key={item.id} id={bookRowAnchor(item.id)} tabIndex={-1} className="rounded-2xl border border-border bg-card/80 p-4 shadow-sm backdrop-blur-xl focus-visible:outline-2 focus-visible:outline-ring">
+              <li key={item.id} id={bookRowAnchor(item.id)} tabIndex={-1} className="surface-card rounded-2xl p-4 focus-visible:outline-2 focus-visible:outline-ring">
                 <div className="flex flex-col gap-3 md:flex-row md:items-start">
                   <label className="flex items-center gap-2 text-sm md:pt-1">
                     <input type="checkbox" className="h-4 w-4 accent-primary" checked={selected.has(item.id)}
@@ -233,7 +233,7 @@ export function ReviewInbox() {
                   </label>
                   <div className="min-w-0 flex-1 space-y-1">
                     <p className="flex flex-wrap items-center gap-2">
-                      <span className="rounded-md bg-vintage-yellow px-2 py-0.5 text-xs font-semibold text-black">{REVIEW_REASON_LABELS[item.reason]}</span>
+                      <span className="rounded-full bg-brass px-2.5 py-0.5 text-xs font-semibold text-[#1b130d]">{REVIEW_REASON_LABELS[item.reason]}</span>
                       <span className="text-xs text-muted-foreground">{REVIEW_STATE_LABELS[item.state]}{item.resolvedAt ? ` el ${dateText(item.resolvedAt)}` : ""}</span>
                       {draftIds.has(item.id) && <span className="text-xs font-medium">· En el lote</span>}
                     </p>
@@ -261,7 +261,7 @@ export function ReviewInbox() {
         </nav>
       </section>
 
-      <section aria-labelledby={`${headingId}-batch`} className="space-y-4 rounded-2xl border border-border bg-card/80 p-4 shadow-xl backdrop-blur-xl md:p-6">
+      <section aria-labelledby={`${headingId}-batch`} className="surface-card space-y-4 rounded-2xl p-4 md:p-6">
         <h2 id={`${headingId}-batch`} className="text-lg font-semibold">Lote pendiente ({draft.length} de {REVIEW_LIMITS.batch})</h2>
         <p className="text-sm text-muted-foreground">Añade decisiones desde la selección o desde la comparación de cada incidencia. Antes de aplicar verás qué se crea, qué cambia y qué se fusiona.</p>
         {draft.length > 0 && (

@@ -20,7 +20,7 @@ import { addToBatchDraft, readBatchDraft } from "@/lib/review-batch-draft"
 // aplica ahora o se añade al lote de la bandeja, que la muestra en una vista previa antes de confirmar.
 
 const failure = (error: unknown, fallback: string) => error instanceof DomainError ? error.message : fallback
-const selectClass = "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base text-foreground focus-visible:outline-2 focus-visible:outline-ring"
+const selectClass = "flex h-10 w-full rounded-md border border-input bg-input px-3 py-2 text-base text-foreground focus-visible:outline-2 focus-visible:outline-ring"
 const dateText = (iso: string) => new Date(iso).toLocaleString("es-ES", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })
 
 interface DecisionActionsProps {
@@ -121,14 +121,14 @@ export function ReviewComparisonScreen({ issueId, returnPath }: { issueId: strin
     <div className="space-y-6">
       <Button asChild variant="outline"><Link tabIndex={0} href={returnPath}><ArrowLeft aria-hidden="true" className="mr-2 h-4 w-4" />Volver a la bandeja</Link></Button>
       <header className="space-y-2">
-        <p className="flex flex-wrap items-center gap-2 text-sm"><span className="rounded-md bg-vintage-yellow px-2 py-0.5 text-xs font-semibold text-black">{REVIEW_REASON_LABELS[issue.reason]}</span><span className="text-muted-foreground">{REVIEW_STATE_LABELS[issue.state]}</span></p>
-        <h1 ref={heading} tabIndex={-1} className="break-words text-3xl font-bold heading-vintage md:text-4xl">{title}</h1>
+        <p className="flex flex-wrap items-center gap-2 text-sm"><span className="rounded-full bg-brass px-2.5 py-0.5 text-xs font-semibold text-[#1b130d]">{REVIEW_REASON_LABELS[issue.reason]}</span><span className="text-muted-foreground">{REVIEW_STATE_LABELS[issue.state]}</span></p>
+        <h1 ref={heading} tabIndex={-1} className="heading-vintage text-3xl leading-[1.08] md:text-5xl break-words">{title}</h1>
         <p className="text-muted-foreground">{REVIEW_REASON_HELP[issue.reason]}</p>
       </header>
       <div role="status" aria-live="polite" className="text-sm">{notice && <span className="inline-flex items-center gap-2"><CheckCircle aria-hidden="true" className="h-4 w-4" />{notice}</span>}</div>
       {error && <p role="alert" className="flex items-start gap-2 text-sm text-destructive"><AlertTriangle aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" />{error}</p>}
 
-      <section aria-labelledby={`${id}-editions`} className="space-y-3 rounded-2xl border border-border bg-card/80 p-4 shadow-xl backdrop-blur-xl md:p-6">
+      <section aria-labelledby={`${id}-editions`} className="surface-card space-y-3 rounded-2xl p-4 md:p-6">
         <h2 id={`${id}-editions`} className="text-lg font-semibold">Fichas afectadas</h2>
         <ul className="space-y-2">
           {data.editions.map((edition, index) => {
@@ -143,7 +143,7 @@ export function ReviewComparisonScreen({ issueId, returnPath }: { issueId: strin
         </ul>
       </section>
 
-      <section aria-labelledby={`${id}-compare`} className="space-y-3 rounded-2xl border border-border bg-card/80 p-4 shadow-xl backdrop-blur-xl md:p-6">
+      <section aria-labelledby={`${id}-compare`} className="surface-card space-y-3 rounded-2xl p-4 md:p-6">
         <h2 id={`${id}-compare`} className="text-lg font-semibold">Comparación campo a campo</h2>
         {data.providers.length > 0 && (
           <p className="text-sm text-muted-foreground">Fuentes consultadas ahora: {data.providers.map((outcome) => `${outcome.provider === "open-library" ? "Open Library" : outcome.provider === "bne" ? "BNE" : outcome.provider === "google-books" ? "Google Books" : outcome.provider} (${outcome.status === "found" ? "ficha encontrada" : outcome.status === "notFound" ? "sin ficha" : "no disponible"})`).join(", ")}.</p>
@@ -182,7 +182,7 @@ export function ReviewComparisonScreen({ issueId, returnPath }: { issueId: strin
         </div>
       </section>
 
-      <section aria-labelledby={`${id}-evidence`} className="space-y-3 rounded-2xl border border-border bg-card/80 p-4 shadow-xl backdrop-blur-xl md:p-6">
+      <section aria-labelledby={`${id}-evidence`} className="surface-card space-y-3 rounded-2xl p-4 md:p-6">
         <h2 id={`${id}-evidence`} className="text-lg font-semibold">Evidencias guardadas</h2>
         {data.evidence.length ? (
           <ul className="space-y-2 text-sm">
@@ -199,7 +199,7 @@ export function ReviewComparisonScreen({ issueId, returnPath }: { issueId: strin
       </section>
 
       {open ? (
-        <section aria-labelledby={`${id}-decide`} className="space-y-6 rounded-2xl border border-border bg-card/80 p-4 shadow-xl backdrop-blur-xl md:p-6">
+        <section aria-labelledby={`${id}-decide`} className="surface-card space-y-6 rounded-2xl p-4 md:p-6">
           <h2 id={`${id}-decide`} className="text-lg font-semibold">Decidir</h2>
 
           {fieldRows.length > 0 && target && (
@@ -278,7 +278,7 @@ export function ReviewComparisonScreen({ issueId, returnPath }: { issueId: strin
           </fieldset>
         </section>
       ) : (
-        <section aria-labelledby={`${id}-reopen`} className="space-y-3 rounded-2xl border border-border bg-card/80 p-4 shadow-xl backdrop-blur-xl md:p-6">
+        <section aria-labelledby={`${id}-reopen`} className="surface-card space-y-3 rounded-2xl p-4 md:p-6">
           <h2 id={`${id}-reopen`} className="text-lg font-semibold">Reabrir</h2>
           <p className="text-sm text-muted-foreground">Esta incidencia está {REVIEW_STATE_LABELS[issue.state].toLocaleLowerCase("es")}. Reábrela si quieres volver a decidir.</p>
           <DecisionActions decision={{ ...base, kind: "reopen" }} summary={summary} onApplied={done} onQueued={setNotice} />
@@ -286,7 +286,7 @@ export function ReviewComparisonScreen({ issueId, returnPath }: { issueId: strin
       )}
 
       {data.history.length > 0 && (
-        <section aria-labelledby={`${id}-history`} className="space-y-2 rounded-2xl border border-border bg-card/80 p-4 shadow-xl backdrop-blur-xl md:p-6">
+        <section aria-labelledby={`${id}-history`} className="surface-card space-y-2 rounded-2xl p-4 md:p-6">
           <h2 id={`${id}-history`} className="text-lg font-semibold">Historial de decisiones</h2>
           <ol className="space-y-1 text-sm">{data.history.map((entry, index) => <li key={`${entry.decidedAt}-${index}`}>{DECISION_LABELS[entry.kind]} · {dateText(entry.decidedAt)}{entry.evidenceRefs.length ? ` · ${entry.evidenceRefs.length} evidencia(s) citada(s)` : ""}</li>)}</ol>
         </section>

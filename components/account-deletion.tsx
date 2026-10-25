@@ -125,7 +125,7 @@ export function AccountDeletionSection() {
               </div>
             )}
             <div className="flex flex-wrap gap-3">
-              <Button type="submit" disabled={working || !matches || !acknowledged} className="bg-vintage-red hover:bg-vintage-red/90 text-white rounded-xl">
+              <Button type="submit" disabled={working || !matches || !acknowledged}>
                 {working ? <LoaderCircle aria-hidden="true" className="animate-spin" /> : <Trash2 aria-hidden="true" />}
                 {working ? "Enviando solicitud…" : "Eliminar mi cuenta"}
               </Button>

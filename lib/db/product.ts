@@ -1,7 +1,7 @@
 import { and, eq, inArray, sql } from "drizzle-orm"
 import type { DatabaseTransaction } from "./client"
 import {
-  bibliographicEvidence, copyAnnotations, copyLocations, copyTags, locations, mediaAssets, series, seriesEditions, tags,
+  bibliographicEvidence, copyAnnotations, copyLocations, copyTags, loans, locations, mediaAssets, readingCycles, readingEntries, series, seriesEditions, tags,
 } from "./schema"
 import { DomainError, databaseErrorCode } from "../domain-errors"
 import type { IdAllocator, ImportPlan } from "../import-plan"
@@ -9,6 +9,7 @@ import {
   LOCATION_CYCLE_SQLSTATE, LOCATION_DEPTH_SQLSTATE, MEDIA_REFERENCE_SQLSTATE, PRODUCT_LIMIT_SQLSTATE,
   type CopyRating, type LocationEntry, type MediaKind, type SeriesEntry, type TagEntry,
 } from "../product/contracts"
+import { READING_PAGE_SQLSTATE, type Loan, type ReadingCycle, type ReadingCycleStatus, type ReadingEntry } from "../product/reading-loans"
 import { hasProductData, planProductRows, referencedMedia, type ProductApplyMode, type ProductRows, type ProductTargets } from "../product/portable"
 import type { EvidenceEntry } from "../review/contracts"
 import type { Book, LibraryData } from "../types"
@@ -16,7 +17,8 @@ import type { Book, LibraryData } from "../types"
 // Lectura y escritura de los datos de producto de 0014 que forman parte de la colección portable: etiquetas, notas y
 // valoración, ubicaciones, series y evidencias. Dentro de una transacción ya situada en el contexto RLS del dueño y, para
 // escribir, bajo el bloqueo de colección. Las acciones de cada unidad (U-PRO-01/03/05, U-DAT-07) escriben por su cuenta;
-// aquí solo exportar, importar, restaurar partes y restaurar versiones anteriores.
+// aquí solo exportar, importar, restaurar partes y restaurar versiones anteriores. Desde 0015 (O14), también los ciclos de
+// lectura con sus entradas y los préstamos de cada ejemplar: instantes en UTC y fechas civiles como texto, sin conversión.
 
 const BATCH = 100
 
@@ -41,6 +43,15 @@ export async function readProductData(tx: DatabaseTransaction, userId: string, b
       to_char(e.observed_at at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') as observed_at, e.field_claims, e.confidence, e.origin
     from biblib.bibliographic_evidence as e left join biblib.media_assets as m on m.user_id = e.user_id and m.id = e.photo_asset_id and m.state = 'ready'
     where e.user_id = ${owner} order by e.created_at, e.id`)
+  const utc = (column: ReturnType<typeof sql>) => sql`to_char(${column} at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"')`
+  const cycleRows = await tx.execute<{ id: string; copy_id: string; cycle_number: number; status: ReadingCycleStatus; started_at: string | null; finished_at: string | null }>(sql`
+    select id, copy_id, cycle_number, status, ${utc(sql`started_at`)} as started_at, ${utc(sql`finished_at`)} as finished_at
+    from biblib.reading_cycles where user_id = ${owner} order by copy_id, cycle_number, id`)
+  const entryRows = await tx.execute<{ id: string; cycle_id: string; occurred_at: string; page_from: number | null; page_to: number | null; note: string | null }>(sql`
+    select id, cycle_id, ${utc(sql`occurred_at`)} as occurred_at, page_from, page_to, note from biblib.reading_entries where user_id = ${owner} order by cycle_id, occurred_at, id`)
+  const loanRows = await tx.execute<{ id: string; copy_id: string; borrower_label: string; loaned_on: string; due_on: string | null; returned_on: string | null; note: string | null }>(sql`
+    select id, copy_id, borrower_label, loaned_on::text as loaned_on, due_on::text as due_on, returned_on::text as returned_on, note
+    from biblib.loans where user_id = ${owner} order by copy_id, loaned_on, created_at, id`)
 
   const evidenceOf = (row: (typeof evidenceRows)[number]): EvidenceEntry => ({
     id: row.id, sourceKind: row.source_kind, ...(row.source_ref ? { sourceRef: row.source_ref } : {}), ...(row.source_url ? { sourceUrl: row.source_url } : {}),
@@ -52,6 +63,28 @@ export async function readProductData(tx: DatabaseTransaction, userId: string, b
   for (const row of copyTagRows) tagsByCopy.set(row.copy_id, [...(tagsByCopy.get(row.copy_id) ?? []), row.tag_id])
   const locationsByCopy = new Map([...locationRefRows].map((row) => [row.copy_id, row]))
   const seriesByEdition = new Map([...seriesRefRows].map((row) => [row.edition_id, row]))
+  const entriesByCycle = new Map<string, ReadingEntry[]>()
+  for (const row of entryRows) {
+    entriesByCycle.set(row.cycle_id, [...(entriesByCycle.get(row.cycle_id) ?? []), {
+      id: row.id, occurredAt: row.occurred_at, ...(row.page_from !== null ? { pageFrom: row.page_from } : {}), ...(row.page_to !== null ? { pageTo: row.page_to } : {}),
+      ...(row.note !== null ? { note: row.note } : {}),
+    }])
+  }
+  const readingByCopy = new Map<string, ReadingCycle[]>()
+  for (const row of cycleRows) {
+    const entries = entriesByCycle.get(row.id)
+    readingByCopy.set(row.copy_id, [...(readingByCopy.get(row.copy_id) ?? []), {
+      id: row.id, cycleNumber: row.cycle_number, status: row.status, ...(row.started_at ? { startedAt: row.started_at } : {}),
+      ...(row.finished_at ? { finishedAt: row.finished_at } : {}), ...(entries?.length ? { entries } : {}),
+    }])
+  }
+  const loansByCopy = new Map<string, Loan[]>()
+  for (const row of loanRows) {
+    loansByCopy.set(row.copy_id, [...(loansByCopy.get(row.copy_id) ?? []), {
+      id: row.id, borrowerLabel: row.borrower_label, loanedOn: row.loaned_on, ...(row.due_on ? { dueOn: row.due_on } : {}),
+      ...(row.returned_on ? { returnedOn: row.returned_on } : {}), ...(row.note !== null ? { note: row.note } : {}),
+    }])
+  }
   const copyEvidence = new Map<string, EvidenceEntry[]>()
   const editionEvidence = new Map<string, EvidenceEntry[]>()
   for (const row of evidenceRows) {
@@ -77,6 +110,8 @@ export async function readProductData(tx: DatabaseTransaction, userId: string, b
       ...(Object.keys(personal).length ? { personal } : {}),
       ...(place ? { location: { locationId: place.location_id, ...(place.shelf_label ? { shelfLabel: place.shelf_label } : {}), ...(place.position != null ? { position: place.position } : {}) } } : {}),
       ...(copyEvidence.get(book.id)?.length ? { evidence: copyEvidence.get(book.id) } : {}),
+      ...(readingByCopy.get(book.id)?.length ? { reading: readingByCopy.get(book.id) } : {}),
+      ...(loansByCopy.get(book.id)?.length ? { loans: loansByCopy.get(book.id) } : {}),
       ...(membership || ofEdition?.length ? { edition: {
         ...(book.edition ?? { id: editionId }),
         ...(membership ? { series: { seriesId: membership.series_id, ...(membership.position !== null ? { position: membership.position } : {}),
@@ -110,6 +145,9 @@ export async function readProductTargets(tx: DatabaseTransaction, userId: string
   if (mode === "replace") {
     for (const id of [...ownLocations, ...ownSeries]) own.add(id)
     for (const row of await tx.execute<{ id: string }>(sql`select id from biblib.bibliographic_evidence where user_id = ${owner}`)) own.add(row.id)
+    // 0015: ciclos, entradas y préstamos propios conservan su ID al reemplazar (caen con los ejemplares y vuelven).
+    for (const row of await tx.execute<{ id: string }>(sql`select id from biblib.reading_cycles where user_id = ${owner}
+      union all select id from biblib.reading_entries where user_id = ${owner} union all select id from biblib.loans where user_id = ${owner}`)) own.add(row.id)
   }
   const wanted = referencedMedia(library)
   const media = new Map<string, { kind: MediaKind; sha256: string }>()
@@ -134,7 +172,8 @@ export async function deleteAccountProduct(tx: DatabaseTransaction, userId: stri
 
 function productLimitError(error: unknown): never {
   const code = databaseErrorCode(error)
-  if (code === PRODUCT_LIMIT_SQLSTATE) throw new DomainError("LIMIT_EXCEEDED", "La importación superaría el máximo de etiquetas, ubicaciones o series de tu cuenta (o de etiquetas por libro). No se ha aplicado nada.")
+  if (code === PRODUCT_LIMIT_SQLSTATE) throw new DomainError("LIMIT_EXCEEDED", "La importación superaría el máximo de etiquetas, ubicaciones, series, lecturas o préstamos de tu cuenta (o por libro). No se ha aplicado nada.")
+  if (code === READING_PAGE_SQLSTATE) throw new DomainError("INVALID_INPUT", "Una entrada de lectura supera el total de páginas conocido de su edición. No se ha aplicado nada.")
   if (code === LOCATION_CYCLE_SQLSTATE || code === LOCATION_DEPTH_SQLSTATE) throw new DomainError("INVALID_INPUT", "Las ubicaciones del archivo formarían un ciclo o más de 8 niveles con las tuyas. No se ha aplicado nada.")
   if (code === MEDIA_REFERENCE_SQLSTATE) throw new DomainError("CONFLICT", "Una foto citada ya no está disponible. Vuelve a preparar la importación.")
   throw error
@@ -160,6 +199,15 @@ export async function writeProductRows(tx: DatabaseTransaction, userId: string, 
       id: row.id, userId, editionId: row.editionId, copyId: row.copyId, sourceKind: row.sourceKind, sourceRef: row.sourceRef, sourceUrl: row.sourceUrl,
       photoAssetId: row.photoAssetId, observedAt: row.observedAt ? new Date(row.observedAt) : null, fieldClaims: row.fieldClaims, confidence: row.confidence, origin: row.origin,
     }))))
+    // 0015: los ciclos antes que sus entradas (FK con dueño); los ejemplares ya existen.
+    await insertBatches(rows.readingCycles, (batch) => tx.insert(readingCycles).values(batch.map((row) => ({
+      id: row.id, userId, copyId: row.copyId, cycleNumber: row.cycleNumber, status: row.status,
+      startedAt: row.startedAt ? new Date(row.startedAt) : null, finishedAt: row.finishedAt ? new Date(row.finishedAt) : null,
+    }))))
+    await insertBatches(rows.readingEntries, (batch) => tx.insert(readingEntries).values(batch.map((row) => ({
+      id: row.id, userId, cycleId: row.cycleId, occurredAt: new Date(row.occurredAt), pageFrom: row.pageFrom, pageTo: row.pageTo, note: row.note,
+    }))))
+    await insertBatches(rows.loans, (batch) => tx.insert(loans).values(batch.map((row) => ({ userId, ...row }))))
   } catch (error) {
     productLimitError(error)
   }

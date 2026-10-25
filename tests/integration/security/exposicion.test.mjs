@@ -81,6 +81,22 @@ test("funciones SECURITY DEFINER: search_path fijado, sin PUBLIC ni anon, y auth
   assert.deepEqual(definers.filter((fn) => fn.authenticated).map((fn) => fn.name), AUTHENTICATED_DEFINERS)
 })
 
+// O14 (0015): funciones de lectura y préstamos que llaman las acciones. Son SECURITY INVOKER (corren con la RLS y las
+// políticas de cuenta activa de quien llama), fijan search_path y solo las ejecuta authenticated.
+const AUTHENTICATED_INVOKERS = ["loan_open", "loan_return", "reading_cycle_close", "reading_cycle_start"]
+
+test("funciones invoker de lectura y préstamos: search_path fijado, sin PUBLIC ni anon y solo authenticated", async () => {
+  const invokers = await ctx.sql`select p.proname as name, p.prosecdef as definer, p.proconfig as config,
+      has_function_privilege('anon', p.oid, 'EXECUTE') as anon, has_function_privilege('authenticated', p.oid, 'EXECUTE') as authenticated,
+      exists (select 1 from aclexplode(coalesce(p.proacl, acldefault('f', p.proowner))) acl where acl.grantee = 0 and acl.privilege_type = 'EXECUTE') as public
+    from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'biblib' and p.proname = any(${AUTHENTICATED_INVOKERS}) order by 1`
+  assert.deepEqual(invokers.map((fn) => fn.name), AUTHENTICATED_INVOKERS)
+  for (const fn of invokers) {
+    assert.deepEqual({ definer: fn.definer, anon: fn.anon, public: fn.public, authenticated: fn.authenticated }, { definer: false, anon: false, public: false, authenticated: true }, fn.name)
+    assert.ok((fn.config ?? []).includes("search_path=pg_catalog"), `${fn.name} fija search_path`)
+  }
+})
+
 test("GraphQL no publica el esquema de BibLib", async () => {
   const response = await fetch(`${ctx.env.SUPABASE_URL}/graphql/v1`, {
     method: "POST", signal: AbortSignal.timeout(10_000),

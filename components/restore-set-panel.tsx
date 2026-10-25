@@ -221,7 +221,7 @@ export function RestoreSetPanel({ disabled, onNotice, onCommitted }: { disabled:
   const total = selection?.parts.reduce((sum, part) => sum + part.file.size, 0) ?? 0
   const pending = open.filter((candidate) => candidate.sessionId !== session?.sessionId)
   return (
-    <section aria-labelledby="restore-set-title" aria-busy={working} className="rounded-2xl border border-border bg-card/80 backdrop-blur-xl p-5 md:p-8 shadow-xl">
+    <section aria-labelledby="restore-set-title" aria-busy={working} className="surface-card rounded-2xl p-5 md:p-8">
       <h2 id="restore-set-title" className="text-2xl font-bold mb-2 flex items-center gap-2"><Files aria-hidden="true" className="w-6 h-6" />Restaurar una copia por partes</h2>
       <p className="text-muted-foreground mb-3">Selecciona a la vez todas las partes de una copia y su manifiesto («…-conjunto.json»). BibLib comprueba que están completas, que son de la misma copia y que no se han modificado, y sustituye tu colección por la copia en una sola operación: nunca queda a medias.</p>
       <p id="restore-set-limits" className="text-sm text-muted-foreground mb-4">Hasta {RESTORE_LIMITS.maxBooks.toLocaleString("es")} libros, {RESTORE_LIMITS.maxShelves.toLocaleString("es")} estanterías y 80 MiB por copia. Seleccionar los archivos no modifica tu biblioteca.</p>

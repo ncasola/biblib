@@ -1,25 +1,18 @@
-import { Badge } from "@/components/ui/badge"
 import type { Book } from "@/lib/types"
 
 interface BookStatusBadgeProps {
   status: Book["status"]
 }
 
+const STATUS_LABELS: Record<Book["status"], string> = {
+  read: "Leído",
+  reading: "Leyendo",
+  "to-read": "Por leer",
+  unread: "Sin empezar",
+}
+
+/** Chip de estado de lectura con los colores de estado del sistema visual (`.status-chip`, contraste AA). */
 export function BookStatusBadge({ status }: BookStatusBadgeProps) {
-  const statusConfig = {
-    read: { label: "Leído", className: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" },
-    reading: {
-      label: "Leyendo",
-      className: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
-    },
-    "to-read": {
-      label: "Por leer",
-      className: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
-    },
-    unread: { label: "Sin empezar", className: "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200" },
-  }
-
-  const config = statusConfig[status] || statusConfig.unread
-
-  return <Badge className={config.className}>{config.label}</Badge>
+  const known = status in STATUS_LABELS ? status : "unread"
+  return <span data-slot="badge" data-status={known} className="status-chip">{STATUS_LABELS[known]}</span>
 }

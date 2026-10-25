@@ -1,0 +1,2 @@
+Migración · biblib-scratch · aplicado: 0015_reading_and_loans
+Head anterior: 0014_product_batch_o13 · head actual: 0015_reading_and_loans

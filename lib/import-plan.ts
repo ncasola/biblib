@@ -89,7 +89,7 @@ export interface ImportOperationResult {
 }
 
 /** Genera IDs nuevos estables para una misma vista previa (semilla aleatoria del servidor). */
-export type IdAllocator = (kind: "book" | "shelf" | "edition" | "work" | "tag" | "location" | "series" | "evidence", sourceId: string) => string
+export type IdAllocator = (kind: "book" | "shelf" | "edition" | "work" | "tag" | "location" | "series" | "evidence" | "reading_cycle" | "reading_entry" | "loan", sourceId: string) => string
 
 export interface BuildImportPlanInput {
   imported: LibraryData

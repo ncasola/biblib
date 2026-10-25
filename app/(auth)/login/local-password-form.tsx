@@ -41,9 +41,9 @@ export default function LocalPasswordForm({ redirectPath }: { redirectPath?: str
     <section
       aria-labelledby={`${ids}-title`}
       data-biblib-local-login="biblib-local-password-form"
-      className="mt-6 rounded-2xl border-2 border-dashed border-vintage-brown/50 bg-vintage-yellow/10 p-4"
+      className="mt-6 rounded-2xl border border-dashed border-control-border/70 bg-surface/60 p-4"
     >
-      <h2 id={`${ids}-title`} className="text-base font-semibold heading-vintage">
+      <h2 id={`${ids}-title`} className="heading-vintage text-lg">
         Acceso local de desarrollo
       </h2>
       <p className="mt-1 text-sm text-muted-foreground">
@@ -63,7 +63,7 @@ export default function LocalPasswordForm({ redirectPath }: { redirectPath?: str
             disabled={loading}
             aria-invalid={error ? true : undefined}
             aria-describedby={error ? `${ids}-error` : undefined}
-            className="border-2 border-border bg-background"
+            className="bg-input"
           />
         </div>
         <div className="space-y-2">
@@ -78,7 +78,7 @@ export default function LocalPasswordForm({ redirectPath }: { redirectPath?: str
             disabled={loading}
             aria-invalid={error ? true : undefined}
             aria-describedby={error ? `${ids}-error` : undefined}
-            className="border-2 border-border bg-background"
+            className="bg-input"
           />
         </div>
 
@@ -91,7 +91,9 @@ export default function LocalPasswordForm({ redirectPath }: { redirectPath?: str
         <Button
           type="submit"
           disabled={loading}
-          className="w-full rounded-xl bg-vintage-olive py-5 text-base font-semibold text-white hover:bg-vintage-olive/90 active:bg-vintage-olive/80"
+          variant="secondary"
+          size="lg"
+          className="w-full"
         >
           {loading ? (
             <>

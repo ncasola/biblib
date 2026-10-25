@@ -69,6 +69,7 @@ export const DELETION_SCOPE: readonly string[] = [
   "Tus libros: ejemplares, ediciones y obras, con su estado, estantería y comprobaciones.",
   "Tus estanterías, incluida la predeterminada, y tus vistas guardadas.",
   "Tus notas, valoraciones y etiquetas, tus ubicaciones físicas y series, y la revisión bibliográfica con sus evidencias.",
+  "Tu historial de lectura (lecturas, relecturas y sesiones) y tus préstamos, con los alias de quienes tienen tus libros.",
   "Tu foto de perfil propia, las fotos de tus ubicaciones y evidencias, y tus perfiles de importación CSV.",
   "Las portadas privadas que subiste o copiaste y sus imágenes.",
   "Las versiones anteriores de tu biblioteca, las importaciones y restauraciones en curso y sus trabajos.",
