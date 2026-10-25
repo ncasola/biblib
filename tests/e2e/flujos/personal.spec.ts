@@ -52,7 +52,8 @@ test("personal: OR/AND funciona en colección y búsqueda avanzada y sobrevive a
     for (const route of ["/books", "/books/search"]) {
       await page.goto(`${route}?shelf=${shelf}`)
       const filters = page.locator("#book-tag-filters")
-      // En móvil el mismo panel se abre desde Filtros.
+      // El panel aparece tras la primera carga del catálogo (isVisible no espera); en móvil se abre desde Filtros.
+      await expect(filters).toBeAttached()
       if (!await filters.isVisible()) await page.getByRole("button", { name: /Filtros/ }).click()
       await filters.getByRole("checkbox", { name: String(tags[0].name), exact: true }).check()
       await filters.getByRole("checkbox", { name: String(tags[1].name), exact: true }).check()
