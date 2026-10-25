@@ -39,7 +39,8 @@ test("contraste: colores compuestos, estados, componentes y foco en ambos temas"
       document.body.append(container)
       const base = color(getComputedStyle(container).backgroundColor)
       const measurements: { name: string; foreground: Color; background: Color; ratio: number; minimum: number }[] = []
-      const samples = [
+      // U-UX-01: chips de estado (.status-chip con data-status), navegación activa en píldora, enlaces y antetítulos de latón.
+      const samples: [string, string, string?][] = [
         ["texto / fondo", "bg-background text-foreground"],
         ["secundario / tarjeta 80 %", "bg-card/80 text-muted-foreground"],
         ["texto / tarjeta 80 %", "bg-card/80 text-card-foreground"],
@@ -56,17 +57,27 @@ test("contraste: colores compuestos, estados, componentes y foco en ambos temas"
         ["destructivo", "bg-destructive text-destructive-foreground"],
         ["destructivo hover", "bg-destructive/90 text-destructive-foreground"],
         ["selección de menú", "bg-accent text-accent-foreground"],
-        ["navegación activa", "bg-primary/10 text-primary"],
+        ["navegación activa", "bg-foreground text-background"],
+        ["navegación hover", "bg-accent text-accent-foreground"],
+        ["enlace / tarjeta", "bg-card text-link"],
+        ["enlace / fondo", "bg-background text-link"],
+        ["antetítulo de latón", "bg-background text-brass-text"],
+        ["latón / tarjeta", "bg-card text-brass-text"],
+        ["texto secundario cálido / tarjeta", "bg-card text-foreground-light"],
+        ["pestaña inactiva", "bg-muted text-foreground-light"],
+        ["menú desplegable", "bg-popover text-muted-foreground"],
         ["error", "bg-background text-destructive"],
         ["entrada y placeholder", "bg-surface text-muted-foreground"],
-        ["estado leído", "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"],
-        ["estado leyendo", "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"],
-        ["estado por leer", "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200"],
-        ["estado sin empezar", "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"],
+        ["estado leído", "status-chip", "read"],
+        ["estado leyendo", "status-chip", "reading"],
+        ["estado por leer", "status-chip", "to-read"],
+        ["estado sin empezar", "status-chip", "unread"],
+        ["estado prestado (O14)", "status-chip", "loaned"],
       ]
-      for (const [name, classes] of samples) {
+      for (const [name, classes, status] of samples) {
         const probe = document.createElement("span")
         probe.className = classes
+        if (status) probe.dataset.status = status
         probe.textContent = "Texto de muestra"
         container.append(probe)
         const style = getComputedStyle(probe)
