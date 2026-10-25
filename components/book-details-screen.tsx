@@ -14,6 +14,7 @@ import { BookStatusForm } from "@/components/book-status-form"
 import { BookStatusBadge } from "@/components/book-status-badge"
 import { CatalogueProvenanceDetails } from "@/components/catalogue-provenance-details"
 import { CopyLocationSection } from "@/components/copy-location-section"
+import { ReadingPanel } from "@/components/reading-panel"
 import { bookIdentifierLabel, EditionConflictPanel, EditionCopiesPanel } from "@/components/edition-copies"
 import { EditionSeriesPanel } from "@/components/edition-series-panel"
 import { updateEditionAction } from "@/app/actions/editions"
@@ -154,6 +155,7 @@ export function BookDetailsScreen({ bookId, returnPath }: BookDetailsScreenProps
               <div className="sm:col-span-2"><dt className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Procedencia y edición</dt><dd className="mt-1"><CatalogueProvenanceDetails book={book} /></dd></div>
             </dl>
             <section className="surface-card rounded-2xl p-5"><BookStatusForm currentStatus={book.status} onStatusChange={changeStatus} disabled={Boolean(pending)} /></section>
+            <ReadingPanel copyId={book.id} bookStatus={book.status} disabled={Boolean(pending)} />
             <section className="surface-card rounded-2xl p-5 space-y-3"><label htmlFor="book-shelf" className="text-sm font-semibold">Estantería</label><div className="flex flex-col sm:flex-row gap-3"><select id="book-shelf" value={targetShelf} disabled={Boolean(pending)} onChange={(event) => setTargetShelf(event.target.value)} className="min-w-0 flex-1 rounded-md border border-input bg-input px-3 py-2 text-foreground">{shelves.map((shelf) => <option key={shelf.id} value={shelf.id}>{shelf.title}{shelf.isDefault ? " (predeterminada)" : ""}</option>)}</select><Button type="button" disabled={Boolean(pending) || targetShelf === book.shelf_id} onClick={() => void changeShelf()}>{pending === "shelf" ? "Moviendo..." : "Mover libro"}</Button></div></section>
             <CopyLocationSection copyId={book.id} disabled={Boolean(pending)} />
             <EditionConflictPanel book={book} onMerged={async () => { const latest = await getBookDetailAction(book.id); if (latest) setBook(latest); setMessage("Ediciones unidas: este ejemplar usa ahora los datos de la otra edición.") }} />
