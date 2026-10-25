@@ -497,6 +497,7 @@ export const MANIFEST = Object.freeze({
     deletionFunction("account_deletion_step_tables", "text[]", 1, false, false),
     deletionFunction("account_deletion_step_remaining", "integer", 2),
     deletionFunction("account_deletion_lease", "jsonb", 2),
+    deletionFunction("account_deletion_renew", "boolean", 3),
     deletionFunction("account_deletion_claim", "jsonb", 2),
     deletionFunction("account_deletion_purge", "integer", 4),
     deletionFunction("account_deletion_objects", "jsonb", 2),

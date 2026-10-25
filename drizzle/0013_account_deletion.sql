@@ -304,6 +304,18 @@ BEGIN
 END;
 $$;
 --> statement-breakpoint
+-- Renueva el lease vigente del testigo (pasos largos, p. ej. muchos objetos de Storage). Falso si ya no lo tiene.
+CREATE FUNCTION "biblib"."account_deletion_renew"(p_owner uuid, p_token uuid, p_lease_ms integer) RETURNS boolean
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog AS $$
+DECLARE
+  now_at timestamptz := clock_timestamp();
+BEGIN
+  UPDATE biblib.account_deletions AS d SET lease_until = now_at + greatest(1000, least(coalesce(p_lease_ms, 60000), 600000)) * interval '1 millisecond', updated_at = now_at
+  WHERE d.user_id = p_owner AND d.state = 'running' AND d.lease_token = p_token AND d.lease_until > now_at;
+  RETURN FOUND;
+END;
+$$;
+--> statement-breakpoint
 -- Reclama una eliminación vencida (o la de `p_owner`): pendiente, a la espera de reintento o en ejecución con lease
 -- vencido. Cada reclamación recibe un testigo nuevo y un número de fencing mayor.
 CREATE FUNCTION "biblib"."account_deletion_claim"(p_owner uuid, p_lease_ms integer) RETURNS jsonb
@@ -538,7 +550,7 @@ REVOKE ALL ON FUNCTION "biblib"."account_write_allowed"(), "biblib"."account_del
 GRANT EXECUTE ON FUNCTION "biblib"."account_write_allowed"(), "biblib"."account_deletion_request"(text), "biblib"."account_deletion_status"() TO authenticated;
 --> statement-breakpoint
 REVOKE ALL ON FUNCTION "biblib"."account_deletion_step_tables"(text), "biblib"."account_deletion_step_remaining"(uuid, text), "biblib"."account_deletion_lease"(uuid, uuid),
-  "biblib"."account_deletion_claim"(uuid, integer), "biblib"."account_deletion_purge"(uuid, uuid, text, integer), "biblib"."account_deletion_objects"(uuid, integer),
+  "biblib"."account_deletion_renew"(uuid, uuid, integer), "biblib"."account_deletion_claim"(uuid, integer), "biblib"."account_deletion_purge"(uuid, uuid, text, integer), "biblib"."account_deletion_objects"(uuid, integer),
   "biblib"."account_residue"(uuid), "biblib"."account_deletion_advance"(uuid, uuid, text, jsonb, integer), "biblib"."account_deletion_fail"(uuid, uuid, text, integer, integer),
   "biblib"."account_deletion_complete"(uuid, uuid, integer), "biblib"."account_deletion_retry"(uuid), "biblib"."account_deletion_suppress"(uuid, timestamptz, integer),
   "biblib"."account_deletion_purge_marks"(integer) FROM PUBLIC, anon, authenticated;
