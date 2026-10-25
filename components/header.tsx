@@ -18,6 +18,7 @@ const navigation = [
   { href: "/", label: "Inicio" },
   { href: "/books", label: "Libros" },
   { href: "/shelves", label: "Estanterías" },
+  { href: "/locations", label: "Ubicaciones" },
   { href: "/settings", label: "Ajustes" },
 ]
 
