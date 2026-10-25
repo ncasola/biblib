@@ -11,6 +11,7 @@ import { BiblibError, EXIT } from "../lib/exit-codes.mjs"
 import { sanitize } from "../lib/process.mjs"
 import { REPO_ROOT } from "../lib/profiles.mjs"
 import { acquireLock, readState, writeState } from "../lib/state.mjs"
+import { applySuppressions, mergeSuppressions, readMarks, readSuppressions, readSuppressionsFile } from "../lib/suppressions.mjs"
 import { registeredDatabase } from "./backup-local.mjs"
 import { readFixtureStore, writeFixtureStore } from "./fixture-store.mjs"
 import { loadJournal } from "./journal-guard.mjs"
@@ -20,12 +21,13 @@ import { ASSET, BUCKET, loadCensus, resolveSeedTarget } from "./seed-local.mjs"
 import { closeConnection, connect, connectionError } from "./target.mjs"
 
 const fail = (code, message, phase = "restore") => { throw new BiblibError(code, phase, message) }
-const PHASES = ["preflight", "clear", "auth", "domain", "storage", "rotate", "fixtures"]
+// `suppress` (U-OPS-03) aplica las supresiones de cuentas antes de abrir el destino.
+const PHASES = ["preflight", "clear", "auth", "domain", "storage", "rotate", "suppress", "fixtures"]
 const clientOptions = { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } }
 
 export function parseRestoreArgs(argv) {
   const parsed = { json: false }
-  const values = { "--backup": "backup", "--profile": "profile", "--expect-project": "expectProject", "--key-file": "keyFile" }
+  const values = { "--backup": "backup", "--profile": "profile", "--expect-project": "expectProject", "--key-file": "keyFile", "--suppressions": "suppressions" }
   const seen = new Set()
   for (let i = 0; i < argv.length; i++) {
     const flag = argv[i]
@@ -35,7 +37,7 @@ export function parseRestoreArgs(argv) {
     else if (values[flag] && argv[i + 1] && !argv[i + 1].startsWith("--")) parsed[values[flag]] = argv[++i]
     else fail(EXIT.INVALID_ARGS, "Restore no admite URLs, --linked, --db-url ni flags reenviados.", "argumentos")
   }
-  if (!parsed.backup || !parsed.expectProject || !["main", "test", "scratch"].includes(parsed.profile)) fail(EXIT.INVALID_ARGS, "Uso: db:restore:local --backup <carpeta> --profile main|test|scratch --expect-project <id> [--key-file <ruta>] [--json].", "argumentos")
+  if (!parsed.backup || !parsed.expectProject || !["main", "test", "scratch"].includes(parsed.profile)) fail(EXIT.INVALID_ARGS, "Uso: db:restore:local --backup <carpeta> --profile main|test|scratch --expect-project <id> [--key-file <ruta>] [--suppressions <registro.json>] [--json].", "argumentos")
   return parsed
 }
 
@@ -268,6 +270,9 @@ export async function runRestore(options, deps = {}) {
   const resolved = await (deps.resolveTarget ?? resolveSeedTarget)(options.profile, { root })
   if (options.expectProject !== resolved.project) fail(EXIT.IDENTITY_MISMATCH, "--expect-project no coincide con el proyecto del perfil destino; no se ha modificado nada.", "identidad")
   const { stack } = resolved
+  // Supresiones conocidas fuera de la base: el registro del perfil y, si se indica, el de otro entorno. Un registro
+  // ilegible detiene el restore antes de tocar el destino.
+  const suppressions = [...readSuppressions(stack), ...(options.suppressions ? readSuppressionsFile(path.resolve(root, options.suppressions)) : [])]
   const state = readState(stack)
   const all = await (deps.inventory ?? inventory)(stack)
   assertResetIdentity(stack, state, all, resolved.target)
@@ -321,13 +326,20 @@ export async function runRestore(options, deps = {}) {
     if (rotation.staleWriteRejected === false) fail(EXIT.VERIFICATION_FAILED, "Una escritura condicional con una versión del respaldo siguió aplicando tras la rotación.", "rotate")
     save("rotate", "passed", rotation)
 
+    // Antes de abrir el destino: ninguna cuenta suprimida vuelve con el respaldo (U-OPS-03).
+    save("suppress", "running")
+    const suppression = await applySuppressions({ sql, admin, entries: suppressions, manifest })
+    mergeSuppressions(stack, await readMarks(sql))
+    save("suppress", "passed", suppression)
+
     save("fixtures", "running")
     save("fixtures", "passed", await rebindFixtures(admin, sql, resolved, census, manifest.backupId))
     receipt.status = "passed"
     receipt.finishedAt = new Date().toISOString()
     receipt.durationMs = Date.parse(receipt.finishedAt) - startedAt.getTime()
     writeState(stack, receipt, "-restore")
-    return { schemaVersion: 1, code: EXIT.OK, runId, backupId: manifest.backupId, profile: options.profile, project: resolved.project, head: manifest.migrations.head, pendingAfterRestore: migrations.pending, rotation, durationMs: receipt.durationMs,
+    return { schemaVersion: 1, code: EXIT.OK, runId, backupId: manifest.backupId, profile: options.profile, project: resolved.project, head: manifest.migrations.head, pendingAfterRestore: migrations.pending, rotation,
+      suppression: { accounts: suppression.accounts, marks: suppression.marks, objects: suppression.objects }, durationMs: receipt.durationMs,
       next: `pnpm db:restore:verify --backup ${options.backup} --profile ${options.profile}` }
   } catch (error) {
     if (receipt) { receipt.status = options.signal?.aborted ? "interrupted" : "failed"; save(receipt.phase, receipt.status) }
@@ -352,6 +364,7 @@ export async function main(argv = process.argv.slice(2)) {
     if (json) console.log(JSON.stringify(result))
     else {
       console.log(`Restore ${result.backupId} → ${result.profile} (${result.project}) completado en ${Math.round(result.durationMs / 1000)} s; tokens rotados: ${result.rotation.rotated.map((r) => `${r.token} (${r.rows})`).join(", ") || "ninguno"}.`)
+      console.log(`Supresiones aplicadas antes de abrir: ${result.suppression.accounts} cuenta(s) del respaldo eliminadas, ${result.suppression.objects} objeto(s) retirados, ${result.suppression.marks} marca(s).`)
       if (result.pendingAfterRestore.length) console.log(`Migraciones pendientes tras restaurar: ${result.pendingAfterRestore.join(", ")} (usa db:plan:local y db:migrate:local).`)
       console.log(`Siguiente paso: ${result.next}`)
     }
