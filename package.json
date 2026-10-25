@@ -84,7 +84,8 @@
     "media:purge:local": "node scripts/jobs/purge-media-assets.mjs",
     "test:integration:media": "node tests/integration/media/run.mjs",
     "test:integration:personal": "node tests/integration/personal/run.mjs",
-    "test:integration:csv": "node tests/integration/csv/run.mjs"
+    "test:integration:csv": "node tests/integration/csv/run.mjs",
+    "test:integration:locations": "node tests/integration/locations/run.mjs"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "1.1.15",

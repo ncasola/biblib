@@ -15,10 +15,12 @@ export function loadActions(root) {
   catch { throw new BiblibError(EXIT.MISSING_REQUIREMENT, "app", "Falta el manifiesto de acciones del build local; ejecuta la suite con pnpm test:integration:local.") }
   const actions = new Map()
   for (const [id, entry] of Object.entries(manifest)) {
-    const page = Object.keys(entry.workers).find((worker) => worker.endsWith("/page"))
+    // Se prefiere una página fuera de grupos de rutas y de _not-found; un grupo `(…)` no forma parte de la URL.
+    const pages = Object.keys(entry.workers).filter((worker) => worker.endsWith("/page"))
+    const page = pages.find((worker) => !/\/\(|\/_not-found\//.test(worker)) ?? pages[0]
     if (!entry.exportedName || !page) continue
     // La acción se envía a una página que la incluye; los segmentos dinámicos reciben un UUID inocuo.
-    const route = page.replace(/^app/, "").replace(/\/page$/, "").replace(/\[[^\]]+\]/g, PLACEHOLDER_ID) || "/"
+    const route = page.replace(/^app/, "").replace(/\/page$/, "").replace(/\/\([^)]+\)/g, "").replace(/\[[^\]]+\]/g, PLACEHOLDER_ID) || "/"
     actions.set(entry.exportedName, { id, route })
   }
   return actions

@@ -12,6 +12,7 @@ import { BookCoverAssets } from "@/components/book-cover-assets"
 import { displayCover } from "@/lib/book-covers"
 import { BookStatusForm } from "@/components/book-status-form"
 import { CatalogueProvenanceDetails } from "@/components/catalogue-provenance-details"
+import { CopyLocationSection } from "@/components/copy-location-section"
 import { bookIdentifierLabel, EditionConflictPanel, EditionCopiesPanel } from "@/components/edition-copies"
 import { EditionSeriesPanel } from "@/components/edition-series-panel"
 import { updateEditionAction } from "@/app/actions/editions"
@@ -153,6 +154,7 @@ export function BookDetailsScreen({ bookId, returnPath }: BookDetailsScreenProps
             </dl>
             <section className="rounded-2xl border border-border bg-card/80 p-5 shadow-lg"><BookStatusForm currentStatus={book.status} onStatusChange={changeStatus} disabled={Boolean(pending)} /></section>
             <section className="rounded-2xl border border-border bg-card/80 p-5 shadow-lg space-y-3"><label htmlFor="book-shelf" className="text-sm font-semibold">Estantería</label><div className="flex flex-col sm:flex-row gap-3"><select id="book-shelf" value={targetShelf} disabled={Boolean(pending)} onChange={(event) => setTargetShelf(event.target.value)} className="min-w-0 flex-1 rounded-lg border border-input bg-background p-2 text-foreground">{shelves.map((shelf) => <option key={shelf.id} value={shelf.id}>{shelf.title}{shelf.isDefault ? " (predeterminada)" : ""}</option>)}</select><Button type="button" disabled={Boolean(pending) || targetShelf === book.shelf_id} onClick={() => void changeShelf()}>{pending === "shelf" ? "Moviendo..." : "Mover libro"}</Button></div></section>
+            <CopyLocationSection copyId={book.id} disabled={Boolean(pending)} />
             <EditionConflictPanel book={book} onMerged={async () => { const latest = await getBookDetailAction(book.id); if (latest) setBook(latest); setMessage("Ediciones unidas: este ejemplar usa ahora los datos de la otra edición.") }} />
             <EditionCopiesPanel key={book.copyVersion} book={book} shelves={shelves} />
             {book.edition && <EditionSeriesPanel key={book.edition.id} editionId={book.edition.id} />}

@@ -1,0 +1,13 @@
+lint exit=0 16s
+typecheck exit=0 4s
+test exit=0 14s
+test:scripts exit=1 80s
+test:db exit=0 15s
+build exit=0 22s
+test:smoke exit=0 60s
+test:scripts (repetición) exit=0
+test:integration:locations --profile test exit=0
+test:integration:product --profile test --reuse-build exit=0
+test:integration:security --profile test --reuse-build exit=0
+test:e2e:local (chromium completo) exit=0
+db:local:down --profile test exit=0

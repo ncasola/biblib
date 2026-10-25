@@ -1594,3 +1594,41 @@ Al fusionar, «Omitir existente» conserva los libros actuales y enumera las rep
 Las filas `record` son inmutables, con códigos/campos de incidencia sin muestras. Las muestras se derivan para su dueño desde los bytes privados y están acotadas; la interfaz muestra las primeras 100 incidencias y el informe incluye todas. Los archivos publicados se conservan en staging hasta su caducidad para recuperar el informe; al abrir otra sesión se purgan las caducadas de esa misma cuenta. El respaldo y la eliminación de cuenta ya incluyen staging y perfiles por 0014. Retirar la interfaz CSV no borra los ejemplares importados ni impide sus exportaciones JSON.
 
 Validación: `pnpm test` (parser, normalización, contrato y planes), `pnpm test:scripts` (runner), `pnpm test:integration:csv --profile scratch|test [--reuse-build]` (7 escenarios con GoTrue y acciones HTTP reales, también en `test:integration:local`) y `tests/e2e/flujos/csv.spec.ts` (3 recorridos). El perfil solo se usa desde su checkout autorizado. Evidencia y resultados ejecutados en [O13/dat-09](validacion/2026-10-25/O13/dat-09/informe.md).
+
+## Ubicación física y fotos de referencia · U-PRO-03 (O13)
+
+`/locations` organiza dónde están los libros en casa: un árbol propio de la cuenta (habitación, estantería, armario, caja, balda u otra) de hasta 8 niveles y 500 ubicaciones. Es un **complemento** de la estantería lógica: ninguna acción de ubicaciones toca `copies.shelf_id`, el estado de lectura ni la versión de la ficha. Contrato de datos: [contratos-o13 → U-PRO-03](spec-pendientes/contratos-o13.md#u-pro-03--ubicación-física) (tablas `locations` y `copy_locations` de 0014; esta unidad no añade schema).
+
+### Acciones (`app/actions/locations.ts`, todas `ActionResult`)
+
+| Acción | Qué hace |
+| --- | --- |
+| `getLocationsAction()` | Todas las ubicaciones, también las vacías, con sus ejemplares e hijas directos. |
+| `createLocationAction` / `updateLocationAction` / `moveLocationAction` | Crear (en la raíz o dentro de otra), renombrar o cambiar el tipo, y mover con todo su contenido. Renombrar y mover exigen la versión vista (`CONFLICT` si cambió). Un ciclo (**BL001**) o más de 8 niveles contando el subárbol (**BL002**) llegan como `INVALID_INPUT` con un mensaje claro; el límite de 500 (**BP001**), como `LIMIT_EXCEEDED`. |
+| `deleteLocationAction({ id, expectedVersion, contents })` | Vacía, se borra. Ocupada, `CONFLICT` salvo con la elección explícita `contents: "move-to-parent"`: sus ubicaciones pasan a la que la contiene y sus ejemplares también, con su hueco y posición; si estaba en la raíz, las ubicaciones pasan a la raíz y los ejemplares quedan sin ubicación. Nunca se borra un libro. |
+| `getLocationContentsAction` | Ejemplares de una ubicación (y, si se pide, de las interiores), filtrados por título/autor y estado, ordenados por hueco y posición, de 50 en 50. |
+| `getCopyLocationAction` / `setCopyLocationAction` / `clearCopyLocationAction` | Ubicación actual del ejemplar con su ruta legible; asignarla (`expectedVersion: null`) o moverla con la versión de `copy_locations`; quitarla. `shelf_label` (1–60) y posición manual (1–100000) opcionales: compartir posición se avisa (`samePosition`) y **nadie se renumera**. |
+| `uploadLocationPhotoAction(FormData)` / `removeLocationPhotoAction` | Foto general del mueble (opcional, nunca por libro). Ver abajo. |
+
+La ficha (`/book/[id]`) muestra la sección **Ubicación física** (`components/copy-location-section.tsx`), fuera de `BookForm`; sin ubicaciones la ficha funciona igual. Desde ella, «Ver ubicaciones» abre `/locations?ubicacion=<id>`.
+
+### Fotos privadas
+
+- Usa el flujo de imágenes privadas de U-EXP-06 (`lib/media/server.ts`): `beginUpload("location")` → `upload` (normaliza y sube con la sesión del dueño) → `register` → cita en `locations.photo_asset_id`; `discard` si algo falla o al soltar la anterior.
+- El servidor valida firma, marcado y políglotas, decodifica con `sharp` (`normalizeMediaImage`: hasta 5 MiB y 4096 px por lado) y **reencodifica a WebP sin EXIF, GPS, XMP ni ICC**. Solo esos bytes llegan al bucket privado `biblib-media` (`<dueño>/location/<asset>`).
+- La foto anterior solo se suelta cuando la nueva está registrada y citada con la versión vista; si algo falla, se descarta la nueva y la anterior sigue. La sustituida o la de una ubicación borrada se descarta y su objeto se retira con la sesión del dueño, **salvo que la cite una versión anterior** de la biblioteca: entonces se conserva para poder restaurarla.
+- Lectura: la ruta autenticada común `GET /api/media/<asset>` de U-EXP-06 (sesión, asset propio y listo, `private, no-store`, `CSP sandbox`). Ajena, inexistente o ya descartada: 404; sin sesión: 401. Nunca hay URL pública ni viaja a Open Library u otro proveedor.
+- **Purga:** un objeto que no se pudo retirar con la sesión del dueño, o una foto sustituida que solo citaba una versión anterior, la recoge `pnpm media:purge:local` (U-EXP-06) cuando ya nada la cita.
+
+### Formatos y eliminación
+
+Exportación v2 (`copies.locations`), versiones anteriores, respaldo, restauración y eliminación de cuenta ya las cubría el lote D (0014): esta unidad no las amplía. Un archivo v1 o una v2 sin la sección se importa con la ubicación vacía.
+
+### Pruebas
+
+- `pnpm test`: `tests/locations.test.ts` (entradas, árbol, ruta legible, destinos de un movimiento y foto reencodificada sin EXIF ni GPS comprobada en los bytes).
+- `pnpm test:scripts`: `tests/scripts/locations-runner.test.mjs` (argumentos y registro del grupo).
+- `pnpm test:integration:locations --profile scratch|test [--reuse-build]`: grupo `tests/integration/locations` con cuentas desechables y la app compilada (árbol, ciclos y niveles, borrar ocupada, asignar y mover, usuario cruzado, foto inválida, EXIF eliminado en los bytes guardados, sustitución, ida y vuelta v2, JSON antiguo y cuenta en eliminación). También corre en `pnpm test:integration:local`.
+- E2E: `tests/e2e/flujos/ubicaciones.spec.ts` (`pnpm test:e2e:local --grep "ubicaciones:"`).
+
+Evidencia: [O13/pro-03](validacion/2026-10-25/O13/pro-03/informe.md).
