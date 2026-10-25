@@ -172,7 +172,8 @@ export async function setCsvMapping(owner: string, input: SetCsvMappingInput): P
     if (session.version !== input.expectedVersion || input.mappingVersion !== (session.csvMappingVersion ?? 0) + 1) throw changed()
     const [{ size }] = await tx.execute<{ size: number }>(sql`select octet_length(${canonicalJson(input.mapping)}::jsonb::text) as size`)
     if (size > CSV_LIMITS.mappingBytes) throw new DomainError("LIMIT_EXCEEDED", "El mapeo supera el límite de 16 KiB.")
-    if (session.previewId) await tx.update(importPreviews).set({ expiresAt: sql`now()` }).where(and(eq(importPreviews.id, session.previewId), eq(importPreviews.userId, owner)))
+    // La vista previa anterior no se modifica (authenticated no tiene UPDATE en import_previews): al soltar
+    // previewId y cambiar el hash de la sesión, confirmarla da PREVIEW_EXPIRED en import-publisher.
     const [stored] = await tx.update(importSessions).set({ state: "receiving", csvMapping: input.mapping, csvMappingVersion: input.mappingVersion, mappingSha256: mappingHash,
       previewId: null, previewRevision: null, previewExpiresAt: null, plan: null, version: randomUUID(), updatedAt: sql`now()` }).where(eq(importSessions.id, session.id)).returning()
     await writeRecords(tx, owner, stored, source.parsed.complete ? source.parsed : { ...source.parsed, records: [] }, source.normalized)
@@ -201,11 +202,11 @@ export async function prepareCsv(owner: string, input: PrepareCsvImportInput): P
     const current = await loadCsvSession(tx, owner, session.id, true)
     editable(current)
     if (current.version !== session.version || current.mappingSha256 !== session.mappingSha256) throw changed()
-    // Una revisión idéntica se recupera, incluso tras perder la respuesta. Otra elección invalida la anterior.
+    // Una revisión idéntica se recupera, incluso tras perder la respuesta. Otra elección invalida la anterior:
+    // la sesión pasa a apuntar a la nueva y confirmar la antigua da PREVIEW_EXPIRED (sin UPDATE en import_previews).
     if (current.previewId) {
       const [previous] = await tx.select().from(importPreviews).where(and(eq(importPreviews.id, current.previewId), eq(importPreviews.userId, owner), sql`${importPreviews.expiresAt} > now()`))
       if (previous?.inputDigest === digest && previous.revision === revision) return { ...binding, version: current.version, previewId: previous.id, revision, digest, expiresAt: previous.expiresAt.toISOString(), plan: previous.plan, issues: normalized.issues.slice(0, 200), issueCount: normalized.issues.length }
-      await tx.update(importPreviews).set({ expiresAt: sql`now()` }).where(eq(importPreviews.id, current.previewId))
     }
     // Mismo cupo y retención de vistas previas que JSON, bajo el bloqueo de colección compartido.
     await tx.delete(importPreviews).where(and(eq(importPreviews.userId, owner), sql`${importPreviews.expiresAt} < now() - interval '1 day'`))
