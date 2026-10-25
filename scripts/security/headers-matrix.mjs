@@ -40,7 +40,7 @@ export const RESPONSE_TYPES = Object.freeze({
   "estatico-public": { status: [200], cache: ["public, max-age=0"], csp: "any", varyCookie: false, noCookies: true },
 })
 
-const PROTECTED = ["/", "/books", "/books/add", "/books/search", "/book/:libroA", "/shelves", "/shelves/3d", "/settings", "/profile"]
+const PROTECTED = ["/", "/books", "/books/add", "/books/search", "/book/:libroA", "/shelves", "/shelves/3d", "/locations", "/settings", "/profile"]
 
 /**
  * Inventario de peticiones. `as`: anon o a (sesión real de A). `location`: destino exacto esperado;
@@ -65,6 +65,7 @@ export const REQUESTS = Object.freeze([
   { route: "/api/internal/jobs/run", as: "anon", method: "POST", type: "api" },
   { route: "/api/library/export?part=0", as: "anon", type: "api" },
   { route: "/api/covers/:libroA", as: "anon", type: "api" },
+  { route: "/api/locations/:libroA/photo", as: "anon", type: "api" },
   { route: "/logo.png", as: "anon", type: "estatico-public" },
   { route: "/default-book-cover.webp", as: "anon", type: "estatico-public" },
   { route: "/manifest.webmanifest", as: "anon", type: "estatico-public" },
