@@ -74,18 +74,20 @@ export interface InspectedCsv {
   recordCount: number | null
   inputHash: string
   issues: CsvIssue[]
+  issueCount: number
   mapping: CsvMapping | null
   mappingVersion: number | null
 }
 export interface SetCsvMappingInput { sessionId: string; expectedVersion: string; mapping: CsvMapping; mappingVersion: number }
 export interface CsvMappingReceipt {
-  sessionId: string; version: string; mappingHash: string; mappingVersion: number; issues: CsvIssue[]; validRows: number; totalRows: number
+  sessionId: string; version: string; mappingHash: string; mappingVersion: number; issues: CsvIssue[]; issueCount: number; validRows: number; totalRows: number
 }
 export type CsvDuplicatePolicy = "skip-existing" | "another-copy"
 export interface PrepareCsvImportInput { sessionId: string; mode: ImportMode; duplicatePolicy: CsvDuplicatePolicy; invalidRows?: "block" | "skip-invalid" }
 export interface CsvImportPreview {
+  version: string
   sessionId: string; previewId: string; revision: string; digest: string; expiresAt: string; inputHash: string; mappingHash: string
-  plan: ImportPlan; issues: CsvIssue[]
+  plan: ImportPlan; issues: CsvIssue[]; issueCount: number
   omittedRows: { sourceRowKey: string; ordinal: number; codes: CsvIssue["code"][] }[]
 }
 export interface CsvImportActions {

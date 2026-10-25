@@ -6,7 +6,7 @@ export type CsvIssueCode =
   | "DUPLICATE_HEADER" | "TOO_MANY_COLUMNS" | "TOO_MANY_RECORDS" | "UNEXPECTED_QUOTE"
   | "TRUNCATED_RECORD" | "COLUMN_COUNT" | "INVALID_MAPPING" | "REQUIRED_TITLE"
   | "FIELD_LIMIT" | "INVALID_PAGES" | "UNKNOWN_STATUS" | "INVALID_ISBN" | "EDITION_CONFLICT"
-  | "CANONICAL_LIMIT"
+  | "CANONICAL_LIMIT" | "EXISTING_COPY" | "INVALID_CHARACTER"
 
 export interface CsvIssue {
   code: CsvIssueCode
@@ -80,6 +80,7 @@ export function parseCsv(input: string | Uint8Array, delimiter: CsvDelimiter): P
       break
     }
     touched = true
+    if (char === "\0") problem("INVALID_CHARACTER", "La celda contiene un carácter nulo que no se puede guardar. Corrígelo antes de importar.")
     if (state === "quoted") {
       if (char === '"') {
         if (source[offset + 1] === '"') { cell += '"'; offset++ }
@@ -112,6 +113,7 @@ export function parseCsv(input: string | Uint8Array, delimiter: CsvDelimiter): P
   }
   const seen = new Set<string>()
   for (const [column, header] of result.headers.entries()) {
+    if (header.length > 500) result.issues.push(csvIssue("FIELD_LIMIT", 0, String(column), header, "La cabecera admite hasta 500 caracteres."))
     if (!header) result.issues.push(csvIssue("EMPTY_HEADER", 0, String(column), header, "La columna necesita una cabecera."))
     const key = header.normalize("NFC").toLocaleLowerCase("es")
     if (seen.has(key)) result.issues.push(csvIssue("DUPLICATE_HEADER", 0, String(column), header, "Hay una cabecera duplicada; corrígela antes de importar."))

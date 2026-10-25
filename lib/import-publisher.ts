@@ -1,7 +1,7 @@
 import { createHash, randomUUID } from "node:crypto"
 import { and, asc, eq, sql } from "drizzle-orm"
 import type { DatabaseTransaction } from "./db/client"
-import { books, importPreviews, libraryOperations, librarySnapshots, shelves } from "./db/schema"
+import { books, importPreviews, importSessions, libraryOperations, librarySnapshots, shelves } from "./db/schema"
 import { deleteAllCopies, insertPlannedCopies } from "./db/model"
 import { applyProductData, deleteAccountProduct, readProductTargets } from "./db/product"
 import { DomainError, idempotencyConflict, previewExpired, revisionConflict } from "./domain-errors"
@@ -126,12 +126,19 @@ export async function publishImport(tx: DatabaseTransaction, request: PublishReq
 
   // Se vuelve a validar la entrada almacenada y a derivar el plan: con la misma revisión debe coincidir.
   const stored = preview!.preview
+  const csv = stored.plan.csv
+  if (csv) {
+    const [session] = await tx.select().from(importSessions).where(and(eq(importSessions.id, csv.sessionId), eq(importSessions.userId, userId),
+      eq(importSessions.source, "csv"), eq(importSessions.state, "prepared"), eq(importSessions.previewId, stored.id), sql`${importSessions.expiresAt} > now()`)).limit(1).for("update")
+    if (!session || session.mappingSha256 !== csv.mappingHash || session.csvMappingVersion !== csv.mappingVersion || session.inputSha256 !== csv.inputHash) throw previewExpired()
+  }
   // Una vista previa de restauración solo se confirma con restoreSnapshotAction.
   if (stored.snapshotId || !stored.payload) throw new DomainError("NOT_FOUND", "La revisión de la importación no está disponible. Prepárala de nuevo.")
   let payload: LibraryData
   try { payload = parseLibraryImport(stored.payload) } catch { throw previewExpired() }
-  const plan = buildImportPlan({ imported: payload, current: await readCollectionSnapshot(tx, userId), mode: stored.mode, allocateId: previewAllocator(stored.id),
+  const plan = buildImportPlan({ imported: payload, current: await readCollectionSnapshot(tx, userId), mode: stored.mode, allocateId: previewAllocator(csv?.sessionId ?? stored.id), duplicatePolicy: stored.plan.duplicatePolicy,
     covers: { found: stored.plan.counts.coversFound, pending: stored.plan.counts.coversPending } })
+  if (csv) plan.csv = csv
   if (canonicalJson(plan) !== canonicalJson(stored.plan)) throw revisionConflict()
   const result = operationResult(plan)
   // La operación se registra antes de escribir para que la versión anterior la cite en esta misma transacción.
@@ -145,6 +152,7 @@ export async function publishImport(tx: DatabaseTransaction, request: PublishReq
     await hooks.afterCapture?.(snapshotId)
   }
   await applyPlan(tx, userId, payload, plan, previewAllocator(stored.id))
+  if (csv) await tx.update(importSessions).set({ state: "committed", operationId, version: randomUUID(), updatedAt: sql`now()` }).where(and(eq(importSessions.id, csv.sessionId), eq(importSessions.userId, userId)))
   return { operationId, result, replayed: false, insertedBookIds: plan.books.insert.map((entry) => entry.id), snapshotId }
 }
 

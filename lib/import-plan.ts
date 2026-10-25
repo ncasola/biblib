@@ -53,6 +53,12 @@ export interface ImportPlanCounts {
 export interface ImportPlan {
   rulesVersion: number
   mode: ImportMode
+  /** Solo cuando la persona elige añadir copias; JSON conserva su política anterior por defecto. */
+  duplicatePolicy?: "another-copy"
+  csv?: {
+    sessionId: string; inputHash: string; mappingHash: string; mappingVersion: number
+    omittedRows: { sourceRowKey: string; ordinal: number; codes: string[] }[]
+  }
   counts: ImportPlanCounts
   shelves: {
     create: { sourceId: string; id: string; title: string }[]
@@ -91,6 +97,7 @@ export interface BuildImportPlanInput {
   mode: ImportMode
   allocateId: IdAllocator
   covers?: { found: number; pending: number }
+  duplicatePolicy?: "skip-existing" | "another-copy"
 }
 
 const titleKey = (title: string) => title.toLocaleLowerCase("es")
@@ -154,7 +161,7 @@ export function planEditions(rows: ReadonlyMap<string, Book>, insert: { sourceId
   return { editions, works, editionOf: (sourceId: string) => editionFor.get(editionKey(rows.get(sourceId)!))! }
 }
 
-export function buildImportPlan({ imported, current, mode, allocateId, covers = { found: 0, pending: 0 } }: BuildImportPlanInput): ImportPlan {
+export function buildImportPlan({ imported, current, mode, allocateId, covers = { found: 0, pending: 0 }, duplicatePolicy = "skip-existing" }: BuildImportPlanInput): ImportPlan {
   const defaultShelf = current.shelves.find((shelf) => shelf.isDefault)
   if (!defaultShelf) throw new Error("La colección actual no tiene estantería predeterminada.")
   // Varios ejemplares actuales pueden compartir identificador (una edición con varias copias).
@@ -199,9 +206,9 @@ export function buildImportPlan({ imported, current, mode, allocateId, covers = 
     // Un ejemplar sin ISBN ni identificador (U-DAT-06) solo se reconoce por su ID propio de esta cuenta.
     const own = previousById.get(book.id)
     const sameCopy = Boolean(own) && (identity === null ? !own!.isbn?.trim() : candidates.includes(book.id))
-    if (mode === "merge" && (candidates.length || sameCopy)) { skip.push({ sourceId: book.id, existingId: sameCopy ? book.id : candidates[0] }); continue }
+    if (mode === "merge" && (candidates.length || sameCopy) && (duplicatePolicy === "skip-existing" || sameCopy)) { skip.push({ sourceId: book.id, existingId: sameCopy ? book.id : candidates[0] }); continue }
     // Al reemplazar, el mismo ejemplar conserva su ID; si no, el siguiente libre con ese identificador.
-    const previous = sameCopy && !matched.has(book.id) ? book.id : candidates.find((id) => !matched.has(id))
+    const previous = mode === "merge" ? undefined : sameCopy && !matched.has(book.id) ? book.id : candidates.find((id) => !matched.has(id))
     const id = previous ?? allocateId("book", book.id)
     if (previous) matched.add(previous)
     if (id !== book.id) reassigned.push({ kind: "book", sourceId: book.id, id })
@@ -224,12 +231,28 @@ export function buildImportPlan({ imported, current, mode, allocateId, covers = 
     keepWork: (key) => mode === "replace" && currentWorks.has(key) ? key : null,
   })
 
+  const reuseEditions = new Map<string, string>()
+  if (mode === "merge" && duplicatePolicy === "another-copy") {
+    for (const book of imported.books) {
+      if (!book.isbn) continue
+      const existingId = previousByIdentifier.get(copyIdentity(book)!)?.[0]
+      if (!existingId) continue
+      const editionId = previousById.get(existingId)?.editionId
+      if (!editionId) throw new Error("La edición existente no está disponible para añadir una copia.")
+      reuseEditions.set(editionKey(book), editionId)
+    }
+    plannedEditions.editions = plannedEditions.editions.filter((entry) => !reuseEditions.has(entry.key))
+    const neededWorks = new Set(plannedEditions.editions.map((entry) => entry.workId))
+    plannedEditions.works = plannedEditions.works.filter((entry) => neededWorks.has(entry.id))
+  }
+
   const deletedBooks = mode === "replace" ? current.books.filter((book) => !matched.has(book.id)).map((book) => book.id) : []
   const deletedShelves = mode === "replace" ? [...previousCustom.keys()].filter((id) => !reused.has(id)) : []
   const shelvesAfter = mode === "replace" ? 1 + create.length : current.shelves.length + create.length
   return {
     rulesVersion: IMPORT_RULES_VERSION,
     mode,
+    ...(duplicatePolicy === "another-copy" ? { duplicatePolicy } : {}),
     counts: {
       added: insert.length - matched.size,
       kept: mode === "merge" ? current.books.length : matched.size,
@@ -247,7 +270,7 @@ export function buildImportPlan({ imported, current, mode, allocateId, covers = 
       coversPending: covers.pending,
     },
     shelves: { create, map, delete: deletedShelves },
-    books: { insert: insert.map((entry) => ({ ...entry, editionId: plannedEditions.editionOf(entry.sourceId) })), skip, delete: deletedBooks },
+    books: { insert: insert.map((entry) => ({ ...entry, editionId: reuseEditions.get(editionKey(rows.get(entry.sourceId)!)) ?? plannedEditions.editionOf(entry.sourceId) })), skip, delete: deletedBooks },
     editions: { create: plannedEditions.editions },
     works: { create: plannedEditions.works },
     reassigned,

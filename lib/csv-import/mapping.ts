@@ -2,6 +2,7 @@ import { z } from "zod"
 import { canonicalJson } from "../import-plan"
 import { csvIssue, type CsvDelimiter, type CsvIssue } from "./parser"
 import type { Book } from "../types"
+import type { CsvMapping as StoredCsvMapping } from "./contracts"
 
 export const CSV_MAPPING_VERSION = 1
 export const CSV_TARGETS = ["title", "authors", "isbn", "publishers", "pages", "publishDate", "status", "shelf", "ignore"] as const
@@ -72,4 +73,30 @@ export async function csvSha256(value: string | Uint8Array): Promise<string> {
 
 export async function csvMappingHash(mapping: CsvMapping, delimiter: CsvDelimiter): Promise<string> {
   return csvSha256(canonicalJson({ mappingVersion: CSV_MAPPING_VERSION, delimiter, mapping: { ...mapping, columns: [...mapping.columns].sort((a, b) => a.sourceColumn - b.sourceColumn) } }))
+}
+
+/** Shape persistente de 0014; el parser puro conserva su representación por índices. */
+export const storedCsvMappingSchema = z.object({
+  delimiter: z.enum([",", ";", "\t"]), header: z.literal(true),
+  columns: z.array(z.object({ sourceColumn: z.string().min(1).max(500), target: z.enum(CSV_TARGETS), separator: z.string().min(1).max(10).optional() }).strict()).min(1).max(256),
+  statusMap: z.record(z.string().min(1).max(200), z.enum(["read", "reading", "unread", "to-read"])).optional(),
+  defaultStatus: z.enum(["read", "reading", "unread", "to-read"]).optional(),
+  defaultShelf: z.string().trim().min(1).max(120).optional(),
+}).strict()
+  .refine((value) => new TextEncoder().encode(JSON.stringify(value)).byteLength <= 15_000, "El mapeo supera el límite permitido.")
+  .refine((value) => [value.defaultShelf ?? "", ...value.columns.flatMap((column) => [column.sourceColumn, column.separator ?? ""]), ...Object.keys(value.statusMap ?? {})].every((text) => !text.includes("\0")), "El mapeo contiene un carácter nulo.")
+
+export function resolveStoredMapping(headers: readonly string[], stored: StoredCsvMapping): { mapping: CsvMapping | null; issues: CsvIssue[] } {
+  const checked = storedCsvMappingSchema.safeParse(stored)
+  if (!checked.success) return { mapping: null, issues: [csvIssue("INVALID_MAPPING", 0, "mapping", "", "Revisa el mapeo y sus límites; esta versión requiere cabecera.")] }
+  const value = checked.data
+  const separator = (target: CsvTarget) => value.columns.find((column) => column.target === target)?.separator ?? null
+  return validateCsvMapping(headers, {
+    columns: value.columns.map((column) => ({
+      sourceColumn: /^#[1-9]\d*$/.test(column.sourceColumn) ? Number(column.sourceColumn.slice(1)) - 1 : headers.indexOf(column.sourceColumn), target: column.target,
+    })),
+    authorsSeparator: separator("authors"), publishersSeparator: separator("publishers"),
+    statusEquivalences: Object.entries(value.statusMap ?? {}).map(([source, status]) => ({ source, status })),
+    defaultStatus: value.defaultStatus ?? "unread", defaultShelf: value.defaultShelf ?? "Predeterminada",
+  })
 }

@@ -7,6 +7,7 @@ import { parseLibraryImport } from "../library-import"
 import type { Book, LibraryData, Shelf } from "../types"
 import { csvMappingHash, csvSha256, csvValueKey, validateCsvMapping, type CsvMapping, type CsvTarget } from "./mapping"
 import { csvIssue, parseCsv, type CsvDelimiter, type CsvIssue, type CsvIssueCode } from "./parser"
+import { csvSourceRowKey as persistentRowKey } from "./contracts"
 
 export interface NormalizedCsvRow {
   ordinal: number
@@ -24,6 +25,7 @@ export interface NormalizedCsv {
   /** Cualquier incidencia bloquea el conjunto. No hay publicación parcial implícita. */
   library: LibraryData | null
   payload: PortableBackupV2 | null
+  shelves: Shelf[]
 }
 
 /** Clave de origen, no ISBN ni ID de edición. El ordinal es el registro de datos desde 1. */
@@ -31,7 +33,7 @@ export function csvSourceRowKey(sessionId: string, ordinal: number): string {
   if (!z.uuid().safeParse(sessionId).success || !Number.isInteger(ordinal) || ordinal < 1 || ordinal > 2_000) {
     throw new Error("La sesión o el número de registro CSV no es válido.")
   }
-  return `csv:${sessionId}:${ordinal}`
+  return persistentRowKey(ordinal)
 }
 
 function names(value: string, separator: string | null, max: number): { name: string }[] {
@@ -65,7 +67,7 @@ export async function normalizeCsv(input: {
   const mappingHash = mapping ? await csvMappingHash(mapping, input.delimiter) : null
   const digest = mappingHash ? await csvSha256(canonicalJson({ inputHash, mappingHash })) : null
   const issues = [...parsed.issues, ...checked.issues]
-  const result: NormalizedCsv = { inputHash, mappingHash, digest, rows: [], issues, library: null, payload: null }
+  const result: NormalizedCsv = { inputHash, mappingHash, digest, rows: [], issues, library: null, payload: null, shelves: [] }
   if (!mapping || !parsed.complete) return result
   const columns = new Map(mapping.columns.map((column) => [column.target, column.sourceColumn]))
   const statusTable = new Map(mapping.statusEquivalences.map((state) => [csvValueKey(state.source), state.status]))
@@ -81,8 +83,14 @@ export async function normalizeCsv(input: {
   }
   shelfFor(mapping.defaultShelf)
   const editions = new Map<string, { id: string; fingerprint: string }>()
+  const issuesByRecord = new Map<number, CsvIssue[]>()
+  for (const issue of parsed.issues) {
+    const group = issuesByRecord.get(issue.record) ?? []
+    group.push(issue); issuesByRecord.set(issue.record, group)
+  }
   for (const record of parsed.records) {
-    const rowIssues = parsed.issues.filter((issue) => issue.record === record.ordinal)
+    const rowIssues = [...(issuesByRecord.get(record.ordinal) ?? [])]
+    const parserIssueCount = rowIssues.length
     const value = (field: CsvTarget) => { const column = columns.get(field); return column === undefined ? "" : (record.cells[column] ?? "").trim() }
     const add = (code: CsvIssueCode, field: CsvTarget, message: string) => rowIssues.push(csvIssue(code, record.ordinal, field, value(field), message))
     const limit = (field: CsvTarget, text: string, max: number) => { if (text.length > max) add("FIELD_LIMIT", field, `El campo supera el límite de ${max} caracteres.`) }
@@ -115,9 +123,9 @@ export async function normalizeCsv(input: {
     if (!rowIssues.length && status) {
       const shelf = shelfFor(shelfTitle)
       book = {
-        id: sourceRowKey, isbn, title, authors, publishers, number_of_pages: numberOfPages, publish_date: publishDate,
+        id: `${input.sessionId}:${sourceRowKey}`, isbn, title, authors, publishers, number_of_pages: numberOfPages, publish_date: publishDate,
         status, shelf_id: shelf.id, shelf_name: shelf.title, cover: normalizeBookCover(),
-        catalogue: { source: "import", isbnVerified: false }, edition: { id: sourceRowKey },
+        catalogue: { source: "import", isbnVerified: false }, edition: { id: `${input.sessionId}:${sourceRowKey}` },
       }
       // Solo agrupa ISBN idénticos con bibliografía idéntica; conserva una copia por registro.
       if (isbn) {
@@ -127,14 +135,15 @@ export async function normalizeCsv(input: {
           add("EDITION_CONFLICT", "isbn", "El mismo ISBN tiene datos bibliográficos distintos en otro registro; revisa ambas filas.")
           book = null
         } else if (existing) book.edition = { id: existing.id }
-        else editions.set(isbn, { id: sourceRowKey, fingerprint })
+        else editions.set(isbn, { id: book.id, fingerprint })
       }
       if (book) shelf.book_count++
     }
     result.rows.push({ ordinal: record.ordinal, sourceRowKey, book, issues: rowIssues })
     // Las incidencias del parser ya están incluidas en el conjunto.
-    issues.push(...rowIssues.filter((issue) => !parsed.issues.includes(issue)))
+    issues.push(...rowIssues.slice(parserIssueCount))
   }
+  result.shelves = [...shelves.values()]
   if (shelves.size > 200) issues.push(csvIssue("FIELD_LIMIT", 0, "shelf", "", "La importación admite hasta 200 estanterías."))
   if (issues.length) return result
   const library: LibraryData = { books: result.rows.flatMap((row) => row.book ? [row.book] : []), shelves: [...shelves.values()] }
