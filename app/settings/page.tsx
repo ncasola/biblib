@@ -302,7 +302,7 @@ export default function SettingsPage() {
       // Las partes se ofrecen en un diálogo: la lista no empuja el resto de la página (tarea T2 de rendimiento).
       else setPartsOpen(true)
       const format = prepared.formatVersion === 2
-        ? " Se usa el formato 2 porque tu biblioteca tiene procedencia por campo o de la BNE que el formato 1 no conserva."
+        ? " Se usa el formato 2 porque tu biblioteca tiene datos que el formato 1 no conserva: varios ejemplares de una edición, obras, libros sin ISBN, comprobaciones con evidencias o procedencia por campo."
         : " Se usa el formato 1, compatible con versiones anteriores, porque conserva todos tus datos."
       setMessage({ type: "success", text: (parts.length === 1
         ? `Copia preparada con ${prepared.totals.books} libros y ${prepared.totals.shelves} estanterías. Conserva el archivo descargado para restaurar la colección.`
@@ -485,7 +485,7 @@ export default function SettingsPage() {
           <section aria-labelledby="import-title" aria-busy={isImporting || isValidating || isPreparing} className="rounded-2xl border border-border bg-card/80 backdrop-blur-xl p-5 md:p-8 shadow-xl">
             <h2 id="import-title" className="text-2xl font-bold mb-2">Importar una biblioteca</h2>
             <p className="text-muted-foreground mb-4">Selecciona un JSON para validarlo y revisar qué cambiará en tu biblioteca. Elegir el archivo todavía no modifica tus datos.</p>
-            <p id="import-limits" className="text-sm text-muted-foreground mb-4">Formato antiguo de BibLib o versión 1. Máximo 8 MiB, {MAX_IMPORT_BOOKS.toLocaleString("es")} libros y {MAX_IMPORT_SHELVES} estanterías.</p>
+            <p id="import-limits" className="text-sm text-muted-foreground mb-4">Formato antiguo de BibLib, versión 1 o versión 2. Máximo 8 MiB, {MAX_IMPORT_BOOKS.toLocaleString("es")} libros y {MAX_IMPORT_SHELVES} estanterías.</p>
             <input ref={fileInput} id="import-file" type="file" accept=".json,application/json" onChange={(event) => void handleFile(event)} disabled={busy || !counts || loading} className="sr-only" tabIndex={-1} aria-label="Archivo JSON de biblioteca" aria-describedby="import-limits" />
             <Button type="button" onClick={() => fileInput.current?.click()} disabled={busy || !counts || loading} variant="secondary" className="rounded-xl">{isValidating ? <LoaderCircle aria-hidden="true" className="animate-spin" /> : <Upload aria-hidden="true" />}{isValidating ? "Validando archivo…" : preview ? "Elegir otro archivo" : "Seleccionar archivo JSON"}</Button>
 
