@@ -8,12 +8,10 @@ interface LoadingStateProps {
 
 export function LoadingState({ message = "Cargando tu biblioteca..." }: LoadingStateProps) {
   return (
-    <div className="flex items-center justify-center h-96">
-      <div className="rounded-2xl border border-border/70 bg-card/90 backdrop-blur-xl px-8 py-7 shadow-xl">
-        <div className="flex items-center gap-3">
-          <Loader2 className="h-5 w-5 animate-spin text-vintage-red" />
-          <p className="text-foreground font-medium">{message}</p>
-        </div>
+    <div className="flex h-96 items-center justify-center">
+      <div className="surface-card flex items-center gap-3 px-8 py-6">
+        <Loader2 aria-hidden="true" className="size-5 animate-spin text-brass-text" />
+        <p className="font-medium text-foreground">{message}</p>
       </div>
     </div>
   )
