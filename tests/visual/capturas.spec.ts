@@ -42,6 +42,19 @@ test("capturas con sesión de A", async ({ page, stack }) => {
   }
 })
 
+// Complementarias (solo después): el resto de pantallas del rediseño a 1440 y 375 px.
+test("capturas complementarias con sesión de A", async ({ page }) => {
+  test.skip(phase === "antes", "Solo se registran después del rediseño.")
+  const routes = [["alta", "/books/add"], ["busqueda", "/books/search"], ["revision", "/books/review"], ["series", "/series"], ["ubicaciones", "/locations"], ["ajustes", "/settings"], ["perfil", "/profile"]] as const
+  for (const width of widths) {
+    await page.setViewportSize({ width, height: width === 375 ? 812 : 900 })
+    for (const [name, route] of routes) {
+      await page.goto(route)
+      await shoot(page, `extra-${name}`)
+    }
+  }
+})
+
 test.describe("sin sesión", () => {
   test.use({ account: "anon" })
   test("capturas del acceso", async ({ page }) => {
