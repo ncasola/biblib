@@ -1,0 +1,25 @@
+Grupo review · perfil scratch · biblib-scratch · run d3be3231b3d8
+Compilando la app para el perfil scratch…
+✔ B no enumera incidencias, fuentes ni evidencias de A (3221.6587ms)
+✔ B no compara ni decide sobre una incidencia de A y la respuesta no confirma que exista (468.8679ms)
+✔ A compara su duda de foto: ve la foto citada como privada, sin ruta ni URL firmada (147.8167ms)
+✔ aceptar el título de la ficha de proveedor conserva los demás campos, cita la fuente y deja el ejemplar provisional (4644.0046ms)
+✔ una versión antigua de la incidencia o de la edición es un conflicto y no cambia nada (112.4297ms)
+✔ ignorar no borra evidencias, no se regenera sola y se puede reabrir (340.0698ms)
+✔ confirmar en el ejemplar exige la confirmación literal y conserva la foto como evidencia (280.2673ms)
+✔ la importación de referencia genera 94 incidencias y ninguna comprobación física falsa (3182.244ms)
+✔ el cursor recorre todas las incidencias sin repetir y los filtros se combinan (1478.5402ms)
+✔ una incidencia cuyo motivo desaparece se resuelve sola y conserva sus evidencias; si vuelve, se reabre la misma (280.0598ms)
+✔ homónimos y autores iguales con obras distintas no se proponen como duplicados (1813.6648ms)
+✔ dos revisores: el segundo choca con lo aplicado y no aplica la mitad; el modo parcial informa por fila (1709.2188ms)
+✔ una fuente eliminada tras la vista previa es un conflicto: atómico no aplica nada, parcial aplica el resto (312.9132ms)
+✔ un lote de más de 50, una vista previa alterada o ajena se rechazan sin aplicar nada (1664.0416ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 33716.4392
+exit=0
