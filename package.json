@@ -74,7 +74,8 @@
     "test:integration:restore": "node tests/integration/restore/run.mjs",
     "perf:restore": "node scripts/performance/restore-bench.mjs",
     "test:integration:assets": "node tests/integration/assets/run.mjs",
-    "assets:purge:local": "node scripts/jobs/purge-cover-assets.mjs"
+    "assets:purge:local": "node scripts/jobs/purge-cover-assets.mjs",
+    "test:integration:model": "node tests/integration/model/run.mjs"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "1.1.15",
