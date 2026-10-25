@@ -1,0 +1,38 @@
+{
+  "overflow": {
+    "ficha-dark-1440": 0,
+    "ficha-sin-total-dark-1440": 0,
+    "ficha-legado-dark-1440": 0,
+    "inicio-dark-1440": 0,
+    "ficha-dark-375": 0,
+    "ficha-sin-total-dark-375": 0,
+    "ficha-legado-dark-375": 0,
+    "inicio-dark-375": 0,
+    "ficha-dark-320": 0,
+    "ficha-sin-total-dark-320": 0,
+    "ficha-legado-dark-320": 0,
+    "inicio-dark-320": 0,
+    "ficha-light-1440": 0,
+    "ficha-sin-total-light-1440": 0,
+    "ficha-legado-light-1440": 0,
+    "inicio-light-1440": 0,
+    "ficha-light-375": 0,
+    "ficha-sin-total-light-375": 0,
+    "ficha-legado-light-375": 0,
+    "inicio-light-375": 0,
+    "ficha-light-320": 0,
+    "ficha-sin-total-light-320": 0,
+    "ficha-legado-light-320": 0,
+    "inicio-light-320": 0
+  },
+  "axe": {
+    "ficha-dark-1440": [],
+    "ficha-sin-total-dark-1440": [],
+    "ficha-legado-dark-1440": [],
+    "inicio-dark-1440": [],
+    "ficha-light-1440": [],
+    "ficha-sin-total-light-1440": [],
+    "ficha-legado-light-1440": [],
+    "inicio-light-1440": []
+  }
+}
