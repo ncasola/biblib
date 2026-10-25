@@ -3,110 +3,167 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ==================================================================
+   Sistema visual «Biblioteca nocturna» (U-UX-01)
+   Oscuro: tinta cálida, nogal, latón y crema. Claro: la misma dirección
+   en papel crema. Se conservan los nombres de shadcn; los propios
+   (latón, estados, enlaces, elevación) se añaden aquí. Contraste AA
+   revisado en ambos temas, también en hover, foco y bordes de control.
+   ================================================================== */
+
 :root {
-  /* Texto de color sobre crema: contraste mínimo revisado de 4.96:1. */
-  --vintage-red: #DC2626;
-  --vintage-olive: #536332;
-  --vintage-yellow: #8b6500;
-  --vintage-purple: #624477;
+  /* Marca. El rojo de acción es el mismo en los dos temas, ajustado a AA. */
+  --vintage-red: #b3302a;
+  --vintage-olive: #4f5f2a;
+  --vintage-yellow: #7a5a12;
+  --vintage-purple: #5e4280;
   --vintage-cream: #f6eddd;
-  --vintage-brown: #644b32;
-  --vintage-red-text: #b52b30;
+  --vintage-brown: #6b4a2f;
+  --vintage-red-text: #a82a22;
   --vintage-olive-text: var(--vintage-olive);
   --vintage-yellow-text: var(--vintage-yellow);
   --vintage-purple-text: var(--vintage-purple);
   --vintage-brown-text: var(--vintage-brown);
 
-  --background: #faf7f0;
-  --foreground: #423326;
-  --surface: #f4eddf;
-  --foreground-light: #655746;
-  --primary-dark: #872025;
-  --card: #fffdf9;
-  --card-foreground: var(--vintage-brown);
-  --popover: #fffdf9;
-  --popover-foreground: var(--vintage-brown);
-  --primary: #b52b30;
-  --primary-foreground: oklch(0.99 0 0);
-  --secondary: #465529;
-  --secondary-foreground: oklch(0.99 0 0);
-  --muted: #eee5d5;
-  --muted-foreground: var(--foreground-light);
-  --accent: #d4af37;
-  --accent-foreground: #423326;
-  --destructive: #b4232b;
-  --destructive-foreground: oklch(0.99 0 0);
-  --border: #d8cbb6;
-  --input: #f4eddf;
-  --control-border: #88775e;
-  --ring: var(--vintage-red);
-  --radius: 1rem;
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  /* Latón: superficie (--brass), realce (--brass-light) y texto legible sobre el fondo (--brass-text). */
+  --brass: #c9a24a;
+  --brass-light: #f2d58a;
+  --brass-text: #7a5a12;
+  --walnut: #6b4326;
+  --heading: #2a1d14;
+  --link: #8a2a1e;
+  --primary-text: #a82a22;
+
+  --background: #f5eddd;
+  --foreground: #2a1d14;
+  --surface: #efe4d0;
+  --foreground-light: #4f3d2e;
+  --primary-dark: #8a2a1e;
+  --card: #fcf8f0;
+  --card-foreground: #2a1d14;
+  --popover: #fffcf6;
+  --popover-foreground: #2a1d14;
+  --primary: #b3302a;
+  --primary-foreground: #fffaf0;
+  --secondary: #3a2a1f;
+  --secondary-foreground: #f6eddd;
+  --muted: #ebdfc8;
+  --muted-foreground: #64513f;
+  --accent: #ebdcc1;
+  --accent-foreground: #2a1d14;
+  --destructive: #a8261d;
+  --destructive-foreground: #fffaf0;
+  --border: #dccdb2;
+  --input: #fffcf6;
+  --control-border: #7f6d55;
+  --ring: #8a6514;
+  --radius: 0.875rem;
+
+  /* Estados de lectura (texto y fondo de chip). «Prestado» queda listo para O14. */
+  --status-read: #3f5a1c;
+  --status-read-bg: #e5e5d7;
+  --status-reading: #7a5000;
+  --status-reading-bg: #ece4d3;
+  --status-to-read: #2f4a9a;
+  --status-to-read-bg: #e3e3e6;
+  --status-unread: #5c4a39;
+  --status-unread-bg: #e9e3da;
+  --status-loaned: #9a3f12;
+  --status-loaned-bg: #f0e2d5;
+
+  /* Elevación por capas: sombras cálidas y suaves. */
+  --elev-1: 0 1px 2px rgb(62 40 20 / 0.06), 0 2px 6px -2px rgb(62 40 20 / 0.08);
+  --elev-2: 0 1px 2px rgb(62 40 20 / 0.06), 0 8px 18px -8px rgb(62 40 20 / 0.18);
+  --elev-3: 0 2px 4px rgb(62 40 20 / 0.06), 0 18px 36px -16px rgb(62 40 20 / 0.26);
+  --elev-4: 0 4px 8px rgb(62 40 20 / 0.08), 0 32px 64px -24px rgb(62 40 20 / 0.36);
+  --card-sheen: linear-gradient(180deg, rgb(255 255 255 / 0.55), rgb(255 255 255 / 0));
+  --page-glow: radial-gradient(ellipse 60% 40% at 15% 0%, rgb(201 162 74 / 0.2) 0%, transparent 70%), radial-gradient(ellipse 50% 35% at 100% 10%, rgb(107 78 139 / 0.1) 0%, transparent 70%);
+
+  --chart-1: #b3302a;
+  --chart-2: #4f5f2a;
+  --chart-3: #7a5a12;
+  --chart-4: #5e4280;
+  --chart-5: #2f4a9a;
+  --sidebar: var(--card);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--accent-foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
 }
 
 .dark {
-  /* Texto de color sobre carbón: contraste mínimo revisado de 5.59:1. */
-  --vintage-red: #a91f28;
-  --vintage-olive: #46562b;
-  --vintage-yellow: #e0b94f;
-  --vintage-purple: #614478;
-  --vintage-brown: #715238;
-  --vintage-red-text: #ff7775;
-  --vintage-olive-text: #b4c77e;
-  --vintage-yellow-text: #f0cd63;
-  --vintage-purple-text: #cfafe9;
-  --vintage-brown-text: #d6b58d;
-  --background: #202028;
+  --vintage-red: #c0392b;
+  --vintage-olive: #4f5f2a;
+  --vintage-yellow: #c9a24a;
+  --vintage-purple: #5e4280;
+  --vintage-brown: #7a5638;
+  --vintage-red-text: #ff8a7a;
+  --vintage-olive-text: #b5c98a;
+  --vintage-yellow-text: #e2bd63;
+  --vintage-purple-text: #cdb4ec;
+  --vintage-brown-text: #d9b98f;
+
+  --brass-text: #e2bd63;
+  --heading: #fbf3e2;
+  --link: #f2d58a;
+  --primary-text: #ff8a7a;
+
+  --background: #16110d;
   --foreground: #f6eddd;
-  --surface: #292932;
-  --foreground-light: #c6bda9;
-  --primary: #a91f28;
-  --primary-dark: #ff7775;
-  --primary-foreground: #fffdf9;
-  --card: #292932;
+  --surface: #1d1611;
+  --foreground-light: #e3d6bf;
+  --primary-dark: #ff8a7a;
+  --card: #221a14;
   --card-foreground: #f6eddd;
-  --popover: #292932;
+  --popover: #261d16;
   --popover-foreground: #f6eddd;
-  --secondary: #46562b;
-  --secondary-foreground: #fffdf9;
-  --muted: #32323b;
-  --muted-foreground: #c6bda9;
-  --accent: #e0b94f;
-  --accent-foreground: #423326;
-  --destructive: #f16d6a;
-  --destructive-foreground: #202028;
-  --border: #4b4b55;
-  --input: #32323b;
-  --control-border: #98919d;
-  --ring: #ffaaa3;
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: #292932;
-  --sidebar-foreground: #f6eddd;
-  --sidebar-primary: #a91f28;
-  --sidebar-primary-foreground: #fffdf9;
-  --sidebar-accent: #32323b;
-  --sidebar-accent-foreground: #f6eddd;
-  --sidebar-border: #4b4b55;
-  --sidebar-ring: #ffaaa3;
+  --primary: #c0392b;
+  --primary-foreground: #fffaf0;
+  --secondary: #efe2c8;
+  --secondary-foreground: #1b130d;
+  --muted: #2b2119;
+  --muted-foreground: #cdbfa6;
+  --accent: #33281e;
+  --accent-foreground: #fbf3e2;
+  --destructive: #f08b7b;
+  --destructive-foreground: #1b130d;
+  --border: #3a2e24;
+  --input: #1b1510;
+  --control-border: #8f7e66;
+  --ring: #f2d58a;
+
+  --status-read: #a9c47f;
+  --status-read-bg: #383525;
+  --status-reading: #f2c94c;
+  --status-reading-bg: #43361d;
+  --status-to-read: #b9c7ff;
+  --status-to-read-bg: #3a363a;
+  --status-unread: #d4c6ad;
+  --status-unread-bg: #3e362c;
+  --status-loaned: #f0a37a;
+  --status-loaned-bg: #433024;
+
+  --elev-1: inset 0 1px 0 rgb(255 244 222 / 0.04), 0 1px 2px rgb(0 0 0 / 0.3);
+  --elev-2: inset 0 1px 0 rgb(255 244 222 / 0.05), 0 10px 22px -10px rgb(0 0 0 / 0.55);
+  --elev-3: inset 0 1px 0 rgb(255 244 222 / 0.05), 0 20px 40px -18px rgb(0 0 0 / 0.65);
+  --elev-4: inset 0 1px 0 rgb(255 244 222 / 0.06), 0 34px 70px -26px rgb(0 0 0 / 0.75);
+  --card-sheen: linear-gradient(180deg, rgb(255 244 222 / 0.045), rgb(255 244 222 / 0.01));
+  --page-glow: radial-gradient(ellipse 60% 40% at 15% 0%, #3d2a1c 0%, transparent 70%), radial-gradient(ellipse 50% 35% at 100% 10%, #2b2036 0%, transparent 70%);
+
+  --chart-1: #ff8a7a;
+  --chart-2: #b5c98a;
+  --chart-3: #e2bd63;
+  --chart-4: #cdb4ec;
+  --chart-5: #b9c7ff;
 }
 
 @theme inline {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-heading: var(--font-fraunces), Georgia, "Times New Roman", serif;
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -125,10 +182,17 @@
   --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
+  --color-control-border: var(--control-border);
   --color-surface: var(--surface);
   --color-foreground-light: var(--foreground-light);
   --color-primary-dark: var(--primary-dark);
   --color-ring: var(--ring);
+  --color-heading: var(--heading);
+  --color-link: var(--link);
+  --color-brass: var(--brass);
+  --color-brass-light: var(--brass-light);
+  --color-brass-text: var(--brass-text);
+  --color-walnut: var(--walnut);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
@@ -138,6 +202,13 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 6px);
+  --shadow-xs: var(--elev-1);
+  --shadow-sm: var(--elev-1);
+  --shadow-md: var(--elev-2);
+  --shadow-lg: var(--elev-2);
+  --shadow-xl: var(--elev-3);
+  --shadow-2xl: var(--elev-4);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -147,7 +218,7 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  /* Vintage colors as Tailwind tokens */
+  /* Colores de marca como tokens de Tailwind */
   --color-vintage-red: var(--vintage-red);
   --color-vintage-olive: var(--vintage-olive);
   --color-vintage-yellow: var(--vintage-yellow);
@@ -171,6 +242,27 @@
 
   body {
     @apply bg-background text-foreground;
+    /* Luz cálida de lámpara arriba (nogal y morado en oscuro, latón tenue en claro). Se desplaza con la página. */
+    background-image: var(--page-glow);
+    background-repeat: no-repeat;
+    background-size: 100% 70rem;
+    text-rendering: optimizeLegibility;
+  }
+
+  :where(h1, h2, h3) {
+    font-family: var(--font-heading);
+    font-optical-sizing: auto;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+
+  :where(h1, h2, h3, h4) {
+    color: var(--heading);
+  }
+
+  ::selection {
+    background: color-mix(in srgb, var(--brass) 45%, transparent);
+    color: var(--foreground);
   }
 
   html {
@@ -195,6 +287,10 @@
     min-height: 2.75rem;
   }
 
+  :where(select, textarea) {
+    border-radius: var(--radius-md);
+  }
+
   :where([data-slot="tabs-list"], [data-slot="tabs-trigger"], [data-slot="select-item"], [role="menuitem"]) {
     min-height: 2.75rem;
   }
@@ -203,9 +299,11 @@
     min-width: 0;
   }
 
-  input[type="checkbox"] {
+  input[type="checkbox"],
+  input[type="radio"] {
     min-width: 1.5rem;
     min-height: 1.5rem;
+    accent-color: var(--primary);
   }
 
   button:not(:disabled) {
@@ -215,12 +313,18 @@
   button:disabled {
     cursor: not-allowed;
   }
+
+  details > summary {
+    cursor: pointer;
+  }
 }
 
-/* Remove @layer components and use simple CSS classes */
+/* Titulares de marca: Fraunces en tinta (claro) o crema (oscuro). */
 .heading-vintage {
+  font-family: var(--font-heading);
   font-weight: 700;
-  color: var(--vintage-red-text);
+  color: var(--heading);
+  letter-spacing: -0.015em;
 }
 
 .text-vintage-red {
@@ -247,9 +351,8 @@
 
 .dark .text-vintage-red,
 .dark .text-primary,
-.dark .hover\:text-primary:hover,
-.dark .heading-vintage {
-  color: var(--vintage-red-text);
+.dark .hover\:text-primary:hover {
+  color: var(--primary-text);
 }
 
 .dark .text-vintage-olive {
@@ -268,6 +371,93 @@
   color: var(--vintage-brown-text);
 }
 
+/* ------------------------------------------------------------------
+   Patrones base del sistema (ver AGENTS.md · Convenciones de estilo)
+   ------------------------------------------------------------------ */
+
+/* Tarjeta con profundidad: brillo superior muy suave, borde fino y sombra por capas. */
+@utility surface-card {
+  background-color: var(--card);
+  background-image: var(--card-sheen);
+  color: var(--card-foreground);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--elev-2);
+}
+
+/* Antetítulo: versalitas de latón sobre el titular de una sección. */
+@utility eyebrow {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--brass-text);
+}
+
+/* Enlace de texto de la dirección: latón en oscuro, rojo tinta en claro. */
+@utility link-quiet {
+  color: var(--link);
+  font-weight: 600;
+  text-decoration-line: underline;
+  text-decoration-color: color-mix(in srgb, currentColor 35%, transparent);
+  text-underline-offset: 0.2em;
+
+  &:hover {
+    text-decoration-color: currentColor;
+  }
+}
+
+/* Chip de estado de lectura: texto y fondo propios de cada estado, con contraste AA. */
+.status-chip {
+  --chip: var(--status-unread);
+  --chip-bg: var(--status-unread-bg);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  border-radius: 999px;
+  padding: 0.125rem 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.25rem;
+  white-space: nowrap;
+  color: var(--chip);
+  background-color: var(--chip-bg);
+  border: 1px solid color-mix(in srgb, var(--chip) 30%, transparent);
+}
+
+.status-chip::before {
+  content: "";
+  inline-size: 0.4375rem;
+  block-size: 0.4375rem;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.status-chip[data-status="read"] { --chip: var(--status-read); --chip-bg: var(--status-read-bg); }
+.status-chip[data-status="reading"] { --chip: var(--status-reading); --chip-bg: var(--status-reading-bg); }
+.status-chip[data-status="to-read"] { --chip: var(--status-to-read); --chip-bg: var(--status-to-read-bg); }
+.status-chip[data-status="loaned"] { --chip: var(--status-loaned); --chip-bg: var(--status-loaned-bg); }
+
+/* Lomos decorativos de las tarjetas de estantería del inicio (nogal en los dos temas). */
+.shelf-preview {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  block-size: 6rem;
+  padding-inline: 0.75rem;
+  overflow: hidden;
+  border-radius: 0.5rem 0.5rem 0.25rem 0.25rem;
+  border-bottom: 10px solid var(--walnut);
+  background: linear-gradient(180deg, #24170e, #3a2616);
+  box-shadow: inset 0 8px 16px rgb(0 0 0 / 0.35);
+}
+
+.shelf-preview > span {
+  flex: none;
+  border-radius: 2px 2px 0 0;
+  background-image: linear-gradient(90deg, rgb(0 0 0 / 0.35), rgb(255 255 255 / 0.12) 30%, rgb(0 0 0 / 0.25));
+}
+
 ::-webkit-scrollbar {
   width: 12px;
 }
@@ -278,13 +468,13 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--vintage-olive);
+  background: var(--control-border);
   border-radius: 6px;
   border: 2px solid var(--muted);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--vintage-red);
+  background: var(--brass);
 }
 
 @media (prefers-reduced-motion: reduce) {
