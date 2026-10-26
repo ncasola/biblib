@@ -1,5 +1,5 @@
 {
-  "capturedAt": "2026-10-26T07:52:06.980Z",
+  "capturedAt": "2026-10-26T08:32:49.198Z",
   "container": "supabase_db_biblib-scratch",
   "counts": {
     "schemas": 2,
@@ -19,7 +19,7 @@
   "catalogue": {
     "schemas": [
       "biblib owner=postgres acl=authenticated=U/postgres,postgres=UC/postgres",
-      "drizzle owner=postgres acl="
+      "drizzle owner=postgres acl=postgres=UC/postgres"
     ],
     "relations": [
       "biblib.account_deletions kind=r rls=true force=false acl=postgres=arwdDxtm/postgres",
@@ -67,8 +67,8 @@
       "biblib.shelves kind=r rls=true force=false acl=authenticated=arwd/postgres,postgres=arwdDxtm/postgres",
       "biblib.tags kind=r rls=true force=false acl=authenticated=arwd/postgres,postgres=arwdDxtm/postgres",
       "biblib.works kind=r rls=true force=false acl=authenticated=arwd/postgres,postgres=arwdDxtm/postgres",
-      "drizzle.__drizzle_migrations kind=r rls=false force=false acl=",
-      "drizzle.__drizzle_migrations_id_seq kind=S rls=false force=false acl="
+      "drizzle.__drizzle_migrations kind=r rls=false force=false acl=postgres=arwdDxtm/postgres",
+      "drizzle.__drizzle_migrations_id_seq kind=S rls=false force=false acl=postgres=rwU/postgres"
     ],
     "columns": [
       "biblib.account_deletions.attempts integer notnull=true default=0 identity= generated= acl=",
@@ -1048,7 +1048,7 @@
       "biblib.prune_orphan_works() returns trigger lang=plpgsql secdef=true volatile=v config=search_path=pg_catalog owner=postgres acl=postgres=X/postgres md5=b01f41cf534d27e3fb6356e275eefea8",
       "biblib.reading_cycle_close(p_cycle_id uuid, p_expected_version uuid, p_status text, p_finished_at timestamp with time zone) returns jsonb lang=plpgsql secdef=false volatile=v config=search_path=pg_catalog owner=postgres acl=authenticated=X/postgres,postgres=X/postgres md5=8d7712950320f19f6f64137494b5ae0a",
       "biblib.reading_cycle_start(p_copy_id uuid, p_started_at timestamp with time zone) returns jsonb lang=plpgsql secdef=false volatile=v config=search_path=pg_catalog owner=postgres acl=authenticated=X/postgres,postgres=X/postgres md5=0517b2aa6f269c69b540632065e070c5",
-      "biblib.rotate_book_version() returns trigger lang=plpgsql secdef=false volatile=v config=search_path=pg_catalog owner=postgres acl= md5=03f3fca18ee91b2521f65037a4618fc2",
+      "biblib.rotate_book_version() returns trigger lang=plpgsql secdef=false volatile=v config=search_path=pg_catalog owner=postgres acl==X/postgres,postgres=X/postgres md5=03f3fca18ee91b2521f65037a4618fc2",
       "biblib.rotate_library_revision() returns trigger lang=plpgsql secdef=true volatile=v config=search_path=pg_catalog owner=postgres acl=postgres=X/postgres md5=0f1647e9e75c9818f45f6e565b03a9db",
       "biblib.saved_view_filters_valid(value jsonb) returns boolean lang=plpgsql secdef=false volatile=i config=search_path=pg_catalog owner=postgres acl=authenticated=X/postgres,postgres=X/postgres md5=c4244b013e1cf435aa8987b0d90110c2",
       "biblib.tag_normalize(p_name text) returns text lang=plpgsql secdef=false volatile=i config=search_path=pg_catalog owner=postgres acl=authenticated=X/postgres,postgres=X/postgres md5=686dd847ac759122a0ac797951af510b"

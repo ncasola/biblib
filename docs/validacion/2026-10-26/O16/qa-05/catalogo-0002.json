@@ -1,0 +1,111 @@
+{
+  "capturedAt": "2026-10-26T08:30:07.098Z",
+  "container": "supabase_db_biblib-scratch",
+  "counts": {
+    "schemas": 2,
+    "relations": 4,
+    "columns": 27,
+    "constraints": 10,
+    "indexes": 10,
+    "views": 0,
+    "functions": 1,
+    "triggers": 1,
+    "policies": 8,
+    "defaultAcl": 0,
+    "types": 0,
+    "buckets": 1,
+    "ledger": 3
+  },
+  "catalogue": {
+    "schemas": [
+      "biblib owner=postgres acl=authenticated=U/postgres,postgres=UC/postgres",
+      "drizzle owner=postgres acl=postgres=UC/postgres"
+    ],
+    "relations": [
+      "biblib.books kind=r rls=true force=false acl=authenticated=arwd/postgres,postgres=arwdDxtm/postgres",
+      "biblib.shelves kind=r rls=true force=false acl=authenticated=arwd/postgres,postgres=arwdDxtm/postgres",
+      "drizzle.__drizzle_migrations kind=r rls=false force=false acl=postgres=arwdDxtm/postgres",
+      "drizzle.__drizzle_migrations_id_seq kind=S rls=false force=false acl=postgres=rwU/postgres"
+    ],
+    "columns": [
+      "biblib.books.authors jsonb notnull=true default='[]'::jsonb identity= generated= acl=",
+      "biblib.books.catalogue jsonb notnull=true default='{\"source\": \"import\", \"isbnVerified\": false}'::jsonb identity= generated= acl=",
+      "biblib.books.cover_large text notnull=true default='/default-book-cover.webp'::text identity= generated= acl=",
+      "biblib.books.cover_medium text notnull=true default='/default-book-cover.webp'::text identity= generated= acl=",
+      "biblib.books.cover_small text notnull=true default='/default-book-cover.webp'::text identity= generated= acl=",
+      "biblib.books.created_at timestamp with time zone notnull=true default=now() identity= generated= acl=",
+      "biblib.books.id uuid notnull=true default=gen_random_uuid() identity= generated= acl=",
+      "biblib.books.isbn text notnull=true default= identity= generated= acl=",
+      "biblib.books.number_of_pages integer notnull=true default=0 identity= generated= acl=",
+      "biblib.books.publish_date text notnull=true default=''::text identity= generated= acl=",
+      "biblib.books.publishers jsonb notnull=true default='[]'::jsonb identity= generated= acl=",
+      "biblib.books.shelf_id uuid notnull=true default= identity= generated= acl=",
+      "biblib.books.status text notnull=true default='unread'::text identity= generated= acl=",
+      "biblib.books.subtitle text notnull=false default= identity= generated= acl=",
+      "biblib.books.title text notnull=true default= identity= generated= acl=",
+      "biblib.books.updated_at timestamp with time zone notnull=true default=now() identity= generated= acl=",
+      "biblib.books.user_id uuid notnull=true default= identity= generated= acl=",
+      "biblib.books.version uuid notnull=true default=gen_random_uuid() identity= generated= acl=",
+      "biblib.shelves.created_at timestamp with time zone notnull=true default=now() identity= generated= acl=",
+      "biblib.shelves.id uuid notnull=true default=gen_random_uuid() identity= generated= acl=",
+      "biblib.shelves.is_default boolean notnull=true default=false identity= generated= acl=",
+      "biblib.shelves.title text notnull=true default= identity= generated= acl=",
+      "biblib.shelves.updated_at timestamp with time zone notnull=true default=now() identity= generated= acl=",
+      "biblib.shelves.user_id uuid notnull=true default= identity= generated= acl=",
+      "drizzle.__drizzle_migrations.created_at bigint notnull=false default= identity= generated= acl=",
+      "drizzle.__drizzle_migrations.hash text notnull=true default= identity= generated= acl=",
+      "drizzle.__drizzle_migrations.id integer notnull=true default=nextval('drizzle.__drizzle_migrations_id_seq'::regclass) identity= generated= acl="
+    ],
+    "constraints": [
+      "biblib.books books_owner_shelf_fk FOREIGN KEY (user_id, shelf_id) REFERENCES biblib.shelves(user_id, id) ON DELETE RESTRICT",
+      "biblib.books books_pages_check CHECK (((number_of_pages >= 0) AND (number_of_pages <= 100000)))",
+      "biblib.books books_pkey PRIMARY KEY (id)",
+      "biblib.books books_status_check CHECK ((status = ANY (ARRAY['read'::text, 'reading'::text, 'unread'::text, 'to-read'::text])))",
+      "biblib.books books_title_check CHECK (((length(btrim(title)) >= 1) AND (length(btrim(title)) <= 500)))",
+      "biblib.books books_user_fk FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE",
+      "biblib.shelves shelves_pkey PRIMARY KEY (id)",
+      "biblib.shelves shelves_title_check CHECK (((length(btrim(title)) >= 1) AND (length(btrim(title)) <= 120)))",
+      "biblib.shelves shelves_user_fk FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE",
+      "drizzle.__drizzle_migrations __drizzle_migrations_pkey PRIMARY KEY (id)"
+    ],
+    "indexes": [
+      "biblib.books_pkey CREATE UNIQUE INDEX books_pkey ON biblib.books USING btree (id)",
+      "biblib.books_shelf_id_idx CREATE INDEX books_shelf_id_idx ON biblib.books USING btree (shelf_id)",
+      "biblib.books_user_id_id_unique CREATE UNIQUE INDEX books_user_id_id_unique ON biblib.books USING btree (user_id, id)",
+      "biblib.books_user_id_idx CREATE INDEX books_user_id_idx ON biblib.books USING btree (user_id)",
+      "biblib.books_user_id_isbn_unique CREATE UNIQUE INDEX books_user_id_isbn_unique ON biblib.books USING btree (user_id, isbn)",
+      "biblib.shelves_pkey CREATE UNIQUE INDEX shelves_pkey ON biblib.shelves USING btree (id)",
+      "biblib.shelves_user_id_default_unique CREATE UNIQUE INDEX shelves_user_id_default_unique ON biblib.shelves USING btree (user_id, is_default) WHERE (is_default = true)",
+      "biblib.shelves_user_id_id_unique CREATE UNIQUE INDEX shelves_user_id_id_unique ON biblib.shelves USING btree (user_id, id)",
+      "biblib.shelves_user_id_title_unique CREATE UNIQUE INDEX shelves_user_id_title_unique ON biblib.shelves USING btree (user_id, title)",
+      "drizzle.__drizzle_migrations_pkey CREATE UNIQUE INDEX __drizzle_migrations_pkey ON drizzle.__drizzle_migrations USING btree (id)"
+    ],
+    "views": [],
+    "functions": [
+      "biblib.rotate_book_version() returns trigger lang=plpgsql secdef=false volatile=v config=search_path=pg_catalog owner=postgres acl==X/postgres,postgres=X/postgres md5=03f3fca18ee91b2521f65037a4618fc2"
+    ],
+    "triggers": [
+      "biblib.books books_rotate_version enabled=O CREATE TRIGGER books_rotate_version BEFORE INSERT OR UPDATE ON biblib.books FOR EACH ROW EXECUTE FUNCTION biblib.rotate_book_version()"
+    ],
+    "policies": [
+      "biblib.books books_delete_own PERMISSIVE authenticated DELETE using=(user_id = auth.uid()) check=",
+      "biblib.books books_insert_own PERMISSIVE authenticated INSERT using= check=(user_id = auth.uid())",
+      "biblib.books books_select_own PERMISSIVE authenticated SELECT using=(user_id = auth.uid()) check=",
+      "biblib.books books_update_own PERMISSIVE authenticated UPDATE using=(user_id = auth.uid()) check=(user_id = auth.uid())",
+      "biblib.shelves shelves_delete_own PERMISSIVE authenticated DELETE using=((user_id = auth.uid()) AND (NOT is_default)) check=",
+      "biblib.shelves shelves_insert_own PERMISSIVE authenticated INSERT using= check=(user_id = auth.uid())",
+      "biblib.shelves shelves_select_own PERMISSIVE authenticated SELECT using=(user_id = auth.uid()) check=",
+      "biblib.shelves shelves_update_own PERMISSIVE authenticated UPDATE using=((user_id = auth.uid()) AND (NOT is_default)) check=((user_id = auth.uid()) AND (NOT is_default))"
+    ],
+    "defaultAcl": [],
+    "types": [],
+    "buckets": [
+      "biblib-test-assets public=false size= mime=image/webp"
+    ],
+    "ledger": [
+      "585b45c948a69091695708a43771658522e89a8778814a8c3e145d095e9685ca 1792627200000",
+      "b2f6e7bcc8e8c8b85fe2fb5f21506237d10f8aae0d7d895d83b214ab53cb6ab2 1760000000000",
+      "eb1e44f5d2a96cea8db8c39d1e4055758c0a0d0c0a8c220bd03b2b1be3a94a09 1792678059187"
+    ]
+  }
+}

@@ -1,6 +1,6 @@
 # Matriz de los 35 hallazgos de la auditoría · U-QA-05 (O16)
 
-**Fecha:** 26 de octubre de 2026 · **Rama:** `u-qa-05` sobre `feature/spec-pendientes` (O15 integrada; base `b02afe7`) · **Auditoría original (histórica, sin cambios):** [auditoria-2026-10-22.md](../../../auditoria-2026-10-22.md).
+**Fecha:** 26 de octubre de 2026 · **Rama:** `u-qa-05` sobre `feature/spec-pendientes` (O15 completa, con U-EXP-07 integrada en `07f7dcf`) · **Auditoría original (histórica, sin cambios):** [auditoria-2026-10-22.md](../../../auditoria-2026-10-22.md).
 
 **Fuentes:**
 - Registros de puerta G06…G14 e informes de unidad en `docs/validacion/**`.
@@ -32,12 +32,12 @@
 
 | Estado | Hallazgos |
 | --- | --- |
-| `implementado-local` | 33 |
-| `pendiente` | 2 (UI-03 lector de pantalla; UX-06 bordes 10/11, verificados en O16, ver nota) |
-| `diferido-con-decision` | 0 hallazgos completos. Las partes diferidas (3D libre, Google Books) se listan en [Decisiones de alcance](#decisiones-de-alcance) |
+| `implementado-local` | 34 |
+| `pendiente` | 1: UI-03, por el ensayo manual con lector de pantalla |
+| `diferido-con-decision` | 0 hallazgos completos. Las partes diferidas (3D libre, Google Books, copia de portadas de proveedor) están en [Decisiones de alcance](#decisiones-de-alcance) |
 | `verificado-preproduccion` / `verificado-produccion` | 0 (no hay despliegue) |
 
-> **UX-06:** O16 añadió la verificación de los bordes 0/1/10/11 en la app real ([qa-05/22-paginacion.json](qa-05/22-paginacion.json)). Si esa prueba está en verde, su estado es `implementado-local`; véase la fila.
+> **UX-06:** sus bordes 10/11 no tenían una prueba explícita. O16 los verificó en la app real con Chrome, 7/7 ([qa-05/22-paginacion.json](qa-05/22-paginacion.json)).
 
 **Cierre de código** (local): alcanzado para los 35 hallazgos salvo el ensayo manual de UI-03. **Cierre de despliegue** (remoto): **pendiente** para todos los hallazgos con parte externa. El dueño de esa parte es Néstor (usuario); la lista consolidada está en [entrega.md](entrega.md).
 
@@ -101,7 +101,7 @@
 
 | Hallazgo | Criterio original | Unidades | Estado | Evidencia (fecha · commit) | Dueño | Qué falta |
 | --- | --- | --- | --- | --- | --- | --- |
-| **QA-01** La puerta de calidad permite errores de tipos | Una regresión de tipos bloquea el build; pruebas de restauración, aislamiento A/B, duplicados y edición. | U-INF-05/06, U-QA-01/02/04 | `implementado-local` | [G06](../../2026-10-23/O06/g06-coordinador.md) (23-10 · `941fa5d`); [O09/qa-04](../../2026-10-23/O09/qa-04.md) (23-10 · `d5e528c`); [G14](../O14/g14-coordinador.md) (26-10 · `38228bb`); suite final en esta rama: [qa-05/informe.md](qa-05/informe.md#6-validación-de-la-rama) (26-10 · O16). | U-QA-01/02/04 | Ejecución real de los workflows en GitHub (push/PR) y promoción habilitada tras autorizar destinos: Néstor. |
+| **QA-01** La puerta de calidad permite errores de tipos | Una regresión de tipos bloquea el build; pruebas de restauración, aislamiento A/B, duplicados y edición. | U-INF-05/06, U-QA-01/02/04 | `implementado-local` | [G06](../../2026-10-23/O06/g06-coordinador.md) (23-10 · `941fa5d`); [O09/qa-04](../../2026-10-23/O09/qa-04.md) (23-10 · `d5e528c`); [G14](../O14/g14-coordinador.md) (26-10 · `38228bb`); suite final en esta rama: [qa-05/informe.md](qa-05/informe.md#6-enlaces-y-validación-de-la-rama) (26-10 · O16). | U-QA-01/02/04 | Ejecución real de los workflows en GitHub (push/PR) y promoción habilitada tras autorizar destinos: Néstor. |
 | **QA-02** Esquema y migraciones sin equivalencia | Migrar desde vacío y desde la versión anterior; verificar índices, FK y políticas. | U-INF-04/07, U-QA-01/04 | `implementado-local` | [O04/u-inf-04](../../2026-10-23/O04/u-inf-04-informe.md) (23-10 · `9652f92`); [O06/u-inf-06](../../2026-10-23/O06/u-inf-06-informe.md) (23-10 · `46d7d3e`); [O08/inf-07](../../2026-10-23/O08/inf-07/informe.md) (23-10 · `cbd2a9b`); catálogo completo (tablas, funciones, políticas, índices, triggers y grants) idéntico entre instalación limpia, migración 0002→0015 y restauración: [qa-05/informe.md](qa-05/informe.md#2-instalación-limpia-y-migración-desde-la-versión-previa) (26-10 · O16). | U-INF-04/07, U-QA-04 | Adopción y migración del destino real; ensayo nativo en Linux en el CI. |
 | **OPS-01** Logs de depuración y sin medición | Logs estructurados sin datos privados; errores, conexiones y latencia medidos; alertas. | U-OPS-01, U-QA-03/04 | `implementado-local` | [O03/u-ops-01](../../2026-10-23/O03/u-ops-01.md) (23-10 · `8b23b90`); [rendimiento 2026-10-23](../../rendimiento/2026-10-23/informe.md) (23-10 · `71e2e98`); [alertas](../../../alertas.md) (propuestas, no activadas). | U-OPS-01, U-QA-03/04 | Exportador, panel y alertas en la herramienta real con prueba de disparo controlada: Néstor. |
 | **OPS-02** Recuperación y privacidad sin política | Exportar, restaurar y solicitar/eliminar la cuenta; los respaldos del proveedor se verifican, no se presuponen; cabeceras y caché del alojamiento revisadas. | U-OPS-02/03/04, U-DAT-10, U-EXP-08 | `implementado-local` | [O07/ops-02](../../2026-10-23/O07/ops-02/informe.md) (23-10 · `f60d3eb`); [O12/ops-03](../../2026-10-25/O12/ops-03/informe.md) (25-10 · `144a7fd`); respaldo de la versión final con `biblib-media`/`biblib-covers`, borrado de cuenta y no resurrección al restaurar: [qa-05/informe.md](qa-05/informe.md#3-respaldo-y-restauración-de-la-versión-final) (26-10 · O16). | U-OPS-02/03/04, U-DAT-10 | Respaldos del proveedor y restauración remota; cabeceras y caché del alojamiento/CDN; bindings Docker en loopback (decisión A/B): Néstor. |

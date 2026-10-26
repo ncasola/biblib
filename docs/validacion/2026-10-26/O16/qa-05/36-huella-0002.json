@@ -1,0 +1,23 @@
+{
+  "migraciones": 3,
+  "cuentas": [
+    {
+      "email": "lector-a@biblib.test",
+      "fichas": 115,
+      "estanterias": 7,
+      "huella_fichas": "6c04e0a600474f75d23faf550bcc821d",
+      "huella_isbn": "a87a8191ae822b933770e9edc72405b2",
+      "huella_estanterias": "533fa0e5debdc4ed470fc76d2540c961",
+      "manuales": 11
+    },
+    {
+      "email": "lector-b@biblib.test",
+      "fichas": 4,
+      "estanterias": 3,
+      "huella_fichas": "f9af2b3240710e65e41900592b0689f2",
+      "huella_isbn": "b6e8efcf524d8bbf1169073dc8cd16a3",
+      "huella_estanterias": "110ca5da5cbe8709314e679700cf6c70",
+      "manuales": 2
+    }
+  ]
+}

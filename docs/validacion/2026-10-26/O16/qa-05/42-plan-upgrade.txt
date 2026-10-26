@@ -1,0 +1,8 @@
+Plan de migración · biblib-scratch · estado pending
+Head aplicado: 0002_book_versions · pendientes: 0003_library_revision, 0004_catalogue_coordination, 0005_library_jobs, 0006_library_snapshots, 0007_saved_views, 0008_restore_sessions, 0009_cover_assets, 0010_works_editions_copies, 0011_copies_cutover, 0012_model_account_deletion, 0013_account_deletion, 0014_product_batch_o13, 0015_reading_and_loans
+[ok] prerequisite.auth.users: auth.users lo proporciona la plataforma.
+[ok] prerequisite.auth.uid(): auth.uid() lo proporciona la plataforma.
+[ok] prerequisite.role:authenticated: role:authenticated lo proporciona la plataforma.
+[ok] prerequisite.role:anon: role:anon lo proporciona la plataforma.
+Plan migrate guardado en .biblib\plans\qa05-upgrade.json (caduca 2026-10-26T09:00:38.697Z).
+Para aplicarlo: pnpm db:migrate:local --plan .biblib\plans\qa05-upgrade.json --expect-project biblib-scratch --expect-plan 4705793649d372c6e6c5c950244dda75177c28eab1982ec479a2fc40e8fe8de6

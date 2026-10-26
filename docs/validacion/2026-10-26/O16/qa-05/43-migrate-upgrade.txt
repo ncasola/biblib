@@ -1,0 +1,6 @@
+Migración · biblib-scratch · aplicado: 0003_library_revision → 0004_catalogue_coordination → 0005_library_jobs → 0006_library_snapshots → 0007_saved_views → 0008_restore_sessions → 0009_cover_assets → 0010_works_editions_copies → 0011_copies_cutover → 0012_model_account_deletion → 0013_account_deletion → 0014_product_batch_o13 → 0015_reading_and_loans
+Head anterior: 0002_book_versions · head actual: 0015_reading_and_loans
+
+real	0m3.439s
+user	0m0.015s
+sys	0m0.015s

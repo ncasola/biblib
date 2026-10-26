@@ -1,0 +1,25 @@
+
+> biblib@1.0.0 test:integration:model C:\Users\ncaso\orca\workspaces\biblib\u-inf-03
+> node tests/integration/model/run.mjs "--profile" "scratch" "--reuse-build"
+
+Grupo model · perfil scratch · biblib-scratch · run 384e6c76343c
+✔ dos copias de un ISBN: una edición, dos ejemplares con estado, ubicación y comprobación independientes (4825.9455ms)
+✔ cambiar una edición compartida informa de cuántos ejemplares afecta y exige confirmarlo (816.3279ms)
+✔ un libro sin ISBN: null en la edición, se edita, se exporta en v2 y se restaura con null (700.887ms)
+✔ importar un v2 con dos copias de una edición conserva la edición compartida tras la vista previa (197.707ms)
+✔ aislamiento: B no cita ediciones ni ejemplares de A ni fusiona ediciones ajenas (514.5103ms)
+✔ concurrencia e idempotencia: altas simultáneas no duplican y repetir una clave recupera el resultado (348.5245ms)
+✔ fusionar ediciones: los ejemplares pasan con su estado y la revisión vieja se rechaza (630.0488ms)
+✔ ningún proveedor simulado acredita la comprobación física (211.1045ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 9992.2157
+
+real	0m15.246s
+user	0m0.030s
+sys	0m0.045s
