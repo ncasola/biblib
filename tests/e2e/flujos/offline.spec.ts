@@ -13,8 +13,11 @@ const PHRASE_B = "faro del norte"
 const BOOKS_A = ["El cuaderno de la bruma", "La isla de papel", "El reloj de las mareas", "Mapas de una ciudad inventada"]
 const ONLY_B = "Versos para un faro"
 const STATIC_PATHS = new Set(["/offline", "/logo-mark.png", "/logo.png", "/logo-transparent.png", "/logo-dark.png", "/manifest.webmanifest", "/default-book-cover.webp"])
-/** Peticiones que fallan a propósito sin red (refresco de sesión, recursos de la página) y su registro en consola. */
-const OFFLINE_CONSOLE = /net::ERR_INTERNET_DISCONNECTED|Failed to fetch|AuthRetryableFetchError|ERR_NAME_NOT_RESOLVED/
+/**
+ * Peticiones que fallan a propósito sin red (refresco de sesión, recursos de la página) y su registro en consola.
+ * WebKit registra la carga sin red como «internal error»: solo se admite en /offline y en la renovación de GoTrue.
+ */
+const OFFLINE_CONSOLE = /net::ERR_INTERNET_DISCONNECTED|Failed to fetch|AuthRetryableFetchError|ERR_NAME_NOT_RESOLVED|^Failed to load resource: WebKit encountered an internal error \[\/(offline|auth\/v1\/token)\]$/
 
 // WebKit bloquea los workers en todo su proyecto (playwright.config.ts); aquí son el objeto de la prueba.
 test.use({ account: "a", serviceWorkers: "allow" })
