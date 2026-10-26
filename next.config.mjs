@@ -1,6 +1,7 @@
 import { validateTarget } from "./scripts/db/environment.mjs"
 
 const target = process.env.BIBLIB_TARGET
+const STATIC_ASSET_CACHE = "public, max-age=86400, stale-while-revalidate=604800"
 if (target !== undefined) validateTarget(target)
 
 /** @type {import('next').NextConfig} */
@@ -35,6 +36,10 @@ const nextConfig = {
         { key: "Cache-Control", value: "private, no-store" },
         { key: "Vary", value: "Cookie" },
       ] },
+      // Logos y portada por defecto: públicos, sin cookies y casi inmutables. Un día en caché y una semana
+      // sirviendo la copia mientras se revalida; el manifiesto y el worker siguen sin caché larga.
+      { source: "/:asset(logo|logo-mark|logo-dark|logo-transparent).png", headers: [{ key: "Cache-Control", value: STATIC_ASSET_CACHE }] },
+      { source: "/default-book-cover.webp", headers: [{ key: "Cache-Control", value: STATIC_ASSET_CACHE }] },
     ]
   },
   // Pantallas retiradas del prototipo: el acceso publicado es solo Google OAuth,

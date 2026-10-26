@@ -178,10 +178,15 @@ test("cabeceras: sw.js y /offline sin caché larga (private, no-store) y el mani
   type HeaderRule = { source: string; headers: { key: string; value: string }[] }
   const config = await import(pathToFileURL(path.join(process.cwd(), "next.config.mjs")).href) as { default: { headers(): Promise<HeaderRule[]> } }
   const rules = (await config.default.headers()).filter((rule) => rule.headers.some(({ key }) => key === "Cache-Control"))
-  assert.equal(rules.length, 1, "Una sola regla de Cache-Control: la matriz de U-OPS-04 no cambia")
-  const matches = new RegExp(`^${rules[0].source}$`)
-  assert.deepEqual(rules[0].headers.find(({ key }) => key === "Cache-Control"), { key: "Cache-Control", value: "private, no-store" })
+  const isPrivate = (rule: HeaderRule) => rule.headers.some(({ key, value }) => key === "Cache-Control" && value === "private, no-store")
+  const privateRules = rules.filter(isPrivate)
+  assert.equal(privateRules.length, 1, "Una sola regla privada de Cache-Control: la matriz de U-OPS-04 no cambia")
+  const matches = new RegExp(`^${privateRules[0].source}$`)
   for (const route of ["/sw.js", "/offline", "/api/library/export", "/auth/callback"]) assert.ok(matches.test(route), route)
   assert.ok(!matches.test("/manifest.webmanifest"))
   assert.ok(!matches.test("/_next/static/chunks/app.js"))
+  // Las demás reglas (logos y portada por defecto) nunca alcanzan el worker, /offline ni el manifiesto.
+  const longCache = rules.filter((rule) => !isPrivate(rule)).map((rule) => rule.source)
+  assert.deepEqual(longCache, ["/:asset(logo|logo-mark|logo-dark|logo-transparent).png", "/default-book-cover.webp"])
+  for (const source of longCache) assert.ok(!["/sw.js", "/offline", "/manifest.webmanifest"].includes(source))
 })
