@@ -588,7 +588,7 @@
         "UX-05",
         "UI-01"
       ],
-      "status": "in-progress"
+      "status": "implemented"
     },
     {
       "id": "U-EXP-08",
@@ -616,7 +616,7 @@
         "OPS-02",
         "FE-01"
       ],
-      "status": "in-progress"
+      "status": "implemented"
     },
     {
       "id": "U-PRO-01",
@@ -914,7 +914,7 @@
         "OPS-01",
         "OPS-02"
       ],
-      "status": "planned"
+      "status": "in-progress"
     },
     {
       "id": "U-OPS-01",
