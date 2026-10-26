@@ -191,8 +191,7 @@
       "note": "Se entrega preparada: sin destino remoto autorizado.",
       "evidence": "O08 · merge 9441517; 8/8 escenarios contra Postgres efímero con TLS y scratch",
       "pending": [
-        "Toda verificación contra preprod/prod reales: autorización de Néstor, ref real, preprod inexistente, plan del proveedor.",
-        "docs/recuperacion.md desfasado respecto al recibo ampliado."
+        "Toda verificación contra preprod/prod reales: autorización de Néstor, ref real, preprod inexistente, plan del proveedor."
       ]
     },
     {
@@ -262,8 +261,7 @@
       "status": "implemented",
       "evidence": "O09 · merge 3a0458b + 8d39ff1; 0005_library_jobs; test:integration:jobs 19/19 en scratch con código integrado (docs/validacion/2026-10-23/O09/dat-03/)",
       "pending": [
-        "startImportJobAction sin consumidor en la UI.",
-        "prepareImport sigue usando enrichImportedBookCovers (fixture ya sin red): U-BIB-05."
+        "startImportJobAction sin consumidor en la UI."
       ]
     },
     {
@@ -308,10 +306,7 @@
       ],
       "status": "implemented",
       "evidence": "O08 · merge 88570f3; 0004_catalogue_coordination; grupo catalogue 14/14 en scratch (docs/validacion/2026-10-23/O08/dat-05/)",
-      "pending": [
-        "lib/library-import.ts y lib/api-client.ts siguen con fetch directo a OL: U-BIB-05/U-DAT-03.",
-        "Grupo catalogue con el perfil test en el cierre de ola."
-      ]
+      "pending": []
     },
     {
       "id": "U-DAT-06",
@@ -588,7 +583,11 @@
         "UX-05",
         "UI-01"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "evidence": "O15 · merge 07f7dcf; E2E impresión 6/6, PDF A4/Carta, E2E completo 85 (docs/validacion/2026-10-26/O15/exp-07/); G15 docs/validacion/2026-10-26/O15/g15-coordinador.md",
+      "pending": [
+        "Firefox/WebKit y diálogo nativo de impresión sin probar."
+      ]
     },
     {
       "id": "U-EXP-08",
@@ -616,7 +615,12 @@
         "OPS-02",
         "FE-01"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "evidence": "O15 · merge b02afe7; E2E offline 7/7, cabeceras 53/53, a11y 10/10 (docs/validacion/2026-10-26/O15/exp-08/); G15",
+      "pending": [
+        "Parámetros de la copia (PIN/frase, PBKDF2 600k, TTL 7 días, 10 intentos) fijados por el coordinador: revisión del usuario antes de activar BIBLIB_OFFLINE_SNAPSHOT.",
+        "Firefox/WebKit, dispositivos reales y purga por SIGNED_OUT con sesión revocada en remoto sin probar."
+      ]
     },
     {
       "id": "U-PRO-01",
@@ -655,7 +659,11 @@
         "UI-01",
         "IMP-03"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "evidence": "O14 · merge 8bc4b47; integración reading 28/28, E2E lectura 4/4 en test (docs/validacion/2026-10-26/O14/pro-02/); G14",
+      "pending": [
+        "Las cifras «Leyendo»/«Leídos» del inicio cuentan el estado del libro y «Seguir leyendo» los ciclos abiertos: unificarlas es decisión de diseño del usuario."
+      ]
     },
     {
       "id": "U-PRO-03",
@@ -694,7 +702,8 @@
         "UX-01",
         "OPS-02"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "evidence": "O14 · merge 1e951dc; loans 10/10, reading-loans 19/19, E2E completo 74 y a11y 10/10 en test (docs/validacion/2026-10-26/O14/pro-04/); G14"
     },
     {
       "id": "U-PRO-05",
@@ -738,8 +747,7 @@
       "status": "implemented",
       "evidence": "O06 · merge 22a2b8c; test:integration:local 34/34 ×2 contra perfil test (docs/validacion/2026-10-23/O06/qa-01/)",
       "pending": [
-        "scripts/next-target.mjs pasa SUPABASE_SERVICE_ROLE_KEY local al proceso servidor de Next (no al bundle): retirarlo del childEnv de la app.",
-        "Con GoTrue/Storage caídos, Kong cuelga ~60 s y el proxy no tiene timeout (UX-04/U-QA-02).",
+        "Con GoTrue/Storage caídos, Kong cuelga ~60 s y el proxy no tiene timeout (UX-04/U-QA-02): en O16-FIX.",
         "El runner no resiembra por el límite de correo de GoTrue (2/h).",
         "Pruebas A/B de assets por propietario al integrar U-DAT-10."
       ]
@@ -960,8 +968,7 @@
       "status": "implemented",
       "evidence": "O07 · merge 6e6eb9c; backup→reset→restore→verify en scratch (docs/validacion/2026-10-23/O07/ops-02/)",
       "pending": [
-        "Procedimiento remoto: U-INF-07 y plan del proveedor.",
-        "El recibo de backup aún no satisface --backup-receipt de db:reset:local."
+        "Procedimiento remoto: U-INF-07 y plan del proveedor."
       ]
     },
     {
@@ -1010,8 +1017,7 @@
       "status": "implemented-local",
       "evidence": "O09 · merge fee2525; headers 35/35, integración security 19/19, service_role fuera de Next",
       "pending": [
-        "HTTPS real, CDN, Google OAuth real y CSP en modo enforcement.",
-        "Repetir con U-EXP-05 y U-EXP-08."
+        "HTTPS real, CDN, Google OAuth real y CSP en modo enforcement."
       ]
     },
     {
@@ -1233,7 +1239,8 @@
       "priority": "P1",
       "document": "07-rediseno.md",
       "auditRefs": [],
-      "status": "implemented"
+      "status": "implemented",
+      "evidence": "O14 · merge 4abc6fd; contraste AA mínimo 5,16:1 claro / 5,23:1 oscuro (docs/validacion/2026-10-26/UX/ux-01/); G14 docs/validacion/2026-10-26/O14/g14-coordinador.md"
     },
     {
       "id": "U-UX-02",
@@ -1248,7 +1255,8 @@
       "priority": "P1",
       "document": "07-rediseno.md",
       "auditRefs": [],
-      "status": "implemented"
+      "status": "implemented",
+      "evidence": "O14 · merge fe974b8; E2E 3D 7/7, axe 0 violaciones en ambos temas (docs/validacion/2026-10-26/UX/ux-02/); G14"
     }
   ]
 }
