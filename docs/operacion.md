@@ -1779,3 +1779,12 @@ node docs/validacion/2026-10-26/O16/qa-05/catalogo.mjs --diff <a.json> <b.json>
 - Los bordes de paginación 0/1/10/11 quedan en `tests/e2e/flujos/paginacion.spec.ts`; las coberturas de unidades integradas se referencian en `pendientes.spec.ts`.
 
 Mediciones, validación y límites del intento de reproducir la contención de `test:scripts`: [informe O16-FIX](validacion/2026-10-26/O16/fix/informe.md).
+
+## E2E en Firefox y WebKit · O16-XB
+
+`pnpm test:e2e:local --profile test --project chromium --project firefox --project webkit` es el cierre de ola en los tres motores. Con `--reuse-build` y `--grep "<texto>"` se itera sobre un grupo sin recompilar (recompila sin `--reuse-build` si cambia el código de la app). Antes de los tres navegadores, deja 5 minutos desde el último run: son 33 intentos de acceso y GoTrue admite 30 cada 5 minutos.
+
+- **WebKit sin service worker.** WebKit no aplica `route()` a las peticiones de una página controlada por un worker. El proyecto `webkit` los bloquea y solo `offline.spec.ts` los permite. En G16 el logout simulado llegaba a GoTrue con `scope=global`, revocaba la sesión guardada de A y todo WebKit posterior acababa en «Acceso · BibLib». La semántica del cierre de sesión del producto no cambia.
+- **Evidencia fuera del árbol.** Préstamos, impresión y accesibilidad escriben en `.biblib/e2e/evidencia/<fecha>/<ola>/<unidad>`. Para regenerar a propósito la evidencia publicada: `$env:BIBLIB_E2E_EVIDENCE_DIR = "docs/validacion"` antes del runner (también en `test:a11y:local`). Un run sin la variable deja `git status` limpio.
+- **Datos entre proyectos.** Los tres navegadores comparten A y B. Cada prueba borra lo suyo por el `data.slug(...)` del título; las que exportan en v1 comprueban antes que A no tenga datos que exijan v2 (`v2Residue`) y nombran lo que haya quedado.
+- **Omisiones por motor** (motivo en la prueba e inventario en el [informe O16-XB](validacion/2026-10-26/O16/xb/informe.md)): tres pruebas offline en Firefox (el worker no atiende navegaciones con `setOffline`) y, en el WebKit de Playwright para Windows, el paso del PIN incorrecto (AES-KW sin comprobación de integridad, detectado con una sonda). La cámara simulada crea `mediaDevices`/`MediaStream` donde faltan y WebKit llega a los enlaces con Opción+Tab, como Safari.
