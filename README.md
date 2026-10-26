@@ -36,8 +36,6 @@ pnpm db:local:credentials --as a --profile scratch   # en otra terminal interact
 pnpm db:local:down --profile scratch
 ```
 
-`next dev` (también `dev:local`) añade a `agents.md` un bloque de reglas de Next 16; no lo incluyas en un commit salvo que se decida conservarlo.
-
 ## Catalogar y organizar
 
 - Busca por ISBN o añade una ficha manual. Los ISBN se validan y normalizan; su equivalente de 10 y 13 dígitos identifica la misma edición a efectos de duplicados.
