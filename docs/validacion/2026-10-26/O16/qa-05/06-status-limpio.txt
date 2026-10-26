@@ -1,0 +1,3 @@
+Estado de migraciones · biblib-scratch · up-to-date
+Head aplicado: 0015_reading_and_loans · esperado: 0015_reading_and_loans · pendientes: ninguna
+864 comprobaciones correctas.
