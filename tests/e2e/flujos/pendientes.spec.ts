@@ -42,7 +42,6 @@ test.describe("Privacidad · pendientes", () => {
 
 test.describe("Producto", () => {
   pending("U-PRO-01", "notas, etiquetas y valoración")
-  pending("U-PRO-02", "ciclos y progreso de lectura")
   pending("U-PRO-04", "préstamos")
   pending("U-PRO-03", "ubicación física")
   pending("U-PRO-05", "series y volúmenes")

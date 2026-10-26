@@ -7,6 +7,7 @@ import { BookCover } from "@/components/book-cover"
 import { BookStatusBadge } from "@/components/book-status-badge"
 import { ShelfSpines } from "@/components/shelf-spines"
 import { LoanSummary } from "@/components/loan-summary"
+import { ReadingContinueSection, ReadingStatsSection } from "@/components/reading-home"
 import Link from "next/link"
 import { useCallback, useEffect, useState, type ReactNode } from "react"
 import { getLibrarySummaryAction } from "@/app/actions/library"
@@ -120,26 +121,9 @@ export default function Dashboard() {
           </div>
         </section>
 
-        {reading.length > 0 && (
-          <section aria-labelledby="seguir-leyendo" className="flex flex-col gap-4">
-            <SectionTitle id="seguir-leyendo" title="Seguir leyendo" action={<Link href="/books?status=reading" className="link-quiet inline-flex min-h-11 items-center">Ver todo</Link>} />
-            <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {reading.slice(0, 3).map((book) => (
-                <li key={book.id}>
-                  <Link href={`/book/${book.id}`} className="surface-card group flex h-full gap-4 p-4 transition-[transform,box-shadow] duration-300 hover:shadow-xl motion-safe:hover:-translate-y-0.5">
-                    <BookCover cover={displayCover(book)} title={book.title} sizes="92px" className="w-[5.75rem] shrink-0 rounded-[4px_8px_8px_4px] border-0 shadow-[0_14px_24px_-8px_rgb(0_0_0/0.45)]" />
-                    <span className="flex min-w-0 flex-1 flex-col gap-1.5">
-                      <span className="font-heading text-xl leading-tight font-bold text-heading group-hover:underline group-hover:decoration-brass group-hover:underline-offset-4">{book.title}</span>
-                      <span className="text-sm text-muted-foreground">{authorsOf(book)}</span>
-                      <span className="mt-auto flex flex-wrap items-center gap-2 pt-2 text-xs text-muted-foreground"><BookStatusBadge status={book.status} />{book.shelf_name}</span>
-                      {/* Hueco para el progreso de lectura (páginas leídas, O14): sin barra ni cifras hasta tener datos. */}
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
+        {/* U-PRO-02: ciclos de lectura abiertos reales y estadísticas de lo registrado (components/reading-home.tsx). */}
+        <ReadingContinueSection />
+        <ReadingStatsSection />
 
         <section aria-labelledby="estanterias-inicio" className="flex flex-col gap-4">
           <SectionTitle id="estanterias-inicio" title="Estanterías" action={<span className="flex flex-wrap gap-x-5"><Link href="/shelves/3d" className="link-quiet inline-flex min-h-11 items-center">Abrir en 3D</Link><Link href="/shelves" className="link-quiet inline-flex min-h-11 items-center">Gestionar estanterías</Link></span>} />
