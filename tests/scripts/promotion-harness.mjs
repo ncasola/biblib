@@ -170,7 +170,7 @@ ${extra}`)
 
 /**
  * Productor de recibos SOLO de ensayo: el respaldo remoto real depende del plan del proveedor y
- * está pendiente. Vuelca biblib/drizzle y auth.users dentro del contenedor, mide ledger y hechos
+ * está pendiente. Vuelca biblib/biblib_migrations y auth.users dentro del contenedor, mide ledger y hechos
  * de catálogo por la conexión del runner y escribe un recibo con el mismo contrato.
  */
 export async function rehearsalBackup(remote, { root = repo, target, project, fingerprint, sql, now = new Date() }) {
@@ -188,7 +188,7 @@ export async function rehearsalBackup(remote, { root = repo, target, project, fi
     return { inspection, objects: await objectFacts(tx) }
   })
   add("auth-data", "db/auth-users.sql", `${dump(["--data-only", "--table", "auth.users"])}\n`)
-  add("domain-dump", "db/biblib-drizzle.sql", `${dump(["--schema", "biblib", "--schema", "drizzle"])}\n`)
+  add("domain-dump", "db/biblib-drizzle.sql", `${dump(["--schema", "biblib", "--schema", "biblib_migrations"])}\n`)
   const receipt = {
     schemaVersion: 1, kind: RECEIPT_KIND, backupId, createdAt: now.toISOString(), completedAt: new Date().toISOString(),
     target: { target, profile: null, project }, fingerprint, commit: null,
@@ -224,7 +224,7 @@ export async function rehearseRestore(backup, { root = repo } = {}) {
       copy.psql(readFileSync(path.join(root, file.path), "utf8"))
     }
     // Desde 0009 el bucket de portadas y sus políticas de storage.objects se reinstalan tras el volcado
-    // de dominio, como hace db:restore:local (el volcado de biblib/drizzle no los contiene).
+    // de dominio, como hace db:restore:local (el volcado de biblib/biblib_migrations no los contiene).
     copy.psql("DO $$ BEGIN IF to_regprocedure('biblib.cover_storage_install()') IS NOT NULL THEN PERFORM biblib.cover_storage_install(); END IF; END $$;")
     // Desde 0014, igual con el bucket privado de imágenes (`biblib-media`).
     copy.psql("DO $$ BEGIN IF to_regprocedure('biblib.media_storage_install()') IS NOT NULL THEN PERFORM biblib.media_storage_install(); END IF; END $$;")

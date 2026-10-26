@@ -142,7 +142,7 @@ export async function applyAdoption(sql, { plan, journal, migrationsDir = MIGRAT
   const lock = await acquireMigrationLock(sql, { waitMs, signal })
   report.waitedForLock = lock.waited
   try {
-    const before = await inspectDatabase(sql, journal)
+    const before = await inspectDatabase(sql, journal, { legacy: "adopt" })
     if (before.state !== "adoption-required") fail(EXIT.PLAN_REJECTED, "adopción", `El destino ya no requiere adopción (estado ${before.state}); ¿otro runner? No se ha escrito nada. Genera un plan nuevo.`)
     const analysis = analyzeAdoption(before.facts, journal, { migrationsDir })
     if (!analysis.proven) throw Object.assign(new BiblibError(EXIT.HISTORY_DIVERGED, "adopción", "El esquema ya no es equivalente al prefijo planificado; no se adopta."), { report: { ...report, result: "rechazado: sin equivalencia", reconciliation: analysis.reconciliation } })
@@ -156,7 +156,7 @@ export async function applyAdoption(sql, { plan, journal, migrationsDir = MIGRAT
       for (const row of plan.adoption.rows) await tx`insert into ${tx(LEDGER.schema)}.${tx(LEDGER.table)} (hash, created_at) values (${row.hash}, ${row.created_at})`
       const ledger = await readLedger(tx)
       const comparison = compareLedger(journal.entries, ledger.rows)
-      const after = classify(journal, ledger, await inspectObjects(tx))
+      const after = classify(journal, ledger, await inspectObjects(tx), { legacy: "adopt" })
       if (comparison.problems.length || comparison.appliedHead?.tag !== plan.adoption.head.tag || !["pending", "up-to-date"].includes(after.state)) {
         fail(EXIT.VERIFICATION_FAILED, "verificación", "El ledger adoptado no produce un historial coherente con el manifest; se revierte sin escribir nada.")
       }

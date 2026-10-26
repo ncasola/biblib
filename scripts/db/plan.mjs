@@ -177,7 +177,7 @@ export async function createPlan({ profile, out, root = REPO_ROOT, migrationsDir
 }
 
 const ADOPTION_RISKS = [
-  "Adopción excepcional: solo crea el ledger drizzle.__drizzle_migrations si falta y escribe sus filas; no ejecuta DDL de negocio ya presente.",
+  "Adopción excepcional: solo crea el ledger biblib_migrations.__drizzle_migrations si falta y escribe sus filas; no ejecuta DDL de negocio ya presente.",
   "Tras adoptar, el head cambia: genera un plan migrate nuevo y un respaldo de ese head antes de aplicar los pendientes.",
 ]
 
@@ -200,8 +200,8 @@ export async function createRemotePlan({ target, out, expectProject, root = REPO
   let observed
   try {
     observed = await sql.begin("read only", async (tx) => {
-      const probe = await probeRemote(tx)
-      const inspection = await inspectDatabase(tx, journal)
+      const probe = await probeRemote(tx, remote.descriptor)
+      const inspection = await inspectDatabase(tx, journal, { legacy: "adopt" })
       const adoption = inspection.state === "adoption-required" ? analyzeAdoption(inspection.facts, journal, { migrationsDir }) : null
       const data = await dataPreflight(tx, adoption?.proven ? adoption.pendingAfter : inspection.pending)
       return { probe, inspection, adoption, data }

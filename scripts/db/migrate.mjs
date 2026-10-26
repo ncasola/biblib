@@ -9,10 +9,10 @@ import { localPath } from "../lib/local-path.mjs"
 import { objectFacts } from "../lib/backup-db.mjs"
 import { REPO_ROOT } from "../lib/profiles.mjs"
 import { sanitize } from "../lib/process.mjs"
-import { compareLedger, inspectJournal, LEDGER, loadJournal, MIGRATIONS_DIR } from "./journal-guard.mjs"
+import { compareLedger, inspectJournal, LEDGER, LEGACY_LEDGER, loadJournal, MIGRATIONS_DIR } from "./journal-guard.mjs"
 import { inspectObjects, verifyManifest } from "./objects-manifest.mjs"
 import { assertPlanMatchesTarget, createPlan, gitCommit, readPlan, validatePlan } from "./plan.mjs"
-import { assertSupportedTarget, closeConnection, connect, connectionError, drizzleVersion, inspectDatabase, readLedger, resolveLocal } from "./target.mjs"
+import { assertSupportedTarget, closeConnection, connect, connectionError, drizzleVersion, effectiveLedger, inspectDatabase, moveLegacyLedger, readLedger, resolveLocal } from "./target.mjs"
 import { withRemoteEnvFile } from "./remote-env.mjs"
 import { assertReceiptMatchesDatabase, connectRemote, dataPreflight, describeRemote, isRemoteTarget, platformFingerprint, probeRemote, remoteConnectionError, validateBackupReceipt } from "./remote-preflight.mjs"
 import { analyzeAdoption, applyAdoption } from "./adopt.mjs"
@@ -77,13 +77,20 @@ function failedChange(error, journal, pending) {
  * Aplica con el migrador de Drizzle bajo bloqueo consultivo y verifica el resultado.
  * `migrationsDir` solo cambia en pruebas de stack (por ejemplo, una migración que falla).
  */
-export async function applyPlan(sql, { plan, journal, migrationsDir = MIGRATIONS_DIR, waitMs = lockWait(), signal, beforeApply }) {
+export async function applyPlan(sql, { plan, journal, migrationsDir = MIGRATIONS_DIR, waitMs = lockWait(), signal, beforeApply, legacy = "use" }) {
   const report = { previousHead: plan.appliedHead, attempted: plan.pending, failedChange: null, result: "pending", head: plan.appliedHead }
   const lock = await acquireMigrationLock(sql, { waitMs, signal })
   report.waitedForLock = lock.waited
   try {
-    const before = await inspectDatabase(sql, journal)
+    let before = await inspectDatabase(sql, journal, { legacy })
     assertPlanMatchesTarget(plan, before)
+    // Solo en local (legacy "use"): el historial anterior de BibLib pasa al ledger propio antes de aplicar.
+    if (before.ledgerSource === "legacy") {
+      await moveLegacyLedger(sql, before.ledger.legacyRows)
+      report.ledgerMoved = `${LEGACY_LEDGER.schema}.${LEGACY_LEDGER.table} → ${LEDGER.schema}.${LEDGER.table}`
+      before = await inspectDatabase(sql, journal, { legacy })
+      assertPlanMatchesTarget(plan, before)
+    }
     if (!plan.pending.length) return { ...report, result: "sin cambios: el destino ya estaba al día", checks: before.manifest }
     // Comprobaciones de promoción (recibo frente al destino, huella de plataforma), ya bajo bloqueo.
     await beforeApply?.(sql, before)
@@ -204,8 +211,8 @@ export async function statusRemote({ target, expectProject, root = REPO_ROOT, mi
   const sql = connectRemote(remote, { applicationName: "biblib-status", resolveHost: deps.resolveHost })
   try {
     const observed = journal.problems.length ? null : await sql.begin("read only", async (tx) => {
-      const probe = await probeRemote(tx)
-      const inspection = await inspectDatabase(tx, journal)
+      const probe = await probeRemote(tx, remote.descriptor)
+      const inspection = await inspectDatabase(tx, journal, { legacy: "adopt" })
       const adoption = inspection.state === "adoption-required" ? analyzeAdoption(inspection.facts, journal, { migrationsDir }) : null
       return { probe, inspection, adoption, data: await dataPreflight(tx, adoption?.proven ? adoption.pendingAfter : inspection.pending) }
     })
@@ -270,14 +277,14 @@ export async function runPromotion(options, { kind = "migrate", apply = applyPla
   signal?.addEventListener("abort", abort, { once: true })
   let platformBefore = null
   try {
-    const probe = await sql.begin("read only", (tx) => probeRemote(tx))
+    const probe = await sql.begin("read only", (tx) => probeRemote(tx, remote.descriptor))
     const failed = probe.checks.find((c) => c.status === "fail")
     if (failed) fail(failed.code, "preflight", failed.message)
     const beforeApply = async (locked, before) => {
       assertReceiptMatchesDatabase(backup, { ledgerRows: before.ledger.rows, objectsHash: (await objectFacts(locked)).hash })
       platformBefore = await platformFingerprint(locked)
     }
-    const report = await apply(sql, { plan, journal, migrationsDir, signal, beforeApply })
+    const report = await apply(sql, { plan, journal, migrationsDir, signal, beforeApply, legacy: "adopt" })
     const platformAfter = platformBefore ? await platformFingerprint(sql) : null
     const platform = platformBefore ? { before: platformBefore, after: platformAfter, unchanged: platformBefore === platformAfter } : null
     const failing = (report.checks ?? []).filter((c) => c.status === "fail")
@@ -315,7 +322,7 @@ export async function readAppliedHead(stackContext) {
   const resolved = await resolveLocal(stackContext.profile.name, { root: stackContext.root, stack: stackContext })
   const sql = connect(resolved, { applicationName: "biblib-status" })
   try {
-    const ledger = await sql.begin("read only", (tx) => readLedger(tx))
+    const { ledger } = effectiveLedger(journal, await sql.begin("read only", (tx) => readLedger(tx)))
     if (!ledger.rows.length) return null
     const comparison = compareLedger(journal.entries, ledger.rows)
     return { tag: comparison.appliedHead?.tag ?? null, applied: comparison.migrations.filter((m) => m.status === "applied").length, expected: journal.entries.length, state: comparison.problems.length ? "diverged" : comparison.pending.length ? "pending" : "up-to-date" }

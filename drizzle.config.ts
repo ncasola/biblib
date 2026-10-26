@@ -14,7 +14,7 @@ export default defineConfig({
   out: "./drizzle",
   dialect: "postgresql",
   migrations: {
-    schema: "drizzle",
+    schema: "biblib_migrations",
     table: "__drizzle_migrations",
   },
   strict: true,

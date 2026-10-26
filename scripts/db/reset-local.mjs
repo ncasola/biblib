@@ -7,7 +7,7 @@ import { localPath, removeLocalPath } from "../lib/local-path.mjs"
 import { checkPublishedBindings, REPO_ROOT } from "../lib/profiles.mjs"
 import { acquireLock, readState, writeState } from "../lib/state.mjs"
 import { canonical, computePlanHash, PLAN_TTL_MS, readPlan, resolvePlanPath, writePlan } from "./plan.mjs"
-import { sha256 } from "./journal-guard.mjs"
+import { LEDGER, sha256 } from "./journal-guard.mjs"
 import { closeConnection, connect, connectionError } from "./target.mjs"
 import { acquireMigrationLock, releaseMigrationLock } from "./migrate.mjs"
 import { assertNoForeignEnvFiles } from "./environment.mjs"
@@ -94,7 +94,7 @@ export async function discardedState(ctx, target, { sql: provided } = {}) {
   const sql = provided ?? connect({ target }, { applicationName: "biblib-reset-plan" })
   try {
     const readTables = async (tx) => {
-      const names = await tx`select schemaname, tablename from pg_tables where schemaname in ('biblib', 'auth', 'storage', 'drizzle') order by schemaname, tablename`
+      const names = await tx`select schemaname, tablename from pg_tables where schemaname in ('biblib', 'auth', 'storage', ${LEDGER.schema}) order by schemaname, tablename`
       const result = []
       for (const table of names) {
         const [row] = await tx`select count(*)::integer as count, md5(coalesce(string_agg(md5(to_jsonb(t)::text), '' order by md5(to_jsonb(t)::text)), '')) as hash from ${tx(table.schemaname)}.${tx(table.tablename)} t`
@@ -105,7 +105,7 @@ export async function discardedState(ctx, target, { sql: provided } = {}) {
     const tables = provided ? await readTables(sql) : await sql.begin("isolation level repeatable read read only", readTables)
     const mailbox = await mailpitInventory(ctx)
     const count = (schema, table) => tables.find((t) => t.schema === schema && t.table === table)?.count ?? 0
-    return { counts: { domain: { books: count("biblib", "books"), shelves: count("biblib", "shelves") }, auth: { users: count("auth", "users"), sessions: count("auth", "sessions"), refreshTokens: count("auth", "refresh_tokens") }, storage: { buckets: count("storage", "buckets"), objects: count("storage", "objects") }, mailpit: { messages: mailbox.total }, ledger: count("drizzle", "__drizzle_migrations") }, tables, mailpitHash: sha256(canonical(mailbox)), hash: sha256(canonical({ tables, mailbox })) }
+    return { counts: { domain: { books: count("biblib", "books"), shelves: count("biblib", "shelves") }, auth: { users: count("auth", "users"), sessions: count("auth", "sessions"), refreshTokens: count("auth", "refresh_tokens") }, storage: { buckets: count("storage", "buckets"), objects: count("storage", "objects") }, mailpit: { messages: mailbox.total }, ledger: count(LEDGER.schema, LEDGER.table) }, tables, mailpitHash: sha256(canonical(mailbox)), hash: sha256(canonical({ tables, mailbox })) }
   } finally { if (!provided) await closeConnection(sql) }
 }
 
@@ -181,7 +181,7 @@ export async function runReset(options, deps) {
         // Postgres local no permite LOCK en tablas auth/storage de la plataforma.
         // max:1 permite esta transacción explícita en la conexión dedicada.
         await lockSql.unsafe("begin")
-        const tables = await lockSql`select schemaname, tablename from pg_tables where schemaname in ('biblib', 'drizzle') order by schemaname, tablename`
+        const tables = await lockSql`select schemaname, tablename from pg_tables where schemaname in ('biblib', ${LEDGER.schema}) order by schemaname, tablename`
         for (const table of tables) await lockSql`lock table ${lockSql(table.schemaname)}.${lockSql(table.tablename)} in share mode`
       }
       const discarded = await snapshot(ctx, target, { sql: lockSql })

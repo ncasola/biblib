@@ -1,4 +1,5 @@
 import { canonical } from "../db/plan.mjs"
+import { LEDGER } from "../db/journal-guard.mjs"
 import { inspectObjects } from "../db/objects-manifest.mjs"
 import { BiblibError, EXIT } from "./exit-codes.mjs"
 import { AUTH_TABLES, sha256 } from "./backup-files.mjs"
@@ -18,19 +19,19 @@ export const ROTATING_COLUMNS = Object.freeze({ "biblib.books": ["version"], "bi
   ...Object.fromEntries(PRODUCT_TOKEN_TABLES.map((table) => [`biblib.${table}`, ["version"]])) })
 // Clave natural de cada tabla para comparar presencia cuando el contenido cambia legítimamente.
 // Las tablas de producto de 0014 sin `id` se identifican por su clave primaria (sin la `version` que rota el restore).
-export const TABLE_KEYS = Object.freeze({ "storage.objects": ["bucket_id", "name"], "drizzle.__drizzle_migrations": ["hash", "created_at"], "biblib.library_state": ["user_id"],
+export const TABLE_KEYS = Object.freeze({ "storage.objects": ["bucket_id", "name"], [`${LEDGER.schema}.${LEDGER.table}`]: ["hash", "created_at"], "biblib.library_state": ["user_id"],
   "biblib.copy_tags": ["user_id", "copy_id", "tag_id"], "biblib.copy_annotations": ["user_id", "copy_id"], "biblib.copy_locations": ["user_id", "copy_id"],
   "biblib.series_editions": ["user_id", "edition_id"], "biblib.profiles": ["user_id"] })
 // Auth y Storage se comparan por cantidad y claves: restore reasigna credenciales de fixtures
 // y Storage recrea sus filas al subir los bytes por API.
-export const CONTENT_SCHEMAS = Object.freeze(["biblib", "drizzle"])
+export const CONTENT_SCHEMAS = Object.freeze(["biblib", LEDGER.schema])
 
 const key = (t) => `${t.schema}.${t.table}`
 
 /** Tablas incluidas en el alcance: dominio, ledger, identidades Auth y Storage. */
 export async function scopeTables(tx) {
   const rows = await tx`select schemaname as schema, tablename as table from pg_tables
-    where schemaname in ('biblib', 'drizzle') or (schemaname = 'auth' and tablename = any(${AUTH_TABLES}::text[]))
+    where schemaname in ('biblib', ${LEDGER.schema}) or (schemaname = 'auth' and tablename = any(${AUTH_TABLES}::text[]))
       or (schemaname = 'storage' and tablename in ('buckets', 'objects'))
     order by schemaname, tablename`
   const auth = await tx`select tablename as table from pg_tables where schemaname = 'auth' order by tablename`

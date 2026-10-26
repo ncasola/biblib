@@ -5,7 +5,8 @@ import path from "node:path"
 import { after, before, describe, test } from "node:test"
 import { applyAdoption } from "../../scripts/db/adopt.mjs"
 import { loadJournal } from "../../scripts/db/journal-guard.mjs"
-import { runPromotion, statusRemote } from "../../scripts/db/migrate.mjs"
+import { applyPlan, runPromotion, statusRemote } from "../../scripts/db/migrate.mjs"
+import { inspectDatabase } from "../../scripts/db/target.mjs"
 import { computePlanHash, createRemotePlan } from "../../scripts/db/plan.mjs"
 import { connectRemote, describeRemote } from "../../scripts/db/remote-preflight.mjs"
 import { objectFacts } from "../../scripts/lib/backup-db.mjs"
@@ -46,7 +47,7 @@ describe("promoción contra un remoto simulado [stack]", { skip }, () => {
   })
 
   const track = (file) => { if (file) created.push(file); return file }
-  const reset = () => remote.psql("drop schema if exists biblib cascade; drop schema if exists drizzle cascade; delete from auth.users;")
+  const reset = () => remote.psql("drop schema if exists biblib cascade; drop schema if exists biblib_migrations cascade; drop schema if exists drizzle cascade; delete from auth.users;")
   async function plan(name, { migrationsDir } = {}) {
     const out = `inf07-${process.pid}-${name}.json`
     const result = await createRemotePlan({ target: TARGET, out, expectProject: REF, env, ...(migrationsDir ? { migrationsDir } : {}) }, deps)
@@ -74,20 +75,20 @@ describe("promoción contra un remoto simulado [stack]", { skip }, () => {
       return result
     } catch (error) { track(error.record); throw error }
   }
-  const ledger = async () => (await admin`select to_regclass('drizzle.__drizzle_migrations') is not null as present`)[0].present ? (await admin`select hash, created_at::bigint as created_at from drizzle.__drizzle_migrations order by id`).map((r) => ({ hash: r.hash, created_at: Number(r.created_at) })) : null
-  const schemas = async () => (await admin`select nspname from pg_namespace where nspname in ('biblib', 'drizzle') order by 1`).map((r) => r.nspname)
+  const ledger = async () => (await admin`select to_regclass('biblib_migrations.__drizzle_migrations') is not null as present`)[0].present ? (await admin`select hash, created_at::bigint as created_at from biblib_migrations.__drizzle_migrations order by id`).map((r) => ({ hash: r.hash, created_at: Number(r.created_at) })) : null
+  const schemas = async () => (await admin`select nspname from pg_namespace where nspname in ('biblib', 'biblib_migrations') order by 1`).map((r) => r.nspname)
   const domainRows = async () => ({
     // Desde 0011 (U-DAT-06) books es la vista plana: un ISBN válido se lee canónico y su texto original queda en
     // books_legacy y en el informe de migración. Se compara el identificador sin espacios ni guiones.
     books: (await admin`select id::text, user_id::text, isbn, title, number_of_pages, shelf_id::text from biblib.books order by id`).map((r) => ({ ...r, isbn: r.isbn?.replace(/[s-]/g, "") ?? null })),
     shelves: (await admin`select id::text, user_id::text, title, is_default from biblib.shelves order by id`).map((r) => ({ ...r })),
   })
-  /** Copia equivalente a 0000: SQL y ledger de 0000 aplicados por el Drizzle antiguo, con datos A/B. */
+  /** Copia equivalente a 0000: SQL y ledger propio de 0000 ya aplicados, con datos A/B. */
   function copyAt0000(extra = "") {
     reset()
     applyManually(remote, tags[0])
     const [first] = journal.entries
-    remote.psql(`create schema drizzle; create table drizzle.__drizzle_migrations (id serial primary key, hash text not null, created_at bigint); insert into drizzle.__drizzle_migrations (hash, created_at) values ('${first.hash}', ${first.when});`)
+    remote.psql(`create schema biblib_migrations; create table biblib_migrations.__drizzle_migrations (id serial primary key, hash text not null, created_at bigint); insert into biblib_migrations.__drizzle_migrations (hash, created_at) values ('${first.hash}', ${first.when});`)
     seedSynthetic(remote, { extra })
   }
 
@@ -327,5 +328,36 @@ describe("promoción contra un remoto simulado [stack]", { skip }, () => {
     assert.deepEqual(results.sort(), [EXIT.OK, EXIT.PLAN_REJECTED])
     assert.equal((await ledger()).length, tags.length)
     evidence("08-concurrencia", { codes: results, ledgerRows: (await ledger()).length })
+  })
+
+  const legacyLedger = (hash, when) => `create schema drizzle; create table drizzle.__drizzle_migrations (id serial primary key, hash text not null, created_at bigint); insert into drizzle.__drizzle_migrations (hash, created_at) values ('${hash}', ${when});`
+
+  test("9 · ledger anterior de BibLib en drizzle: en local se traslada antes de aplicar", async () => {
+    reset()
+    applyManually(remote, tags[0])
+    remote.psql(legacyLedger(journal.entries[0].hash, journal.entries[0].when))
+    seedSynthetic(remote)
+    const sql = connectRemote(describeTarget(), { resolveHost: deps.resolveHost })
+    try {
+      const inspection = await sql.begin("read only", (tx) => inspectDatabase(tx, journal))
+      assert.equal(inspection.ledgerSource, "legacy")
+      assert.equal(inspection.appliedHead.tag, tags[0])
+      const report = await applyPlan(sql, { plan: { appliedHead: inspection.appliedHead, pending: inspection.pending, expectedHead: journal.entries.at(-1) }, journal, waitMs: 5000 })
+      assert.match(report.ledgerMoved, /drizzle\.__drizzle_migrations → biblib_migrations\.__drizzle_migrations/)
+    } finally { await sql.end({ timeout: 5 }) }
+    assert.equal((await ledger()).length, tags.length)
+    assert.equal((await admin`select to_regnamespace('drizzle') is null as gone`)[0].gone, true)
+  })
+
+  test("10 · ledger de otra app en drizzle (proyecto compartido): status lo ignora, pide adopción y no lo toca", async () => {
+    reset()
+    applyManually(remote, tags[0])
+    remote.psql(legacyLedger("f".repeat(64), 1778674633700))
+    const status = await statusRemote({ target: TARGET, expectProject: REF, env }, deps)
+    assert.equal(status.result.state, "adoption-required")
+    assert.ok(status.result.checks.some((c) => c.id === "ledger.foreign" && c.status === "warn"))
+    assert.equal(status.result.checks.some((c) => c.id === "ledger.unknown"), false)
+    assert.equal((await admin`select count(*)::integer as n from drizzle.__drizzle_migrations`)[0].n, 1)
+    assert.equal(await ledger(), null)
   })
 })

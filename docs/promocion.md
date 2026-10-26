@@ -96,12 +96,12 @@ Dos promociones con el mismo plan no aplican dos veces: la segunda espera el blo
 
 ## Adopción excepcional del historial
 
-Para un destino con esquema `biblib` y sin ledger Drizzle (aplicado a mano o con otra herramienta):
+Para un destino con esquema `biblib` y sin ledger propio (aplicado a mano, con otra herramienta o con el historial en el `drizzle` compartido):
 
 1. `db:status` informa `adoption-required` y si la adopción es demostrable. `db:plan` compara los metadatos del destino con cada prefijo del journal: tablas y columnas exactas (nombre, tipo, nulabilidad), RLS, políticas (comando, roles, expresión normalizada), grants, PK/FK/checks, índices, función `rotate_book_version` y triggers, y ausencia de objetos de migraciones posteriores. Coincidir solo en nombres de tablas no basta.
 2. Si un único prefijo es equivalente, el plan es `kind: adopt-ledger`, con la evidencia por migración (comprobaciones superadas), las filas exactas del ledger (tag, hash y `created_at` en orden), la huella de los hechos y los pendientes que quedarían. Si no, sale con **5** y propone la conciliación: el prefijo más cercano y cada diferencia (por ejemplo, «falta el trigger `books_rotate_version`»), con dos opciones: corrección hacia delante revisada en una copia aislada, o restaurar el respaldo ensayado.
 3. Respaldo y ensayo del destino tal como está (head vacío).
-4. `pnpm db:adopt:<target> ... --backup-receipt <recibo>`. Bajo el bloqueo común relee el destino; exige que siga sin ledger y con los mismos hechos que el plan (**6** si cambiaron, **5** si ya no es equivalente). Solo crea `drizzle.__drizzle_migrations` con la definición de Drizzle si falta y escribe sus filas; dentro de la misma transacción comprueba que el resultado es un historial coherente con el manifest. No ejecuta DDL de negocio ni acepta `--force`.
+4. `pnpm db:adopt:<target> ... --backup-receipt <recibo>`. Bajo el bloqueo común relee el destino; exige que siga sin ledger y con los mismos hechos que el plan (**6** si cambiaron, **5** si ya no es equivalente). Solo crea `biblib_migrations.__drizzle_migrations` (ledger propio de BibLib; `drizzle.__drizzle_migrations` es de otra app del proyecto compartido) con la definición de Drizzle si falta y escribe sus filas; dentro de la misma transacción comprueba que el resultado es un historial coherente con el manifest. No ejecuta DDL de negocio ni acepta `--force`.
 5. El head cambió: haz un **respaldo nuevo** del head adoptado y vuelve al paso 2 del procedimiento normal para los pendientes. Un plan `adopt-ledger` no sirve para `migrate` ni al revés.
 
 Un ledger con hashes calculados sobre CRLF (`reconciliation-required`) no se adopta automáticamente: requiere documentar la equivalencia de bytes y una decisión explícita.

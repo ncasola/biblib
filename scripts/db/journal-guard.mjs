@@ -5,7 +5,10 @@ import { BiblibError, EXIT } from "../lib/exit-codes.mjs"
 import { REPO_ROOT } from "../lib/profiles.mjs"
 
 export const MIGRATIONS_DIR = path.join(REPO_ROOT, "drizzle")
-export const LEDGER = Object.freeze({ schema: "drizzle", table: "__drizzle_migrations" })
+// Ledger propio de BibLib: el proyecto Supabase es compartido (D01) y `drizzle.__drizzle_migrations`
+// lo usa otra app. El ledger anterior solo se lee en local para trasladarlo (moveLegacyLedger).
+export const LEDGER = Object.freeze({ schema: "biblib_migrations", table: "__drizzle_migrations" })
+export const LEGACY_LEDGER = Object.freeze({ schema: "drizzle", table: "__drizzle_migrations" })
 const BREAKPOINT = "--> statement-breakpoint"
 
 /**

@@ -11,7 +11,7 @@ import { compareLedger, drizzleHash, inspectJournal, loadJournal, summarizeDdl }
 import { expectedObjects, MANIFEST_MIGRATIONS, normalizeExpression, verifyManifest } from "../../scripts/db/objects-manifest.mjs"
 import { assertPlanMatchesTarget, buildPlan, canonical, computePlanHash, parsePlanArgs, resolvePlanPath, validatePlan } from "../../scripts/db/plan.mjs"
 import { acquireMigrationLock, applyPlan, EXPLICIT_COMMANDS, legacyDispatcher, parseArgs, releaseMigrationLock } from "../../scripts/db/migrate.mjs"
-import { classify, closeConnection, connect, inspectDatabase, readLedger, resolveLocal } from "../../scripts/db/target.mjs"
+import { classify, closeConnection, connect, effectiveLedger, inspectDatabase, readLedger, resolveLocal } from "../../scripts/db/target.mjs"
 
 const repo = fileURLToPath(new URL("../../", import.meta.url))
 const drizzleDir = path.join(repo, "drizzle")
@@ -154,6 +154,36 @@ describe("ledger", () => {
     const noAuth = classify({ entries }, { biblib: false, ledger: false, rows: [] }, { ...facts, prerequisites: { users: false, uid: true } })
     assert.equal(noAuth.code, EXIT.SERVICE_UNAVAILABLE)
     assert.equal(classify({ entries }, { biblib: false, ledger: true, rows: rowsFor(entries) }, facts).state, "diverged")
+  })
+
+  test("ledger anterior de BibLib: en local se usa y se traslada; en remoto exige adopción", () => {
+    const legacyRows = rowsFor(entries, 3)
+    const raw = { biblib: true, ledger: false, rows: [], legacyRows }
+    const local = effectiveLedger({ entries }, raw)
+    assert.equal(local.source, "legacy")
+    assert.deepEqual(local.ledger.rows, legacyRows)
+    const usable = classify({ entries }, raw, facts)
+    assert.notEqual(usable.state, "adoption-required")
+    assert.equal(usable.appliedHead.tag, entries[2].tag)
+    assert.ok(usable.checks.some((c) => c.id === "ledger.legacy" && c.status === "warn"))
+    const remote = classify({ entries }, raw, facts, { legacy: "adopt" })
+    assert.equal(remote.state, "adoption-required")
+    assert.equal(effectiveLedger({ entries }, raw, { legacy: "adopt" }).source, "own")
+  })
+
+  test("ledger de otra app en drizzle (proyecto compartido): nunca se lee como propio", () => {
+    const foreign = [{ id: 1, hash: "f".repeat(64), created_at: 1778674633700 }, { id: 2, hash: "e".repeat(64), created_at: 1778674700431 }]
+    for (const legacy of ["use", "adopt"]) {
+      const state = classify({ entries }, { biblib: true, ledger: false, rows: [], legacyRows: foreign }, facts, { legacy })
+      assert.equal(state.state, "adoption-required")
+      assert.ok(state.checks.some((c) => c.id === "ledger.foreign" && c.status === "warn" && /otra app/.test(c.message)))
+      assert.equal(state.checks.some((c) => c.id === "ledger.unknown"), false)
+    }
+    const own = classify({ entries }, { biblib: true, ledger: true, rows: rowsFor(entries), legacyRows: foreign }, facts)
+    assert.equal(own.state, "up-to-date")
+    // Una mezcla de filas de BibLib y ajenas tampoco se adopta como historial propio.
+    const mixed = effectiveLedger({ entries }, { biblib: true, ledger: false, rows: [], legacyRows: [...rowsFor(entries, 2), ...foreign.map((r, i) => ({ ...r, id: 3 + i }))] })
+    assert.equal(mixed.source, "own")
   })
 })
 
@@ -683,7 +713,7 @@ describe("argumentos y despachador", () => {
 
   test("drizzle.config.ts declara el mismo ledger y no carga archivos de entorno", () => {
     const config = readFileSync(path.join(repo, "drizzle.config.ts"), "utf8")
-    assert.match(config, /schema: "drizzle"/)
+    assert.match(config, /schema: "biblib_migrations"/)
     assert.match(config, /table: "__drizzle_migrations"/)
     assert.doesNotMatch(config, /loadEnvFile|dbCredentials/)
   })

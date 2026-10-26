@@ -1,4 +1,5 @@
 import { existsSync, readFileSync } from "node:fs"
+import { LEDGER } from "../db/journal-guard.mjs"
 import { contentDigests, tokenHashes } from "./backup-db.mjs"
 import { BiblibError, EXIT } from "./exit-codes.mjs"
 import { readState, writeState } from "./state.mjs"
@@ -102,7 +103,7 @@ export async function applySuppressions({ sql, admin, entries = [], manifest, ma
   if (!wanted.size) return empty
   const ids = [...wanted.keys()]
   const present = (await sql`select id::text as id from auth.users where id = any(${ids}::uuid[]) order by id`).map((row) => row.id)
-  const existing = await sql`select schemaname as schema, tablename as table from pg_tables where schemaname in ('biblib', 'drizzle', 'auth', 'storage')`
+  const existing = await sql`select schemaname as schema, tablename as table from pg_tables where schemaname in ('biblib', ${LEDGER.schema}, 'auth', 'storage')`
   const tables = (manifest.digests ?? []).map(({ schema, table }) => ({ schema, table })).filter((t) => existing.some((e) => e.schema === t.schema && e.table === t.table))
   const before = await contentDigests(sql, tables)
   const tokensBefore = await tokenHashes(sql)

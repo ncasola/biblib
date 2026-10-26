@@ -102,7 +102,7 @@ BibLib tiene su propia configuración de Supabase local (U-INF-01), separada de 
 ### Configuración y perfiles
 
 - `supabase/config.toml` es la configuración del perfil `main` (`project_id = "biblib-local"`). Parte de la plantilla de `supabase init` 2.117.0, que usa `[local_smtp]` para Mailpit (no `[inbucket]`). Usa Postgres 17 con Auth, Storage, Studio, Mailpit y REST. Realtime, Analytics, Edge Functions, pooler y vector buckets están desactivados.
-- Migraciones y seed del CLI desactivados (`[db.migrations] enabled = false`, `[db.seed] enabled = false`). `supabase/migrations/` no contiene SQL. Drizzle es el único que aplica el esquema de negocio. Un stack recién arrancado no tiene el esquema `biblib`, el ledger `drizzle` ni `supabase_migrations`.
+- Migraciones y seed del CLI desactivados (`[db.migrations] enabled = false`, `[db.seed] enabled = false`). `supabase/migrations/` no contiene SQL. Drizzle es el único que aplica el esquema de negocio. Un stack recién arrancado no tiene el esquema `biblib`, el ledger `biblib_migrations` ni `supabase_migrations`.
 - `api.schemas` no incluye `biblib`: el dominio sigue pasando por Server Actions y RLS.
 - `supabase/profiles.json` declara los perfiles:
 
@@ -277,7 +277,9 @@ pnpm db:plan:local --profile scratch --out scratch.json [--json]
 pnpm db:migrate:local --plan .biblib/plans/scratch.json --expect-project biblib-scratch --expect-plan <sha256>
 ```
 
-`pnpm db:migrate` es ahora un despachador: no aplica nada, no lee archivos de entorno y sale con **2** listando estos comandos. Drizzle Kit queda solo para operaciones offline (`generate`, `check`, `up`); `drizzle-kit migrate`, `push`, `pull` o `studio` fallan con un mensaje que remite a los wrappers. `drizzle.config.ts` declara el mismo ledger que el runner: `drizzle.__drizzle_migrations`.
+`pnpm db:migrate` es ahora un despachador: no aplica nada, no lee archivos de entorno y sale con **2** listando estos comandos. Drizzle Kit queda solo para operaciones offline (`generate`, `check`, `up`); `drizzle-kit migrate`, `push`, `pull` o `studio` fallan con un mensaje que remite a los wrappers. `drizzle.config.ts` declara el mismo ledger que el runner: `biblib_migrations.__drizzle_migrations`.
+
+**Ledger propio (proyecto compartido).** El proyecto Supabase de producción es compartido con otras apps y una de ellas usa `drizzle.__drizzle_migrations`, el ledger por defecto de Drizzle. Por eso BibLib registra su historial en `biblib_migrations.__drizzle_migrations` y nunca lee como propio el de `drizzle` si contiene filas que no son de su journal (aviso `ledger.foreign`). En local, un stack que aún tenga el historial de BibLib en `drizzle` lo conserva hasta el siguiente `db:migrate:local` (o `db:local:up`/bootstrap), que lo traslada en una transacción bajo el bloqueo antes de aplicar y borra el anterior; `db:backup:local` exige ese traslado. En remoto no se traslada: el destino pasa por adopción.
 
 ### Journal, hashes y finales de línea
 
@@ -573,7 +575,7 @@ pnpm db:restore:local --backup .biblib/backups/<backupId> --profile scratch --ex
 pnpm db:restore:verify --backup .biblib/backups/<backupId> --profile scratch [--json]
 ```
 
-- `db:backup:local` guarda en `.biblib/backups/<backupId>/` (ignorado por Git) el volcado de `biblib` y del ledger `drizzle` con snapshot exportado, los datos de identidad de Auth con `supabase db dump --local --data-only --schema auth` y los bytes Storage leídos por la API del perfil, más el recibo `backup.json` con hashes, alcance y exclusiones. Usa `docker exec` sobre el ID registrado del contenedor Postgres, sin credenciales en argv ni en la salida.
+- `db:backup:local` guarda en `.biblib/backups/<backupId>/` (ignorado por Git) el volcado de `biblib` y del ledger `biblib_migrations` con snapshot exportado, los datos de identidad de Auth con `supabase db dump --local --data-only --schema auth` y los bytes Storage leídos por la API del perfil, más el recibo `backup.json` con hashes, alcance y exclusiones. Usa `docker exec` sobre el ID registrado del contenedor Postgres, sin credenciales en argv ni en la salida.
 - `db:restore:local` solo restaura en un stack local propio, acreditado como reset y **vacío o recién reseteado**; antes de tocarlo valida archivos, clave e historial. Rota `books.version` (y `library_state.revision` si existe), invalida previews y leases y reasigna las credenciales de las cuentas fixture. No envía correo ni llama a proveedores.
 - `db:restore:verify` comprueba objetos de esquema, ledger, cantidades, tokens rotados, muestra de fichas, sesiones A/B reales con RLS y objetos Storage por sha256, y escribe el informe de recuperación. Una discrepancia sale con **11**.
 - `db:backup:prod` sale con **2**: pendiente de U-INF-07 y de un destino autorizado.

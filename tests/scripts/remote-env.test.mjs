@@ -5,7 +5,7 @@ import path from "node:path"
 import { after, test } from "node:test"
 import { fileURLToPath } from "node:url"
 import { parseRemoteEnv, remoteCaFile, remoteEnvFile, remoteEnvFromVercel, withRemoteEnvFile, writeRemoteEnv } from "../../scripts/db/remote-env.mjs"
-import { describeRemote } from "../../scripts/db/remote-preflight.mjs"
+import { describeRemote, probeRemote } from "../../scripts/db/remote-preflight.mjs"
 import { EXIT } from "../../scripts/lib/exit-codes.mjs"
 
 const repo = fileURLToPath(new URL("../../", import.meta.url))
@@ -63,6 +63,16 @@ test("el archivo generado pasa la identidad remota sin variables en la sesión",
   assert.equal(remote.descriptor.connection, "pooler-session")
   assert.equal(remote.descriptor.tls.rootCert, "ca-explicita")
   assert.throws(() => describeRemote("prod", { env, expectProject: "otroproyecto", cwd: dir }), (error) => error.code === EXIT.IDENTITY_MISMATCH)
+})
+
+test("TLS: con el pooler cuenta la verificación del cliente; en conexión directa, pg_stat_ssl", async () => {
+  const facts = { version_num: 150008, version: "15.8", role: "postgres", replica: false, ssl: false, tls_version: null, create_schema: true, auth_schema: true, storage_schema: true, auth_references: true }
+  const fake = () => { let calls = 0; return async () => (calls++ === 0 ? [facts] : []) }
+  const tls = (probe) => probe.checks.find((c) => c.id === "remote.tls")
+  assert.equal(tls(await probeRemote(fake(), { connection: "pooler-session", host: "aws-0-eu-west-1.pooler.supabase.com" })).status, "ok")
+  const direct = await probeRemote(fake(), { connection: "direct" })
+  assert.equal(tls(direct).status, "fail")
+  assert.equal(direct.code, EXIT.IDENTITY_MISMATCH)
 })
 
 test("rechaza mezclar fuentes, claves ajenas, duplicados y enlaces", () => {

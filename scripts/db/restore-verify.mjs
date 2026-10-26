@@ -13,7 +13,7 @@ import { REPO_ROOT } from "../lib/profiles.mjs"
 import { readState } from "../lib/state.mjs"
 import { readSuppressions, residueOf, suppressedIds } from "../lib/suppressions.mjs"
 import { displayPath } from "./backup-local.mjs"
-import { loadJournal } from "./journal-guard.mjs"
+import { LEDGER, loadJournal } from "./journal-guard.mjs"
 import { canonical } from "./plan.mjs"
 import { assertResetIdentity } from "./reset-local.mjs"
 import { loadCensus, resolveSeedTarget } from "./seed-local.mjs"
@@ -180,7 +180,7 @@ export async function runVerify(options, deps = {}) {
     const current = await sql.begin("isolation level repeatable read read only", async (tx) => {
       const inspection = await inspectDatabase(tx, journal)
       const tables = manifest.digests.map(({ schema, table }) => ({ schema, table }))
-      const present = await tx`select schemaname as schema, tablename as table from pg_tables where schemaname in ('biblib', 'drizzle', 'auth', 'storage')`
+      const present = await tx`select schemaname as schema, tablename as table from pg_tables where schemaname in ('biblib', ${LEDGER.schema}, 'auth', 'storage')`
       return {
         inspection, ledger: inspection.ledger.rows,
         objects: await objectFacts(tx),

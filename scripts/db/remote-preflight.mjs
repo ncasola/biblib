@@ -6,6 +6,7 @@ import { manifestHash, MANIFEST_FILE, resolveBackupsRoot } from "../lib/backup-f
 import { BiblibError, EXIT } from "../lib/exit-codes.mjs"
 import { REPO_ROOT } from "../lib/profiles.mjs"
 import { loadTarget } from "./environment.mjs"
+import { LEDGER } from "./journal-guard.mjs"
 import { canonical } from "./plan.mjs"
 
 // Preflight de promoción a preproducción/producción (U-INF-07): identidad remota, TLS
@@ -117,7 +118,7 @@ export function remoteConnectionError(error, phase = "conexión") {
  * Comprueba, solo con consultas de catálogo, conexión TLS, rol administrativo, primario,
  * permisos necesarios para DDL y bloqueo, propiedad de los esquemas y versión de Postgres.
  */
-export async function probeRemote(sql) {
+export async function probeRemote(sql, { connection = "direct", host } = {}) {
   const [facts] = await sql`select current_setting('server_version_num')::integer as version_num, current_setting('server_version') as version,
       current_user::text as role, pg_is_in_recovery() as replica,
       coalesce((select ssl from pg_stat_ssl where pid = pg_backend_pid()), false) as ssl,
@@ -126,18 +127,21 @@ export async function probeRemote(sql) {
       to_regnamespace('auth') is not null as auth_schema, to_regnamespace('storage') is not null as storage_schema,
       case when to_regclass('auth.users') is null then null else has_table_privilege('auth.users', 'REFERENCES') end as auth_references`
   const owners = await sql`select distinct owner from (
-      select nspowner::regrole::text as owner from pg_namespace where nspname in ('biblib', 'drizzle')
-      union all select c.relowner::regrole::text from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname in ('biblib', 'drizzle')
+      select nspowner::regrole::text as owner from pg_namespace where nspname in ('biblib', ${LEDGER.schema})
+      union all select c.relowner::regrole::text from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname in ('biblib', ${LEDGER.schema})
       union all select p.proowner::regrole::text from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'biblib') o`
   const membership = await Promise.all(owners.map(async ({ owner }) => ({ owner, member: (await sql`select pg_has_role(current_user, ${owner}, 'MEMBER') as member`)[0].member })))
   const major = Math.floor(facts.version_num / 10000)
   const checks = []
   const check = (id, ok, code, message, failure, status = "fail") => checks.push({ id, status: ok ? "ok" : status, ...(ok || status !== "fail" ? {} : { code }), message: ok ? message : failure })
-  check("remote.tls", facts.ssl === true, EXIT.IDENTITY_MISMATCH, `Sesión TLS verificada (${facts.tls_version ?? "TLS"}).`, "La sesión no usa TLS según el propio servidor.")
+  // Con el pooler, pg_stat_ssl describe su tramo interno hacia la base, no la conexión del runner. Esa ya
+  // se verificó al conectar (TLS obligatorio, CA y nombre del host del pooler): sin TLS no habría sesión.
+  if (connection === "pooler-session") check("remote.tls", true, null, `TLS verificado por el cliente contra ${host ?? "el pooler"}; el pooler termina TLS y pg_stat_ssl solo describe su tramo interno.`)
+  else check("remote.tls", facts.ssl === true, EXIT.IDENTITY_MISMATCH, `Sesión TLS verificada (${facts.tls_version ?? "TLS"}).`, "La sesión no usa TLS según el propio servidor.")
   check("remote.role", facts.role === ADMIN_ROLE, EXIT.IDENTITY_MISMATCH, "Conectado con el rol administrativo postgres.", "La conexión no usa el rol administrativo postgres: no es apta para DDL ni para el bloqueo de migraciones.")
   check("remote.primary", facts.replica === false, EXIT.IDENTITY_MISMATCH, "El destino es el primario (no una réplica de lectura).", "El destino es una réplica de lectura: no es el primario del proyecto.")
-  check("remote.privilege.create", facts.create_schema === true, EXIT.IDENTITY_MISMATCH, "El rol puede crear esquemas (ledger drizzle).", "El rol no puede crear esquemas en la base: permisos insuficientes para el runner.")
-  check("remote.privilege.owner", membership.every((m) => m.member), EXIT.IDENTITY_MISMATCH, `El rol pertenece a los propietarios de biblib/drizzle (${owners.length || "sin objetos todavía"}).`, "Hay objetos de biblib/drizzle cuyo propietario no es el rol administrativo: el DDL fallaría.")
+  check("remote.privilege.create", facts.create_schema === true, EXIT.IDENTITY_MISMATCH, "El rol puede crear esquemas (ledger biblib_migrations).", "El rol no puede crear esquemas en la base: permisos insuficientes para el runner.")
+  check("remote.privilege.owner", membership.every((m) => m.member), EXIT.IDENTITY_MISMATCH, `El rol pertenece a los propietarios de biblib/biblib_migrations (${owners.length || "sin objetos todavía"}).`, "Hay objetos de biblib/biblib_migrations cuyo propietario no es el rol administrativo: el DDL fallaría.")
   check("remote.privilege.auth", facts.auth_references !== false, EXIT.IDENTITY_MISMATCH, facts.auth_references === null ? "auth.users no existe todavía (lo informa el manifest)." : "El rol puede referenciar auth.users desde las FK de propietario.", "El rol no puede referenciar auth.users: las FK de propietario fallarían.")
   check("remote.platform", facts.auth_schema && facts.storage_schema, null, "Esquemas de plataforma auth y storage presentes.", "Faltan esquemas de plataforma (auth/storage): no parece un proyecto Supabase completo.", "warn")
   if (major < 15) check("remote.version", false, EXIT.MISSING_REQUIREMENT, "", `Postgres ${facts.version} no está soportado (mínimo 15).`)

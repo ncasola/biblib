@@ -119,7 +119,11 @@ function pullFromVercel(target, root) {
   const folder = mkdtempSync(path.join(os.tmpdir(), "biblib-vercel-"))
   const pulled = path.join(folder, "pulled.env")
   try {
-    const result = spawnSync("vercel", ["env", "pull", pulled, "--environment", VERCEL_ENVIRONMENT[target], "--yes"], { cwd: root, stdio: ["ignore", "ignore", "inherit"], shell: process.platform === "win32", windowsHide: true })
+    // En Windows `vercel` es un .cmd y necesita shell; la orden va entera para no pasar argumentos sin escapar.
+    const args = ["env", "pull", pulled, "--environment", VERCEL_ENVIRONMENT[target], "--yes"]
+    const result = process.platform === "win32"
+      ? spawnSync(`vercel ${args.map((arg) => `"${arg}"`).join(" ")}`, { cwd: root, stdio: ["ignore", "ignore", "inherit"], shell: true, windowsHide: true })
+      : spawnSync("vercel", args, { cwd: root, stdio: ["ignore", "ignore", "inherit"] })
     if (result.status !== 0 || !existsSync(pulled)) fail(EXIT.SERVICE_UNAVAILABLE, "vercel env pull falló. Comprueba `vercel whoami` y que el repo esté enlazado (`vercel link`).")
     const values = {}
     for (const line of readFileSync(pulled, "utf8").split(/\r?\n/)) {

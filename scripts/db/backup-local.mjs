@@ -12,7 +12,7 @@ import { sanitize, supabaseCommand } from "../lib/process.mjs"
 import { profileWorkdir, REPO_ROOT } from "../lib/profiles.mjs"
 import { acquireLock, readState } from "../lib/state.mjs"
 import { mergeSuppressions, readMarks } from "../lib/suppressions.mjs"
-import { compareLedger, loadJournal } from "./journal-guard.mjs"
+import { compareLedger, LEDGER, loadJournal } from "./journal-guard.mjs"
 import { acquireMigrationLock, releaseMigrationLock } from "./migrate.mjs"
 import { canonical, gitCommit } from "./plan.mjs"
 import { assertResetIdentity, discardedState, mailpitInventory } from "./reset-local.mjs"
@@ -55,8 +55,8 @@ export function registeredDatabase(stack, state, all) {
 const PG_ARGS = ["--host", "127.0.0.1", "--username", "postgres", "--dbname", "postgres", "--no-password"]
 
 async function dumpDomain(stack, db, snapshot, signal) {
-  const result = await streamCommand("docker", ["exec", db.id, "pg_dump", ...PG_ARGS, "--schema", "biblib", "--schema", "drizzle", "--format", "plain", "--quote-all-identifiers", "--snapshot", snapshot], { ...stack.processOptions, signal, phase: "volcado" })
-  if (result.code !== 0 || !result.stdout.length) fail(EXIT.SERVICE_UNAVAILABLE, "pg_dump no pudo volcar biblib/drizzle del contenedor registrado.", "volcado")
+  const result = await streamCommand("docker", ["exec", db.id, "pg_dump", ...PG_ARGS, "--schema", "biblib", "--schema", LEDGER.schema, "--format", "plain", "--quote-all-identifiers", "--snapshot", snapshot], { ...stack.processOptions, signal, phase: "volcado" })
+  if (result.code !== 0 || !result.stdout.length) fail(EXIT.SERVICE_UNAVAILABLE, `pg_dump no pudo volcar biblib/${LEDGER.schema} del contenedor registrado.`, "volcado")
   return result.stdout
 }
 
@@ -197,6 +197,7 @@ export async function runBackup({ profile, out, keyFile, root = REPO_ROOT, signa
     const snapshot = await sql.begin("isolation level repeatable read read only", async (tx) => {
       const inspection = await inspectDatabase(tx, journal)
       if (inspection.code !== EXIT.OK) fail(inspection.code, "Historial u objetos divergentes; consulta db:status:local antes de respaldar.", "ledger")
+      if (inspection.ledgerSource === "legacy") fail(EXIT.PLAN_REJECTED, `El perfil aún tiene el ledger anterior; ejecuta db:migrate:local (o db:local:up) para trasladarlo a ${LEDGER.schema} antes de respaldar.`, "ledger")
       if (!inspection.ledger.rows.length) fail(EXIT.PLAN_REJECTED, "El perfil no tiene esquema migrado; no hay respaldo administrativo que hacer.", "ledger")
       const scope = await scopeTables(tx)
       const mark = await stateMark(tx, scope.tables)
@@ -251,7 +252,7 @@ export async function runBackup({ profile, out, keyFile, root = REPO_ROOT, signa
       migrations: { head: inspection.appliedHead?.tag ?? null, state: inspection.state, applied, journalHash: sha256(canonical(journal.entries.map(({ tag, when, hash }) => ({ tag, when, hash })))), ledgerHash: sha256(canonical(inspection.ledger.rows)) },
       scope: {
         list: ["schema", "data", "history", "auth", "storage", "mailpit"],
-        schema: ["biblib", "drizzle"], data: ["biblib", "drizzle"], history: "drizzle.__drizzle_migrations",
+        schema: ["biblib", LEDGER.schema], data: ["biblib", LEDGER.schema], history: `${LEDGER.schema}.${LEDGER.table}`,
         auth: { method: "supabase db dump --local --data-only --schema auth", tables: snapshot.scope.tables.filter((t) => t.schema === "auth").map((t) => `auth.${t.table}`) },
         storage: { method: "API Storage del perfil (clave local service_role, solo en memoria)", buckets: snapshot.storage.buckets.length, objects: storageObjects.length },
         mailpit: { method: "API de Mailpit del perfil (mensajes RAW, sin marcarlos como leídos)", messages: mail.length, restored: false },

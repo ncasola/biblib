@@ -2,7 +2,7 @@ import assert from "node:assert/strict"
 import { after, before, test } from "node:test"
 import { securityContext } from "./lib/context.mjs"
 
-// U-OPS-04 · Exposición de datos: la Data API no publica biblib ni drizzle, y los grants de anon y
+// U-OPS-04 · Exposición de datos: la Data API no publica biblib ni biblib_migrations, y los grants de anon y
 // authenticated coinciden con el inventario de docs/seguridad.md (incluidas las funciones SECURITY
 // DEFINER de 0003–0005). Si una migración cambia un grant, esta prueba y el inventario se revisan juntos.
 
@@ -28,9 +28,9 @@ function rest(route, { bearer, profile, method = "GET" } = {}) {
   return fetch(`${ctx.env.SUPABASE_URL}${route}`, { method, headers, signal: AbortSignal.timeout(10_000) })
 }
 
-test("la Data API solo admite public y graphql_public: biblib y drizzle se rechazan para anónimo y A", async () => {
+test("la Data API solo admite public y graphql_public: biblib y biblib_migrations se rechazan para anónimo y A", async () => {
   for (const bearer of [undefined, token]) {
-    for (const [profile, table] of [["biblib", "books"], ["biblib", "shelves"], ["biblib", "library_jobs"], ["drizzle", "__drizzle_migrations"]]) {
+    for (const [profile, table] of [["biblib", "books"], ["biblib", "shelves"], ["biblib", "library_jobs"], ["biblib_migrations", "__drizzle_migrations"]]) {
       const response = await rest(`/rest/v1/${table}?select=*`, { bearer, profile })
       const json = await response.json()
       assert.equal(response.status, 406, `${profile}.${table}`)
@@ -43,27 +43,27 @@ test("la Data API solo admite public y graphql_public: biblib y drizzle se recha
   }
 })
 
-test("anon no tiene uso de biblib ni de drizzle, ni privilegios sobre tablas, secuencias o funciones definer", async () => {
+test("anon no tiene uso de biblib ni de biblib_migrations, ni privilegios sobre tablas, secuencias o funciones definer", async () => {
   const [schemas] = await ctx.sql`select
-      has_schema_privilege('anon', 'biblib', 'USAGE') as anon_biblib, has_schema_privilege('anon', 'drizzle', 'USAGE') as anon_drizzle,
-      has_schema_privilege('authenticated', 'biblib', 'USAGE') as auth_biblib, has_schema_privilege('authenticated', 'drizzle', 'USAGE') as auth_drizzle,
+      has_schema_privilege('anon', 'biblib', 'USAGE') as anon_biblib, has_schema_privilege('anon', 'biblib_migrations', 'USAGE') as anon_drizzle,
+      has_schema_privilege('authenticated', 'biblib', 'USAGE') as auth_biblib, has_schema_privilege('authenticated', 'biblib_migrations', 'USAGE') as auth_drizzle,
       has_schema_privilege('authenticated', 'biblib', 'CREATE') as auth_create`
   assert.deepEqual({ ...schemas }, { anon_biblib: false, anon_drizzle: false, auth_biblib: true, auth_drizzle: false, auth_create: false })
   const anonTables = await ctx.sql`select c.relname from pg_class c join pg_namespace n on n.oid = c.relnamespace
-    where n.nspname in ('biblib', 'drizzle') and ((case when c.relkind in ('r', 'p', 'v', 'm') then has_table_privilege('anon', c.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER') else false end)
+    where n.nspname in ('biblib', 'biblib_migrations') and ((case when c.relkind in ('r', 'p', 'v', 'm') then has_table_privilege('anon', c.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER') else false end)
       or (case when c.relkind = 'S' then has_sequence_privilege('anon', c.oid, 'USAGE, SELECT, UPDATE') else false end))`
   assert.deepEqual(anonTables.map((row) => row.relname), [])
   const anonDefiners = await ctx.sql`select p.proname from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'biblib' and p.prosecdef and has_function_privilege('anon', p.oid, 'EXECUTE')`
   assert.deepEqual(anonDefiners.map((row) => row.proname), [])
 })
 
-test("todas las tablas de biblib tienen RLS y authenticated no toca drizzle ni las secuencias", async () => {
+test("todas las tablas de biblib tienen RLS y authenticated no toca biblib_migrations ni las secuencias", async () => {
   const tables = await ctx.sql`select c.relname, c.relrowsecurity as rls from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname = 'biblib' and c.relkind in ('r', 'p')`
   assert.ok(tables.length >= 13)
   assert.deepEqual(tables.filter((row) => !row.rls).map((row) => row.relname), [])
   const sequences = await ctx.sql`select c.relname from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname = 'biblib' and case when c.relkind = 'S' then has_sequence_privilege('authenticated', c.oid, 'USAGE, SELECT, UPDATE') else false end`
   assert.deepEqual(sequences.map((row) => row.relname), [])
-  const [ledger] = await ctx.sql`select has_table_privilege('authenticated', 'drizzle.__drizzle_migrations', 'SELECT') as read`
+  const [ledger] = await ctx.sql`select has_table_privilege('authenticated', 'biblib_migrations.__drizzle_migrations', 'SELECT') as read`
   assert.equal(ledger.read, false)
 })
 
