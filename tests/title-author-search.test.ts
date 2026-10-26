@@ -78,7 +78,9 @@ test("claves por dueño y consulta: caducidad, manipulación, URL arbitraria y o
   assert.equal((await api.editions(input)).ok, true)
   assert.equal((await api.editions({ ...input, queryToken: other.value.queryToken })).ok, false)
   assert.equal((await api.editions({ ...input, workKey: "https://evil.test/private" })).ok, false)
-  assert.equal((await api.prepare({ candidateKey: `${workKey.slice(0, 40)}x${workKey.slice(41)}` })).ok, false)
+  // Cambia de verdad un carácter: si ya era «x», sustituirlo por «x» no manipularía la clave.
+  const tampered = workKey[40] === "x" ? "y" : "x"
+  assert.equal((await api.prepare({ candidateKey: `${workKey.slice(0, 40)}${tampered}${workKey.slice(41)}` })).ok, false)
   const otherUser = actions(catalog(), { authenticate: async () => ownerB, now: () => clock })
   assert.equal((await otherUser.editions(input)).ok, false)
   assert.equal((await otherUser.prepare({ candidateKey: workKey })).ok, false)
