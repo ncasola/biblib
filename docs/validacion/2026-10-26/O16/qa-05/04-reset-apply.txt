@@ -1,0 +1,10 @@
+
+> biblib@1.0.0 db:reset:local C:\Users\ncaso\orca\workspaces\biblib\u-inf-03
+> node scripts/local-stack.mjs reset "--apply" "--plan" ".biblib/plans/qa05-reset-1.json" "--expect-project" "biblib-scratch" "--expect-plan" "2a86ad86689f981fbb69e331f7aef0e574aee91de10f9f3d1e06e0c15669fb3d" "--discard-local-data"
+
+Error [docker] (8): Docker no pudo completar la consulta u operación del perfil.
+ ELIFECYCLE  Command failed with exit code 8.
+
+real	1m23.975s
+user	0m0.000s
+sys	0m0.000s

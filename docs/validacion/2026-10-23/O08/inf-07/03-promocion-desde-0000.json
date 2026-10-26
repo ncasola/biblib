@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "code": 0,
+  "kind": "migrate",
+  "target": {
+    "target": "preprod",
+    "project": "inf07ensayoremoto001",
+    "fingerprint": "1e9b3dc4e9d78ecd14b26d46d602db476601e8a1ec18a2f71e771b53e62be04f",
+    "host": "db.inf07ensayoremoto001.supabase.co",
+    "port": 5432,
+    "database": "postgres",
+    "user": "postgres",
+    "connection": "direct",
+    "tls": "verify-full"
+  },
+  "planHash": "5032fe85d059e15ef5901e8b47de61a542ae3c23dbf2baa6aabcea9b3ff1ea28",
+  "previousHead": {
+    "tag": "0000_biblib_init",
+    "when": 1760000000000,
+    "hash": "b2f6e7bcc8e8c8b85fe2fb5f21506237d10f8aae0d7d895d83b214ab53cb6ab2"
+  },
+  "head": {
+    "tag": "0004_catalogue_coordination",
+    "when": 1792770443198,
+    "hash": "d10085aa91488d41078ced9905b986b56d2ac8dfdccb62a712ef384a064038e3"
+  },
+  "result": "aplicado: 0001_library_integrity → 0002_book_versions → 0003_library_revision → 0004_catalogue_coordination",
+  "checks": {
+    "ok": 138,
+    "other": []
+  },
+  "pendingAfter": [],
+  "backupId": "20261023T165446Z-ensayo-0a6465",
+  "record": ".biblib/promotions/20261023T165450Z-preprod-5032fe85d059-08fa11.json",
+  "idsYDatosConservados": true,
+  "versionRotada": true,
+  "fkPropietario": "23503",
+  "rls": {
+    "a": 2,
+    "b": 1,
+    "ajenasActualizadas": 0
+  },
+  "claimsLocalesATransaccion": {
+    "role": "postgres",
+    "claims": ""
+  }
+}

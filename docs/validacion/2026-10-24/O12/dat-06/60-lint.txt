@@ -1,0 +1,5 @@
+
+> biblib@1.0.0 lint C:\Users\ncaso\orca\workspaces\biblib\u-inf-03
+> eslint .
+
+exit=0

@@ -1,0 +1,1 @@
+{"asset":"139cf910-8acd-4b1a-ae68-a625709f61bf","book":"041f852f-d188-5b80-a3d7-4f8cedce2787","registered":"ready","bytes":328}

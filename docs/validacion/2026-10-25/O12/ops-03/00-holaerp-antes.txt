@@ -1,0 +1,21 @@
+082bb27f1ad5 supabase_inbucket_holaerp public.ecr.aws/supabase/mailpit:v1.30.2 2026-10-23 11:49:15 +0100 BST
+08cec5edb3ab supabase_kong_holaerp public.ecr.aws/supabase/kong:2.8.1 2026-10-23 11:49:14 +0100 BST
+120d997b9f56 supabase_storage_holaerp public.ecr.aws/supabase/storage-api:v1.72.1 2026-10-23 11:49:17 +0100 BST
+2fd62432d826 holaerp-local-redis redis:7-alpine 2026-10-07 21:45:24 +0100 BST
+332384a83b1f supabase_rest_holaerp public.ecr.aws/supabase/postgrest:v16.2 2026-10-23 11:49:16 +0100 BST
+607df66c4564 supabase_edge_runtime_holaerp public.ecr.aws/supabase/edge-runtime:v1.74.3 2026-10-23 11:49:17 +0100 BST
+635d94610787 supabase_realtime_holaerp public.ecr.aws/supabase/realtime:v2.130.0 2026-10-23 11:49:15 +0100 BST
+7937bb8bda37 supabase_auth_holaerp public.ecr.aws/supabase/gotrue:v2.196.0 2026-10-23 11:49:14 +0100 BST
+95dd8a99145e supabase_db_holaerp public.ecr.aws/supabase/postgres:17.6.1.167 2026-10-23 11:48:51 +0100 BST
+b4e9b186eabc supabase_studio_holaerp public.ecr.aws/supabase/studio:2026.08.24-sha-8ec45b2 2026-10-23 11:49:19 +0100 BST
+f13ae72c84a8 supabase_pg_meta_holaerp ghcr.io/supabase/postgres-meta:v0.99.0 2026-10-23 11:49:18 +0100 BST
+holaerp-ps_db-data
+holaerp-ps_ps-data
+holaerp-woo_db-data
+holaerp-woo_wp-data
+supabase_db_holaerp
+supabase_edge_runtime_holaerp
+supabase_storage_holaerp
+1aaaac8132fe supabase_network_holaerp
+bc44cf05fa25 holaerp-web_holaerp-local-network
+f65d1a0bc4e0 holaerp-woo_default

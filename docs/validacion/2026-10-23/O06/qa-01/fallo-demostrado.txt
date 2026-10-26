@@ -1,0 +1,77 @@
+Integración Supabase real · perfil test · biblib-test · huella b831ef825c09 · run ad1038140527
+Bundle de cliente sin credenciales administrativas ni URLs privadas.
+✔ Auth del perfil test solo contiene las cuentas ficticias A/B del censo, sin identidades externas (701.9985ms)
+✔ el correo local solo se entrega a Mailpit y a destinatarios @biblib.test (7.7396ms)
+✔ getUser identifica a A y B en GoTrue y rechaza un token alterado (4116.8855ms)
+✔ cookies SSR: nombre sb-<ref>-auth-token, Path=/, SameSite=Lax y sesión en base64url (0.5287ms)
+✔ renovación por el SDK: tokens nuevos, misma identidad y cookies actualizadas (126.5611ms)
+✔ anónimo en una ruta privada con consulta vuelve al acceso conservando la ruta (7.8323ms)
+✔ con sesión, /login devuelve a la ruta con consulta y descarta destinos externos (190.0756ms)
+✔ una sesión vencida con refresh válido se renueva en el proxy y mantiene el destino (409.1911ms)
+✔ cookies fragmentadas producidas por el SDK funcionan en el proxy y en las acciones (293.9354ms)
+✔ cerrar sesión elimina la vista privada, también con una copia antigua de las cookies (271.4212ms)
+✔ cierre y renovación concurrentes no dejan ninguna sesión utilizable (1752.9046ms)
+✔ cada cuenta solo recibe su biblioteca desde las acciones (4199.0107ms)
+✔ A no lee, modifica, mueve ni borra recursos de B manipulando IDs (1535.741ms)
+✔ anónimo no obtiene datos: el proxy redirige las acciones y la API responde 401 (7.5897ms)
+✔ CRUD propio como A: versión rotada por el trigger, conflicto con versión antigua y portada por defecto (1073.54ms)
+✔ la estantería predeterminada no se borra ni se renombra desde la app (229.4733ms)
+✔ la conexión de la app no arrastra claims: A, B, fallo de A y B otra vez (565.969ms)
+✔ conexión reutilizada A → B → sin claims, también tras una transacción fallida (732.2026ms)
+✔ PostgREST rechaza el esquema biblib para anónimo y para A (lectura y escritura) (2421.1496ms)
+✔ el esquema público no expone tablas de BibLib (2.4774ms)
+✔ supabase-js con .schema('biblib') no obtiene datos (9.3201ms)
+✔ GraphQL no expone libros ni estanterías (pg_graphql desactivado en el stack) (15.5977ms)
+✔ A solo ve sus filas: los libros y estanterías de B no existen para A (758.5444ms)
+✔ A no actualiza ni borra libros o estanterías de B (0 filas afectadas) (13.9355ms)
+✔ A no inserta para B ni enlaza sus libros con estanterías de B (26.2309ms)
+✔ la estantería predeterminada está protegida también para su dueño (16.7063ms)
+✔ anon no tiene acceso al esquema biblib, ni siquiera con claims de A (9.9926ms)
+✔ books_rotate_version rota la versión con el rol authenticated en alta, cambio y versión forzada (12.6502ms)
+✔ el bucket de fixtures es privado y rechaza la lectura anónima por todas las rutas (2375.8933ms)
+✔ una sesión de A tampoco lee el bucket de fixtures sin firma (sin políticas por cuenta todavía) (11.2111ms)
+✔ la URL firmada por el proceso de prueba descarga los bytes exactos; alterada o caducada se rechaza (2537.7637ms)
+✔ un objeto creado por el run se sirve solo firmado y se elimina sin tocar el fixture (68.1621ms)
+✔ la portada por defecto se sirve desde la app, sin red externa ni sesión (5.6584ms)
+✖ DEMO de fallo: compara un token para comprobar que la salida lo oculta (1738.8941ms)
+ℹ tests 34
+ℹ suites 0
+ℹ pass 33
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 41429.7801
+
+✖ failing tests:
+
+test at tests\integration\storage\zz-demo-fallo.test.mjs:5:1
+✖ DEMO de fallo: compara un token para comprobar que la salida lo oculta (1738.8941ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + '[jwt oculto]'
+  - 'valor-esperado-falso'
+  
+      at TestContext.<anonymous> (<repo>/tests/integration/storage/zz-demo-fallo.test.mjs:7:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+      at async Test.run (node:internal/test_runner/test:1113:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:358:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '[jwt oculto]',
+    expected: 'valor-esperado-falso',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+✔ con Auth y Storage inaccesibles no se sirven datos privados ni objetos, y todo vuelve al recuperarlos (14649.5805ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 19211.0712
+Cuentas de Auth sin cambios (2, todas @biblib.test). Limpieza del run completa.
+Error [pruebas] (11): Fallaron 1 escenario(s); revisa los nombres marcados arriba.

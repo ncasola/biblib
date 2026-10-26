@@ -1,0 +1,5 @@
+lint 0
+typecheck 0
+test 0
+test:scripts 1
+test:db 0

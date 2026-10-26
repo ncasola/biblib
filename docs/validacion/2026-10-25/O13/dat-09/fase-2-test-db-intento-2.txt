@@ -1,0 +1,36 @@
+
+> biblib@1.0.0 test:db C:\Users\ncaso\orca\workspaces\biblib\u-dat-09
+> node scripts/test-database.mjs
+
+Correcto: tests/db/bootstrap.sql
+Correcto: drizzle/0000_biblib_init.sql
+Correcto: tests/db/legacy.sql
+Correcto: drizzle/0001_library_integrity.sql
+Correcto: drizzle/0002_book_versions.sql
+Correcto: drizzle/0003_library_revision.sql
+Correcto: tests/db/versions.sql
+Correcto: tests/db/rls.sql
+Correcto: migraciones, aislamiento A/B, FK de propietario, predeterminada, integridad y rollback.
+Correcto: tests/db/revision.sql
+Correcto: revisión de colección, bloqueo, rotación única, aislamiento A/B, vistas previas e idempotencia.
+Correcto: drizzle/0004_catalogue_coordination.sql
+pnpm : Command failed: docker exec -i 917a656e23847d114f497041ca6e5fd24ef683ac1173b476234665735cfb4f90 psql 
+--no-psqlrc --quiet --tuples-only --no-align -U postgres -d biblib_test -v ON_ERROR_STOP=1
+En línea: 2 Carácter: 1
++ pnpm test:db *> docs/validacion/2026-10-25/O13/dat-09/fase-2-test-db. ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Command failed:...ON_ERROR_STOP=1:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+ERROR:  Prueba fallida: la segunda espera el intervalo de 1 s fuera de la base
+CONTEXT:  PL/pgSQL function assert_true(boolean,text) line 4 at RAISE
+SQL statement "SELECT public.assert_true(r->>'state' = 'reserved' AND (r->>'waitMs')::int BETWEEN 990 AND 1000, 'la 
+segunda espera el intervalo de 1 s fuera de la base')"
+PL/pgSQL function inline_code_block line 7 at PERFORM
+
+ERROR:  Prueba fallida: la segunda espera el intervalo de 1 s fuera de la base
+CONTEXT:  PL/pgSQL function assert_true(boolean,text) line 4 at RAISE
+SQL statement "SELECT public.assert_true(r->>'state' = 'reserved' AND (r->>'waitMs')::int BETWEEN 990 AND 1000, 'la 
+segunda espera el intervalo de 1 s fuera de la base')"
+PL/pgSQL function inline_code_block line 7 at PERFORM
+ ELIFECYCLE  Command failed with exit code 1.

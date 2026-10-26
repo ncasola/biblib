@@ -1,0 +1,44 @@
+﻿[
+    {
+        "command":  "pnpm lint",
+        "status":  "timeout",
+        "exitCode":  null,
+        "durationSeconds":  283.4,
+        "stackAndBuildSkipped":  false
+    },
+    {
+        "command":  "pnpm typecheck",
+        "status":  "timeout",
+        "exitCode":  null,
+        "durationSeconds":  250.3,
+        "stackAndBuildSkipped":  false
+    },
+    {
+        "command":  "pnpm test",
+        "status":  "timeout",
+        "exitCode":  null,
+        "durationSeconds":  190,
+        "stackAndBuildSkipped":  false
+    },
+    {
+        "command":  "pnpm test:scripts --test-concurrency=1",
+        "status":  "timeout",
+        "exitCode":  null,
+        "durationSeconds":  214.5,
+        "stackAndBuildSkipped":  true
+    },
+    {
+        "command":  "pnpm build",
+        "status":  "timeout",
+        "exitCode":  null,
+        "durationSeconds":  252.8,
+        "stackAndBuildSkipped":  false
+    },
+    {
+        "command":  "pnpm test:smoke",
+        "status":  "timeout",
+        "exitCode":  null,
+        "durationSeconds":  219.8,
+        "stackAndBuildSkipped":  false
+    }
+]

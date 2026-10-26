@@ -1,0 +1,2819 @@
+{
+ "books": [
+  {
+   "id": "00000000-0000-4000-8002-000000000001",
+   "isbn": "9780001000018",
+   "title": "Ficha sintética 001",
+   "authors": [
+    {
+     "name": "Autoría sintética 01"
+    }
+   ],
+   "number_of_pages": 37,
+   "publish_date": "1951",
+   "publishers": [
+    {
+     "name": "Editorial sintética 1"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/1.jpg",
+    "medium": "https://covers.biblib.invalid/m/1.jpg",
+    "large": "https://covers.biblib.invalid/l/1.jpg"
+   },
+   "status": "read",
+   "shelf_id": "00000000-0000-4000-8001-000000000001",
+   "shelf_name": "Balda sintética A"
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000002",
+   "isbn": "9780001000025",
+   "title": "Ficha sintética 002",
+   "authors": [
+    {
+     "name": "Autoría sintética 02"
+    }
+   ],
+   "number_of_pages": 74,
+   "publish_date": "1952",
+   "publishers": [
+    {
+     "name": "Editorial sintética 2"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/2.jpg",
+    "medium": "https://covers.biblib.invalid/m/2.jpg",
+    "large": "https://covers.biblib.invalid/l/2.jpg"
+   },
+   "status": "reading",
+   "shelf_id": "00000000-0000-4000-8001-000000000002",
+   "shelf_name": "Balda sintética B",
+   "catalogue": {
+    "source": "open-library",
+    "isbnVerified": false
+   }
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000003",
+   "isbn": "9780001000032",
+   "title": "Ficha sintética 003",
+   "authors": [
+    {
+     "name": "Autoría sintética 03"
+    }
+   ],
+   "number_of_pages": 111,
+   "publish_date": "1953",
+   "publishers": [],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/3.jpg",
+    "medium": "https://covers.biblib.invalid/m/3.jpg",
+    "large": "https://covers.biblib.invalid/l/3.jpg"
+   },
+   "status": "to-read",
+   "shelf_id": "00000000-0000-4000-8001-000000000003",
+   "shelf_name": "Balda sintética C"
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000004",
+   "isbn": "9780001000049",
+   "title": "Ficha sintética 004",
+   "authors": [
+    {
+     "name": "Autoría sintética 04"
+    }
+   ],
+   "number_of_pages": 148,
+   "publish_date": "",
+   "publishers": [
+    {
+     "name": "Editorial sintética 4"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/4.jpg",
+    "medium": "https://covers.biblib.invalid/m/4.jpg",
+    "large": "https://covers.biblib.invalid/l/4.jpg"
+   },
+   "status": "unread",
+   "shelf_id": "00000000-0000-4000-8001-000000000004",
+   "shelf_name": "Balda sintética D",
+   "catalogue": {
+    "source": "import",
+    "isbnVerified": false
+   }
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000005",
+   "isbn": "9780001000056",
+   "title": "Ficha sintética 005",
+   "authors": [
+    {
+     "name": "Autoría sintética 05"
+    }
+   ],
+   "number_of_pages": 185,
+   "publish_date": "1955",
+   "publishers": [
+    {
+     "name": "Editorial sintética 0"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/5.jpg",
+    "medium": "https://covers.biblib.invalid/m/5.jpg",
+    "large": "https://covers.biblib.invalid/l/5.jpg"
+   },
+   "status": "read",
+   "shelf_id": "00000000-0000-4000-8001-000000000000",
+   "shelf_name": "Predeterminada"
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000006",
+   "isbn": "9780001000063",
+   "title": "Ficha sintética 006",
+   "authors": [
+    {
+     "name": "Autoría sintética 06"
+    }
+   ],
+   "number_of_pages": 222,
+   "publish_date": "1956",
+   "publishers": [],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/6.jpg",
+    "medium": "https://covers.biblib.invalid/m/6.jpg",
+    "large": "https://covers.biblib.invalid/l/6.jpg"
+   },
+   "status": "reading",
+   "shelf_id": "00000000-0000-4000-8001-000000000001",
+   "shelf_name": "Balda sintética A",
+   "catalogue": {
+    "source": "open-library",
+    "isbnVerified": false
+   }
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000007",
+   "isbn": "9780001000070",
+   "title": "Ficha sintética 007",
+   "authors": [],
+   "number_of_pages": 259,
+   "publish_date": "1957",
+   "publishers": [
+    {
+     "name": "Editorial sintética 2"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/7.jpg",
+    "medium": "https://covers.biblib.invalid/m/7.jpg",
+    "large": "https://covers.biblib.invalid/l/7.jpg"
+   },
+   "status": "to-read",
+   "shelf_id": "00000000-0000-4000-8001-000000000002",
+   "shelf_name": "Balda sintética B"
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000008",
+   "isbn": "9780001000087",
+   "title": "Ficha sintética 008",
+   "authors": [
+    {
+     "name": "Autoría sintética 08"
+    }
+   ],
+   "number_of_pages": 296,
+   "publish_date": "",
+   "publishers": [
+    {
+     "name": "Editorial sintética 3"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/8.jpg",
+    "medium": "https://covers.biblib.invalid/m/8.jpg",
+    "large": "https://covers.biblib.invalid/l/8.jpg"
+   },
+   "status": "unread",
+   "shelf_id": "00000000-0000-4000-8001-000000000003",
+   "shelf_name": "Balda sintética C",
+   "catalogue": {
+    "source": "import",
+    "isbnVerified": false
+   }
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000009",
+   "isbn": "9780001000094",
+   "title": "Ficha sintética 009",
+   "authors": [
+    {
+     "name": "Autoría sintética 09"
+    }
+   ],
+   "number_of_pages": 333,
+   "publish_date": "1959",
+   "publishers": [],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/9.jpg",
+    "medium": "https://covers.biblib.invalid/m/9.jpg",
+    "large": "https://covers.biblib.invalid/l/9.jpg"
+   },
+   "status": "read",
+   "shelf_id": "00000000-0000-4000-8001-000000000004",
+   "shelf_name": "Balda sintética D"
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000010",
+   "isbn": "9780001000100",
+   "title": "Ficha sintética 010",
+   "authors": [
+    {
+     "name": "Autoría sintética 10"
+    }
+   ],
+   "number_of_pages": 370,
+   "publish_date": "1960",
+   "publishers": [
+    {
+     "name": "Editorial sintética 0"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/10.jpg",
+    "medium": "https://covers.biblib.invalid/m/10.jpg",
+    "large": "https://covers.biblib.invalid/l/10.jpg"
+   },
+   "status": "reading",
+   "shelf_id": "00000000-0000-4000-8001-000000000000",
+   "shelf_name": "Predeterminada",
+   "catalogue": {
+    "source": "open-library",
+    "isbnVerified": false
+   }
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000011",
+   "isbn": "9780001000117",
+   "title": "Ficha sintética 011",
+   "authors": [
+    {
+     "name": "Autoría sintética 11"
+    }
+   ],
+   "number_of_pages": 407,
+   "publish_date": "1961",
+   "publishers": [
+    {
+     "name": "Editorial sintética 1"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/11.jpg",
+    "medium": "https://covers.biblib.invalid/m/11.jpg",
+    "large": "https://covers.biblib.invalid/l/11.jpg"
+   },
+   "status": "to-read",
+   "shelf_id": "00000000-0000-4000-8001-000000000001",
+   "shelf_name": "Balda sintética A"
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000012",
+   "isbn": "9780001000124",
+   "title": "Ficha sintética 012",
+   "authors": [
+    {
+     "name": "Autoría sintética 12"
+    }
+   ],
+   "number_of_pages": 444,
+   "publish_date": "",
+   "publishers": [],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/12.jpg",
+    "medium": "https://covers.biblib.invalid/m/12.jpg",
+    "large": "https://covers.biblib.invalid/l/12.jpg"
+   },
+   "status": "unread",
+   "shelf_id": "00000000-0000-4000-8001-000000000002",
+   "shelf_name": "Balda sintética B",
+   "catalogue": {
+    "source": "import",
+    "isbnVerified": false
+   }
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000013",
+   "isbn": "9780001000131",
+   "title": "Ficha sintética 013",
+   "authors": [
+    {
+     "name": "Autoría sintética 00"
+    }
+   ],
+   "number_of_pages": 481,
+   "publish_date": "1963",
+   "publishers": [
+    {
+     "name": "Editorial sintética 3"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/13.jpg",
+    "medium": "https://covers.biblib.invalid/m/13.jpg",
+    "large": "https://covers.biblib.invalid/l/13.jpg"
+   },
+   "status": "read",
+   "shelf_id": "00000000-0000-4000-8001-000000000003",
+   "shelf_name": "Balda sintética C"
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000014",
+   "isbn": "9780001000148",
+   "title": "Ficha sintética 014",
+   "authors": [],
+   "number_of_pages": 518,
+   "publish_date": "1964",
+   "publishers": [
+    {
+     "name": "Editorial sintética 4"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/14.jpg",
+    "medium": "https://covers.biblib.invalid/m/14.jpg",
+    "large": "https://covers.biblib.invalid/l/14.jpg"
+   },
+   "status": "reading",
+   "shelf_id": "00000000-0000-4000-8001-000000000004",
+   "shelf_name": "Balda sintética D",
+   "catalogue": {
+    "source": "open-library",
+    "isbnVerified": false
+   }
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000015",
+   "isbn": "9780001000155",
+   "title": "Ficha sintética 015",
+   "authors": [
+    {
+     "name": "Autoría sintética 02"
+    }
+   ],
+   "number_of_pages": 555,
+   "publish_date": "1965",
+   "publishers": [],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/15.jpg",
+    "medium": "https://covers.biblib.invalid/m/15.jpg",
+    "large": "https://covers.biblib.invalid/l/15.jpg"
+   },
+   "status": "to-read",
+   "shelf_id": "00000000-0000-4000-8001-000000000000",
+   "shelf_name": "Predeterminada"
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000016",
+   "isbn": "9780001000162",
+   "title": "Ficha sintética 016",
+   "authors": [
+    {
+     "name": "Autoría sintética 03"
+    }
+   ],
+   "number_of_pages": 592,
+   "publish_date": "",
+   "publishers": [
+    {
+     "name": "Editorial sintética 1"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/16.jpg",
+    "medium": "https://covers.biblib.invalid/m/16.jpg",
+    "large": "https://covers.biblib.invalid/l/16.jpg"
+   },
+   "status": "unread",
+   "shelf_id": "00000000-0000-4000-8001-000000000001",
+   "shelf_name": "Balda sintética A",
+   "catalogue": {
+    "source": "import",
+    "isbnVerified": false
+   }
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000017",
+   "isbn": "9780001000179",
+   "title": "Ficha sintética 017",
+   "authors": [
+    {
+     "name": "Autoría sintética 04"
+    }
+   ],
+   "number_of_pages": 629,
+   "publish_date": "1967",
+   "publishers": [
+    {
+     "name": "Editorial sintética 2"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/17.jpg",
+    "medium": "https://covers.biblib.invalid/m/17.jpg",
+    "large": "https://covers.biblib.invalid/l/17.jpg"
+   },
+   "status": "read",
+   "shelf_id": "00000000-0000-4000-8001-000000000002",
+   "shelf_name": "Balda sintética B"
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000018",
+   "isbn": "9780001000186",
+   "title": "Ficha sintética 018",
+   "authors": [
+    {
+     "name": "Autoría sintética 05"
+    }
+   ],
+   "number_of_pages": 666,
+   "publish_date": "1968",
+   "publishers": [],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/18.jpg",
+    "medium": "https://covers.biblib.invalid/m/18.jpg",
+    "large": "https://covers.biblib.invalid/l/18.jpg"
+   },
+   "status": "reading",
+   "shelf_id": "00000000-0000-4000-8001-000000000003",
+   "shelf_name": "Balda sintética C",
+   "catalogue": {
+    "source": "open-library",
+    "isbnVerified": false
+   }
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000019",
+   "isbn": "9780001000193",
+   "title": "Ficha sintética 019",
+   "authors": [
+    {
+     "name": "Autoría sintética 06"
+    }
+   ],
+   "number_of_pages": 703,
+   "publish_date": "1969",
+   "publishers": [
+    {
+     "name": "Editorial sintética 4"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/19.jpg",
+    "medium": "https://covers.biblib.invalid/m/19.jpg",
+    "large": "https://covers.biblib.invalid/l/19.jpg"
+   },
+   "status": "to-read",
+   "shelf_id": "00000000-0000-4000-8001-000000000004",
+   "shelf_name": "Balda sintética D"
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000020",
+   "isbn": "9780001000209",
+   "title": "Ficha sintética 020",
+   "authors": [
+    {
+     "name": "Autoría sintética 07"
+    }
+   ],
+   "number_of_pages": 740,
+   "publish_date": "",
+   "publishers": [
+    {
+     "name": "Editorial sintética 0"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/20.jpg",
+    "medium": "https://covers.biblib.invalid/m/20.jpg",
+    "large": "https://covers.biblib.invalid/l/20.jpg"
+   },
+   "status": "unread",
+   "shelf_id": "00000000-0000-4000-8001-000000000000",
+   "shelf_name": "Predeterminada",
+   "catalogue": {
+    "source": "import",
+    "isbnVerified": false
+   }
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000021",
+   "isbn": "9780001000216",
+   "title": "Ficha sintética 021",
+   "authors": [],
+   "number_of_pages": 777,
+   "publish_date": "1971",
+   "publishers": [],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/21.jpg",
+    "medium": "https://covers.biblib.invalid/m/21.jpg",
+    "large": "https://covers.biblib.invalid/l/21.jpg"
+   },
+   "status": "read",
+   "shelf_id": "00000000-0000-4000-8001-000000000001",
+   "shelf_name": "Balda sintética A"
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000022",
+   "isbn": "9780001000223",
+   "title": "Ficha sintética 022",
+   "authors": [
+    {
+     "name": "Autoría sintética 09"
+    }
+   ],
+   "number_of_pages": 814,
+   "publish_date": "1972",
+   "publishers": [
+    {
+     "name": "Editorial sintética 2"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/22.jpg",
+    "medium": "https://covers.biblib.invalid/m/22.jpg",
+    "large": "https://covers.biblib.invalid/l/22.jpg"
+   },
+   "status": "reading",
+   "shelf_id": "00000000-0000-4000-8001-000000000002",
+   "shelf_name": "Balda sintética B",
+   "catalogue": {
+    "source": "open-library",
+    "isbnVerified": false
+   }
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000023",
+   "isbn": "9780001000230",
+   "title": "Ficha sintética 023",
+   "authors": [
+    {
+     "name": "Autoría sintética 10"
+    }
+   ],
+   "number_of_pages": 851,
+   "publish_date": "1973",
+   "publishers": [
+    {
+     "name": "Editorial sintética 3"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/23.jpg",
+    "medium": "https://covers.biblib.invalid/m/23.jpg",
+    "large": "https://covers.biblib.invalid/l/23.jpg"
+   },
+   "status": "to-read",
+   "shelf_id": "00000000-0000-4000-8001-000000000003",
+   "shelf_name": "Balda sintética C"
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000024",
+   "isbn": "9780001000247",
+   "title": "Ficha sintética 024",
+   "authors": [
+    {
+     "name": "Autoría sintética 11"
+    }
+   ],
+   "number_of_pages": 888,
+   "publish_date": "",
+   "publishers": [],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/24.jpg",
+    "medium": "https://covers.biblib.invalid/m/24.jpg",
+    "large": "https://covers.biblib.invalid/l/24.jpg"
+   },
+   "status": "unread",
+   "shelf_id": "00000000-0000-4000-8001-000000000004",
+   "shelf_name": "Balda sintética D",
+   "catalogue": {
+    "source": "import",
+    "isbnVerified": false
+   }
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000025",
+   "isbn": "9780001000254",
+   "title": "Ficha sintética 025",
+   "authors": [
+    {
+     "name": "Autoría sintética 12"
+    }
+   ],
+   "number_of_pages": 25,
+   "publish_date": "1975",
+   "publishers": [
+    {
+     "name": "Editorial sintética 0"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/25.jpg",
+    "medium": "https://covers.biblib.invalid/m/25.jpg",
+    "large": "https://covers.biblib.invalid/l/25.jpg"
+   },
+   "status": "read",
+   "shelf_id": "00000000-0000-4000-8001-000000000000",
+   "shelf_name": "Predeterminada"
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000026",
+   "isbn": "9780001000261",
+   "title": "Ficha sintética 026",
+   "authors": [
+    {
+     "name": "Autoría sintética 00"
+    }
+   ],
+   "number_of_pages": 62,
+   "publish_date": "1976",
+   "publishers": [
+    {
+     "name": "Editorial sintética 1"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/26.jpg",
+    "medium": "https://covers.biblib.invalid/m/26.jpg",
+    "large": "https://covers.biblib.invalid/l/26.jpg"
+   },
+   "status": "reading",
+   "shelf_id": "00000000-0000-4000-8001-000000000001",
+   "shelf_name": "Balda sintética A",
+   "catalogue": {
+    "source": "open-library",
+    "isbnVerified": false
+   }
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000027",
+   "isbn": "9780001000278",
+   "title": "Ficha sintética 027",
+   "authors": [
+    {
+     "name": "Autoría sintética 01"
+    }
+   ],
+   "number_of_pages": 99,
+   "publish_date": "1977",
+   "publishers": [],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/27.jpg",
+    "medium": "https://covers.biblib.invalid/m/27.jpg",
+    "large": "https://covers.biblib.invalid/l/27.jpg"
+   },
+   "status": "to-read",
+   "shelf_id": "00000000-0000-4000-8001-000000000002",
+   "shelf_name": "Balda sintética B"
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000028",
+   "isbn": "9780001000285",
+   "title": "Ficha sintética 028",
+   "authors": [],
+   "number_of_pages": 136,
+   "publish_date": "",
+   "publishers": [
+    {
+     "name": "Editorial sintética 3"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/28.jpg",
+    "medium": "https://covers.biblib.invalid/m/28.jpg",
+    "large": "https://covers.biblib.invalid/l/28.jpg"
+   },
+   "status": "unread",
+   "shelf_id": "00000000-0000-4000-8001-000000000003",
+   "shelf_name": "Balda sintética C",
+   "catalogue": {
+    "source": "import",
+    "isbnVerified": false
+   }
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000029",
+   "isbn": "9780001000292",
+   "title": "Ficha sintética 029",
+   "authors": [
+    {
+     "name": "Autoría sintética 03"
+    }
+   ],
+   "number_of_pages": 173,
+   "publish_date": "1979",
+   "publishers": [
+    {
+     "name": "Editorial sintética 4"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/29.jpg",
+    "medium": "https://covers.biblib.invalid/m/29.jpg",
+    "large": "https://covers.biblib.invalid/l/29.jpg"
+   },
+   "status": "read",
+   "shelf_id": "00000000-0000-4000-8001-000000000004",
+   "shelf_name": "Balda sintética D"
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000030",
+   "isbn": "9780001000308",
+   "title": "Ficha sintética 030",
+   "authors": [
+    {
+     "name": "Autoría sintética 04"
+    }
+   ],
+   "number_of_pages": 210,
+   "publish_date": "1980",
+   "publishers": [],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/30.jpg",
+    "medium": "https://covers.biblib.invalid/m/30.jpg",
+    "large": "https://covers.biblib.invalid/l/30.jpg"
+   },
+   "status": "reading",
+   "shelf_id": "00000000-0000-4000-8001-000000000000",
+   "shelf_name": "Predeterminada",
+   "catalogue": {
+    "source": "open-library",
+    "isbnVerified": false
+   }
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000031",
+   "isbn": "9780001000315",
+   "title": "Ficha sintética 031",
+   "authors": [
+    {
+     "name": "Autoría sintética 05"
+    }
+   ],
+   "number_of_pages": 247,
+   "publish_date": "1981",
+   "publishers": [
+    {
+     "name": "Editorial sintética 1"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/31.jpg",
+    "medium": "https://covers.biblib.invalid/m/31.jpg",
+    "large": "https://covers.biblib.invalid/l/31.jpg"
+   },
+   "status": "to-read",
+   "shelf_id": "00000000-0000-4000-8001-000000000001",
+   "shelf_name": "Balda sintética A"
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000032",
+   "isbn": "9780001000322",
+   "title": "Ficha sintética 032",
+   "authors": [
+    {
+     "name": "Autoría sintética 06"
+    }
+   ],
+   "number_of_pages": 284,
+   "publish_date": "",
+   "publishers": [
+    {
+     "name": "Editorial sintética 2"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/32.jpg",
+    "medium": "https://covers.biblib.invalid/m/32.jpg",
+    "large": "https://covers.biblib.invalid/l/32.jpg"
+   },
+   "status": "unread",
+   "shelf_id": "00000000-0000-4000-8001-000000000002",
+   "shelf_name": "Balda sintética B",
+   "catalogue": {
+    "source": "import",
+    "isbnVerified": false
+   }
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000033",
+   "isbn": "9780001000339",
+   "title": "Ficha sintética 033",
+   "authors": [
+    {
+     "name": "Autoría sintética 07"
+    }
+   ],
+   "number_of_pages": 321,
+   "publish_date": "1983",
+   "publishers": [],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/33.jpg",
+    "medium": "https://covers.biblib.invalid/m/33.jpg",
+    "large": "https://covers.biblib.invalid/l/33.jpg"
+   },
+   "status": "read",
+   "shelf_id": "00000000-0000-4000-8001-000000000003",
+   "shelf_name": "Balda sintética C"
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000034",
+   "isbn": "9780001000346",
+   "title": "Ficha sintética 034",
+   "authors": [
+    {
+     "name": "Autoría sintética 08"
+    }
+   ],
+   "number_of_pages": 358,
+   "publish_date": "1984",
+   "publishers": [
+    {
+     "name": "Editorial sintética 4"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/34.jpg",
+    "medium": "https://covers.biblib.invalid/m/34.jpg",
+    "large": "https://covers.biblib.invalid/l/34.jpg"
+   },
+   "status": "reading",
+   "shelf_id": "00000000-0000-4000-8001-000000000004",
+   "shelf_name": "Balda sintética D",
+   "catalogue": {
+    "source": "open-library",
+    "isbnVerified": false
+   }
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000035",
+   "isbn": "9780001000353",
+   "title": "Ficha sintética 035",
+   "authors": [],
+   "number_of_pages": 395,
+   "publish_date": "1985",
+   "publishers": [
+    {
+     "name": "Editorial sintética 0"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/35.jpg",
+    "medium": "https://covers.biblib.invalid/m/35.jpg",
+    "large": "https://covers.biblib.invalid/l/35.jpg"
+   },
+   "status": "to-read",
+   "shelf_id": "00000000-0000-4000-8001-000000000000",
+   "shelf_name": "Predeterminada"
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000036",
+   "isbn": "9780001000360",
+   "title": "Ficha sintética 036",
+   "authors": [
+    {
+     "name": "Autoría sintética 10"
+    }
+   ],
+   "number_of_pages": 432,
+   "publish_date": "",
+   "publishers": [],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/36.jpg",
+    "medium": "https://covers.biblib.invalid/m/36.jpg",
+    "large": "https://covers.biblib.invalid/l/36.jpg"
+   },
+   "status": "unread",
+   "shelf_id": "00000000-0000-4000-8001-000000000001",
+   "shelf_name": "Balda sintética A",
+   "catalogue": {
+    "source": "import",
+    "isbnVerified": false
+   }
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000037",
+   "isbn": "9780001000377",
+   "title": "Ficha sintética 037",
+   "authors": [
+    {
+     "name": "Autoría sintética 11"
+    }
+   ],
+   "number_of_pages": 469,
+   "publish_date": "1987",
+   "publishers": [
+    {
+     "name": "Editorial sintética 2"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/37.jpg",
+    "medium": "https://covers.biblib.invalid/m/37.jpg",
+    "large": "https://covers.biblib.invalid/l/37.jpg"
+   },
+   "status": "read",
+   "shelf_id": "00000000-0000-4000-8001-000000000002",
+   "shelf_name": "Balda sintética B"
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000038",
+   "isbn": "9780001000384",
+   "title": "Ficha sintética 038",
+   "authors": [
+    {
+     "name": "Autoría sintética 12"
+    }
+   ],
+   "number_of_pages": 506,
+   "publish_date": "1988",
+   "publishers": [
+    {
+     "name": "Editorial sintética 3"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/38.jpg",
+    "medium": "https://covers.biblib.invalid/m/38.jpg",
+    "large": "https://covers.biblib.invalid/l/38.jpg"
+   },
+   "status": "reading",
+   "shelf_id": "00000000-0000-4000-8001-000000000003",
+   "shelf_name": "Balda sintética C",
+   "catalogue": {
+    "source": "open-library",
+    "isbnVerified": false
+   }
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000039",
+   "isbn": "9780001000391",
+   "title": "Ficha sintética 039",
+   "authors": [
+    {
+     "name": "Autoría sintética 00"
+    }
+   ],
+   "number_of_pages": 543,
+   "publish_date": "1989",
+   "publishers": [],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/39.jpg",
+    "medium": "https://covers.biblib.invalid/m/39.jpg",
+    "large": "https://covers.biblib.invalid/l/39.jpg"
+   },
+   "status": "to-read",
+   "shelf_id": "00000000-0000-4000-8001-000000000004",
+   "shelf_name": "Balda sintética D"
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000040",
+   "isbn": "9780001000407",
+   "title": "Ficha sintética 040",
+   "authors": [
+    {
+     "name": "Autoría sintética 01"
+    }
+   ],
+   "number_of_pages": 580,
+   "publish_date": "",
+   "publishers": [
+    {
+     "name": "Editorial sintética 0"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/40.jpg",
+    "medium": "https://covers.biblib.invalid/m/40.jpg",
+    "large": "https://covers.biblib.invalid/l/40.jpg"
+   },
+   "status": "unread",
+   "shelf_id": "00000000-0000-4000-8001-000000000000",
+   "shelf_name": "Predeterminada",
+   "catalogue": {
+    "source": "import",
+    "isbnVerified": false
+   }
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000041",
+   "isbn": "9780001000414",
+   "title": "Ficha sintética 041",
+   "authors": [
+    {
+     "name": "Autoría sintética 02"
+    }
+   ],
+   "number_of_pages": 617,
+   "publish_date": "1991",
+   "publishers": [
+    {
+     "name": "Editorial sintética 1"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/41.jpg",
+    "medium": "https://covers.biblib.invalid/m/41.jpg",
+    "large": "https://covers.biblib.invalid/l/41.jpg"
+   },
+   "status": "read",
+   "shelf_id": "00000000-0000-4000-8001-000000000001",
+   "shelf_name": "Balda sintética A"
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000042",
+   "isbn": "9780001000421",
+   "title": "Ficha sintética 042",
+   "authors": [],
+   "number_of_pages": 654,
+   "publish_date": "1992",
+   "publishers": [],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/42.jpg",
+    "medium": "https://covers.biblib.invalid/m/42.jpg",
+    "large": "https://covers.biblib.invalid/l/42.jpg"
+   },
+   "status": "reading",
+   "shelf_id": "00000000-0000-4000-8001-000000000002",
+   "shelf_name": "Balda sintética B",
+   "catalogue": {
+    "source": "open-library",
+    "isbnVerified": false
+   }
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000043",
+   "isbn": "9780001000438",
+   "title": "Ficha sintética 043",
+   "authors": [
+    {
+     "name": "Autoría sintética 04"
+    }
+   ],
+   "number_of_pages": 691,
+   "publish_date": "1993",
+   "publishers": [
+    {
+     "name": "Editorial sintética 3"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/43.jpg",
+    "medium": "https://covers.biblib.invalid/m/43.jpg",
+    "large": "https://covers.biblib.invalid/l/43.jpg"
+   },
+   "status": "to-read",
+   "shelf_id": "00000000-0000-4000-8001-000000000003",
+   "shelf_name": "Balda sintética C"
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000044",
+   "isbn": "9780001000445",
+   "title": "Ficha sintética 044",
+   "authors": [
+    {
+     "name": "Autoría sintética 05"
+    }
+   ],
+   "number_of_pages": 728,
+   "publish_date": "",
+   "publishers": [
+    {
+     "name": "Editorial sintética 4"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/44.jpg",
+    "medium": "https://covers.biblib.invalid/m/44.jpg",
+    "large": "https://covers.biblib.invalid/l/44.jpg"
+   },
+   "status": "unread",
+   "shelf_id": "00000000-0000-4000-8001-000000000004",
+   "shelf_name": "Balda sintética D",
+   "catalogue": {
+    "source": "import",
+    "isbnVerified": false
+   }
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000045",
+   "isbn": "9780001000452",
+   "title": "Ficha sintética 045",
+   "authors": [
+    {
+     "name": "Autoría sintética 06"
+    }
+   ],
+   "number_of_pages": 765,
+   "publish_date": "1995",
+   "publishers": [],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/45.jpg",
+    "medium": "https://covers.biblib.invalid/m/45.jpg",
+    "large": "https://covers.biblib.invalid/l/45.jpg"
+   },
+   "status": "read",
+   "shelf_id": "00000000-0000-4000-8001-000000000000",
+   "shelf_name": "Predeterminada"
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000046",
+   "isbn": "9780001000469",
+   "title": "Ficha sintética 046",
+   "authors": [
+    {
+     "name": "Autoría sintética 07"
+    }
+   ],
+   "number_of_pages": 802,
+   "publish_date": "1996",
+   "publishers": [
+    {
+     "name": "Editorial sintética 1"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/46.jpg",
+    "medium": "https://covers.biblib.invalid/m/46.jpg",
+    "large": "https://covers.biblib.invalid/l/46.jpg"
+   },
+   "status": "reading",
+   "shelf_id": "00000000-0000-4000-8001-000000000001",
+   "shelf_name": "Balda sintética A",
+   "catalogue": {
+    "source": "open-library",
+    "isbnVerified": false
+   }
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000047",
+   "isbn": "9780001000476",
+   "title": "Ficha sintética 047",
+   "authors": [
+    {
+     "name": "Autoría sintética 08"
+    }
+   ],
+   "number_of_pages": 839,
+   "publish_date": "1997",
+   "publishers": [
+    {
+     "name": "Editorial sintética 2"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/47.jpg",
+    "medium": "https://covers.biblib.invalid/m/47.jpg",
+    "large": "https://covers.biblib.invalid/l/47.jpg"
+   },
+   "status": "to-read",
+   "shelf_id": "00000000-0000-4000-8001-000000000002",
+   "shelf_name": "Balda sintética B"
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000048",
+   "isbn": "9780001000483",
+   "title": "Ficha sintética 048",
+   "authors": [
+    {
+     "name": "Autoría sintética 09"
+    }
+   ],
+   "number_of_pages": 876,
+   "publish_date": "",
+   "publishers": [],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/48.jpg",
+    "medium": "https://covers.biblib.invalid/m/48.jpg",
+    "large": "https://covers.biblib.invalid/l/48.jpg"
+   },
+   "status": "unread",
+   "shelf_id": "00000000-0000-4000-8001-000000000003",
+   "shelf_name": "Balda sintética C",
+   "catalogue": {
+    "source": "import",
+    "isbnVerified": false
+   }
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000049",
+   "isbn": "9780001000490",
+   "title": "Ficha sintética 049",
+   "authors": [],
+   "number_of_pages": 13,
+   "publish_date": "1999",
+   "publishers": [
+    {
+     "name": "Editorial sintética 4"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/49.jpg",
+    "medium": "https://covers.biblib.invalid/m/49.jpg",
+    "large": "https://covers.biblib.invalid/l/49.jpg"
+   },
+   "status": "read",
+   "shelf_id": "00000000-0000-4000-8001-000000000004",
+   "shelf_name": "Balda sintética D"
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000050",
+   "isbn": "9780001000506",
+   "title": "Ficha sintética 050",
+   "authors": [
+    {
+     "name": "Autoría sintética 11"
+    }
+   ],
+   "number_of_pages": 50,
+   "publish_date": "2000",
+   "publishers": [
+    {
+     "name": "Editorial sintética 0"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/50.jpg",
+    "medium": "https://covers.biblib.invalid/m/50.jpg",
+    "large": "https://covers.biblib.invalid/l/50.jpg"
+   },
+   "status": "reading",
+   "shelf_id": "00000000-0000-4000-8001-000000000000",
+   "shelf_name": "Predeterminada",
+   "catalogue": {
+    "source": "open-library",
+    "isbnVerified": false
+   }
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000051",
+   "isbn": "9780001000513",
+   "title": "Ficha sintética 051",
+   "authors": [
+    {
+     "name": "Autoría sintética 12"
+    }
+   ],
+   "number_of_pages": 87,
+   "publish_date": "2001",
+   "publishers": [],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/51.jpg",
+    "medium": "https://covers.biblib.invalid/m/51.jpg",
+    "large": "https://covers.biblib.invalid/l/51.jpg"
+   },
+   "status": "to-read",
+   "shelf_id": "00000000-0000-4000-8001-000000000001",
+   "shelf_name": "Balda sintética A"
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000052",
+   "isbn": "9780001000520",
+   "title": "Ficha sintética 052",
+   "authors": [
+    {
+     "name": "Autoría sintética 00"
+    }
+   ],
+   "number_of_pages": 124,
+   "publish_date": "",
+   "publishers": [
+    {
+     "name": "Editorial sintética 2"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/52.jpg",
+    "medium": "https://covers.biblib.invalid/m/52.jpg",
+    "large": "https://covers.biblib.invalid/l/52.jpg"
+   },
+   "status": "unread",
+   "shelf_id": "00000000-0000-4000-8001-000000000002",
+   "shelf_name": "Balda sintética B",
+   "catalogue": {
+    "source": "import",
+    "isbnVerified": false
+   }
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000053",
+   "isbn": "9780001000537",
+   "title": "Ficha sintética 053",
+   "authors": [
+    {
+     "name": "Autoría sintética 01"
+    }
+   ],
+   "number_of_pages": 161,
+   "publish_date": "2003",
+   "publishers": [
+    {
+     "name": "Editorial sintética 3"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/53.jpg",
+    "medium": "https://covers.biblib.invalid/m/53.jpg",
+    "large": "https://covers.biblib.invalid/l/53.jpg"
+   },
+   "status": "read",
+   "shelf_id": "00000000-0000-4000-8001-000000000003",
+   "shelf_name": "Balda sintética C"
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000054",
+   "isbn": "9780001000544",
+   "title": "Ficha sintética 054",
+   "authors": [
+    {
+     "name": "Autoría sintética 02"
+    }
+   ],
+   "number_of_pages": 198,
+   "publish_date": "2004",
+   "publishers": [],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/54.jpg",
+    "medium": "https://covers.biblib.invalid/m/54.jpg",
+    "large": "https://covers.biblib.invalid/l/54.jpg"
+   },
+   "status": "reading",
+   "shelf_id": "00000000-0000-4000-8001-000000000004",
+   "shelf_name": "Balda sintética D",
+   "catalogue": {
+    "source": "open-library",
+    "isbnVerified": false
+   }
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000055",
+   "isbn": "9780001000551",
+   "title": "Ficha sintética 055",
+   "authors": [
+    {
+     "name": "Autoría sintética 03"
+    }
+   ],
+   "number_of_pages": 235,
+   "publish_date": "2005",
+   "publishers": [
+    {
+     "name": "Editorial sintética 0"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/55.jpg",
+    "medium": "https://covers.biblib.invalid/m/55.jpg",
+    "large": "https://covers.biblib.invalid/l/55.jpg"
+   },
+   "status": "to-read",
+   "shelf_id": "00000000-0000-4000-8001-000000000000",
+   "shelf_name": "Predeterminada"
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000056",
+   "isbn": "9780001000568",
+   "title": "Ficha sintética 056",
+   "authors": [],
+   "number_of_pages": 272,
+   "publish_date": "",
+   "publishers": [
+    {
+     "name": "Editorial sintética 1"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/56.jpg",
+    "medium": "https://covers.biblib.invalid/m/56.jpg",
+    "large": "https://covers.biblib.invalid/l/56.jpg"
+   },
+   "status": "unread",
+   "shelf_id": "00000000-0000-4000-8001-000000000001",
+   "shelf_name": "Balda sintética A",
+   "catalogue": {
+    "source": "import",
+    "isbnVerified": false
+   }
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000057",
+   "isbn": "9780001000575",
+   "title": "Ficha sintética 057",
+   "authors": [
+    {
+     "name": "Autoría sintética 05"
+    }
+   ],
+   "number_of_pages": 309,
+   "publish_date": "2007",
+   "publishers": [],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/57.jpg",
+    "medium": "https://covers.biblib.invalid/m/57.jpg",
+    "large": "https://covers.biblib.invalid/l/57.jpg"
+   },
+   "status": "read",
+   "shelf_id": "00000000-0000-4000-8001-000000000002",
+   "shelf_name": "Balda sintética B"
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000058",
+   "isbn": "9780001000582",
+   "title": "Ficha sintética 058",
+   "authors": [
+    {
+     "name": "Autoría sintética 06"
+    }
+   ],
+   "number_of_pages": 346,
+   "publish_date": "2008",
+   "publishers": [
+    {
+     "name": "Editorial sintética 3"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/58.jpg",
+    "medium": "https://covers.biblib.invalid/m/58.jpg",
+    "large": "https://covers.biblib.invalid/l/58.jpg"
+   },
+   "status": "reading",
+   "shelf_id": "00000000-0000-4000-8001-000000000003",
+   "shelf_name": "Balda sintética C",
+   "catalogue": {
+    "source": "open-library",
+    "isbnVerified": false
+   }
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000059",
+   "isbn": "9780001000599",
+   "title": "Ficha sintética 059",
+   "authors": [
+    {
+     "name": "Autoría sintética 07"
+    }
+   ],
+   "number_of_pages": 383,
+   "publish_date": "2009",
+   "publishers": [
+    {
+     "name": "Editorial sintética 4"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/59.jpg",
+    "medium": "https://covers.biblib.invalid/m/59.jpg",
+    "large": "https://covers.biblib.invalid/l/59.jpg"
+   },
+   "status": "to-read",
+   "shelf_id": "00000000-0000-4000-8001-000000000004",
+   "shelf_name": "Balda sintética D"
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000060",
+   "isbn": "9780001000605",
+   "title": "Ficha sintética 060",
+   "authors": [
+    {
+     "name": "Autoría sintética 08"
+    }
+   ],
+   "number_of_pages": 420,
+   "publish_date": "",
+   "publishers": [],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/60.jpg",
+    "medium": "https://covers.biblib.invalid/m/60.jpg",
+    "large": "https://covers.biblib.invalid/l/60.jpg"
+   },
+   "status": "unread",
+   "shelf_id": "00000000-0000-4000-8001-000000000000",
+   "shelf_name": "Predeterminada",
+   "catalogue": {
+    "source": "import",
+    "isbnVerified": false
+   }
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000061",
+   "isbn": "9780001000612",
+   "title": "Ficha sintética 061",
+   "authors": [
+    {
+     "name": "Autoría sintética 09"
+    }
+   ],
+   "number_of_pages": 457,
+   "publish_date": "2011",
+   "publishers": [
+    {
+     "name": "Editorial sintética 1"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/61.jpg",
+    "medium": "https://covers.biblib.invalid/m/61.jpg",
+    "large": "https://covers.biblib.invalid/l/61.jpg"
+   },
+   "status": "read",
+   "shelf_id": "00000000-0000-4000-8001-000000000001",
+   "shelf_name": "Balda sintética A"
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000062",
+   "isbn": "9780001000629",
+   "title": "Ficha sintética 062",
+   "authors": [
+    {
+     "name": "Autoría sintética 10"
+    }
+   ],
+   "number_of_pages": 494,
+   "publish_date": "2012",
+   "publishers": [
+    {
+     "name": "Editorial sintética 2"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/62.jpg",
+    "medium": "https://covers.biblib.invalid/m/62.jpg",
+    "large": "https://covers.biblib.invalid/l/62.jpg"
+   },
+   "status": "reading",
+   "shelf_id": "00000000-0000-4000-8001-000000000002",
+   "shelf_name": "Balda sintética B",
+   "catalogue": {
+    "source": "open-library",
+    "isbnVerified": false
+   }
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000063",
+   "isbn": "9780001000636",
+   "title": "Ficha sintética 063",
+   "authors": [],
+   "number_of_pages": 531,
+   "publish_date": "2013",
+   "publishers": [],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/63.jpg",
+    "medium": "https://covers.biblib.invalid/m/63.jpg",
+    "large": "https://covers.biblib.invalid/l/63.jpg"
+   },
+   "status": "to-read",
+   "shelf_id": "00000000-0000-4000-8001-000000000003",
+   "shelf_name": "Balda sintética C"
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000064",
+   "isbn": "9780001000643",
+   "title": "Ficha sintética 064",
+   "authors": [
+    {
+     "name": "Autoría sintética 12"
+    }
+   ],
+   "number_of_pages": 568,
+   "publish_date": "",
+   "publishers": [
+    {
+     "name": "Editorial sintética 4"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/64.jpg",
+    "medium": "https://covers.biblib.invalid/m/64.jpg",
+    "large": "https://covers.biblib.invalid/l/64.jpg"
+   },
+   "status": "unread",
+   "shelf_id": "00000000-0000-4000-8001-000000000004",
+   "shelf_name": "Balda sintética D",
+   "catalogue": {
+    "source": "import",
+    "isbnVerified": false
+   }
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000065",
+   "isbn": "9780001000650",
+   "title": "Ficha sintética 065",
+   "authors": [
+    {
+     "name": "Autoría sintética 00"
+    }
+   ],
+   "number_of_pages": 605,
+   "publish_date": "2015",
+   "publishers": [
+    {
+     "name": "Editorial sintética 0"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/65.jpg",
+    "medium": "https://covers.biblib.invalid/m/65.jpg",
+    "large": "https://covers.biblib.invalid/l/65.jpg"
+   },
+   "status": "read",
+   "shelf_id": "00000000-0000-4000-8001-000000000000",
+   "shelf_name": "Predeterminada"
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000066",
+   "isbn": "9780001000667",
+   "title": "Ficha sintética 066",
+   "authors": [
+    {
+     "name": "Autoría sintética 01"
+    }
+   ],
+   "number_of_pages": 642,
+   "publish_date": "2016",
+   "publishers": [],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/66.jpg",
+    "medium": "https://covers.biblib.invalid/m/66.jpg",
+    "large": "https://covers.biblib.invalid/l/66.jpg"
+   },
+   "status": "reading",
+   "shelf_id": "00000000-0000-4000-8001-000000000001",
+   "shelf_name": "Balda sintética A",
+   "catalogue": {
+    "source": "open-library",
+    "isbnVerified": false
+   }
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000067",
+   "isbn": "9780001000674",
+   "title": "Ficha sintética 067",
+   "authors": [
+    {
+     "name": "Autoría sintética 02"
+    }
+   ],
+   "number_of_pages": 679,
+   "publish_date": "2017",
+   "publishers": [
+    {
+     "name": "Editorial sintética 2"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/67.jpg",
+    "medium": "https://covers.biblib.invalid/m/67.jpg",
+    "large": "https://covers.biblib.invalid/l/67.jpg"
+   },
+   "status": "to-read",
+   "shelf_id": "00000000-0000-4000-8001-000000000002",
+   "shelf_name": "Balda sintética B"
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000068",
+   "isbn": "9780001000681",
+   "title": "Ficha sintética 068",
+   "authors": [
+    {
+     "name": "Autoría sintética 03"
+    }
+   ],
+   "number_of_pages": 716,
+   "publish_date": "",
+   "publishers": [
+    {
+     "name": "Editorial sintética 3"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/68.jpg",
+    "medium": "https://covers.biblib.invalid/m/68.jpg",
+    "large": "https://covers.biblib.invalid/l/68.jpg"
+   },
+   "status": "unread",
+   "shelf_id": "00000000-0000-4000-8001-000000000003",
+   "shelf_name": "Balda sintética C",
+   "catalogue": {
+    "source": "import",
+    "isbnVerified": false
+   }
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000069",
+   "isbn": "9780001000698",
+   "title": "Ficha sintética 069",
+   "authors": [
+    {
+     "name": "Autoría sintética 04"
+    }
+   ],
+   "number_of_pages": 753,
+   "publish_date": "2019",
+   "publishers": [],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/69.jpg",
+    "medium": "https://covers.biblib.invalid/m/69.jpg",
+    "large": "https://covers.biblib.invalid/l/69.jpg"
+   },
+   "status": "read",
+   "shelf_id": "00000000-0000-4000-8001-000000000004",
+   "shelf_name": "Balda sintética D"
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000070",
+   "isbn": "9780001000704",
+   "title": "Ficha sintética 070",
+   "authors": [],
+   "number_of_pages": 790,
+   "publish_date": "1950",
+   "publishers": [
+    {
+     "name": "Editorial sintética 0"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/70.jpg",
+    "medium": "https://covers.biblib.invalid/m/70.jpg",
+    "large": "https://covers.biblib.invalid/l/70.jpg"
+   },
+   "status": "reading",
+   "shelf_id": "00000000-0000-4000-8001-000000000000",
+   "shelf_name": "Predeterminada",
+   "catalogue": {
+    "source": "open-library",
+    "isbnVerified": false
+   }
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000071",
+   "isbn": "9780001000711",
+   "title": "Ficha sintética 071",
+   "authors": [
+    {
+     "name": "Autoría sintética 06"
+    }
+   ],
+   "number_of_pages": 827,
+   "publish_date": "1951",
+   "publishers": [
+    {
+     "name": "Editorial sintética 1"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/71.jpg",
+    "medium": "https://covers.biblib.invalid/m/71.jpg",
+    "large": "https://covers.biblib.invalid/l/71.jpg"
+   },
+   "status": "to-read",
+   "shelf_id": "00000000-0000-4000-8001-000000000001",
+   "shelf_name": "Balda sintética A"
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000072",
+   "isbn": "9780001000728",
+   "title": "Ficha sintética 072",
+   "authors": [
+    {
+     "name": "Autoría sintética 07"
+    }
+   ],
+   "number_of_pages": 864,
+   "publish_date": "",
+   "publishers": [],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/72.jpg",
+    "medium": "https://covers.biblib.invalid/m/72.jpg",
+    "large": "https://covers.biblib.invalid/l/72.jpg"
+   },
+   "status": "unread",
+   "shelf_id": "00000000-0000-4000-8001-000000000002",
+   "shelf_name": "Balda sintética B",
+   "catalogue": {
+    "source": "import",
+    "isbnVerified": false
+   }
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000073",
+   "isbn": "9780001000735",
+   "title": "Ficha sintética 073",
+   "authors": [
+    {
+     "name": "Autoría sintética 08"
+    }
+   ],
+   "number_of_pages": 1,
+   "publish_date": "1953",
+   "publishers": [
+    {
+     "name": "Editorial sintética 3"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/73.jpg",
+    "medium": "https://covers.biblib.invalid/m/73.jpg",
+    "large": "https://covers.biblib.invalid/l/73.jpg"
+   },
+   "status": "read",
+   "shelf_id": "00000000-0000-4000-8001-000000000003",
+   "shelf_name": "Balda sintética C"
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000074",
+   "isbn": "9780001000742",
+   "title": "Ficha sintética 074",
+   "authors": [
+    {
+     "name": "Autoría sintética 09"
+    }
+   ],
+   "number_of_pages": 38,
+   "publish_date": "1954",
+   "publishers": [
+    {
+     "name": "Editorial sintética 4"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/74.jpg",
+    "medium": "https://covers.biblib.invalid/m/74.jpg",
+    "large": "https://covers.biblib.invalid/l/74.jpg"
+   },
+   "status": "reading",
+   "shelf_id": "00000000-0000-4000-8001-000000000004",
+   "shelf_name": "Balda sintética D",
+   "catalogue": {
+    "source": "open-library",
+    "isbnVerified": false
+   }
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000075",
+   "isbn": "9780001000759",
+   "title": "Ficha sintética 075",
+   "authors": [
+    {
+     "name": "Autoría sintética 10"
+    }
+   ],
+   "number_of_pages": 75,
+   "publish_date": "1955",
+   "publishers": [],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/75.jpg",
+    "medium": "https://covers.biblib.invalid/m/75.jpg",
+    "large": "https://covers.biblib.invalid/l/75.jpg"
+   },
+   "status": "to-read",
+   "shelf_id": "00000000-0000-4000-8001-000000000000",
+   "shelf_name": "Predeterminada"
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000076",
+   "isbn": "9780001000766",
+   "title": "Ficha sintética 076",
+   "authors": [
+    {
+     "name": "Autoría sintética 11"
+    }
+   ],
+   "number_of_pages": 112,
+   "publish_date": "",
+   "publishers": [
+    {
+     "name": "Editorial sintética 1"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/76.jpg",
+    "medium": "https://covers.biblib.invalid/m/76.jpg",
+    "large": "https://covers.biblib.invalid/l/76.jpg"
+   },
+   "status": "unread",
+   "shelf_id": "00000000-0000-4000-8001-000000000001",
+   "shelf_name": "Balda sintética A",
+   "catalogue": {
+    "source": "import",
+    "isbnVerified": false
+   }
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000077",
+   "isbn": "9780001000773",
+   "title": "Ficha sintética 077",
+   "authors": [],
+   "number_of_pages": 149,
+   "publish_date": "1957",
+   "publishers": [
+    {
+     "name": "Editorial sintética 2"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/77.jpg",
+    "medium": "https://covers.biblib.invalid/m/77.jpg",
+    "large": "https://covers.biblib.invalid/l/77.jpg"
+   },
+   "status": "read",
+   "shelf_id": "00000000-0000-4000-8001-000000000002",
+   "shelf_name": "Balda sintética B"
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000078",
+   "isbn": "9780001000780",
+   "title": "Ficha sintética 078",
+   "authors": [
+    {
+     "name": "Autoría sintética 00"
+    }
+   ],
+   "number_of_pages": 186,
+   "publish_date": "1958",
+   "publishers": [],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/78.jpg",
+    "medium": "https://covers.biblib.invalid/m/78.jpg",
+    "large": "https://covers.biblib.invalid/l/78.jpg"
+   },
+   "status": "reading",
+   "shelf_id": "00000000-0000-4000-8001-000000000003",
+   "shelf_name": "Balda sintética C",
+   "catalogue": {
+    "source": "open-library",
+    "isbnVerified": false
+   }
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000079",
+   "isbn": "9780001000797",
+   "title": "Ficha sintética 079",
+   "authors": [
+    {
+     "name": "Autoría sintética 01"
+    }
+   ],
+   "number_of_pages": 223,
+   "publish_date": "1959",
+   "publishers": [
+    {
+     "name": "Editorial sintética 4"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/79.jpg",
+    "medium": "https://covers.biblib.invalid/m/79.jpg",
+    "large": "https://covers.biblib.invalid/l/79.jpg"
+   },
+   "status": "to-read",
+   "shelf_id": "00000000-0000-4000-8001-000000000004",
+   "shelf_name": "Balda sintética D"
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000080",
+   "isbn": "9780001000803",
+   "title": "Ficha sintética 080",
+   "authors": [
+    {
+     "name": "Autoría sintética 02"
+    }
+   ],
+   "number_of_pages": 260,
+   "publish_date": "",
+   "publishers": [
+    {
+     "name": "Editorial sintética 0"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/80.jpg",
+    "medium": "https://covers.biblib.invalid/m/80.jpg",
+    "large": "https://covers.biblib.invalid/l/80.jpg"
+   },
+   "status": "unread",
+   "shelf_id": "00000000-0000-4000-8001-000000000000",
+   "shelf_name": "Predeterminada",
+   "catalogue": {
+    "source": "import",
+    "isbnVerified": false
+   }
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000081",
+   "isbn": "9780001000810",
+   "title": "Ficha sintética 081",
+   "authors": [
+    {
+     "name": "Autoría sintética 03"
+    }
+   ],
+   "number_of_pages": 297,
+   "publish_date": "1961",
+   "publishers": [],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/81.jpg",
+    "medium": "https://covers.biblib.invalid/m/81.jpg",
+    "large": "https://covers.biblib.invalid/l/81.jpg"
+   },
+   "status": "read",
+   "shelf_id": "00000000-0000-4000-8001-000000000001",
+   "shelf_name": "Balda sintética A"
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000082",
+   "isbn": "9780001000827",
+   "title": "Ficha sintética 082",
+   "authors": [
+    {
+     "name": "Autoría sintética 04"
+    }
+   ],
+   "number_of_pages": 334,
+   "publish_date": "1962",
+   "publishers": [
+    {
+     "name": "Editorial sintética 2"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/82.jpg",
+    "medium": "https://covers.biblib.invalid/m/82.jpg",
+    "large": "https://covers.biblib.invalid/l/82.jpg"
+   },
+   "status": "reading",
+   "shelf_id": "00000000-0000-4000-8001-000000000002",
+   "shelf_name": "Balda sintética B",
+   "catalogue": {
+    "source": "open-library",
+    "isbnVerified": false
+   }
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000083",
+   "isbn": "9780001000834",
+   "title": "Ficha sintética 083",
+   "authors": [
+    {
+     "name": "Autoría sintética 05"
+    }
+   ],
+   "number_of_pages": 371,
+   "publish_date": "1963",
+   "publishers": [
+    {
+     "name": "Editorial sintética 3"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/83.jpg",
+    "medium": "https://covers.biblib.invalid/m/83.jpg",
+    "large": "https://covers.biblib.invalid/l/83.jpg"
+   },
+   "status": "to-read",
+   "shelf_id": "00000000-0000-4000-8001-000000000003",
+   "shelf_name": "Balda sintética C"
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000084",
+   "isbn": "9780001000841",
+   "title": "Ficha sintética 084",
+   "authors": [],
+   "number_of_pages": 408,
+   "publish_date": "",
+   "publishers": [],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/84.jpg",
+    "medium": "https://covers.biblib.invalid/m/84.jpg",
+    "large": "https://covers.biblib.invalid/l/84.jpg"
+   },
+   "status": "unread",
+   "shelf_id": "00000000-0000-4000-8001-000000000004",
+   "shelf_name": "Balda sintética D",
+   "catalogue": {
+    "source": "import",
+    "isbnVerified": false
+   }
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000085",
+   "isbn": "9780001000858",
+   "title": "Ficha sintética 085",
+   "authors": [
+    {
+     "name": "Autoría sintética 07"
+    }
+   ],
+   "number_of_pages": 445,
+   "publish_date": "1965",
+   "publishers": [
+    {
+     "name": "Editorial sintética 0"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/85.jpg",
+    "medium": "https://covers.biblib.invalid/m/85.jpg",
+    "large": "https://covers.biblib.invalid/l/85.jpg"
+   },
+   "status": "read",
+   "shelf_id": "00000000-0000-4000-8001-000000000000",
+   "shelf_name": "Predeterminada"
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000086",
+   "isbn": "9780001000865",
+   "title": "Ficha sintética 086",
+   "authors": [
+    {
+     "name": "Autoría sintética 08"
+    }
+   ],
+   "number_of_pages": 482,
+   "publish_date": "1966",
+   "publishers": [
+    {
+     "name": "Editorial sintética 1"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/86.jpg",
+    "medium": "https://covers.biblib.invalid/m/86.jpg",
+    "large": "https://covers.biblib.invalid/l/86.jpg"
+   },
+   "status": "reading",
+   "shelf_id": "00000000-0000-4000-8001-000000000001",
+   "shelf_name": "Balda sintética A",
+   "catalogue": {
+    "source": "open-library",
+    "isbnVerified": false
+   }
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000087",
+   "isbn": "9780001000872",
+   "title": "Ficha sintética 087",
+   "authors": [
+    {
+     "name": "Autoría sintética 09"
+    }
+   ],
+   "number_of_pages": 519,
+   "publish_date": "1967",
+   "publishers": [],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/87.jpg",
+    "medium": "https://covers.biblib.invalid/m/87.jpg",
+    "large": "https://covers.biblib.invalid/l/87.jpg"
+   },
+   "status": "to-read",
+   "shelf_id": "00000000-0000-4000-8001-000000000002",
+   "shelf_name": "Balda sintética B"
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000088",
+   "isbn": "9780001000889",
+   "title": "Ficha sintética 088",
+   "authors": [
+    {
+     "name": "Autoría sintética 10"
+    }
+   ],
+   "number_of_pages": 556,
+   "publish_date": "",
+   "publishers": [
+    {
+     "name": "Editorial sintética 3"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/88.jpg",
+    "medium": "https://covers.biblib.invalid/m/88.jpg",
+    "large": "https://covers.biblib.invalid/l/88.jpg"
+   },
+   "status": "unread",
+   "shelf_id": "00000000-0000-4000-8001-000000000003",
+   "shelf_name": "Balda sintética C",
+   "catalogue": {
+    "source": "import",
+    "isbnVerified": false
+   }
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000089",
+   "isbn": "9780001000896",
+   "title": "Ficha sintética 089",
+   "authors": [
+    {
+     "name": "Autoría sintética 11"
+    }
+   ],
+   "number_of_pages": 593,
+   "publish_date": "1969",
+   "publishers": [
+    {
+     "name": "Editorial sintética 4"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/89.jpg",
+    "medium": "https://covers.biblib.invalid/m/89.jpg",
+    "large": "https://covers.biblib.invalid/l/89.jpg"
+   },
+   "status": "read",
+   "shelf_id": "00000000-0000-4000-8001-000000000004",
+   "shelf_name": "Balda sintética D"
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000090",
+   "isbn": "9780001000902",
+   "title": "Ficha sintética 090",
+   "authors": [
+    {
+     "name": "Autoría sintética 12"
+    }
+   ],
+   "number_of_pages": 630,
+   "publish_date": "1970",
+   "publishers": [],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/90.jpg",
+    "medium": "https://covers.biblib.invalid/m/90.jpg",
+    "large": "https://covers.biblib.invalid/l/90.jpg"
+   },
+   "status": "reading",
+   "shelf_id": "00000000-0000-4000-8001-000000000000",
+   "shelf_name": "Predeterminada",
+   "catalogue": {
+    "source": "open-library",
+    "isbnVerified": false
+   }
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000091",
+   "isbn": "9780001000919",
+   "title": "Ficha sintética 091",
+   "authors": [],
+   "number_of_pages": 667,
+   "publish_date": "1971",
+   "publishers": [
+    {
+     "name": "Editorial sintética 1"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/91.jpg",
+    "medium": "https://covers.biblib.invalid/m/91.jpg",
+    "large": "https://covers.biblib.invalid/l/91.jpg"
+   },
+   "status": "to-read",
+   "shelf_id": "00000000-0000-4000-8001-000000000001",
+   "shelf_name": "Balda sintética A"
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000092",
+   "isbn": "9780001000926",
+   "title": "Ficha sintética 092",
+   "authors": [
+    {
+     "name": "Autoría sintética 01"
+    }
+   ],
+   "number_of_pages": 704,
+   "publish_date": "",
+   "publishers": [
+    {
+     "name": "Editorial sintética 2"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/92.jpg",
+    "medium": "https://covers.biblib.invalid/m/92.jpg",
+    "large": "https://covers.biblib.invalid/l/92.jpg"
+   },
+   "status": "unread",
+   "shelf_id": "00000000-0000-4000-8001-000000000002",
+   "shelf_name": "Balda sintética B",
+   "catalogue": {
+    "source": "import",
+    "isbnVerified": false
+   }
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000093",
+   "isbn": "9780001000933",
+   "title": "Ficha sintética 093",
+   "authors": [
+    {
+     "name": "Autoría sintética 02"
+    }
+   ],
+   "number_of_pages": 741,
+   "publish_date": "1973",
+   "publishers": [],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/93.jpg",
+    "medium": "https://covers.biblib.invalid/m/93.jpg",
+    "large": "https://covers.biblib.invalid/l/93.jpg"
+   },
+   "status": "read",
+   "shelf_id": "00000000-0000-4000-8001-000000000003",
+   "shelf_name": "Balda sintética C"
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000094",
+   "isbn": "9780001000940",
+   "title": "Ficha sintética 094",
+   "authors": [
+    {
+     "name": "Autoría sintética 03"
+    }
+   ],
+   "number_of_pages": 778,
+   "publish_date": "1974",
+   "publishers": [
+    {
+     "name": "Editorial sintética 4"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/94.jpg",
+    "medium": "https://covers.biblib.invalid/m/94.jpg",
+    "large": "https://covers.biblib.invalid/l/94.jpg"
+   },
+   "status": "reading",
+   "shelf_id": "00000000-0000-4000-8001-000000000004",
+   "shelf_name": "Balda sintética D",
+   "catalogue": {
+    "source": "open-library",
+    "isbnVerified": false
+   }
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000095",
+   "isbn": "9780001000957",
+   "title": "Ficha sintética 095",
+   "authors": [
+    {
+     "name": "Autoría sintética 04"
+    }
+   ],
+   "number_of_pages": 815,
+   "publish_date": "1975",
+   "publishers": [
+    {
+     "name": "Editorial sintética 0"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/95.jpg",
+    "medium": "https://covers.biblib.invalid/m/95.jpg",
+    "large": "https://covers.biblib.invalid/l/95.jpg"
+   },
+   "status": "to-read",
+   "shelf_id": "00000000-0000-4000-8001-000000000000",
+   "shelf_name": "Predeterminada"
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000096",
+   "isbn": "9780001000964",
+   "title": "Ficha sintética 096",
+   "authors": [
+    {
+     "name": "Autoría sintética 05"
+    }
+   ],
+   "number_of_pages": 852,
+   "publish_date": "",
+   "publishers": [],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/96.jpg",
+    "medium": "https://covers.biblib.invalid/m/96.jpg",
+    "large": "https://covers.biblib.invalid/l/96.jpg"
+   },
+   "status": "unread",
+   "shelf_id": "00000000-0000-4000-8001-000000000001",
+   "shelf_name": "Balda sintética A",
+   "catalogue": {
+    "source": "import",
+    "isbnVerified": false
+   }
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000097",
+   "isbn": "9780001000971",
+   "title": "Ficha sintética 097",
+   "authors": [
+    {
+     "name": "Autoría sintética 06"
+    }
+   ],
+   "number_of_pages": 889,
+   "publish_date": "1977",
+   "publishers": [
+    {
+     "name": "Editorial sintética 2"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/97.jpg",
+    "medium": "https://covers.biblib.invalid/m/97.jpg",
+    "large": "https://covers.biblib.invalid/l/97.jpg"
+   },
+   "status": "read",
+   "shelf_id": "00000000-0000-4000-8001-000000000002",
+   "shelf_name": "Balda sintética B"
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000098",
+   "isbn": "9780001000988",
+   "title": "Ficha sintética 098",
+   "authors": [],
+   "number_of_pages": 26,
+   "publish_date": "1978",
+   "publishers": [
+    {
+     "name": "Editorial sintética 3"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/98.jpg",
+    "medium": "https://covers.biblib.invalid/m/98.jpg",
+    "large": "https://covers.biblib.invalid/l/98.jpg"
+   },
+   "status": "reading",
+   "shelf_id": "00000000-0000-4000-8001-000000000003",
+   "shelf_name": "Balda sintética C",
+   "catalogue": {
+    "source": "open-library",
+    "isbnVerified": false
+   }
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000099",
+   "isbn": "9780001000995",
+   "title": "Ficha sintética 099",
+   "authors": [
+    {
+     "name": "Autoría sintética 08"
+    }
+   ],
+   "number_of_pages": 63,
+   "publish_date": "1979",
+   "publishers": [],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/99.jpg",
+    "medium": "https://covers.biblib.invalid/m/99.jpg",
+    "large": "https://covers.biblib.invalid/l/99.jpg"
+   },
+   "status": "to-read",
+   "shelf_id": "00000000-0000-4000-8001-000000000004",
+   "shelf_name": "Balda sintética D"
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000100",
+   "isbn": "9780001001008",
+   "title": "Ficha sintética 100",
+   "authors": [
+    {
+     "name": "Autoría sintética 09"
+    }
+   ],
+   "number_of_pages": 100,
+   "publish_date": "",
+   "publishers": [
+    {
+     "name": "Editorial sintética 0"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/100.jpg",
+    "medium": "https://covers.biblib.invalid/m/100.jpg",
+    "large": "https://covers.biblib.invalid/l/100.jpg"
+   },
+   "status": "unread",
+   "shelf_id": "00000000-0000-4000-8001-000000000000",
+   "shelf_name": "Predeterminada",
+   "catalogue": {
+    "source": "import",
+    "isbnVerified": false
+   }
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000101",
+   "isbn": "9780001001015",
+   "title": "Ficha sintética 101",
+   "authors": [
+    {
+     "name": "Autoría sintética 10"
+    }
+   ],
+   "number_of_pages": 137,
+   "publish_date": "1981",
+   "publishers": [
+    {
+     "name": "Editorial sintética 1"
+    }
+   ],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/101.jpg",
+    "medium": "https://covers.biblib.invalid/m/101.jpg",
+    "large": "https://covers.biblib.invalid/l/101.jpg"
+   },
+   "status": "read",
+   "shelf_id": "00000000-0000-4000-8001-000000000001",
+   "shelf_name": "Balda sintética A"
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000102",
+   "isbn": "9780001001022",
+   "title": "Ficha sintética 102",
+   "authors": [
+    {
+     "name": "Autoría sintética 11"
+    }
+   ],
+   "number_of_pages": 174,
+   "publish_date": "1982",
+   "publishers": [],
+   "cover": {
+    "small": "https://covers.biblib.invalid/s/102.jpg",
+    "medium": "https://covers.biblib.invalid/m/102.jpg",
+    "large": "https://covers.biblib.invalid/l/102.jpg"
+   },
+   "status": "reading",
+   "shelf_id": "00000000-0000-4000-8001-000000000002",
+   "shelf_name": "Balda sintética B",
+   "catalogue": {
+    "source": "open-library",
+    "isbnVerified": false
+   }
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000103",
+   "isbn": "manual-00000000-0000-4000-8002-000000000103",
+   "title": "Ficha sintética 103",
+   "authors": [
+    {
+     "name": "Autoría sintética 12"
+    }
+   ],
+   "number_of_pages": 211,
+   "publish_date": "1983",
+   "publishers": [
+    {
+     "name": "Editorial sintética 3"
+    }
+   ],
+   "cover": {
+    "small": "/default-book-cover.webp",
+    "medium": "/default-book-cover.webp",
+    "large": "/default-book-cover.webp"
+   },
+   "status": "to-read",
+   "shelf_id": "00000000-0000-4000-8001-000000000003",
+   "shelf_name": "Balda sintética C"
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000104",
+   "isbn": "manual-00000000-0000-4000-8002-000000000104",
+   "title": "Ficha sintética 104",
+   "authors": [
+    {
+     "name": "Autoría sintética 00"
+    }
+   ],
+   "number_of_pages": 248,
+   "publish_date": "",
+   "publishers": [
+    {
+     "name": "Editorial sintética 4"
+    }
+   ],
+   "cover": {
+    "small": "/default-book-cover.webp",
+    "medium": "/default-book-cover.webp",
+    "large": "/default-book-cover.webp"
+   },
+   "status": "unread",
+   "shelf_id": "00000000-0000-4000-8001-000000000004",
+   "shelf_name": "Balda sintética D",
+   "catalogue": {
+    "source": "manual",
+    "isbnVerified": false
+   }
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000105",
+   "isbn": "manual-00000000-0000-4000-8002-000000000105",
+   "title": "Ficha sintética 105",
+   "authors": [],
+   "number_of_pages": 285,
+   "publish_date": "1985",
+   "publishers": [],
+   "cover": {
+    "small": "/default-book-cover.webp",
+    "medium": "/default-book-cover.webp",
+    "large": "/default-book-cover.webp"
+   },
+   "status": "read",
+   "shelf_id": "00000000-0000-4000-8001-000000000000",
+   "shelf_name": "Predeterminada"
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000106",
+   "isbn": "manual-00000000-0000-4000-8002-000000000106",
+   "title": "Ficha sintética 106",
+   "authors": [
+    {
+     "name": "Autoría sintética 02"
+    }
+   ],
+   "number_of_pages": 322,
+   "publish_date": "1986",
+   "publishers": [
+    {
+     "name": "Editorial sintética 1"
+    }
+   ],
+   "cover": {
+    "small": "/default-book-cover.webp",
+    "medium": "/default-book-cover.webp",
+    "large": "/default-book-cover.webp"
+   },
+   "status": "reading",
+   "shelf_id": "00000000-0000-4000-8001-000000000001",
+   "shelf_name": "Balda sintética A",
+   "catalogue": {
+    "source": "manual",
+    "isbnVerified": false
+   }
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000107",
+   "isbn": "manual-00000000-0000-4000-8002-000000000107",
+   "title": "Ficha sintética 107",
+   "authors": [
+    {
+     "name": "Autoría sintética 03"
+    }
+   ],
+   "number_of_pages": 359,
+   "publish_date": "1987",
+   "publishers": [
+    {
+     "name": "Editorial sintética 2"
+    }
+   ],
+   "cover": {
+    "small": "/default-book-cover.webp",
+    "medium": "/default-book-cover.webp",
+    "large": "/default-book-cover.webp"
+   },
+   "status": "to-read",
+   "shelf_id": "00000000-0000-4000-8001-000000000002",
+   "shelf_name": "Balda sintética B"
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000108",
+   "isbn": "manual-00000000-0000-4000-8002-000000000108",
+   "title": "Ficha sintética 108",
+   "authors": [
+    {
+     "name": "Autoría sintética 04"
+    }
+   ],
+   "number_of_pages": 396,
+   "publish_date": "",
+   "publishers": [],
+   "cover": {
+    "small": "/default-book-cover.webp",
+    "medium": "/default-book-cover.webp",
+    "large": "/default-book-cover.webp"
+   },
+   "status": "unread",
+   "shelf_id": "00000000-0000-4000-8001-000000000003",
+   "shelf_name": "Balda sintética C",
+   "catalogue": {
+    "source": "manual",
+    "isbnVerified": false
+   }
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000109",
+   "isbn": "manual-00000000-0000-4000-8002-000000000109",
+   "title": "Ficha sintética 109",
+   "authors": [
+    {
+     "name": "Autoría sintética 05"
+    }
+   ],
+   "number_of_pages": 433,
+   "publish_date": "1989",
+   "publishers": [
+    {
+     "name": "Editorial sintética 4"
+    }
+   ],
+   "cover": {
+    "small": "/default-book-cover.webp",
+    "medium": "/default-book-cover.webp",
+    "large": "/default-book-cover.webp"
+   },
+   "status": "read",
+   "shelf_id": "00000000-0000-4000-8001-000000000004",
+   "shelf_name": "Balda sintética D"
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000110",
+   "isbn": "manual-00000000-0000-4000-8002-000000000110",
+   "title": "Ficha sintética 110",
+   "authors": [
+    {
+     "name": "Autoría sintética 06"
+    }
+   ],
+   "number_of_pages": 470,
+   "publish_date": "1990",
+   "publishers": [
+    {
+     "name": "Editorial sintética 0"
+    }
+   ],
+   "cover": {
+    "small": "/default-book-cover.webp",
+    "medium": "/default-book-cover.webp",
+    "large": "/default-book-cover.webp"
+   },
+   "status": "reading",
+   "shelf_id": "00000000-0000-4000-8001-000000000000",
+   "shelf_name": "Predeterminada",
+   "catalogue": {
+    "source": "manual",
+    "isbnVerified": false
+   }
+  },
+  {
+   "id": "00000000-0000-4000-8002-000000000111",
+   "isbn": "manual-00000000-0000-4000-8002-000000000111",
+   "title": "Ficha sintética 111",
+   "authors": [
+    {
+     "name": "Autoría sintética 07"
+    }
+   ],
+   "number_of_pages": 507,
+   "publish_date": "1991",
+   "publishers": [],
+   "cover": {
+    "small": "/default-book-cover.webp",
+    "medium": "/default-book-cover.webp",
+    "large": "/default-book-cover.webp"
+   },
+   "status": "to-read",
+   "shelf_id": "00000000-0000-4000-8001-000000000001",
+   "shelf_name": "Balda sintética A"
+  }
+ ],
+ "shelves": [
+  {
+   "id": "00000000-0000-4000-8001-000000000000",
+   "title": "Predeterminada",
+   "book_count": 22,
+   "isDefault": true
+  },
+  {
+   "id": "00000000-0000-4000-8001-000000000001",
+   "title": "Balda sintética A",
+   "book_count": 23
+  },
+  {
+   "id": "00000000-0000-4000-8001-000000000002",
+   "title": "Balda sintética B",
+   "book_count": 22
+  },
+  {
+   "id": "00000000-0000-4000-8001-000000000003",
+   "title": "Balda sintética C",
+   "book_count": 22
+  },
+  {
+   "id": "00000000-0000-4000-8001-000000000004",
+   "title": "Balda sintética D",
+   "book_count": 22
+  }
+ ]
+}

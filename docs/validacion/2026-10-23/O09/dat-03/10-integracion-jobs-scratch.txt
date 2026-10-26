@@ -1,0 +1,28 @@
+Grupo jobs · perfil scratch · biblib-scratch · run aadb56cf6a4e
+✔ crear, recargar y continuar: otra sesión del dueño ve el mismo progreso y lo controla (9971.0326ms)
+✔ recuperar portadas desde Ajustes inicia un trabajo que el servidor completa (355.3878ms)
+✔ A no usa IDs de B: consultar, controlar o confirmar responde como inexistente y B no cambia (857.1901ms)
+✔ la entrada interna solo acepta el token del ejecutor y nunca un dueño de la petición (147.8488ms)
+✔ matar la publicación antes del commit: otro trabajador publica una sola vez, sin duplicados (6125.5322ms)
+✔ matar tras el commit con la respuesta perdida: consultar y repetir devuelven el mismo resultado (898.767ms)
+✔ cancelar antes de publicar: no se aplica nada (697.7497ms)
+✔ cancelar durante la publicación atómica: espera al commit y responde que llegó después (3685.83ms)
+✔ cancelar en la fase de portadas: la importación publicada se conserva (762.3874ms)
+✔ una revisión cambiada deja el trabajo en revisión y repetir no lo aplica (783.1071ms)
+✔ confirmImportAction publica mediante un trabajo y la misma clave recupera el mismo resultado (623.942ms)
+✔ crear y continuar: los pasos confirman progreso y portadas sin tocar los libros del seed (4629.5101ms)
+✔ dos trabajadores sobre el mismo elemento: solo el que tiene el lease vigente confirma (9571.4058ms)
+✔ matar el trabajador tras la consulta y antes de persistir: otro lo recupera sin duplicar (5545.4125ms)
+✔ lease vencido: el trabajador antiguo no escribe aunque nadie lo haya reclamado (4587.4642ms)
+✔ 429 con Retry-After: espera compartida, sin más peticiones y nunca «sin portada» (3492.0226ms)
+✔ 503 y JSON roto se reintentan con backoff y cuentan como intento; nunca son ausencia (5540.9225ms)
+✔ cancelar durante las portadas: el paso en curso no escribe (6540.639ms)
+✔ cuenta bloqueada: el trabajador antiguo no escribe y el trabajo queda no autorizado (6958.6643ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 76999.4541

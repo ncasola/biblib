@@ -2,26 +2,25 @@
   "name": "BibLib",
   "short_name": "BibLib",
   "description": "BibLib es una aplicación de gestión de biblioteca personal.",
+  "lang": "es",
+  "id": "/",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#f5f1e8",
-  "theme_color": "#DC2626",
+  "background_color": "#16110d",
+  "theme_color": "#16110d",
   "icons": [
     {
-      "src": "/logo.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "/logo.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    },
-    {
-      "src": "/logo.png",
-      "sizes": "180x180",
+      "src": "/logo-mark.png",
+      "sizes": "361x361",
       "type": "image/png",
       "purpose": "any"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "500x500",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }

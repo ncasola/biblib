@@ -1,0 +1,7 @@
+{
+  "entries": [
+    { "key": "/books/OL200M", "title": "Árbol de la memoria", "isbn_13": ["9788401337208"], "publish_date": "2009", "languages": [{ "key": "/languages/spa" }] },
+    { "key": "/books/OL201M", "title": "Tree of memory", "publish_date": "2011", "languages": [{ "key": "/languages/eng" }] },
+    { "key": "/books/OL202M" }
+  ]
+}

@@ -1,0 +1,778 @@
+{
+  "schemaVersion": 1,
+  "kind": "reset-local",
+  "target": {
+    "target": "local",
+    "profile": "scratch",
+    "project": "biblib-scratch"
+  },
+  "root": "C:\\Users\\ncaso\\orca\\workspaces\\biblib\\u-inf-03",
+  "rootHash": "1521f98bc1f79009574e3fc3f32b948e779c84053bc7a1b3953f44dc7aac37e9",
+  "fingerprint": "ea260283d87954c1c405cb5ee4875867dd8b103c86084460f3a74244e06b13fa",
+  "identityMarker": {
+    "projectId": "biblib-scratch",
+    "rootLabel": "1521f98bc1f79009"
+  },
+  "resources": {
+    "containers": [
+      {
+        "id": "d14a7fc6e9b3d194659ba42f8189ccc5fd67d160b8fa479d901b2821077828d2",
+        "name": "supabase_studio_biblib-scratch",
+        "labels": {
+          "com.docker.compose.project": "biblib-scratch",
+          "com.supabase.cli.project": "biblib-scratch",
+          "com.supabase.cli.workdir": "C:\\Users\\ncaso\\orca\\workspaces\\biblib\\u-inf-03\\.biblib\\stacks\\scratch"
+        },
+        "status": "running",
+        "health": "healthy",
+        "ports": {
+          "3000/tcp": [
+            {
+              "HostIp": "0.0.0.0",
+              "HostPort": "55343"
+            },
+            {
+              "HostIp": "::",
+              "HostPort": "55343"
+            }
+          ]
+        },
+        "networks": {
+          "biblib-scratch-network": {
+            "Aliases": [
+              "studio"
+            ],
+            "DNSNames": [
+              "supabase_studio_biblib-scratch",
+              "studio",
+              "d14a7fc6e9b3"
+            ],
+            "DriverOpts": null,
+            "EndpointID": "3bb225d30480d5470e8ef972e922f279c2e74e31931f5720db9e0ed95c3b9a83",
+            "Gateway": "172.26.0.1",
+            "GlobalIPv6Address": "",
+            "GlobalIPv6PrefixLen": 0,
+            "GwPriority": 0,
+            "IPAMConfig": null,
+            "IPAddress": "172.26.0.9",
+            "IPPrefixLen": 16,
+            "IPv6Gateway": "",
+            "Links": null,
+            "MacAddress": "8e:ab:c4:a4:5b:cf",
+            "NetworkID": "6da7397786e3b33fb372d7b587d9eea41376f390462853725139085946f66797"
+          }
+        },
+        "mounts": [
+          {
+            "Destination": "/Users/ncaso/orca/workspaces/biblib/u-inf-03/.biblib/stacks/scratch/supabase/snippets",
+            "Mode": "rw",
+            "Propagation": "rprivate",
+            "RW": true,
+            "Source": "C:\\Users\\ncaso\\orca\\workspaces\\biblib\\u-inf-03\\.biblib\\stacks\\scratch\\supabase\\snippets",
+            "Type": "bind"
+          }
+        ]
+      },
+      {
+        "id": "42974987b87f1ec86c34459d98313430687942f8dde6fb6f0ef995921517fd77",
+        "name": "supabase_pg_meta_biblib-scratch",
+        "labels": {
+          "com.docker.compose.project": "biblib-scratch",
+          "com.supabase.cli.project": "biblib-scratch",
+          "com.supabase.cli.workdir": "C:\\Users\\ncaso\\orca\\workspaces\\biblib\\u-inf-03\\.biblib\\stacks\\scratch"
+        },
+        "status": "running",
+        "health": "healthy",
+        "ports": {
+          "8080/tcp": null
+        },
+        "networks": {
+          "biblib-scratch-network": {
+            "Aliases": [
+              "pg_meta"
+            ],
+            "DNSNames": [
+              "supabase_pg_meta_biblib-scratch",
+              "pg_meta",
+              "42974987b87f"
+            ],
+            "DriverOpts": null,
+            "EndpointID": "80ba31c3d7c5ec89a8006afe2969c8ea66c25e79e4d905f66eabbdb1f9a85e45",
+            "Gateway": "172.26.0.1",
+            "GlobalIPv6Address": "",
+            "GlobalIPv6PrefixLen": 0,
+            "GwPriority": 0,
+            "IPAMConfig": null,
+            "IPAddress": "172.26.0.8",
+            "IPPrefixLen": 16,
+            "IPv6Gateway": "",
+            "Links": null,
+            "MacAddress": "12:8a:7e:06:4a:b9",
+            "NetworkID": "6da7397786e3b33fb372d7b587d9eea41376f390462853725139085946f66797"
+          }
+        },
+        "mounts": []
+      },
+      {
+        "id": "827b08bbcaf18255906aab728b2d550eabfd5a565147cf4be2520aecf6e9063e",
+        "name": "supabase_storage_biblib-scratch",
+        "labels": {
+          "com.docker.compose.project": "biblib-scratch",
+          "com.supabase.cli.project": "biblib-scratch",
+          "com.supabase.cli.workdir": "C:\\Users\\ncaso\\orca\\workspaces\\biblib\\u-inf-03\\.biblib\\stacks\\scratch"
+        },
+        "status": "running",
+        "health": "healthy",
+        "ports": {
+          "5000/tcp": null
+        },
+        "networks": {
+          "biblib-scratch-network": {
+            "Aliases": [
+              "storage"
+            ],
+            "DNSNames": [
+              "supabase_storage_biblib-scratch",
+              "storage",
+              "827b08bbcaf1"
+            ],
+            "DriverOpts": null,
+            "EndpointID": "dbae6bf7dda90e46ee4e127407a59e46485cd993e81831938666be76752b4baf",
+            "Gateway": "172.26.0.1",
+            "GlobalIPv6Address": "",
+            "GlobalIPv6PrefixLen": 0,
+            "GwPriority": 0,
+            "IPAMConfig": null,
+            "IPAddress": "172.26.0.7",
+            "IPPrefixLen": 16,
+            "IPv6Gateway": "",
+            "Links": null,
+            "MacAddress": "a2:0b:27:2e:97:49",
+            "NetworkID": "6da7397786e3b33fb372d7b587d9eea41376f390462853725139085946f66797"
+          }
+        },
+        "mounts": [
+          {
+            "Destination": "/mnt",
+            "Driver": "local",
+            "Mode": "z",
+            "Name": "supabase_storage_biblib-scratch",
+            "Propagation": "",
+            "RW": true,
+            "Source": "/var/lib/docker/volumes/supabase_storage_biblib-scratch/_data",
+            "Type": "volume"
+          }
+        ]
+      },
+      {
+        "id": "3ab0c2827baf43409e4661a8f658b1824be6a97ee8cd34551343c36ceeeee2ad",
+        "name": "supabase_rest_biblib-scratch",
+        "labels": {
+          "com.docker.compose.project": "biblib-scratch",
+          "com.supabase.cli.project": "biblib-scratch",
+          "com.supabase.cli.workdir": "C:\\Users\\ncaso\\orca\\workspaces\\biblib\\u-inf-03\\.biblib\\stacks\\scratch"
+        },
+        "status": "running",
+        "health": null,
+        "ports": {
+          "3000/tcp": null
+        },
+        "networks": {
+          "biblib-scratch-network": {
+            "Aliases": [
+              "rest"
+            ],
+            "DNSNames": [
+              "supabase_rest_biblib-scratch",
+              "rest",
+              "3ab0c2827baf"
+            ],
+            "DriverOpts": null,
+            "EndpointID": "2244b85d9cfc036c6b5c8d434b905fac6d772ca122c994ed5972087a8c6d2c63",
+            "Gateway": "172.26.0.1",
+            "GlobalIPv6Address": "",
+            "GlobalIPv6PrefixLen": 0,
+            "GwPriority": 0,
+            "IPAMConfig": null,
+            "IPAddress": "172.26.0.6",
+            "IPPrefixLen": 16,
+            "IPv6Gateway": "",
+            "Links": null,
+            "MacAddress": "12:c2:d6:24:33:48",
+            "NetworkID": "6da7397786e3b33fb372d7b587d9eea41376f390462853725139085946f66797"
+          }
+        },
+        "mounts": []
+      },
+      {
+        "id": "6c822029d0aacd52b1e6d52603cdd5cab23ab22d99408fdd88d3256acdcf1424",
+        "name": "supabase_inbucket_biblib-scratch",
+        "labels": {
+          "com.docker.compose.project": "biblib-scratch",
+          "com.supabase.cli.project": "biblib-scratch",
+          "com.supabase.cli.workdir": "C:\\Users\\ncaso\\orca\\workspaces\\biblib\\u-inf-03\\.biblib\\stacks\\scratch",
+          "org.opencontainers.image.description": "An email and SMTP testing tool with API for developers",
+          "org.opencontainers.image.documentation": "https://mailpit.axllent.org/docs/",
+          "org.opencontainers.image.licenses": "MIT",
+          "org.opencontainers.image.source": "https://github.com/axllent/mailpit",
+          "org.opencontainers.image.title": "Mailpit",
+          "org.opencontainers.image.url": "https://mailpit.axllent.org"
+        },
+        "status": "running",
+        "health": "healthy",
+        "ports": {
+          "8025/tcp": [
+            {
+              "HostIp": "0.0.0.0",
+              "HostPort": "55344"
+            },
+            {
+              "HostIp": "::",
+              "HostPort": "55344"
+            }
+          ]
+        },
+        "networks": {
+          "biblib-scratch-network": {
+            "Aliases": [
+              "inbucket"
+            ],
+            "DNSNames": [
+              "supabase_inbucket_biblib-scratch",
+              "inbucket",
+              "6c822029d0aa"
+            ],
+            "DriverOpts": null,
+            "EndpointID": "3eeb0323ecdd15d14278fc12e5dd21a251746cad4eba2953382bfdfb78afb285",
+            "Gateway": "172.26.0.1",
+            "GlobalIPv6Address": "",
+            "GlobalIPv6PrefixLen": 0,
+            "GwPriority": 0,
+            "IPAMConfig": null,
+            "IPAddress": "172.26.0.5",
+            "IPPrefixLen": 16,
+            "IPv6Gateway": "",
+            "Links": null,
+            "MacAddress": "ce:29:e3:68:83:aa",
+            "NetworkID": "6da7397786e3b33fb372d7b587d9eea41376f390462853725139085946f66797"
+          }
+        },
+        "mounts": []
+      },
+      {
+        "id": "b682081f6d6a2bac9282b3cc00ace210f1ea401b4f35caa125e09c583e5c4ca8",
+        "name": "supabase_auth_biblib-scratch",
+        "labels": {
+          "com.docker.compose.project": "biblib-scratch",
+          "com.supabase.cli.project": "biblib-scratch",
+          "com.supabase.cli.workdir": "C:\\Users\\ncaso\\orca\\workspaces\\biblib\\u-inf-03\\.biblib\\stacks\\scratch"
+        },
+        "status": "running",
+        "health": "healthy",
+        "ports": {
+          "9999/tcp": null
+        },
+        "networks": {
+          "biblib-scratch-network": {
+            "Aliases": [
+              "auth"
+            ],
+            "DNSNames": [
+              "supabase_auth_biblib-scratch",
+              "auth",
+              "b682081f6d6a"
+            ],
+            "DriverOpts": null,
+            "EndpointID": "7e4f81eba4280b805c2f142237545817b0c4b9cb6842bd7ebf5facec3a8b1757",
+            "Gateway": "172.26.0.1",
+            "GlobalIPv6Address": "",
+            "GlobalIPv6PrefixLen": 0,
+            "GwPriority": 0,
+            "IPAMConfig": null,
+            "IPAddress": "172.26.0.4",
+            "IPPrefixLen": 16,
+            "IPv6Gateway": "",
+            "Links": null,
+            "MacAddress": "86:24:24:d7:df:df",
+            "NetworkID": "6da7397786e3b33fb372d7b587d9eea41376f390462853725139085946f66797"
+          }
+        },
+        "mounts": []
+      },
+      {
+        "id": "c720ad1fb3e794c8083ea4ef5e622b8a793ad9d3473aafccb2367e5c1c9c02b8",
+        "name": "supabase_kong_biblib-scratch",
+        "labels": {
+          "com.docker.compose.project": "biblib-scratch",
+          "com.supabase.cli.project": "biblib-scratch",
+          "com.supabase.cli.workdir": "C:\\Users\\ncaso\\orca\\workspaces\\biblib\\u-inf-03\\.biblib\\stacks\\scratch",
+          "maintainer": "Kong <support@konghq.com>"
+        },
+        "status": "running",
+        "health": "healthy",
+        "ports": {
+          "8000/tcp": [
+            {
+              "HostIp": "0.0.0.0",
+              "HostPort": "55341"
+            },
+            {
+              "HostIp": "::",
+              "HostPort": "55341"
+            }
+          ]
+        },
+        "networks": {
+          "biblib-scratch-network": {
+            "Aliases": [
+              "kong",
+              "api.supabase.internal"
+            ],
+            "DNSNames": [
+              "supabase_kong_biblib-scratch",
+              "kong",
+              "api.supabase.internal",
+              "c720ad1fb3e7"
+            ],
+            "DriverOpts": null,
+            "EndpointID": "8c14606a232c86240a07eb687ef2476f32d96b8fbd121c7c76fbed98f5c6ed75",
+            "Gateway": "172.26.0.1",
+            "GlobalIPv6Address": "",
+            "GlobalIPv6PrefixLen": 0,
+            "GwPriority": 0,
+            "IPAMConfig": null,
+            "IPAddress": "172.26.0.3",
+            "IPPrefixLen": 16,
+            "IPv6Gateway": "",
+            "Links": null,
+            "MacAddress": "3a:28:95:cb:da:d4",
+            "NetworkID": "6da7397786e3b33fb372d7b587d9eea41376f390462853725139085946f66797"
+          }
+        },
+        "mounts": []
+      },
+      {
+        "id": "64fbe422bcee94f40648e2c18ca07efd4745da431b87e3bd3473072be187f074",
+        "name": "supabase_db_biblib-scratch",
+        "labels": {
+          "com.docker.compose.project": "biblib-scratch",
+          "com.supabase.cli.project": "biblib-scratch",
+          "com.supabase.cli.workdir": "C:\\Users\\ncaso\\orca\\workspaces\\biblib\\u-inf-03\\.biblib\\stacks\\scratch"
+        },
+        "status": "running",
+        "health": "healthy",
+        "ports": {
+          "5432/tcp": [
+            {
+              "HostIp": "0.0.0.0",
+              "HostPort": "55342"
+            },
+            {
+              "HostIp": "::",
+              "HostPort": "55342"
+            }
+          ]
+        },
+        "networks": {
+          "biblib-scratch-network": {
+            "Aliases": [
+              "db",
+              "db.supabase.internal"
+            ],
+            "DNSNames": [
+              "supabase_db_biblib-scratch",
+              "db",
+              "db.supabase.internal",
+              "64fbe422bcee"
+            ],
+            "DriverOpts": null,
+            "EndpointID": "dba1da30356571204110187c05cc15f2780fca2d5702d3e97aa94d4147cd72e2",
+            "Gateway": "172.26.0.1",
+            "GlobalIPv6Address": "",
+            "GlobalIPv6PrefixLen": 0,
+            "GwPriority": 0,
+            "IPAMConfig": null,
+            "IPAddress": "172.26.0.2",
+            "IPPrefixLen": 16,
+            "IPv6Gateway": "",
+            "Links": null,
+            "MacAddress": "36:cb:5e:d1:19:0f",
+            "NetworkID": "6da7397786e3b33fb372d7b587d9eea41376f390462853725139085946f66797"
+          }
+        },
+        "mounts": [
+          {
+            "Destination": "/var/lib/postgresql/data",
+            "Driver": "local",
+            "Mode": "z",
+            "Name": "supabase_db_biblib-scratch",
+            "Propagation": "",
+            "RW": true,
+            "Source": "/var/lib/docker/volumes/supabase_db_biblib-scratch/_data",
+            "Type": "volume"
+          }
+        ]
+      }
+    ],
+    "networks": [
+      {
+        "id": "6da7397786e3b33fb372d7b587d9eea41376f390462853725139085946f66797",
+        "name": "biblib-scratch-network",
+        "labels": {
+          "biblib.profile": "scratch",
+          "biblib.root": "1521f98bc1f79009"
+        }
+      }
+    ],
+    "volumes": [
+      {
+        "id": "supabase_db_biblib-scratch",
+        "name": "supabase_db_biblib-scratch",
+        "createdAt": "2026-10-23T10:52:22Z",
+        "labels": {
+          "com.docker.compose.project": "biblib-scratch",
+          "com.supabase.cli.project": "biblib-scratch"
+        }
+      },
+      {
+        "id": "supabase_storage_biblib-scratch",
+        "name": "supabase_storage_biblib-scratch",
+        "createdAt": "2026-10-23T10:52:38Z",
+        "labels": {
+          "com.docker.compose.project": "biblib-scratch",
+          "com.supabase.cli.project": "biblib-scratch"
+        }
+      }
+    ]
+  },
+  "bindings": [
+    {
+      "container": "supabase_studio_biblib-scratch",
+      "containerPort": "3000/tcp",
+      "hostIp": "0.0.0.0",
+      "hostPort": 55343,
+      "loopback": false,
+      "inProfileBlock": true
+    },
+    {
+      "container": "supabase_studio_biblib-scratch",
+      "containerPort": "3000/tcp",
+      "hostIp": "::",
+      "hostPort": 55343,
+      "loopback": false,
+      "inProfileBlock": true
+    },
+    {
+      "container": "supabase_inbucket_biblib-scratch",
+      "containerPort": "8025/tcp",
+      "hostIp": "0.0.0.0",
+      "hostPort": 55344,
+      "loopback": false,
+      "inProfileBlock": true
+    },
+    {
+      "container": "supabase_inbucket_biblib-scratch",
+      "containerPort": "8025/tcp",
+      "hostIp": "::",
+      "hostPort": 55344,
+      "loopback": false,
+      "inProfileBlock": true
+    },
+    {
+      "container": "supabase_kong_biblib-scratch",
+      "containerPort": "8000/tcp",
+      "hostIp": "0.0.0.0",
+      "hostPort": 55341,
+      "loopback": false,
+      "inProfileBlock": true
+    },
+    {
+      "container": "supabase_kong_biblib-scratch",
+      "containerPort": "8000/tcp",
+      "hostIp": "::",
+      "hostPort": 55341,
+      "loopback": false,
+      "inProfileBlock": true
+    },
+    {
+      "container": "supabase_db_biblib-scratch",
+      "containerPort": "5432/tcp",
+      "hostIp": "0.0.0.0",
+      "hostPort": 55342,
+      "loopback": false,
+      "inProfileBlock": true
+    },
+    {
+      "container": "supabase_db_biblib-scratch",
+      "containerPort": "5432/tcp",
+      "hostIp": "::",
+      "hostPort": 55342,
+      "loopback": false,
+      "inProfileBlock": true
+    }
+  ],
+  "postgres": {
+    "host": "127.0.0.1",
+    "port": 55342,
+    "database": "postgres"
+  },
+  "mechanism": "registered-physical-rebuild",
+  "scope": [
+    "dominio",
+    "usuarios y sesiones locales",
+    "metadatos y bytes Storage",
+    "mensajes Mailpit",
+    "ledger Drizzle",
+    "credenciales fixture locales"
+  ],
+  "preserved": [
+    "red registrada del perfil",
+    "imágenes Docker",
+    "otros perfiles y proyectos",
+    "planes y recibos"
+  ],
+  "discarded": {
+    "counts": {
+      "domain": {
+        "books": 9,
+        "shelves": 6
+      },
+      "auth": {
+        "users": 2,
+        "sessions": 0,
+        "refreshTokens": 0
+      },
+      "storage": {
+        "buckets": 1,
+        "objects": 1
+      },
+      "mailpit": {
+        "messages": 0
+      },
+      "ledger": 3
+    },
+    "tables": [
+      {
+        "schema": "auth",
+        "table": "audit_log_entries",
+        "count": 101,
+        "hash": "30a1bff8d4046fa7d7de78c14ddf8f42"
+      },
+      {
+        "schema": "auth",
+        "table": "custom_oauth_providers",
+        "count": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "schema": "auth",
+        "table": "flow_state",
+        "count": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "schema": "auth",
+        "table": "identities",
+        "count": 2,
+        "hash": "f90042b6affab34e13213001bfd016b5"
+      },
+      {
+        "schema": "auth",
+        "table": "instances",
+        "count": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "schema": "auth",
+        "table": "mfa_amr_claims",
+        "count": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "schema": "auth",
+        "table": "mfa_challenges",
+        "count": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "schema": "auth",
+        "table": "mfa_factors",
+        "count": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "schema": "auth",
+        "table": "oauth_authorizations",
+        "count": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "schema": "auth",
+        "table": "oauth_client_states",
+        "count": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "schema": "auth",
+        "table": "oauth_clients",
+        "count": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "schema": "auth",
+        "table": "oauth_consents",
+        "count": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "schema": "auth",
+        "table": "one_time_tokens",
+        "count": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "schema": "auth",
+        "table": "refresh_tokens",
+        "count": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "schema": "auth",
+        "table": "saml_providers",
+        "count": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "schema": "auth",
+        "table": "saml_relay_states",
+        "count": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "schema": "auth",
+        "table": "schema_migrations",
+        "count": 77,
+        "hash": "2431d64ed800ea362346c374f29bb3d3"
+      },
+      {
+        "schema": "auth",
+        "table": "sessions",
+        "count": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "schema": "auth",
+        "table": "sso_domains",
+        "count": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "schema": "auth",
+        "table": "sso_providers",
+        "count": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "schema": "auth",
+        "table": "users",
+        "count": 2,
+        "hash": "13784baa81a44e74dae893149833bd4b"
+      },
+      {
+        "schema": "auth",
+        "table": "webauthn_challenges",
+        "count": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "schema": "auth",
+        "table": "webauthn_credentials",
+        "count": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "schema": "biblib",
+        "table": "books",
+        "count": 9,
+        "hash": "27334f427e063e9017bb5639e4ec9cce"
+      },
+      {
+        "schema": "biblib",
+        "table": "shelves",
+        "count": 6,
+        "hash": "888d14a3e73f96a5221598881230af8a"
+      },
+      {
+        "schema": "drizzle",
+        "table": "__drizzle_migrations",
+        "count": 3,
+        "hash": "90766a16fd46ef0318025dfe496eb59f"
+      },
+      {
+        "schema": "storage",
+        "table": "buckets",
+        "count": 1,
+        "hash": "ad9ed4abf5a65b8538ded69719658df9"
+      },
+      {
+        "schema": "storage",
+        "table": "buckets_analytics",
+        "count": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "schema": "storage",
+        "table": "buckets_vectors",
+        "count": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "schema": "storage",
+        "table": "iceberg_namespaces",
+        "count": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "schema": "storage",
+        "table": "iceberg_tables",
+        "count": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "schema": "storage",
+        "table": "migrations",
+        "count": 68,
+        "hash": "d081a9bf61e20c5634f06b8def9ab008"
+      },
+      {
+        "schema": "storage",
+        "table": "objects",
+        "count": 1,
+        "hash": "74bd700b836c5a4ccb73a783a284665e"
+      },
+      {
+        "schema": "storage",
+        "table": "s3_multipart_uploads",
+        "count": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "schema": "storage",
+        "table": "s3_multipart_uploads_parts",
+        "count": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "schema": "storage",
+        "table": "vector_indexes",
+        "count": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      }
+    ],
+    "mailpitHash": "2c70e0c7a413dab2a464ce94291201c71ea68aa72bae9bd2950ca8af10a0b8e0",
+    "hash": "98b17a7372eb3ad9255c0cc7fb456c6e70e32154f74f8d4f9cec9f42979a3bea"
+  },
+  "createdAt": "2026-10-23T12:43:00.522Z",
+  "expiresAt": "2026-10-23T13:13:00.522Z",
+  "planHash": "a66cac4b35afce1fd11eb7fb1cc8ba7e1794903bf94043162a67af12918fedec"
+}

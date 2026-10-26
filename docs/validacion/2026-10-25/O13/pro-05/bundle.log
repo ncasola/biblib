@@ -1,0 +1,5 @@
+
+> biblib@1.0.0 check:bundle C:\Users\ncaso\orca\workspaces\biblib\u-pro-05
+> node scripts/check-client-bundle.mjs "--forbid-local-login"
+
+Bundle cliente limpio (43 archivos revisados; sin formulario de acceso local).

@@ -1,0 +1,350 @@
+
+> biblib@1.0.0 test:scripts C:\Users\ncaso\orca\workspaces\biblib\u-inf-03
+> node --test "tests/scripts/**/*.test.mjs"
+
+✔ db:backup:prod es solo un contrato que rechaza con 2 y sin conectar (2.9216ms)
+✔ los wrappers no admiten URLs, flags remotos ni perfiles desconocidos (2.4983ms)
+✔ la carpeta de respaldos queda fuera de Git: .biblib/ o fuera del repositorio (35.0369ms)
+✔ la clave de recuperación es externa, se valida y nunca se guarda con el respaldo (43.4314ms)
+✔ cifrado autenticado: la clave correcta recupera los bytes; otra clave o un byte alterado fallan con 11 (1.5215ms)
+✔ manifiesto sellado: alterar un campo o un origen remoto se rechaza (169.0331ms)
+✔ inventario: un objeto ausente, alterado o una ruta fuera del respaldo son discrepancias (158.929ms)
+✔ restore autentica el respaldo antes del destino: objeto ausente 11, clave ausente u otra clave 6 (168.8437ms)
+✔ restore rechaza destinos ajenos o remotos antes de conectar (115.6626ms)
+✔ el historial del respaldo debe ser un prefijo exacto del journal (0.4772ms)
+✔ destino recién reseteado: solo el censo de fixtures; cualquier otro dato se rechaza (1.0266ms)
+✔ verify compara recibo y destino: tokens rotados, cantidades, claves y muestra (1.613ms)
+✔ el recibo conserva el último ensayo superado salvo que falle el propio respaldo (0.3062ms)
+✔ Auth: solo identidades; sesiones, tokens, flujos y configuración quedan excluidos (0.3324ms)
+✔ streamCommand captura bytes y entrega la entrada por stdin, no por argv (323.3925ms)
+✔ verify excluye lo que la rotación renueva en library_state (trigger de 0003) (0.3423ms)
+✔ catalogue-bench mide 1, 10 y 100 consultas concurrentes y respeta los invariantes (2922.0493ms)
+✔ catalogue-bench rechaza argumentos desconocidos (174.745ms)
+✔ catalogue: solo perfiles scratch o test, sin otros argumentos (4.0736ms)
+✔ catalogue: el perfil sale del entorno y rechaza main u objetivos remotos (1.4196ms)
+✔ catalogue: los ISBN de prueba son sintéticos y tienen dígito de control válido (1.2357ms)
+✔ agrega contadores y percentiles por proveedor sin reproducir ninguna línea (3.5328ms)
+✔ un proveedor o resultado inesperado no altera contadores ajenos (0.41ms)
+✔ la CLI lee un archivo, valida argumentos y su salida JSON solo contiene cantidades (413.9663ms)
+✔ e2e: argumentos del runner, proyectos y modos exclusivos (4.2512ms)
+✔ e2e: Playwright recibe solo proyectos conocidos y el externo va aparte (0.5993ms)
+✔ e2e: el entorno hijo no hereda Supabase, Postgres, BIBLIB ni NODE_OPTIONS (5.7655ms)
+✔ e2e: el guard del servidor distingue loopback de hosts externos (1.1808ms)
+✔ e2e: el registro del guard acredita la vigilancia y lista solo hosts (10.5155ms)
+✔ e2e: el resumen separa superados, fallos conocidos, pendientes, inesperados y repeticiones (1.3573ms)
+✔ e2e: la instantánea del reemplazo se anota antes y se retira después; un manifiesto dañado se rechaza (53.3438ms)
+✔ target ausente o inválido falla con código 2 antes de acceder al checkout (2.3985ms)
+✔ local ignora URLs remotas heredadas y usa el perfil exacto con rutas con espacios (23.0102ms)
+✔ local no usa un env explícito remoto como sustituto del estado del perfil (5.8441ms)
+✔ localhost, puerto ajeno, usuario distinto y raíz o perfil diferentes no acreditan local (148.5883ms)
+✔ test exige env explícito e ignora los archivos privados de la máquina (10.2108ms)
+✔ preprod/prod exigen identidad inyectada y no recurren a .env.local (16.7811ms)
+✔ redacted no contiene contraseñas, userinfo, JWT ni claves (6.1251ms)
+✔ childEnv elimina variables heredadas y fija opciones públicas y catálogos (8.8214ms)
+✔ .env.local sin marcador se conserva intacto y no se sobrescribe (26.1324ms)
+✔ generar local es idempotente y no acepta otros objetivos (31.3524ms)
+✔ detecta todos los archivos que Next y el CLI cargarían en cada modo (81.8718ms)
+✔ un marcador válido no autoriza variables extra ni valores distintos al contexto (40.0794ms)
+✔ huellas estables sin contraseña y distintas por objetivo, proyecto, raíz o clave pública (29.3476ms)
+✔ start rechaza un biblib-target.json de otro objetivo/proyecto antes de ejecutar Next (98.2965ms)
+✔ wrapper rechaza argumentos y reenvíos arbitrarios con código 2 (0.4642ms)
+✔ el inspector de bundle detecta referencias privadas y JWT administrativos sin mostrarlos (48.1139ms)
+✔ childEnv fija NEXT_PUBLIC_BIBLIB_LOCAL_LOGIN=1 solo en local/test y la vacía en preprod/prod (142.8853ms)
+✔ next.config define la variable pública siempre: 1 en local/test y vacía sin objetivo, preprod y prod (1062.6675ms)
+✔ check-client-bundle --forbid-local-login detecta los literales del formulario y es opcional (34.2988ms)
+✔ [build] build:test con placeholders contiene el formulario local (18976.7863ms)
+✔ [build] un build prod simulado no contiene ninguna cadena del formulario local (9935.9955ms)
+✔ db:local:credentials valida argumentos y solo admite A/B (0.3898ms)
+✔ db:local:credentials muestra correo y contraseña solo en una terminal, con aviso y sin escribir archivos (0.4348ms)
+✔ db:local:credentials rechaza salida redirigida, otro objetivo y registros ausentes sin mostrar la contraseña (0.4827ms)
+✔ integración: solo admite el perfil test y --reuse-build (2.5535ms)
+✔ integración: la salida enmascara JWT, cookies SSR y secretos conocidos (0.6775ms)
+✔ integración: la caída de servicios se ejecuta sola y al final (16.8192ms)
+✔ integración: decodifica respuestas RSC de acciones, referencias, texto largo y errores (1.065ms)
+✔ integración: la sesión SSR se envejece sin tocar los tokens y se aplican Set-Cookie (1.1907ms)
+✔ integración: la limpieza solo borra lo registrado por el run y conserva lo que no puede (0.9361ms)
+✔ argumentos del ejecutor local (3.2029ms)
+✔ el token coincide con el de la app y no acepta secretos débiles (1.6782ms)
+✔ un disparo envía solo el token y traduce las respuestas (55.0836ms)
+✔ argumentos del grupo de integración jobs (0.6739ms)
+✔ argumentos cerrados y perfiles explícitos (4.533ms)
+✔ doctor es de solo lectura sin generar estado ni ejecutar start/status (60.1879ms)
+✔ status proyecta contrato estable sin claves ni URLs con credenciales (92.8663ms)
+✔ up idempotente y down conserva volúmenes (linux, rutas con espacios) (173.6636ms)
+✔ up idempotente y down conserva volúmenes (win32, rutas con espacios) (157.7371ms)
+✔ rechaza identidad ajena en red, contenedor, volumen y registro (172.8117ms)
+✔ puerto ajeno y rango excluido bloquean antes de crear y nunca matan al ocupante (95.0844ms)
+✔ fallo de salud conserva diagnóstico y no anuncia éxito (148.2717ms)
+✔ SIGINT registra fase, elimina solo contenedores/red creados y conserva volúmenes (69.0895ms)
+✔ bootstrap migra, siembra y verifica por completo y solo main escribe entorno (150.6782ms)
+✔ bootstrap propaga el código del runner y marca migrate como fallida (118.3509ms)
+✔ bootstrap repetido verifica los fixtures antes de omitir seed y propaga fallo verify (335.4691ms)
+✔ bootstrap propaga el fallo del seed y deja verify pendiente (116.1699ms)
+✔ status publica el head aplicado solo con Postgres propio en marcha (144.3615ms)
+✔ worktree rechaza main, admite scratch/test y bloqueo concurrente devuelve 7 (19.3483ms)
+✔ ejecutor sanea captura, usa argv con espacios y devuelve timeout/interrupción (967.5335ms)
+✔ salud exige Docker y endpoints locales, incluido Studio sin redirección (79.4105ms)
+✔ SIGINT en preflight y fallo bootstrap se registran sin anunciar fases pasadas (99.9213ms)
+✔ bootstrap main delega la generación en los helpers existentes (111.2078ms)
+✔ interrupción de un segundo intento conserva los recursos de la ejecución anterior (94.0385ms)
+✔ configuración generada alterada se rechaza antes de regenerarla (89.2903ms)
+✔ un cambio de identidad durante start nunca se acredita en el registro (109.8406ms)
+✔ un binding nuevo fuera del bloque impide acreditar el arranque (64.6813ms)
+✔ Docker inaccesible no borra la identidad previamente registrada (94.0842ms)
+▶ journal
+  ✔ el journal del repositorio es válido y LF (6.8922ms)
+  ✔ los hashes coinciden con readMigrationFiles del drizzle-orm instalado (9.039ms)
+  ✔ idx no consecutivo, when no creciente, fichero ausente y SQL huérfano bloquean con 5 (458.4528ms)
+  ✔ un SQL con CRLF en disco se rechaza antes de calcular un hash distinto por plataforma (99.2279ms)
+  ✔ las reglas .gitattributes mantienen LF en el índice (63.4567ms)
+  ✔ resumen de DDL sin ejecutar SQL (5.1248ms)
+✔ journal (643.746ms)
+▶ ledger
+  ✔ aplicado completo, parcial y vacío (0.8304ms)
+  ✔ hash legacy CRLF exige conciliación y no se reescribe (0.4629ms)
+  ✔ hash no reconocido, fila desconocida, duplicado y entrada retroactiva (0.4053ms)
+  ✔ esquema presente sin historial exige adopción; base vacía no (0.5068ms)
+✔ ledger (2.5543ms)
+▶ manifest de objetos
+  ✔ los metadatos reales tras 0006 cumplen su prefijo (4.1483ms)
+  ✔ los metadatos reales tras 0002 cumplen el manifest de 0000→0002 (0.5773ms)
+  ✔ los metadatos reales tras 0003 cumplen el manifest de 0000→0003 (0.5247ms)
+  ✔ los metadatos reales tras 0004 cumplen el manifest de 0000→0004 (0.8304ms)
+  ✔ los metadatos reales tras 0005 cumplen el manifest de 0000→0005 (1.3463ms)
+  ✔ los metadatos reales tras 0007 cumplen su prefijo (1.8898ms)
+  ✔ los metadatos reales tras 0008 cumplen el manifest completo (8.4134ms)
+  ✔ drift de la coordinación del catálogo (0004): acceso de cliente, seguridad y fencing (43.8121ms)
+  ✔ drift de los trabajos (0005): escritura de cliente, ejecutor, fencing y lease (47.5937ms)
+  ✔ drift de las versiones anteriores (0006): escritura de cliente, purga, propietario e índices (49.3117ms)
+  ✔ drift de las sesiones de restauración (0008): trozos mutables, guarda, purga, hash y propietario (31.6116ms)
+  ✔ drift de los objetos de 0003: escritura directa, permisos, seguridad y triggers (23.1686ms)
+  ✔ drift de trigger, función y políticas se detecta por metadatos (27.1428ms)
+  ✔ la comparación es semántica, no de pretty-print (3.1235ms)
+  ✔ el manifest depende del head aplicado (0.4154ms)
+  ✔ drift sobre un historial correcto devuelve 5 sin proponer reaplicar (9.1316ms)
+✔ manifest de objetos (253.8979ms)
+▶ plan
+  ✔ documento versionado con hash propio, caducidad a 30 minutos y sin secretos (2.1769ms)
+  ✔ plan caducado, de otro proyecto u otro hash se rechaza (5.2005ms)
+  ✔ bytes o journal distintos de los planificados invalidan el plan (111.6447ms)
+  ✔ bajo bloqueo, un head distinto del planificado devuelve 6 y el drift 5 (4.5728ms)
+  ✔ --out obligatorio y limitado a .biblib/plans (1.7614ms)
+✔ plan (125.6743ms)
+▶ argumentos y despachador
+  ✔ preprod/prod (U-INF-07) exigen --expect-project y no admiten --profile ni --force (0.85ms)
+  ✔ migrate exige plan, proyecto y hash, y no admite URLs ni flags reenviados (0.3426ms)
+  ✔ db:migrate es un despachador que no aplica nada y sale con 2 (860.6296ms)
+  ✔ drizzle.config.ts declara el mismo ledger y no carga archivos de entorno (0.4424ms)
+✔ argumentos y despachador (862.526ms)
+▶ stack scratch real [stack]
+  ✔ drift de trigger y política detectado dentro de una transacción revertida (218.4331ms)
+  ✔ el bloqueo ocupado devuelve 7 sin aplicar nada (438.6838ms)
+  ✔ un error intermedio revierte el conjunto y no adelanta el ledger (9) (744.1322ms)
+✔ stack scratch real [stack] (1401.6554ms)
+✔ perf:t4 mide 10000 ejemplares, todas las variantes y 1/5/10 sesiones por defecto, y rechaza lo desconocido (2.8315ms)
+✔ cada variante cambia una sola cosa y se restaura exactamente, también con CRLF (1.7948ms)
+✔ una variante cuya ancla ya no existe falla antes de compilar y no deja nada cambiado (0.6029ms)
+✔ la tabla del experimento solo lleva cifras y nombres de escenario (0.7058ms)
+✔ el dataset es determinista: dos generaciones producen exactamente el mismo contenido (725.3065ms)
+✔ el libro i no depende del tamaño: los 100 primeros de 1000 coinciden con el dataset de 100 salvo la estantería (31.0964ms)
+✔ los tres tamaños respetan las restricciones del esquema: ISBN, títulos, páginas, estados y estanterías (263.9021ms)
+✔ el reparto es realista: estados con la proporción esperada, estantería mayor dominante y ISBN manuales ~15 % (195.4258ms)
+✔ el dataset incluye tildes y eñes para ejercitar la búsqueda normalizada (25.3306ms)
+✔ cada ISBN de escala es único y válido para todo el rango de 10000 (25.6836ms)
+✔ db:seed:local acepta --scale solo con 100, 1000 o 10000 y conserva el resto del contrato (1.2493ms)
+✔ el seed de escala rechaza el perfil main y objetivos no locales antes de resolver nada (1.1343ms)
+✔ el censo de la cuenta de escala es independiente del A/B y comparte solo el metadato del censo (0.5696ms)
+✔ el seed de dominio actúa en una transacción, solo sobre su propietario, en lotes y sin tocar auth (24.5613ms)
+✔ el seed de dominio falla y revierte si el recuento no coincide con el dataset (2.2091ms)
+✔ los estadísticos usan interpolación lineal y toleran muestras pequeñas o vacías (0.6073ms)
+✔ los EXPLAIN guardados no contienen identificadores (0.5892ms)
+✔ los argumentos de perf:local siguen el contrato: perfil test o scratch, tamaño 1000 por defecto y escenarios por nombre (1.09ms)
+✔ el contrato JSON lista cada escenario con p50, p95, presupuesto y estado (ok, over-budget o no-budget) (1.1125ms)
+✔ la comparación con presupuestos marca cumplimiento y fallo de cada medida (1.1412ms)
+✔ las tablas generadas solo contienen cifras: sin sesiones, contraseñas ni identificadores (14.1786ms)
+✔ un libro suelto se genera igual que dentro del dataset completo (11.8976ms)
+▶ manifiesto de perfiles
+  ✔ declara main, test y scratch con identidades propias (2.8392ms)
+  ✔ cada perfil ocupa su bloque de diez puertos y su puerto de aplicación (2.9897ms)
+  ✔ no hay solapes entre perfiles ni con 5432/54320–54329 (1.6026ms)
+  ✔ declara bindings en loopback y una red propia por perfil (4.8228ms)
+  ✔ detecta solapes, puertos ajenos y bindings externos (0.7528ms)
+  ✔ un perfil desconocido es un error de argumentos (exit 2) (1.1607ms)
+✔ manifiesto de perfiles (16.1609ms)
+▶ supabase/config.toml del perfil main
+  ✔ coincide con la identidad y los puertos de main (0.7804ms)
+  ✔ no activa migraciones ni seed de usuario del CLI (0.2979ms)
+  ✔ no expone el esquema biblib por la Data API (0.3309ms)
+  ✔ usa Postgres 17 y solo los servicios previstos (0.3117ms)
+  ✔ no lee secretos de Studio desde el entorno (0.1786ms)
+  ✔ supabase/migrations no contiene SQL (1.0336ms)
+✔ supabase/config.toml del perfil main (3.55ms)
+▶ workdir generado por perfil
+  ✔ profileWorkdir apunta a .biblib/stacks/<perfil>/ (1.8819ms)
+  ✔ genera scratch con su projectId, puertos y URL de aplicación (65.4688ms)
+  ✔ genera test con su projectId, puertos y URL de aplicación (71.7727ms)
+  ✔ el workdir de main reproduce el config.toml base (73.0663ms)
+  ✔ rechaza un config.toml que no coincide con el perfil base (4.7655ms)
+  ✔ conserva los saltos de línea CRLF del archivo base (2.4028ms)
+✔ workdir generado por perfil (219.795ms)
+▶ bindings publicados reales
+  ✔ solo admite direcciones loopback en el manifiesto (0.3172ms)
+  ✔ detecta la publicación en 0.0.0.0 y :: del ensayo (0.766ms)
+  ✔ acepta loopback explícito y trata HostIp vacío como todas las interfaces (1.0976ms)
+  ✔ señala puertos fuera del bloque del perfil (0.7882ms)
+✔ bindings publicados reales (3.2231ms)
+▶ códigos de salida
+  ✔ EXIT contiene exactamente 0, 2–11 y 130 (0.4911ms)
+  ✔ BiblibError conserva código, fase y mensaje (0.3666ms)
+✔ códigos de salida (1.1608ms)
+▶ promoción contra un remoto simulado [stack]
+  ✖ 1 · status y plan son de solo lectura: no crean ledger ni objetos y listan pendientes
+  ✖ 2 · identidad errónea, sin TLS, plan de otro commit/head y respaldo ausente o ajeno abortan antes de DDL
+  ✖ 3 · copia equivalente a 0000: conserva IDs y datos, aplica 0001…0004 y verifica catálogo, FK, RLS y versión
+  ✖ 4 · datos incompatibles con 0001: listado restringido de correcciones, sin plan ni cambios
+  ✖ 5 · esquema manual sin ledger equivalente a 0002: adopt escribe solo el ledger y migrate aplica 0003/0004
+  ✖ 6 · esquema con drift (sin trigger): la adopción se rechaza con 5 y conciliación, sin ledger
+  ✖ 7 · fallo transaccional sin avance del ledger y restauración coherente desde el respaldo
+  ✖ 8 · dos ejecuciones simultáneas no aplican el mismo plan
+✖ promoción contra un remoto simulado [stack] (5198.5295ms)
+▶ identidad remota
+  ✔ descriptor directo y pooler de sesión válidos; la huella no depende de la credencial (12.7883ms)
+  ✔ sin objetivo/ref esperados, host, rol, base o proyecto ajenos: abortan antes de conectar (4.4927ms)
+  ✔ un pooler regional no identifica el proyecto; el modo transacción no sirve para DDL/bloqueo (1.3855ms)
+  ✔ sin TLS verificado (o con sslmode que no verifica el nombre) sale con 3 (4.4264ms)
+  ✔ fallos TLS y de credenciales se traducen a 3; el resto a 8, sin SQL ni secretos (0.6762ms)
+✔ identidad remota (25.4802ms)
+▶ argumentos de promoción
+  ✔ status/plan exigen --expect-project; migrate y adopt, plan y hashes; --force nunca (1.2943ms)
+  ✔ package.json expone los comandos remotos sin URL ni flags reenviados (0.5541ms)
+✔ argumentos de promoción (2.0945ms)
+▶ plan remoto
+  ✔ plan de otro commit, de otro tipo o de otro destino se rechaza antes de conectar (10.6187ms)
+✔ plan remoto (10.8557ms)
+▶ adopción del historial
+  ✔ esquema manual equivalente a 0002/0003/0004: filas exactas del ledger y evidencia por migración (131.5207ms)
+  ✔ drift (sin trigger), política extra o columnas distintas: no se adopta y se propone conciliación (80.4498ms)
+  ✔ coincidir solo en nombres de tablas no basta: 0002 no equivale a 0000 ni a 0003 (4.6414ms)
+  ✔ la huella de hechos no depende del orden de las consultas de catálogo (82.718ms)
+✔ adopción del historial (299.6651ms)
+▶ recibo --backup-receipt
+  ✔ el recibo de db:backup:local cumple el contrato de db:reset:local: alcance Mailpit, rutas relativas y discardedStateHash (70.5895ms)
+  ✔ sin ensayo superado o con el respaldo alterado no se emite un recibo que acredite la restauración (62.3868ms)
+  ✔ promoción: ausente, alterado, caducado, de otro destino/head o sin ensayo se rechaza antes de conectar (201.3402ms)
+  ✔ bajo bloqueo, un ledger o un esquema distintos del respaldo devuelven 6 (0.9871ms)
+✔ recibo --backup-receipt (335.5921ms)
+✔ reset solo admite plan, identidad y una autorización explícita; no reenvía flags (2.6833ms)
+✔ rechaza 5432, remoto y túnel antes de consultar datos o mutar Docker (116.7609ms)
+✔ rechaza holaerp, raíz ajena, red ajena, marcador aislado y contenedor no registrado (152.0829ms)
+✔ confirmación incorrecta, plan alterado, caducado o de otra raíz se rechazan (30.6583ms)
+✔ cambio de datos sin cambio de cantidades invalida el plan antes de parar (34.3197ms)
+✔ huella Mailpit incluye mensajes fuera de la primera página y detecta inventario inestable (67.1208ms)
+✔ rutas fuera de .biblib y junctions se rechazan sin eliminar el destino (26.0857ms)
+✔ recibo de respaldo acredita inventario completo, estado revisado y restauración (90.2104ms)
+✔ las rutas de limpieza se acreditan antes de cualquier operación destructiva (28.0167ms)
+✔ reset interrumpido conserva fase, continúa por IDs restantes y verifica antes de éxito (159.8864ms)
+✔ un reemplazo de volumen entre interrupción y continuación se rechaza (62.2638ms)
+✔ fallo de bootstrap nunca produce recibo de reset pasado (102.9776ms)
+✔ [stack] plan scratch real acredita cantidades y no destruye (5388.3995ms)
+✔ restore: scratch y test explícitos, rechazo de perfiles o argumentos ajenos (2.8111ms)
+✔ el grupo restore forma parte de test:integration:local (6.8821ms)
+✔ el staging de restauración se restaura como datos de la cuenta: un destino con sesiones no está vacío (1.3752ms)
+✔ trozos dañados abortan el restore; sesiones sin publicar quedan para revisión (0.3342ms)
+✔ perf:restore: perfiles scratch o test, escalas 100/1000/10000 y repeticiones acotadas (8.3685ms)
+✔ el inspector conserva los hechos sellados de respaldos anteriores a 0007 (57.2499ms)
+✔ views: scratch y test explícitos, rechazo de perfiles o argumentos ajenos (0.8884ms)
+✔ vistas restaurables: un destino con preferencias no está vacío (0.4265ms)
+✔ 0007 detecta drift de cuota, validación, RLS, versión e índices con expresión y dirección (26.3014ms)
+✔ service_role: childEnv la conserva para seed/fixtures, pero el proceso de Next la recibe vacía (7.733ms)
+✔ service_role: tampoco se hereda del shell que lanza el wrapper (1.5957ms)
+✔ ninguna ruta, acción, componente ni el proxy usan la credencial administrativa (46.5838ms)
+✔ supabase/config.toml: la Data API solo publica public y graphql_public (0.7616ms)
+✔ la matriz cubre todas las rutas de app/ (si se añade una, el inventario debe ampliarse) (21.0957ms)
+✔ checkResponse acepta una respuesta conforme y detecta caché compartida, CSP aplicada y cabeceras ausentes (24.4512ms)
+✔ checkCsp y checkNonce rechazan comodines, Google/BNE sin flag, unsafe-inline y scripts sin nonce (0.5203ms)
+✔ headers-local: argumentos cerrados y marcadores resueltos (2.0602ms)
+✔ censo sin credenciales: A/B, keys únicas, manuales, ISBN fixture y cuatro estados (6.3345ms)
+✔ argumentos cerrados y target remoto rechazado antes de resolver o escribir (3.8882ms)
+✔ rechaza HolaERP (5432/54321), remoto y perfil sin registro antes de clientes o SQL (70.9548ms)
+✔ un stack que responde con red ajena no se acredita aunque sus IDs estén registrados (39.6276ms)
+✔ Auth/Storage deben estar registrados y los bindings API/DB pertenecer al perfil (107.4749ms)
+✔ ledger pendiente produce 6 antes de crear registro, cuentas o bucket (24.5151ms)
+✔ seed repetido conserva IDs, credenciales privadas y libro manual ajeno (1526.2185ms)
+✔ fallo parcial en dominio produce 10 con fase y reintento sin cuentas duplicadas (1163.3601ms)
+✔ recupera cuenta creada antes de persistir el ID sin imponer UUID a Auth (1034.6982ms)
+✔ correo existente sin metadato fixture se rechaza sin adoptar la cuenta (14.741ms)
+✔ colisión en B se detecta antes de actualizar A (14.2314ms)
+✔ Storage crea bucket privado, carga bytes deterministas y rechaza bucket público existente (1.0287ms)
+✔ registro privado rechaza enlaces a otro directorio (13.7079ms)
+✔ SQL de dominio usa una transacción, scope por propietario y fixtureKey, sin tocar version ni auth (1.0555ms)
+✔ seed y sesiones GoTrue, Storage y Mailpit reales [stack] (19199.2481ms)
+✔ restore: las versiones anteriores son datos de la cuenta, no tablas derivadas (3.4385ms)
+✔ restore: versiones íntegras se cuentan; vencidas o sin completar se señalan para revisión (0.6502ms)
+✔ restore: un trozo o un hash final que no cuadra es un respaldo dañado (11) (0.7412ms)
+ℹ tests 245
+ℹ suites 17
+ℹ pass 237
+ℹ fail 0
+ℹ cancelled 8
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 31864.5888
+
+✖ failing tests:
+
+test at tests\scripts\promotion-stack.test.mjs:92:3
+✖ 1 · status y plan son de solo lectura: no crean ledger ni objetos y listan pendientes
+  'test did not finish before its parent and was cancelled'
+
+test at tests\scripts\promotion-stack.test.mjs:112:3
+✖ 2 · identidad errónea, sin TLS, plan de otro commit/head y respaldo ausente o ajeno abortan antes de DDL
+  'test did not finish before its parent and was cancelled'
+
+test at tests\scripts\promotion-stack.test.mjs:153:3
+✖ 3 · copia equivalente a 0000: conserva IDs y datos, aplica 0001…0004 y verifica catálogo, FK, RLS y versión
+  'test did not finish before its parent and was cancelled'
+
+test at tests\scripts\promotion-stack.test.mjs:207:3
+✖ 4 · datos incompatibles con 0001: listado restringido de correcciones, sin plan ni cambios
+  'test did not finish before its parent and was cancelled'
+
+test at tests\scripts\promotion-stack.test.mjs:227:3
+✖ 5 · esquema manual sin ledger equivalente a 0002: adopt escribe solo el ledger y migrate aplica 0003/0004
+  'test did not finish before its parent and was cancelled'
+
+test at tests\scripts\promotion-stack.test.mjs:266:3
+✖ 6 · esquema con drift (sin trigger): la adopción se rechaza con 5 y conciliación, sin ledger
+  'test did not finish before its parent and was cancelled'
+
+test at tests\scripts\promotion-stack.test.mjs:285:3
+✖ 7 · fallo transaccional sin avance del ledger y restauración coherente desde el respaldo
+  'test did not finish before its parent and was cancelled'
+
+test at tests\scripts\promotion-stack.test.mjs:319:3
+✖ 8 · dos ejecuciones simultáneas no aplican el mismo plan
+  'test did not finish before its parent and was cancelled'
+
+test at tests\scripts\promotion-stack.test.mjs:32:1
+✖ promoción contra un remoto simulado [stack] (5198.5295ms)
+  Error: Command failed: docker exec -i 77f38a53db9b8cf93926f73a8cf42014a6b0153bf042de65c42e449a8114fd7c psql --no-psqlrc --quiet --tuples-only --no-align -U postgres -d postgres -v ON_ERROR_STOP=1
+  ERROR:  role "anon" already exists
+  
+      at genericNodeError (node:internal/errors:985:15)
+      at wrappedFn (node:internal/errors:539:14)
+      at checkExecSyncError (node:child_process:925:11)
+      at execFileSync (node:child_process:961:15)
+      at docker (file:///C:/Users/ncaso/orca/workspaces/biblib/u-inf-03/tests/scripts/promotion-harness.mjs:56:10)
+      at psql (file:///C:/Users/ncaso/orca/workspaces/biblib/u-inf-03/tests/scripts/promotion-harness.mjs:108:10)
+      at remote.psql (file:///C:/Users/ncaso/orca/workspaces/biblib/u-inf-03/tests/scripts/promotion-harness.mjs:91:35)
+      at startRemote (file:///C:/Users/ncaso/orca/workspaces/biblib/u-inf-03/tests/scripts/promotion-harness.mjs:101:26)
+      at async SuiteContext.<anonymous> (file:///C:/Users/ncaso/orca/workspaces/biblib/u-inf-03/tests/scripts/promotion-stack.test.mjs:37:14)
+      at async TestHook.run (node:internal/test_runner/test:1113:7) {
+    status: 3,
+    signal: null,
+    output: [ null, '', 'ERROR:  role "anon" already exists\n' ],
+    pid: 26620,
+    stdout: '',
+    stderr: 'ERROR:  role "anon" already exists\n'
+  }
+ ELIFECYCLE  Command failed with exit code 1.
+exit 1

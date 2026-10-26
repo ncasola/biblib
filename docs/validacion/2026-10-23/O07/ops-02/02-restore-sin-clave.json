@@ -1,0 +1,5 @@
+{
+  "code": 6,
+  "phase": "clave",
+  "message": "El respaldo está cifrado y falta la clave de recuperación (--key-file); no se ha modificado el destino."
+}

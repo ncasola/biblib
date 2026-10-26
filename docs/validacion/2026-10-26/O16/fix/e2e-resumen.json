@@ -1,0 +1,24 @@
+{
+  "stats": {
+    "startTime": "2026-10-26T09:21:54.007Z",
+    "duration": 363745.223,
+    "expected": 86,
+    "skipped": 3,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "omitidos": [
+    {
+      "prueba": "flujos\\estanteria-3d.spec.ts / capturas U-UX-02: 1440 y 375 px, ambos temas, con un libro sacado de la balda",
+      "proyecto": "chromium-flujos"
+    },
+    {
+      "prueba": "flujos\\pendientes.spec.ts / Proveedores · escenarios de configuración pendientes / edición discrepante entre proveedores · dueño U-BIB-04",
+      "proyecto": "chromium-flujos"
+    },
+    {
+      "prueba": "flujos\\pendientes.spec.ts / Proveedores · escenarios de configuración pendientes / clave de Google Books ausente · dueño U-BIB-03",
+      "proyecto": "chromium-flujos"
+    }
+  ]
+}

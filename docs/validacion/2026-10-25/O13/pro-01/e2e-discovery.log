@@ -1,0 +1,20 @@
+Listing tests:
+  [chromium-sesion] › sesion.setup.ts:11:3 › acceso local: A entra por el formulario y conserva la sesión
+  [chromium-sesion] › sesion.setup.ts:11:3 › acceso local: B entra por el formulario y conserva la sesión
+  [chromium-flujos] › flujos\personal.spec.ts:3:1 › personal: alta opcional, estrellas por teclado y siguiente alta vacía
+  [chromium-flujos] › flujos\personal.spec.ts:27:1 › personal: conflicto conserva borrador y exige recarga explícita
+  [chromium-flujos] › flujos\personal.spec.ts:46:1 › personal: OR/AND funciona en colección y búsqueda avanzada y sobrevive a recarga
+  [chromium-flujos] › flujos\personal.spec.ts:70:1 › personal: renombrar y borrar etiqueta conserva el libro
+  [firefox-sesion] › sesion.setup.ts:11:3 › acceso local: A entra por el formulario y conserva la sesión
+  [firefox-sesion] › sesion.setup.ts:11:3 › acceso local: B entra por el formulario y conserva la sesión
+  [firefox-flujos] › flujos\personal.spec.ts:3:1 › personal: alta opcional, estrellas por teclado y siguiente alta vacía
+  [firefox-flujos] › flujos\personal.spec.ts:27:1 › personal: conflicto conserva borrador y exige recarga explícita
+  [firefox-flujos] › flujos\personal.spec.ts:46:1 › personal: OR/AND funciona en colección y búsqueda avanzada y sobrevive a recarga
+  [firefox-flujos] › flujos\personal.spec.ts:70:1 › personal: renombrar y borrar etiqueta conserva el libro
+  [webkit-sesion] › sesion.setup.ts:11:3 › acceso local: A entra por el formulario y conserva la sesión
+  [webkit-sesion] › sesion.setup.ts:11:3 › acceso local: B entra por el formulario y conserva la sesión
+  [webkit-flujos] › flujos\personal.spec.ts:3:1 › personal: alta opcional, estrellas por teclado y siguiente alta vacía
+  [webkit-flujos] › flujos\personal.spec.ts:27:1 › personal: conflicto conserva borrador y exige recarga explícita
+  [webkit-flujos] › flujos\personal.spec.ts:46:1 › personal: OR/AND funciona en colección y búsqueda avanzada y sobrevive a recarga
+  [webkit-flujos] › flujos\personal.spec.ts:70:1 › personal: renombrar y borrar etiqueta conserva el libro
+Total: 18 tests in 2 files

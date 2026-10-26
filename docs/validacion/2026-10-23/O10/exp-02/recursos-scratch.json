@@ -1,0 +1,12 @@
+﻿{
+    "profile":  "scratch",
+    "volumes":  [
+                    "supabase_db_biblib-scratch",
+                    "supabase_storage_biblib-scratch"
+                ],
+    "volumeExitCode":  0,
+    "networks":  [
+                     "biblib-scratch-network"
+                 ],
+    "networkExitCode":  0
+}

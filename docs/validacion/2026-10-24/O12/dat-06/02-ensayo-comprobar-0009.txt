@@ -1,0 +1,14 @@
+{
+ "etapa": "0009",
+ "fichas": 121,
+ "encontradas": 121,
+ "coinciden": 121,
+ "distintas": [],
+ "edicionesCompartidas": [],
+ "portadaPrivada": {
+  "asset": "3d90cc19-78ff-4433-9896-411272df5248",
+  "estado": "ready"
+ },
+ "informe": [],
+ "comparacion": null
+}

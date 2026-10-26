@@ -1,0 +1,1 @@
+{"code":6,"phase":"destino","message":"El destino no está vacío ni recién reseteado (filas en otras tablas de biblib); reconstrúyelo con db:reset:local antes de restaurar."}

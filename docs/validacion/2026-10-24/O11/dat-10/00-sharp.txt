@@ -1,0 +1,16 @@
+# pnpm install --frozen-lockfile (allowBuilds sharp: true)
+   ╰──────────────────────────────────────────╯
+
+
+Done in 1s using pnpm v10.32.1
+# sharp.versions
+{"sharp":"0.35.5","vips":"8.18.7","webp":"1.6.0","png":"1.6.58","mozjpeg":"0826579"}
+# pnpm why sharp
+sharp@0.35.5
+├── biblib@1.0.0 (dependencies)
+└─┬ next@16.4.2
+  ├─┬ @vercel/analytics@2.0.1
+  │ └── biblib@1.0.0 (dependencies)
+  └── biblib@1.0.0 (dependencies)
+
+Found 1 version of sharp

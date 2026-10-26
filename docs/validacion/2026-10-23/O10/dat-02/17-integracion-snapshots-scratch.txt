@@ -1,0 +1,24 @@
+
+> biblib@1.0.0 test:integration:snapshots C:\Users\ncaso\orca\workspaces\biblib\u-inf-03
+> node tests/integration/snapshots/run.mjs "--profile" "scratch"
+
+Grupo snapshots · perfil scratch · biblib-scratch · run 293bcbdd1149
+Compilando la app para el perfil scratch…
+✔ reemplazar A crea exactamente una versión coherente; fusionar no crea ninguna y repetir la clave no duplica (9123.3238ms)
+✔ B no puede listar, descargar, comparar, restaurar ni borrar la versión de A (1087.4271ms)
+✔ deshacer devuelve datos y referencias con IDs propios y versiones nuevas; repetir la clave recupera el resultado (794.8001ms)
+✔ una segunda pestaña que edita antes de confirmar provoca conflicto; comparar de nuevo permite restaurar (3987.119ms)
+✔ un fallo entre la captura y la publicación conserva la colección original sin versión válida parcial (870.1175ms)
+✔ caducidad: una versión vencida no se lista ni se restaura y la siguiente captura la retira (1292.7839ms)
+✔ cuota agotada: bloquea reemplazar y restaurar con un mensaje claro sin borrar ninguna versión (1303.3633ms)
+✔ borrar la versión mientras se prepara la restauración: confirmar no aplica nada (921.5991ms)
+✔ una cuenta bloqueada no admite versiones nuevas: ni restaurar ni reemplazar aplican nada (900.4141ms)
+✔ el restore administrativo comprueba en Postgres la integridad de las versiones restauradas (386.99ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 22639.3062

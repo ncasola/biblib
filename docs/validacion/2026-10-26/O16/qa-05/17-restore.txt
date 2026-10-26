@@ -1,0 +1,11 @@
+
+> biblib@1.0.0 db:restore:local C:\Users\ncaso\orca\workspaces\biblib\u-inf-03
+> node scripts/db/restore-local.mjs "--backup" ".biblib/backups/20261026T075637Z-scratch-07510c" "--profile" "scratch" "--expect-project" "biblib-scratch"
+
+Restore 20261026T075637Z-scratch-07510c → scratch (biblib-scratch) completado en 5 s; tokens rotados: biblib.copies.version (14), biblib.editions.version (14), biblib.works.version (0), biblib.tags.version (2), biblib.copy_annotations.version (2), biblib.locations.version (2), biblib.copy_locations.version (2), biblib.series.version (2), biblib.series_editions.version (2), biblib.bibliographic_evidence.version (0), biblib.review_issues.version (0), biblib.profiles.version (2), biblib.csv_mapping_profiles.version (0), biblib.media_assets.version (4), biblib.reading_cycles.version (2), biblib.reading_entries.version (2), biblib.loans.version (2), biblib.library_state.revision (4).
+Supresiones aplicadas antes de abrir: 1 cuenta(s) del respaldo eliminadas, 3 objeto(s) retirados, 2 marca(s).
+Siguiente paso: pnpm db:restore:verify --backup .biblib/backups/20261026T075637Z-scratch-07510c --profile scratch
+
+real	0m5.860s
+user	0m0.015s
+sys	0m0.030s

@@ -1,0 +1,66 @@
+{
+  "generatedAt": "2026-10-24T10:55:52.885Z",
+  "suite": "a11y",
+  "summary": {
+    "passed": 30,
+    "known": [],
+    "pending": 0,
+    "unexpected": [],
+    "repeated": []
+  },
+  "projects": {
+    "chromium-sesion": {
+      "passed": 2,
+      "pending": 0,
+      "known": 0
+    },
+    "firefox-sesion": {
+      "passed": 2,
+      "pending": 0,
+      "known": 0
+    },
+    "webkit-sesion": {
+      "passed": 2,
+      "pending": 0,
+      "known": 0
+    },
+    "chromium-flujos": {
+      "passed": 7,
+      "pending": 0,
+      "known": 0
+    },
+    "firefox-flujos": {
+      "passed": 7,
+      "pending": 0,
+      "known": 0
+    },
+    "webkit-flujos": {
+      "passed": 7,
+      "pending": 0,
+      "known": 0
+    },
+    "chromium": {
+      "passed": 1,
+      "pending": 0,
+      "known": 0
+    },
+    "firefox": {
+      "passed": 1,
+      "pending": 0,
+      "known": 0
+    },
+    "webkit": {
+      "passed": 1,
+      "pending": 0,
+      "known": 0
+    }
+  },
+  "stats": {
+    "startTime": "2026-10-24T10:44:05.747Z",
+    "duration": 594619.571,
+    "expected": 30,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

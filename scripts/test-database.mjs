@@ -15,7 +15,7 @@ function cleanup() {
   if (!containerId) return
   const ownedId = containerId
   containerId = undefined
-  spawnSync("docker", ["rm", "--force", ownedId], { stdio: "ignore" })
+  spawnSync("docker", ["rm", "--force", "--volumes", ownedId], { stdio: "ignore" })
 }
 
 process.once("SIGINT", () => { cleanup(); process.exit(130) })
@@ -33,12 +33,12 @@ async function run() {
       await new Promise((resolve) => setTimeout(resolve, 250))
     }
     if (!ready) throw new Error("Postgres de pruebas no respondió en el tiempo previsto.")
-    const files = ["tests/db/bootstrap.sql", "drizzle/0000_biblib_init.sql", "tests/db/legacy.sql", "drizzle/0001_library_integrity.sql", "drizzle/0002_book_versions.sql", "tests/db/versions.sql", "tests/db/rls.sql"]
+    const files = ["tests/db/bootstrap.sql", "drizzle/0000_biblib_init.sql", "tests/db/legacy.sql", "drizzle/0001_library_integrity.sql", "drizzle/0002_book_versions.sql", "drizzle/0003_library_revision.sql", "tests/db/versions.sql", "tests/db/rls.sql", "tests/db/revision.sql", "drizzle/0004_catalogue_coordination.sql", "tests/db/catalogue.sql", "drizzle/0005_library_jobs.sql", "tests/db/jobs.sql", "drizzle/0006_library_snapshots.sql", "tests/db/snapshots.sql", "drizzle/0007_saved_views.sql", "drizzle/0008_restore_sessions.sql", "tests/db/restore-sessions.sql", "drizzle/0009_cover_assets.sql", "tests/db/cover-assets.sql", "tests/db/model-legacy.sql", "drizzle/0010_works_editions_copies.sql", "tests/db/model-expand.sql", "drizzle/0011_copies_cutover.sql", "tests/db/model.sql", "drizzle/0012_model_account_deletion.sql", "tests/db/model-account-deletion.sql", "drizzle/0013_account_deletion.sql", "tests/db/account-deletion.sql", "tests/db/product-legacy.sql", "drizzle/0014_product_batch_o13.sql", "tests/db/product.sql", "tests/db/reading-loans-legacy.sql", "drizzle/0015_reading_and_loans.sql", "tests/db/reading-loans.sql"]
     for (const relativePath of files) {
       const sql = readFileSync(new URL(`../${relativePath}`, import.meta.url), "utf8")
       const output = docker(["exec", "-i", containerId, "psql", "--no-psqlrc", "--quiet", "--tuples-only", "--no-align", "-U", "postgres", "-d", "biblib_test", "-v", "ON_ERROR_STOP=1"], sql)
       console.log(`Correcto: ${relativePath}`)
-      if (relativePath.endsWith("rls.sql") && output) console.log(output.split(/\r?\n/).filter((line) => line.startsWith("Correcto:")).join("\n"))
+      if ((relativePath.endsWith("rls.sql") || relativePath.endsWith("revision.sql") || relativePath.endsWith("catalogue.sql") || relativePath.endsWith("jobs.sql") || relativePath.endsWith("snapshots.sql") || relativePath.endsWith("restore-sessions.sql") || relativePath.endsWith("cover-assets.sql") || relativePath.includes("model") || relativePath.endsWith("account-deletion.sql") || relativePath.includes("product") || relativePath.includes("reading-loans")) && output) console.log(output.split(/\r?\n/).filter((line) => line.startsWith("Correcto:")).join("\n"))
     }
     console.log("Pruebas de base de datos completadas en un contenedor aislado.")
   } catch (error) {

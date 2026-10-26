@@ -1,0 +1,36 @@
+{
+  "themes": [
+    "light",
+    "dark"
+  ],
+  "widths": [
+    320,
+    375,
+    768,
+    1440
+  ],
+  "zoom": [
+    {
+      "percent": 200,
+      "reference": "1280×1024",
+      "viewport": "640×512"
+    },
+    {
+      "percent": 400,
+      "reference": "1280×1024",
+      "viewport": "320×256"
+    }
+  ],
+  "routes": [
+    "/",
+    "/books",
+    "/books?view=grid",
+    "/books/search",
+    "/books/add",
+    "/book/6f5dba6a-72c5-5ff3-a42a-73f33f63bc2d",
+    "/shelves",
+    "/shelves/3d",
+    "/profile"
+  ],
+  "overflow": 0
+}

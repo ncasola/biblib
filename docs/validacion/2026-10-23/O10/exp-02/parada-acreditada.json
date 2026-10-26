@@ -1,0 +1,7 @@
+{
+  "profile": "scratch",
+  "apply": true,
+  "stopped": false,
+  "code": 8,
+  "message": "Docker no pudo completar la consulta u operación del perfil."
+}

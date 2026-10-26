@@ -1,0 +1,62 @@
+Rendimiento · perfil scratch · biblib-scratch · huella ea260283d879 · tamaños 10000
+Compilando la app para el perfil scratch…
+
+== 10000 ejemplares ==
+Dataset biblib-escala-v1 (6e9b3738de18): 10000 libros, 41 estanterías.
+Abriendo sesiones reales (10 de escala, A y B)…
+Frío (primera llamada de cada acción tras arrancar la app)…
+  dashboard                        c=1  p50    79.5 ms · p95    99.7 ms · SQL p95 12.06 ms · errores 0
+  dashboard                        c=5  p50   101.4 ms · p95   120.8 ms · errores 0
+  dashboard                        c=10 p50   152.6 ms · p95     199 ms · errores 0
+  listado-inicial                  c=1  p50    63.7 ms · p95    77.8 ms · SQL p95 1.12 ms · errores 0
+  listado-inicial                  c=5  p50      89 ms · p95   108.5 ms · errores 0
+  listado-inicial                  c=10 p50     132 ms · p95   167.2 ms · errores 0
+  listado-100-filas                c=1  p50      65 ms · p95    79.7 ms · SQL p95 2.15 ms · errores 0
+  listado-100-filas                c=5  p50    94.1 ms · p95   110.4 ms · errores 0
+  listado-100-filas                c=10 p50   141.8 ms · p95   186.3 ms · errores 0
+  listado-ultima-pagina            c=1  p50    95.7 ms · p95     119 ms · SQL p95 46.49 ms · errores 0
+  listado-ultima-pagina            c=5  p50   123.7 ms · p95   139.7 ms · errores 0
+  listado-ultima-pagina            c=10 p50   206.4 ms · p95   291.3 ms · errores 0
+  filtrado-estado-estanteria       c=1  p50    60.2 ms · p95    69.7 ms · SQL p95 2.67 ms · errores 0
+  filtrado-estado-estanteria       c=5  p50   114.6 ms · p95   129.5 ms · errores 0
+  filtrado-estado-estanteria       c=10 p50   182.7 ms · p95   218.2 ms · errores 0
+  ordenado-autor                   c=1  p50   101.7 ms · p95   119.7 ms · SQL p95 17.49 ms · errores 0
+  ordenado-autor                   c=5  p50     141 ms · p95   169.8 ms · errores 0
+  ordenado-autor                   c=10 p50     231 ms · p95   307.4 ms · errores 0
+  ordenado-fecha                   c=1  p50    88.3 ms · p95   111.4 ms · SQL p95 31.12 ms · errores 0
+  ordenado-fecha                   c=5  p50   111.7 ms · p95   143.4 ms · errores 0
+  ordenado-fecha                   c=10 p50   151.3 ms · p95     191 ms · errores 0
+  busqueda-local-texto             c=1  p50   152.7 ms · p95   172.9 ms · SQL p95 103.69 ms · errores 0
+  busqueda-local-texto             c=5  p50   207.4 ms · p95   269.2 ms · errores 0
+  busqueda-local-texto             c=10 p50   321.9 ms · p95   406.1 ms · errores 0
+  busqueda-local-isbn              c=1  p50   150.2 ms · p95     210 ms · SQL p95 141.6 ms · errores 0
+  busqueda-local-isbn              c=5  p50   188.9 ms · p95   298.1 ms · errores 0
+  busqueda-local-isbn              c=10 p50   357.5 ms · p95   462.7 ms · errores 0
+  detalle                          c=1  p50    54.8 ms · p95    63.2 ms · SQL p95 0.1 ms · errores 0
+  detalle                          c=5  p50    79.8 ms · p95    98.2 ms · errores 0
+  detalle                          c=10 p50   119.4 ms · p95   139.2 ms · errores 0
+  estanterias                      c=1  p50      61 ms · p95    70.5 ms · SQL p95 6.82 ms · errores 0
+  estanterias                      c=5  p50    88.8 ms · p95   107.9 ms · errores 0
+  estanterias                      c=10 p50   164.7 ms · p95   243.6 ms · errores 0
+  estanteria-3d-pagina-48          c=1  p50    65.2 ms · p95    99.8 ms · SQL p95 3.97 ms · errores 0
+  estanteria-3d-pagina-48          c=5  p50    83.6 ms · p95    93.8 ms · errores 0
+  estanteria-3d-pagina-48          c=10 p50     135 ms · p95   177.3 ms · errores 0
+  ajustes-recuentos                c=1  p50      74 ms · p95    97.4 ms · SQL p95 0.86 ms · errores 0
+  ajustes-recuentos                c=5  p50   106.4 ms · p95   123.2 ms · errores 0
+  ajustes-recuentos                c=10 p50   137.7 ms · p95   199.8 ms · errores 0
+  exportacion-servidor             c=1  p50   450.8 ms · p95   492.9 ms · SQL p95 101.76 ms · errores 0
+  exportacion-servidor             c=5  p50  1835.3 ms · p95    1921 ms · errores 0
+  exportacion-servidor             c=10 p50  3055.2 ms · p95  4569.6 ms · errores 0
+  preview-importacion-conservar    c=1  p50   234.9 ms · p95   242.9 ms · SQL p95 34.22 ms · errores 0
+  preview-importacion-conservar    c=5  p50   734.3 ms · p95  1167.9 ms · errores 0
+  preview-importacion-conservar    c=10 p50  1436.9 ms · p95  1758.5 ms · errores 0
+  preview-importacion-nuevos       c=1  p50   264.4 ms · p95   297.4 ms · SQL p95 49.06 ms · errores 0
+  preview-importacion-nuevos       c=5  p50   935.3 ms · p95    1447 ms · errores 0
+  preview-importacion-nuevos       c=10 p50  1720.4 ms · p95  2216.6 ms · errores 0
+  preview-importacion-reemplazo    c=1  p50   272.7 ms · p95   307.1 ms · SQL p95 47.56 ms · errores 0
+  preview-importacion-reemplazo    c=5  p50   878.7 ms · p95  1318.2 ms · errores 0
+  preview-importacion-reemplazo    c=10 p50  1654.7 ms · p95  2070.7 ms · errores 0
+EXPLAIN de 20 consultas guardado.
+Aislamiento bajo carga: 932 comprobaciones, 0 violaciones.
+Resultados en .biblib\perf-dat06\antes: 0 medida(s) fuera de presupuesto.
+exit=0

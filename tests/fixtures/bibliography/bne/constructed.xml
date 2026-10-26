@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<s:searchRetrieveResponse xmlns:s="http://www.loc.gov/zing/srw/" xmlns:m="http://www.loc.gov/MARC21/slim">
+  <s:version>1.2</s:version><s:numberOfRecords>2</s:numberOfRecords><s:records>
+    <s:record><s:recordSchema>marcxml</s:recordSchema><s:recordPacking>xml</s:recordPacking><s:recordData>
+      <m:record><m:controlfield tag="001">synthetic-2</m:controlfield><m:datafield tag="020"><m:subfield code="a">0-8044-2957-X (rústica)</m:subfield></m:datafield></m:record>
+    </s:recordData><s:recordPosition>2</s:recordPosition></s:record>
+    <s:record><s:recordSchema>marcxml</s:recordSchema><s:recordPacking>xml</s:recordPacking><s:recordData>
+      <m:record>
+        <m:controlfield tag="001">synthetic-1</m:controlfield>
+        <m:controlfield tag="008">171218s2011    sp |||||o|||| ||| ||spa d</m:controlfield>
+        <m:datafield tag="020"><m:subfield code="a">978-84-01-33720-8</m:subfield></m:datafield>
+        <m:datafield tag="245"><m:subfield code="a">Música &amp; poesía :</m:subfield><m:subfield code="b">una edición española /</m:subfield><m:subfield code="c">Responsabilidad no estructurada</m:subfield></m:datafield>
+        <m:datafield tag="100"><m:subfield code="a">Autora ficticia</m:subfield></m:datafield>
+        <m:datafield tag="700"><m:subfield code="a">Coautor ficticio</m:subfield><m:subfield code="4">aut</m:subfield></m:datafield>
+        <m:datafield tag="700"><m:subfield code="a">Traductor ficticio</m:subfield><m:subfield code="4">trl</m:subfield></m:datafield>
+        <m:datafield tag="264" ind2="1"><m:subfield code="b">Editorial ficticia</m:subfield><m:subfield code="c">[2025]</m:subfield></m:datafield>
+        <m:datafield tag="264" ind2="4"><m:subfield code="c">©2024</m:subfield></m:datafield>
+        <m:datafield tag="300"><m:subfield code="a">234 páginas</m:subfield><m:subfield code="b">ilustraciones</m:subfield><m:subfield code="c">22 cm</m:subfield></m:datafield>
+        <m:datafield tag="856"><m:subfield code="u">https://imagenes.example/portada.jpg</m:subfield></m:datafield>
+      </m:record>
+    </s:recordData><s:recordPosition>1</s:recordPosition></s:record>
+  </s:records>
+</s:searchRetrieveResponse>

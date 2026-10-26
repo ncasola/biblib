@@ -1,0 +1,10 @@
+{
+  "ISBN:9780000000019": {
+    "title": "La isla de papel",
+    "authors": [{ "name": "Bruno Ficticio" }],
+    "number_of_pages": 240,
+    "publish_date": "2025",
+    "publishers": [{ "name": "Editorial Inventada" }],
+    "cover": { "small": "/default-book-cover.webp", "medium": "/default-book-cover.webp", "large": "/default-book-cover.webp" }
+  }
+}

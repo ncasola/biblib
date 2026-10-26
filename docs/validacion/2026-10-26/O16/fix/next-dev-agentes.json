@@ -1,0 +1,9 @@
+{
+  "comando": "pnpm dev:local --profile test",
+  "next": "16.4.2",
+  "agentRules": false,
+  "login": 200,
+  "sha256Antes": "3dd0454233ecba7f006b9f5e993f41d62eb09fac53176688a220c15a3f83ae56",
+  "sha256Despues": "3dd0454233ecba7f006b9f5e993f41d62eb09fac53176688a220c15a3f83ae56",
+  "iguales": true
+}

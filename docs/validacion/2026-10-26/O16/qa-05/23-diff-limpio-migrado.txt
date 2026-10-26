@@ -1,0 +1,14 @@
+schemas: 2 / 2 idéntico
+relations: 47 / 47 idéntico
+columns: 482 / 482 idéntico
+constraints: 275 / 275 idéntico
+indexes: 131 / 131 idéntico
+views: 1 / 1 idéntico
+functions: 80 / 80 idéntico
+triggers: 62 / 62 idéntico
+policies: 184 / 184 idéntico
+defaultAcl: 0 / 0 idéntico
+types: 0 / 0 idéntico
+buckets: 3 / 3 idéntico
+ledger (hashes): idéntico
+Catálogos equivalentes.

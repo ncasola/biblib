@@ -1,0 +1,28 @@
+Grupo jobs · perfil scratch · biblib-scratch · run 1860813befc3
+✔ crear, recargar y continuar: otra sesión del dueño ve el mismo progreso y lo controla (7870.2597ms)
+✔ recuperar portadas desde Ajustes inicia un trabajo que el servidor completa (215.1742ms)
+✔ A no usa IDs de B: consultar, controlar o confirmar responde como inexistente y B no cambia (458.9769ms)
+✔ la entrada interna solo acepta el token del ejecutor y nunca un dueño de la petición (201.8047ms)
+✔ matar la publicación antes del commit: otro trabajador publica una sola vez, sin duplicados (5227.8005ms)
+✔ matar tras el commit con la respuesta perdida: consultar y repetir devuelven el mismo resultado (775.3476ms)
+✔ cancelar antes de publicar: no se aplica nada (646.5413ms)
+✔ cancelar durante la publicación atómica: espera al commit y responde que llegó después (3675.8635ms)
+✔ cancelar en la fase de portadas: la importación publicada se conserva (765.2634ms)
+✔ una revisión cambiada deja el trabajo en revisión y repetir no lo aplica (696.5457ms)
+✔ confirmImportAction publica mediante un trabajo y la misma clave recupera el mismo resultado (386.0188ms)
+✔ crear y continuar: los pasos confirman progreso y portadas sin tocar los libros del seed (4364.5369ms)
+✔ dos trabajadores sobre el mismo elemento: solo el que tiene el lease vigente confirma (9650.1895ms)
+✔ matar el trabajador tras la consulta y antes de persistir: otro lo recupera sin duplicar (5683.5016ms)
+✔ lease vencido: el trabajador antiguo no escribe aunque nadie lo haya reclamado (4644.2638ms)
+✔ 429 con Retry-After: espera compartida, sin más peticiones y nunca «sin portada» (3726.8985ms)
+✔ 503 y JSON roto se reintentan con backoff y cuentan como intento; nunca son ausencia (5639.5772ms)
+✔ cancelar durante las portadas: el paso en curso no escribe (6618.9858ms)
+✔ cuenta bloqueada: el trabajador antiguo no escribe y el trabajo queda no autorizado (7172.6229ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 73242.8513

@@ -1,0 +1,71 @@
+
+> biblib@1.0.0 test:integration:local C:\Users\ncaso\orca\workspaces\biblib\u-qa-01
+> node tests/integration/run.mjs
+
+Integración Supabase real · perfil test · biblib-test · huella b831ef825c09 · run 2d3f54e15a1b
+Compilando la app para el perfil test…
+Bundle de cliente sin credenciales administrativas ni URLs privadas.
+✔ Auth del perfil test solo contiene las cuentas ficticias A/B del censo, sin identidades externas (969.8669ms)
+✔ el correo local solo se entrega a Mailpit y a destinatarios @biblib.test (9.6122ms)
+✔ getUser identifica a A y B en GoTrue y rechaza un token alterado (4974.6241ms)
+✔ cookies SSR: nombre sb-<ref>-auth-token, Path=/, SameSite=Lax y sesión en base64url (0.4853ms)
+✔ renovación por el SDK: tokens nuevos, misma identidad y cookies actualizadas (134.0957ms)
+✔ anónimo en una ruta privada con consulta vuelve al acceso conservando la ruta (6.8427ms)
+✔ con sesión, /login devuelve a la ruta con consulta y descarta destinos externos (184.334ms)
+✔ una sesión vencida con refresh válido se renueva en el proxy y mantiene el destino (382.0893ms)
+✔ cookies fragmentadas producidas por el SDK funcionan en el proxy y en las acciones (341.9799ms)
+✔ cerrar sesión elimina la vista privada, también con una copia antigua de las cookies (261.7149ms)
+✔ cierre y renovación concurrentes no dejan ninguna sesión utilizable (2084.9343ms)
+✔ B no lee, enumera ni confirma vistas previas u operaciones de A por SQL (3017.5212ms)
+✔ authenticated no altera library_state, ni la suya ni la de otro; lock_library solo bloquea la propia (44.7702ms)
+✔ anon no accede a la revisión, las vistas previas ni la función de bloqueo (12.4712ms)
+✔ la Data API no expone revisión, vistas previas, operaciones ni lock_library (56.0791ms)
+✔ reemplazo preparado y cambio posterior en otra sesión de A: conflicto, nada se borra y el reintento no lo fuerza (10016.574ms)
+✔ una mutación de B no invalida la revisión de A; la confirmación aplica el plan una sola vez (1094.1751ms)
+✔ doble confirmación simultánea con la misma clave produce una única operación (301.3672ms)
+✔ una vista previa caducada exige volver a revisar y no aplica nada (234.0419ms)
+✔ B no puede confirmar ni descubrir una vista previa de A (246.5361ms)
+✔ los 111 registros sintéticos legacy se revisan y se importan completos (1152.9831ms)
+✔ los fixtures de A siguen intactos tras todos los escenarios (2.5539ms)
+✔ cada cuenta solo recibe su biblioteca desde las acciones (5052.0838ms)
+✔ A no lee, modifica, mueve ni borra recursos de B manipulando IDs (1429.3977ms)
+✔ anónimo no obtiene datos: el proxy redirige las acciones y la API responde 401 (7.4056ms)
+✔ CRUD propio como A: versión rotada por el trigger, conflicto con versión antigua y portada por defecto (992.1383ms)
+✔ la estantería predeterminada no se borra ni se renombra desde la app (208.0672ms)
+✔ la conexión de la app no arrastra claims: A, B, fallo de A y B otra vez (535.2522ms)
+✔ conexión reutilizada A → B → sin claims, también tras una transacción fallida (1909.0033ms)
+✔ PostgREST rechaza el esquema biblib para anónimo y para A (lectura y escritura) (3005.0063ms)
+✔ el esquema público no expone tablas de BibLib (2.9351ms)
+✔ supabase-js con .schema('biblib') no obtiene datos (10.0333ms)
+✔ GraphQL no expone libros ni estanterías (pg_graphql desactivado en el stack) (15.2183ms)
+✔ A solo ve sus filas: los libros y estanterías de B no existen para A (1013.8867ms)
+✔ A no actualiza ni borra libros o estanterías de B (0 filas afectadas) (14.1705ms)
+✔ A no inserta para B ni enlaza sus libros con estanterías de B (26.2984ms)
+✔ la estantería predeterminada está protegida también para su dueño (15.6456ms)
+✔ anon no tiene acceso al esquema biblib, ni siquiera con claims de A (10.2705ms)
+✔ books_rotate_version rota la versión con el rol authenticated en alta, cambio y versión forzada (14.2074ms)
+✔ el bucket de fixtures es privado y rechaza la lectura anónima por todas las rutas (3072.5326ms)
+✔ una sesión de A tampoco lee el bucket de fixtures sin firma (sin políticas por cuenta todavía) (10.788ms)
+✔ la URL firmada por el proceso de prueba descarga los bytes exactos; alterada o caducada se rechaza (2537.773ms)
+✔ un objeto creado por el run se sirve solo firmado y se elimina sin tocar el fixture (106.3512ms)
+✔ la portada por defecto se sirve desde la app, sin red externa ni sesión (7.2454ms)
+ℹ tests 44
+ℹ suites 0
+ℹ pass 44
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 64703.3578
+✔ con Auth y Storage inaccesibles no se sirven datos privados ni objetos, y todo vuelve al recuperarlos (15604.9367ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 20179.6544
+Cuentas de Auth sin cambios (2, todas @biblib.test). Limpieza del run completa.
+Resultado: 45 escenarios superados, 0 fallidos.
+exit 0

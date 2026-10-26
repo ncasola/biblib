@@ -1,0 +1,20 @@
+Grupo account · perfil scratch · biblib-scratch · run da79fbd2984b
+✔ sesión viva (logout fallido): las acciones responden ACCOUNT_INACTIVE y no escriben (1813.7821ms)
+✔ sesión cerrada: el JWT antiguo no escribe ni por acciones, ni por la Data API, ni por Storage (602.1179ms)
+✔ una cuenta suprimida que vuelve con un respaldo anterior se retira entera antes de abrir; B no cambia (1649.6719ms)
+✔ un trabajo y una eliminación en ejecución en el respaldo se reanudan como reintento, sin su lease (256.6603ms)
+✔ una solicitud a medias restaurada con el respaldo también se aplica antes de abrir (378.9282ms)
+✔ sin sesión no hay solicitud ni estado (815.1467ms)
+✔ A solo pide su propia eliminación: un ID ajeno en la entrada se rechaza y B no cambia (708.603ms)
+✔ doble clic y reintento con otra clave devuelven la misma solicitud (554.1541ms)
+✔ el worker bloquea la cuenta en GoTrue: ni un inicio de sesión nuevo ni un refresh antiguo funcionan (374.7732ms)
+✔ eliminación completa: trabajo en vuelo, Storage caído, worker interrumpido y continuación sin recrear datos (2245.1088ms)
+✔ un worker vencido tras terminar no recrea nada y repetir el ciclo no hace nada (487.4353ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 18728.2461

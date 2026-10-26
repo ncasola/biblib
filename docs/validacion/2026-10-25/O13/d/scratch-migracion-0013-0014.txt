@@ -1,0 +1,2 @@
+Migración · biblib-scratch · aplicado: 0014_product_batch_o13
+Head anterior: 0013_account_deletion · head actual: 0014_product_batch_o13

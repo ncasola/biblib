@@ -1,0 +1,28 @@
+Grupo reading-loans · perfil scratch · biblib-scratch · run 8e7a1b821f33
+✔ B no lee nada de la lectura ni de los préstamos de A y A ve lo suyo (1084.1219ms)
+✔ B no escribe a nombre de A ni cita ejemplares o ciclos de A; las funciones no le revelan nada (37.1917ms)
+✔ B usa sus propios ejemplares con normalidad (10.9833ms)
+✔ una cuenta en eliminación no escribe lectura ni préstamos, tampoco por las funciones (BD001) (34.7416ms)
+✔ el worker retira ciclos, entradas y préstamos; la cuenta queda sin restos y B sigue intacta (1360.2269ms)
+✔ la exportación v2 declara y lleva lectura y préstamos: instantes en UTC, fechas civiles tal cual y nada inventado (1708.9096ms)
+✔ reemplazar desde la propia copia devuelve lectura y préstamos exactos con los mismos IDs (304.7566ms)
+✔ la versión anterior que capturó el reemplazo restaura también la lectura y los préstamos (281.8524ms)
+✔ otra cuenta fusiona el archivo con IDs propios y repetir la fusión no duplica nada (430.9012ms)
+✔ un archivo anterior (v1) con libros leídos se importa sin lectura ni préstamos (194.154ms)
+✔ dos dispositivos inician la misma lectura a la vez: un solo ciclo abierto y el mismo para ambos (780.3819ms)
+✔ terminar con la versión y releer crea el ciclo 2; el 1 conserva estado y fechas, y el ejemplar no cambia (36.4511ms)
+✔ páginas: dentro del total conocido, nunca por encima (BR001); con total desconocido se registran sin porcentaje (45.2083ms)
+✔ el estado read actual no se convierte en ciclos, sesiones ni fechas (2.2937ms)
+✔ dos dispositivos prestan el mismo ejemplar a la vez: un solo préstamo activo (983.3359ms)
+✔ devolver con la versión libera el ejemplar; el préstamo sucesivo conserva el historial (43.2046ms)
+✔ fechas civiles idénticas con cualquier huso de sesión; alias sin correo ni teléfono (61.4907ms)
+✔ prestar no cambia el estado de lectura y cambiarlo por la app no toca el préstamo (121.6198ms)
+✔ borrar el ejemplar por la app se lleva su lectura y sus préstamos; el resto de la cuenta sigue (90.6197ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 16577.8778

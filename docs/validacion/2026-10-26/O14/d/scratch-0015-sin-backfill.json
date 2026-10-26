@@ -1,0 +1,17 @@
+{
+ "users": 2,
+ "copies": 9,
+ "copies_by_status": {
+  "unread": 3,
+  "reading": 2,
+  "to-read": 2,
+  "read": 2
+ },
+ "copies_digest": "1d6759fb1a4ecfba87cb19d5842778fad8a491a0368ab0c5d69d7d3e7a41e57d",
+ "ledger_head_created_at": "1792965826611",
+ "applied": 16,
+ "reading_tables": true,
+ "reading_cycles": 0,
+ "reading_entries": 0,
+ "loans": 0
+}

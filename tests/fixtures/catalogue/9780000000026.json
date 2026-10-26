@@ -1,0 +1,10 @@
+{
+  "ISBN:9780000000026": {
+    "title": "El reloj de las mareas",
+    "authors": [{ "name": "Clara Imaginaria" }],
+    "number_of_pages": 192,
+    "publish_date": "2023",
+    "publishers": [{ "name": "Editorial Inventada" }],
+    "cover": { "small": "/default-book-cover.webp", "medium": "/default-book-cover.webp", "large": "/default-book-cover.webp" }
+  }
+}

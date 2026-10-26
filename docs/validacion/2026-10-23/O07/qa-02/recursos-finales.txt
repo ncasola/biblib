@@ -1,0 +1,9 @@
+# Recursos Docker de BibLib tras db:local:down --profile test
+## Redes
+biblib-scratch-network
+biblib-test-network
+## Volúmenes
+supabase_db_biblib-scratch
+supabase_db_biblib-test
+supabase_storage_biblib-scratch
+supabase_storage_biblib-test

@@ -1,0 +1,103 @@
+
+> biblib@1.0.0 test:e2e:local C:\Users\ncaso\orca\workspaces\biblib\u-qa-01
+> node tests/e2e/run.mjs "--profile" "test" "--reuse-build" "--grep" "préstamos:"
+
+E2E · perfil test · biblib-test · huella b831ef825c09 · run 772dffb28531 · chromium
+Bundle de cliente sin credenciales administrativas ni URLs privadas.
+
+Running 5 tests using 1 worker
+
+(node:34276) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 1 [chromium-sesion] › tests\e2e\sesion.setup.ts:11:3 › acceso local: A entra por el formulario y conserva la sesión (1.2s)
+  ok 2 [chromium-sesion] › tests\e2e\sesion.setup.ts:11:3 › acceso local: B entra por el formulario y conserva la sesión (999ms)
+(node:33676) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  3 [chromium-flujos] › tests\e2e\flujos\prestamos.spec.ts:15:1 › préstamos: prestar, listado vencido, devolución, préstamo sucesivo y confirmaciones (2.3s)
+(node:22448) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 4 [chromium-flujos] › tests\e2e\flujos\prestamos.spec.ts:74:1 › préstamos: alias rechazado conserva el borrador y no ofrece campos de contacto (2.1s)
+  x  5 [chromium-flujos] › tests\e2e\flujos\prestamos.spec.ts:90:1 › préstamos: contraste, diálogos y reflujo en claro y oscuro (3.4s)
+
+
+  1) [chromium-flujos] › tests\e2e\flujos\prestamos.spec.ts:15:1 › préstamos: prestar, listado vencido, devolución, préstamo sucesivo y confirmaciones 
+
+    Error: {"width":768,"scroll":812,"outside":[{"tag":"BUTTON","class":"inline-flex min-h-11 min-w-11 items-center justify-center gap-2 whitespace-normal rounded-md text-sm font-semibold transition-[color,background-color,border-color,box-shadow,transform] duration-200 cursor-pointer motion-safe:active:translate-y-px disabled:cursor-not-allowed disabled:pointer-events-none disabled:opacity-60 disabled:shadow-none [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive border bg-card/60 shadow-xs hover:bg-accent hover:text-accent-foreground h-11 px-4 py-2 has-[>svg]:px-3.5","right":812.234375}]}
+
+    expect(received).toBeLessThanOrEqual(expected)
+
+    Expected: <= 769
+    Received:    812
+
+      10 |     outside: [...document.querySelectorAll<HTMLElement>("main *")].filter((node) => node.getBoundingClientRect().right > innerWidth + 1).map((node) => ({ tag: node.tagName, class: node.className, right: node.getBoundingClientRect().right })).slice(-12),
+      11 |   }))
+    > 12 |   expect(metrics.scroll, JSON.stringify(metrics)).toBeLessThanOrEqual(metrics.width + 1)
+         |                                                   ^
+      13 | }
+      14 |
+      15 | test("préstamos: prestar, listado vencido, devolución, préstamo sucesivo y confirmaciones", async ({ page, stack, data }, testInfo) => {
+        at noOverflow (C:\Users\ncaso\orca\workspaces\biblib\u-qa-01\tests\e2e\flujos\prestamos.spec.ts:12:51)
+        at C:\Users\ncaso\orca\workspaces\biblib\u-qa-01\tests\e2e\flujos\prestamos.spec.ts:31:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    .biblib\e2e\artefactos\flujos-prestamos-préstamos-f6d46-o-sucesivo-y-confirmaciones-chromium-flujos\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: .biblib\e2e\artefactos\flujos-prestamos-préstamos-f6d46-o-sucesivo-y-confirmaciones-chromium-flujos\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    .biblib\e2e\artefactos\flujos-prestamos-préstamos-f6d46-o-sucesivo-y-confirmaciones-chromium-flujos\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace .biblib\e2e\artefactos\flujos-prestamos-préstamos-f6d46-o-sucesivo-y-confirmaciones-chromium-flujos\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium-flujos] › tests\e2e\flujos\prestamos.spec.ts:90:1 › préstamos: contraste, diálogos y reflujo en claro y oscuro 
+
+    Error: {"width":768,"scroll":812,"outside":[{"tag":"BUTTON","class":"inline-flex min-h-11 min-w-11 items-center justify-center gap-2 whitespace-normal rounded-md text-sm font-semibold transition-[color,background-color,border-color,box-shadow,transform] duration-200 cursor-pointer motion-safe:active:translate-y-px disabled:cursor-not-allowed disabled:pointer-events-none disabled:opacity-60 disabled:shadow-none [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive border bg-card/60 shadow-xs hover:bg-accent hover:text-accent-foreground h-11 px-4 py-2 has-[>svg]:px-3.5","right":812.234375}]}
+
+    expect(received).toBeLessThanOrEqual(expected)
+
+    Expected: <= 769
+    Received:    812
+
+      10 |     outside: [...document.querySelectorAll<HTMLElement>("main *")].filter((node) => node.getBoundingClientRect().right > innerWidth + 1).map((node) => ({ tag: node.tagName, class: node.className, right: node.getBoundingClientRect().right })).slice(-12),
+      11 |   }))
+    > 12 |   expect(metrics.scroll, JSON.stringify(metrics)).toBeLessThanOrEqual(metrics.width + 1)
+         |                                                   ^
+      13 | }
+      14 |
+      15 | test("préstamos: prestar, listado vencido, devolución, préstamo sucesivo y confirmaciones", async ({ page, stack, data }, testInfo) => {
+        at noOverflow (C:\Users\ncaso\orca\workspaces\biblib\u-qa-01\tests\e2e\flujos\prestamos.spec.ts:12:51)
+        at C:\Users\ncaso\orca\workspaces\biblib\u-qa-01\tests\e2e\flujos\prestamos.spec.ts:109:7
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    .biblib\e2e\artefactos\flujos-prestamos-préstamos-ab3a5-y-reflujo-en-claro-y-oscuro-chromium-flujos\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: .biblib\e2e\artefactos\flujos-prestamos-préstamos-ab3a5-y-reflujo-en-claro-y-oscuro-chromium-flujos\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    .biblib\e2e\artefactos\flujos-prestamos-préstamos-ab3a5-y-reflujo-en-claro-y-oscuro-chromium-flujos\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace .biblib\e2e\artefactos\flujos-prestamos-préstamos-ab3a5-y-reflujo-en-claro-y-oscuro-chromium-flujos\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    [chromium-flujos] › tests\e2e\flujos\prestamos.spec.ts:15:1 › préstamos: prestar, listado vencido, devolución, préstamo sucesivo y confirmaciones 
+    [chromium-flujos] › tests\e2e\flujos\prestamos.spec.ts:90:1 › préstamos: contraste, diálogos y reflujo en claro y oscuro 
+  3 passed (21.1s)
+Servidor sin salidas de red externas durante el run.
+Cuentas de Auth sin cambios (2, todas @biblib.test). Datos del run limpiados y biblioteca de A restaurada si hizo falta.
+pnpm : Error [pruebas] (11): Recorridos fallidos o repetidos (2 fallidos, 0 con repetición); revisa los nombres 
+marcados arriba y .biblib/e2e/report.
+En línea: 2 Carácter: 158
++ ... ento-1.log; pnpm test:e2e:local --profile test --reuse-build --grep ' ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Error [pruebas]...lib/e2e/report.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+ ELIFECYCLE  Command failed with exit code 11.

@@ -1,0 +1,10 @@
+{
+  "ISBN:9780000000033": {
+    "title": "El faro de las palabras",
+    "authors": [{ "name": "Dora Supuesta" }],
+    "number_of_pages": 176,
+    "publish_date": "2024",
+    "publishers": [{ "name": "Editorial Inventada" }],
+    "cover": { "small": "/default-book-cover.webp", "medium": "/default-book-cover.webp", "large": "/default-book-cover.webp" }
+  }
+}

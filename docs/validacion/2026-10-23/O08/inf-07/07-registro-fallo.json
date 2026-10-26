@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "kind": "biblib-promotion-record",
+  "operation": "migrate",
+  "recordId": "68e0f691-ccea-40fb-a8a1-84ab7c2bdee3",
+  "target": {
+    "target": "preprod",
+    "project": "inf07ensayoremoto001",
+    "fingerprint": "1e9b3dc4e9d78ecd14b26d46d602db476601e8a1ec18a2f71e771b53e62be04f",
+    "host": "db.inf07ensayoremoto001.supabase.co",
+    "port": 5432,
+    "database": "postgres",
+    "user": "postgres",
+    "connection": "direct",
+    "tls": "verify-full"
+  },
+  "commit": "0cb90064dd365e5ff9b256e534444099094fd620",
+  "planHash": "f2b1eb6a34000a046ad43f73ca4c2bb4b46967d7ef0e8d58d4819acfa0c2061c",
+  "plan": ".biblib/plans/inf07-25520-fallo.json",
+  "headBefore": "0004_catalogue_coordination",
+  "headAfter": "0004_catalogue_coordination",
+  "attempted": [
+    "0005_u_inf_07_fallo"
+  ],
+  "backup": {
+    "backupId": "20261023T165512Z-ensayo-015e7d",
+    "receiptHash": "4d82782f87d1c051667447781d8f6687830d8652aacc1255022583feca6175fa",
+    "createdAt": "2026-10-23T16:55:12.699Z",
+    "rehearsal": {
+      "reportId": "3e026af7-0892-40e8-ad14-3e56941ad6a0",
+      "at": "2026-10-23T16:55:16.922Z"
+    }
+  },
+  "lostWrites": {
+    "since": "2026-10-23T16:55:12.699Z",
+    "note": "Las escrituras en el destino posteriores a backup.createdAt no están en el respaldo: si hubiera que restaurar, se pierden o se recuperan por otra vía antes de abrir tráfico. Mantén la aplicación sin escrituras desde el respaldo hasta verificar la promoción."
+  },
+  "platform": null,
+  "result": "revertido: el ledger no avanzó",
+  "code": 9,
+  "startedAt": "2026-10-23T16:55:17.980Z",
+  "finishedAt": "2026-10-23T16:55:18.308Z",
+  "phase": "migración"
+}

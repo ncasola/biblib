@@ -25,3 +25,25 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Supabase local (U-INF-01): estado de perfiles y temporales del CLI
+/.biblib/
+supabase/.temp/
+
+# archivos personales y resultados privados (U-OPS-05): no publicar fotos
+# personales, datos de importación ni evidencias con datos de la biblioteca.
+# Los fixtures ficticios de tests/ siguen versionados; estas reglas son
+# preventivas y no cubren archivos ya publicados deliberadamente.
+/imports/
+/fotos/
+/fotos-personales/
+docs/validacion/**/privado/
+
+# Objetivos y builds aislados (U-INF-02)
+!/.env.local.example
+/.next-*/
+
+# E2E Playwright (U-QA-02): informes y artefactos van a .biblib/e2e; por si se lanza Playwright a mano
+/test-results/
+/playwright-report/
+/playwright/.cache/

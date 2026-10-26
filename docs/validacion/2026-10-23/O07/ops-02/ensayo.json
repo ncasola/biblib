@@ -1,0 +1,103 @@
+{
+  "backupId": "20261023T144114Z-scratch-2c1008",
+  "steps": [
+    {
+      "step": "datos-no-fixture",
+      "detail": "Bucket privado biblib-ops02-ensayo con 2 objetos y una ficha manual de B, además del censo y la ficha manual de A.",
+      "ok": true
+    },
+    {
+      "step": "backup-cifrado",
+      "command": "scripts/db/backup-local.mjs local --profile scratch --encrypt-key-file <clave externa> --json",
+      "exit": 0,
+      "expected": 0,
+      "ok": true,
+      "ms": 11160
+    },
+    {
+      "step": "restore-sin-clave",
+      "command": "scripts/db/restore-local.mjs --backup .biblib/backups/20261023T144114Z-scratch-2c1008 --profile scratch --expect-project biblib-scratch --json",
+      "exit": 6,
+      "expected": 6,
+      "ok": true,
+      "ms": 800
+    },
+    {
+      "step": "restore-destino-no-vacio",
+      "command": "scripts/db/restore-local.mjs --backup .biblib/backups/20261023T144114Z-scratch-2c1008 --profile scratch --expect-project biblib-scratch --key-file <clave externa> --json",
+      "exit": 6,
+      "expected": 6,
+      "ok": true,
+      "ms": 3634
+    },
+    {
+      "step": "restore-proyecto-ajeno",
+      "command": "scripts/db/restore-local.mjs --backup .biblib/backups/20261023T144114Z-scratch-2c1008 --profile scratch --expect-project holaerp --key-file <clave externa> --json",
+      "exit": 3,
+      "expected": 3,
+      "ok": true,
+      "ms": 4114
+    },
+    {
+      "step": "reset-dry-run",
+      "command": "scripts/local-stack.mjs reset --dry-run --profile scratch --out reset-ops02-final.json --json",
+      "exit": 0,
+      "expected": 0,
+      "ok": true,
+      "ms": 4155
+    },
+    {
+      "step": "reset-apply",
+      "command": "scripts/local-stack.mjs reset --apply --plan .biblib/plans/reset-ops02-final.json --expect-project biblib-scratch --expect-plan 8cef996b66f47b436e51d289511891feed04a097a510269f962ca227282ff90d --discard-local-data --json",
+      "exit": 0,
+      "expected": 0,
+      "ok": true,
+      "ms": 77001
+    },
+    {
+      "step": "restore",
+      "command": "scripts/db/restore-local.mjs --backup .biblib/backups/20261023T144114Z-scratch-2c1008 --profile scratch --expect-project biblib-scratch --key-file <clave externa> --json",
+      "exit": 0,
+      "expected": 0,
+      "ok": true,
+      "ms": 7250
+    },
+    {
+      "step": "verify",
+      "command": "scripts/db/restore-verify.mjs --backup .biblib/backups/20261023T144114Z-scratch-2c1008 --profile scratch --json",
+      "exit": 0,
+      "expected": 0,
+      "ok": true,
+      "ms": 8528
+    },
+    {
+      "step": "restore-respaldo-sin-objeto",
+      "command": "scripts/db/restore-local.mjs --backup .biblib\\backups\\20261023T144114Z-scratch-2c1008-sin-objeto --profile scratch --expect-project biblib-scratch --key-file <clave externa> --json",
+      "exit": 11,
+      "expected": 11,
+      "ok": true,
+      "ms": 842
+    },
+    {
+      "step": "verify-respaldo-sin-objeto",
+      "command": "scripts/db/restore-verify.mjs --backup .biblib\\backups\\20261023T144114Z-scratch-2c1008-sin-objeto --profile scratch --json",
+      "exit": 11,
+      "expected": 11,
+      "ok": true,
+      "ms": 8049
+    },
+    {
+      "step": "verify-destino-sin-objeto",
+      "command": "scripts/db/restore-verify.mjs --backup .biblib/backups/20261023T144114Z-scratch-2c1008 --profile scratch --json",
+      "exit": 11,
+      "expected": 11,
+      "ok": true,
+      "ms": 6462
+    },
+    {
+      "step": "holaerp-intacto",
+      "ok": true,
+      "detail": "11 contenedores, 3 redes, 7 volúmenes"
+    }
+  ]
+}

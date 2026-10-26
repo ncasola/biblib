@@ -1,0 +1,21 @@
+
+> biblib@1.0.0 db:local:doctor C:\Users\ncaso\orca\workspaces\biblib\u-inf-03
+> node scripts/local-stack.mjs doctor "--profile" "scratch"
+
+BibLib local · scratch · ea260283d87954c1c405cb5ee4875867dd8b103c86084460f3a74244e06b13fa
+[ok] manifest: Manifiesto y configuración coherentes.
+[ok] env: Archivos de entorno acreditados o ausentes.
+[ok] state: Registro de recursos coherente o todavía ausente.
+[ok] version.node: Node esperado >=24.11.1 <25; instalado 24.11.1.
+[ok] version.pnpm: pnpm esperado 10.32.1; instalado 10.32.1.
+[ok] version.supabase: supabase esperado 2.117.0; instalado 2.117.0.
+[ok] docker: Motor Docker disponible.
+[ok] ownership: Recursos del perfil con propiedad acreditada.
+[ok] windows.excluded: El perfil no coincide con rangos TCP excluidos de Windows.
+[ok] bindings.loopback: No hay bindings publicados fuera de loopback.
+postgres: stopped
+auth: stopped
+rest: stopped
+storage: stopped
+studio: stopped
+mailpit: stopped

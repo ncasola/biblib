@@ -1,0 +1,6 @@
+
+> biblib@1.0.0 db:migrate:local C:\Users\ncaso\orca\workspaces\biblib\u-inf-03
+> node scripts/db/migrate.mjs apply local "--plan" ".biblib/plans/dat02-migrar.json" "--expect-project" "biblib-scratch" "--expect-plan" "c5f1d80129fc7301e3e767186e079bfb2e905f6c4c973316cd9fe68eb6e1a748"
+
+Migración · biblib-scratch · aplicado: 0005_library_jobs → 0006_library_snapshots
+Head anterior: 0004_catalogue_coordination · head actual: 0006_library_snapshots

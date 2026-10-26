@@ -1,0 +1,151 @@
+{
+  "schemaVersion": 1,
+  "profile": "scratch",
+  "scale": 10000,
+  "results": [
+    {
+      "scenario": "exportacion-servidor",
+      "p50": 672,
+      "p95": 737.2,
+      "budget": null,
+      "status": "no-budget",
+      "unit": "ms",
+      "concurrency": 1
+    },
+    {
+      "scenario": "sql:exportacion-servidor",
+      "p50": 132.91,
+      "p95": 156.08,
+      "budget": null,
+      "status": "no-budget",
+      "unit": "ms",
+      "concurrency": 1
+    },
+    {
+      "scenario": "exportacion-servidor@5",
+      "p50": 2350.2,
+      "p95": 4670.5,
+      "budget": null,
+      "status": "no-budget",
+      "unit": "ms",
+      "concurrency": 5
+    },
+    {
+      "scenario": "exportacion-servidor@10",
+      "p50": 4570.2,
+      "p95": 6791.5,
+      "budget": null,
+      "status": "no-budget",
+      "unit": "ms",
+      "concurrency": 10
+    },
+    {
+      "scenario": "preview-importacion-conservar",
+      "p50": 275.5,
+      "p95": 299.7,
+      "budget": null,
+      "status": "no-budget",
+      "unit": "ms",
+      "concurrency": 1
+    },
+    {
+      "scenario": "sql:preview-importacion-conservar",
+      "p50": 40.42,
+      "p95": 42.44,
+      "budget": null,
+      "status": "no-budget",
+      "unit": "ms",
+      "concurrency": 1
+    },
+    {
+      "scenario": "preview-importacion-conservar@5",
+      "p50": 927.6,
+      "p95": 1399.8,
+      "budget": null,
+      "status": "no-budget",
+      "unit": "ms",
+      "concurrency": 5
+    },
+    {
+      "scenario": "preview-importacion-conservar@10",
+      "p50": 1774.2,
+      "p95": 2250.5,
+      "budget": null,
+      "status": "no-budget",
+      "unit": "ms",
+      "concurrency": 10
+    },
+    {
+      "scenario": "preview-importacion-nuevos",
+      "p50": 368.4,
+      "p95": 410.5,
+      "budget": null,
+      "status": "no-budget",
+      "unit": "ms",
+      "concurrency": 1
+    },
+    {
+      "scenario": "sql:preview-importacion-nuevos",
+      "p50": 65.11,
+      "p95": 69.09,
+      "budget": null,
+      "status": "no-budget",
+      "unit": "ms",
+      "concurrency": 1
+    },
+    {
+      "scenario": "preview-importacion-nuevos@5",
+      "p50": 1103.4,
+      "p95": 1697.6,
+      "budget": null,
+      "status": "no-budget",
+      "unit": "ms",
+      "concurrency": 5
+    },
+    {
+      "scenario": "preview-importacion-nuevos@10",
+      "p50": 2105,
+      "p95": 2747,
+      "budget": null,
+      "status": "no-budget",
+      "unit": "ms",
+      "concurrency": 10
+    },
+    {
+      "scenario": "preview-importacion-reemplazo",
+      "p50": 352.2,
+      "p95": 367.5,
+      "budget": null,
+      "status": "no-budget",
+      "unit": "ms",
+      "concurrency": 1
+    },
+    {
+      "scenario": "sql:preview-importacion-reemplazo",
+      "p50": 59.99,
+      "p95": 64.51,
+      "budget": null,
+      "status": "no-budget",
+      "unit": "ms",
+      "concurrency": 1
+    },
+    {
+      "scenario": "preview-importacion-reemplazo@5",
+      "p50": 1125.5,
+      "p95": 1667.5,
+      "budget": null,
+      "status": "no-budget",
+      "unit": "ms",
+      "concurrency": 5
+    },
+    {
+      "scenario": "preview-importacion-reemplazo@10",
+      "p50": 2004.1,
+      "p95": 2740.2,
+      "budget": null,
+      "status": "no-budget",
+      "unit": "ms",
+      "concurrency": 10
+    }
+  ]
+}

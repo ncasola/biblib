@@ -1,0 +1,7 @@
+
+> biblib@1.0.0 db:status:local C:\Users\ncaso\orca\workspaces\biblib\u-qa-01
+> node scripts/db/migrate.mjs status local "--profile" "test"
+
+Estado de migraciones · biblib-test · up-to-date
+Head aplicado: 0015_reading_and_loans · esperado: 0015_reading_and_loans · pendientes: ninguna
+864 comprobaciones correctas.

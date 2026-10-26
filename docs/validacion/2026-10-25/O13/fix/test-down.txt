@@ -1,0 +1,12 @@
+
+> biblib@1.0.0 db:local:down C:\Users\ncaso\orca\workspaces\biblib\u-qa-01
+> node scripts/local-stack.mjs down "--profile" "test"
+
+BibLib local · test · b831ef825c09256240fb2572dc9eaa9962c06f3b980aa132a4a912b6766a42aa
+[ok] down: Perfil parado; volúmenes conservados.
+postgres: stopped
+auth: stopped
+rest: stopped
+storage: stopped
+studio: stopped
+mailpit: stopped

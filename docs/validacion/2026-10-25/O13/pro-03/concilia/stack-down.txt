@@ -1,0 +1,8 @@
+BibLib local · test · b831ef825c09256240fb2572dc9eaa9962c06f3b980aa132a4a912b6766a42aa
+[ok] down: Perfil parado; volúmenes conservados.
+postgres: stopped
+auth: stopped
+rest: stopped
+storage: stopped
+studio: stopped
+mailpit: stopped

@@ -1,0 +1,22 @@
+# Antes (inicio de la unidad, 2026-10-24T09:50:24Z)
+supabase_studio_holaerp Up 58 minutes (healthy)
+supabase_pg_meta_holaerp Up 58 minutes (healthy)
+supabase_edge_runtime_holaerp Exited (255) 22 hours ago
+supabase_storage_holaerp Up 58 minutes (healthy)
+supabase_rest_holaerp Up 58 minutes
+supabase_realtime_holaerp Up 58 minutes (healthy)
+supabase_inbucket_holaerp Up 58 minutes (healthy)
+supabase_auth_holaerp Up 58 minutes (healthy)
+supabase_kong_holaerp Up 58 minutes (healthy)
+supabase_db_holaerp Up 58 minutes (healthy)
+holaerp-local-redis Exited (0) 58 minutes ago
+holaerp-ps_db-data
+holaerp-ps_ps-data
+holaerp-woo_db-data
+holaerp-woo_wp-data
+supabase_db_holaerp
+supabase_edge_runtime_holaerp
+supabase_storage_holaerp
+holaerp-web_holaerp-local-network
+holaerp-woo_default
+supabase_network_holaerp

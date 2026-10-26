@@ -1,0 +1,42 @@
+{
+  "runId": "63123d25-ab9e-465e-a6b7-2bffd8b8dae9",
+  "planHash": "8e96e6afc94ffde1e1b1b88f4b6951c705994721e9c1dfaa822b5256c4cb1711",
+  "plan": ".biblib\\plans\\o06-reset-interrupted.json",
+  "authorization": {
+    "discardLocalData": true,
+    "projectId": "biblib-scratch"
+  },
+  "authorizedAt": "2026-10-23T12:44:05.398Z",
+  "destructionStarted": true,
+  "phases": {
+    "preflight": {
+      "status": "passed",
+      "resumed": false
+    },
+    "stop": {
+      "status": "passed"
+    },
+    "destroy": {
+      "status": "interrupted"
+    },
+    "local-state": {
+      "status": "pending"
+    },
+    "bootstrap": {
+      "status": "pending"
+    },
+    "verify": {
+      "status": "pending"
+    }
+  },
+  "phase": "destroy",
+  "status": "interrupted",
+  "schemaVersion": 1,
+  "target": "local",
+  "profile": "scratch",
+  "projectId": "biblib-scratch",
+  "root": "C:\\Users\\ncaso\\orca\\workspaces\\biblib\\u-inf-03",
+  "rootHash": "1521f98bc1f79009574e3fc3f32b948e779c84053bc7a1b3953f44dc7aac37e9",
+  "fingerprint": "ea260283d87954c1c405cb5ee4875867dd8b103c86084460f3a74244e06b13fa",
+  "updatedAt": "2026-10-23T12:44:08.847Z"
+}

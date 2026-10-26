@@ -1,0 +1,1 @@
+{"assets":[{"id":"139cf910-8acd-4b1a-ae68-a625709f61bf","state":"restored","fichas":1,"objeto":true}],"descargaConSesionDeA":true}

@@ -1,0 +1,16 @@
+{
+  "generatedAt": "2026-10-24T10:55:52.941Z",
+  "audits": 84,
+  "pageContexts": 72,
+  "modalContexts": 12,
+  "serious": 0,
+  "critical": 0,
+  "otherViolations": {
+    "landmark-one-main": 6,
+    "region": 6
+  },
+  "incomplete": {
+    "color-contrast": 24,
+    "aria-valid-attr-value": 12
+  }
+}

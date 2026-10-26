@@ -1,0 +1,2 @@
+Head aplicado: 0014_product_batch_o13 · esperado: 0014_product_batch_o13 · pendientes: ninguna
+780 comprobaciones correctas.

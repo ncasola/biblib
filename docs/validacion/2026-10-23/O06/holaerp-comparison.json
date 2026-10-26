@@ -1,0 +1,7 @@
+{
+  "containers": 10,
+  "sameIdsStartedAtRestartsStatusBindingsNetworksMounts": true,
+  "sameNetworks": true,
+  "sameVolumes": true,
+  "destructiveResetExecuted": true
+}

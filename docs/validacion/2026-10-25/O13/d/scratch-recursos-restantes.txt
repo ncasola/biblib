@@ -1,0 +1,3 @@
+biblib-scratch-network
+supabase_db_biblib-scratch
+supabase_storage_biblib-scratch

@@ -1,0 +1,16 @@
+E2E · perfil test · biblib-test · huella b831ef825c09 · run 79e9080bb6ec · chromium
+Compilando la app para el perfil test…
+Bundle de cliente sin credenciales administrativas ni URLs privadas.
+
+Running 5 tests using 1 worker
+
+  ok 1 [chromium-sesion] › tests\e2e\sesion.setup.ts:11:3 › acceso local: A entra por el formulario y conserva la sesión (1.3s)
+  ok 2 [chromium-sesion] › tests\e2e\sesion.setup.ts:11:3 › acceso local: B entra por el formulario y conserva la sesión (898ms)
+  ok 3 [chromium-flujos] › tests\e2e\flujos\avatar.spec.ts:5:1 › avatar privado: previsualizar, recortar, persistir, fallo de red, móvil y quitar (5.2s)
+  ok 4 [chromium-flujos] › tests\e2e\flujos\ubicaciones.spec.ts:41:1 › ubicaciones: mueble y balda, ejemplar situado desde la ficha, contenido filtrado y borrado con elección explícita (4.3s)
+  ok 5 [chromium-flujos] › tests\e2e\flujos\ubicaciones.spec.ts:105:1 › ubicaciones: foto de referencia con vista previa, guardada sin URL pública y quitada (1.7s)
+
+  5 passed (20.8s)
+Servidor sin salidas de red externas durante el run.
+Cuentas de Auth sin cambios (2, todas @biblib.test). Datos del run limpiados y biblioteca de A restaurada si hizo falta.
+Resultado: 5 recorridos superados, 0 fallo(s) conocido(s), 0 pendientes (fixme), 0 fallidos, 0 repeticiones.

@@ -1,0 +1,4 @@
+biblib-scratch-network
+supabase_db_biblib-scratch
+supabase_storage_biblib-scratch
+holaerp: 11 contenedores existentes, 0 en marcha (no tocados por U-QA-05)

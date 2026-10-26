@@ -1,0 +1,16 @@
+# Contenedores biblib-test en marcha
+# Red
+biblib-test-network
+# Volúmenes
+supabase_db_biblib-test
+supabase_storage_biblib-test
+# HolaERP (solo lectura)
+supabase_studio_holaerp Up 34 hours (healthy)
+supabase_pg_meta_holaerp Up 34 hours (healthy)
+supabase_storage_holaerp Up 34 hours (healthy)
+supabase_rest_holaerp Up 34 hours
+supabase_realtime_holaerp Up 34 hours (healthy)
+supabase_inbucket_holaerp Up 34 hours (healthy)
+supabase_auth_holaerp Up 34 hours (healthy)
+supabase_kong_holaerp Up 34 hours (healthy)
+supabase_db_holaerp Up 34 hours (healthy)

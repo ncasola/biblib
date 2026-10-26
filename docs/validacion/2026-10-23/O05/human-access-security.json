@@ -1,0 +1,15 @@
+{
+  "profile": "scratch",
+  "humanAccess": {
+    "temporaryBridge303": true,
+    "ssrCookiesAcceptedByApp": true,
+    "appStatus": 200,
+    "bridgeExited": true
+  },
+  "security": {
+    "gitGrepRealSecretsMatches": 0,
+    "evidenceSecretsMatches": 0,
+    "htmlContainsSeedCredentials": false
+  },
+  "appProcessStopped": true
+}

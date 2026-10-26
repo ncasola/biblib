@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Dirección A · Biblioteca nocturna</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&amp;family=Inter:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0;background:#16110d}
+a{color:#f2d58a}a:hover{color:#fff1c8}
+.nav a{color:#e3d6bf;text-decoration:none;padding:10px 14px;border-radius:999px;font:500 15px Inter,system-ui,sans-serif}
+.nav a:hover{background:rgba(246,237,221,.08);color:#fff}
+.nav a[aria-current="page"]{background:#f6eddd;color:#1b130d}
+.card{border-radius:20px;background:linear-gradient(180deg,rgba(255,244,222,.06),rgba(255,244,222,.02));border:1px solid rgba(246,237,221,.12)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 18px;border-radius:12px;font:600 15px Inter,system-ui,sans-serif;text-decoration:none}
+</style>
+</helmet>
+<div style="min-height: 1180px; background: radial-gradient(ellipse 60% 40% at 15% 0%, #3d2a1c 0%, transparent 70%), radial-gradient(ellipse 50% 35% at 100% 10%, #2b2036 0%, transparent 70%), #16110d; color: #f6eddd; font-family: Inter, system-ui, sans-serif">
+  <header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; max-width: 1280px; margin: 0 auto; padding: 20px 32px">
+    <a href="#" style="display: flex; align-items: center; gap: 12px; text-decoration: none; color: #fbf3e2">
+      <img src="/_blob/9c73712f5e75918796528404df8da818" alt="" style="width: 44px; height: 44px; object-fit: contain">
+      <span style="font: 700 24px Fraunces, Georgia, serif">BibLib</span>
+    </a>
+    <nav class="nav" aria-label="Principal" style="display: flex; flex-wrap: wrap; gap: 4px">
+      <a href="#" aria-current="page">Inicio</a>
+      <a href="#">Colección</a>
+      <a href="#">Estanterías</a>
+      <a href="#">Series</a>
+      <a href="#">Ubicaciones</a>
+      <a href="#">Revisión</a>
+    </nav>
+    <div style="display: flex; align-items: center; gap: 12px">
+      <label style="display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border-radius: 12px; background: rgba(246,237,221,.07); border: 1px solid rgba(246,237,221,.14)">
+        <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#cdbfa6" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+        <span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Buscar en la colección</span>
+        <input placeholder="Título, autor o ISBN" style="width: 200px; background: transparent; border: 0; outline: none; color: #f6eddd; font: 400 15px Inter, system-ui, sans-serif">
+      </label>
+      <a class="btn" href="#" style="background: #c0392b; color: #fffaf0">Añadir libro</a>
+    </div>
+  </header>
+
+  <main style="max-width: 1280px; margin: 0 auto; padding: 24px 32px 64px; display: flex; flex-direction: column; gap: 40px">
+    <section style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 24px">
+      <div style="display: flex; flex-direction: column; gap: 10px; max-width: 640px">
+        <span style="font: 500 13px Inter, system-ui, sans-serif; letter-spacing: .14em; text-transform: uppercase; color: #d9c08a">Tu biblioteca</span>
+        <h1 style="margin: 0; font: 700 56px/1.02 Fraunces, Georgia, serif; color: #fbf3e2">Cuarenta libros y una lectura a medias.</h1>
+        <p style="margin: 0; font: 400 18px/1.55 Inter, system-ui, sans-serif; color: #e3d6bf">Retoma Fortunata y Jacinta donde la dejaste o recorre la estantería del salón.</p>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; flex: 1 1 520px; max-width: 600px">
+        <div class="card" style="padding: 16px; display: flex; flex-direction: column; gap: 4px"><span style="font: 700 32px Fraunces, Georgia, serif">40</span><span style="font-size: 13px; color: #cdbfa6">Libros</span></div>
+        <div class="card" style="padding: 16px; display: flex; flex-direction: column; gap: 4px"><span style="font: 700 32px Fraunces, Georgia, serif; color: #f2c94c">5</span><span style="font-size: 13px; color: #cdbfa6">Leyendo</span></div>
+        <div class="card" style="padding: 16px; display: flex; flex-direction: column; gap: 4px"><span style="font: 700 32px Fraunces, Georgia, serif; color: #b9c7ff">9</span><span style="font-size: 13px; color: #cdbfa6">Por leer</span></div>
+        <div class="card" style="padding: 16px; display: flex; flex-direction: column; gap: 4px"><span style="font: 700 32px Fraunces, Georgia, serif; color: #f0a37a">2</span><span style="font-size: 13px; color: #cdbfa6">Prestados</span></div>
+      </div>
+    </section>
+
+    <section aria-labelledby="seguir" style="display: flex; flex-direction: column; gap: 16px">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 16px">
+        <h2 id="seguir" style="margin: 0; font: 700 28px Fraunces, Georgia, serif">Seguir leyendo</h2>
+        <a href="#" style="font: 500 15px Inter, system-ui, sans-serif">Ver todo</a>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px">
+        <sc-for list="{{ reading }}" as="b" hint-placeholder-count="3">
+          <article class="card" style="display: flex; gap: 18px; padding: 18px">
+            <div aria-hidden="true" style="{{ b.cover }}">
+              <span style="font: 700 14px/1.15 Fraunces, Georgia, serif">{{ b.title }}</span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 8px; min-width: 0; flex: 1">
+              <h3 style="margin: 0; font: 700 20px/1.2 Fraunces, Georgia, serif; color: #fbf3e2">{{ b.title }}</h3>
+              <p style="margin: 0; font-size: 14px; color: #cdbfa6">{{ b.author }}</p>
+              <div style="margin-top: auto; display: flex; flex-direction: column; gap: 6px">
+                <div aria-hidden="true" style="height: 6px; border-radius: 999px; background: rgba(246,237,221,.12); overflow: hidden"><div style="{{ b.bar }}"></div></div>
+                <span style="font-size: 13px; color: #e3d6bf">{{ b.progress }}</span>
+              </div>
+            </div>
+          </article>
+        </sc-for>
+      </div>
+    </section>
+
+    <section aria-labelledby="estantes" style="display: flex; flex-direction: column; gap: 16px">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 16px">
+        <h2 id="estantes" style="margin: 0; font: 700 28px Fraunces, Georgia, serif">Estanterías</h2>
+        <a href="#" style="font: 500 15px Inter, system-ui, sans-serif">Abrir en 3D</a>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px">
+        <sc-for list="{{ shelves }}" as="s" hint-placeholder-count="3">
+          <a href="#" class="card" style="display: flex; flex-direction: column; gap: 14px; padding: 18px; text-decoration: none; color: #f6eddd">
+            <div aria-hidden="true" style="display: flex; align-items: flex-end; gap: 2px; height: 96px; padding: 0 10px; border-bottom: 10px solid #6b4326; border-radius: 6px 6px 2px 2px; background: linear-gradient(180deg, #24170e, #3a2616)">
+              <sc-for list="{{ s.spines }}" as="sp" hint-placeholder-count="12">
+                <span style="{{ sp }}"></span>
+              </sc-for>
+            </div>
+            <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px">
+              <span style="font: 700 20px Fraunces, Georgia, serif">{{ s.name }}</span>
+              <span style="font-size: 14px; color: #cdbfa6">{{ s.count }}</span>
+            </div>
+          </a>
+        </sc-for>
+      </div>
+    </section>
+
+    <section aria-labelledby="pendiente" class="card" style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding: 22px 24px">
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <h2 id="pendiente" style="margin: 0; font: 700 22px Fraunces, Georgia, serif">7 fichas por revisar</h2>
+        <p style="margin: 0; font-size: 15px; color: #e3d6bf">Tres sin ISBN, dos sin portada y dos posibles duplicados.</p>
+      </div>
+      <a class="btn" href="#" style="background: #f6eddd; color: #1b130d">Abrir la bandeja</a>
+    </section>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1180}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const cover = (c, ink) => `flex:none;width:92px;height:136px;box-sizing:border-box;padding:12px 10px;display:flex;align-items:flex-end;border-radius:4px 8px 8px 4px;background:linear-gradient(90deg, rgba(0,0,0,.35), transparent 12%), ${c};color:${ink};box-shadow:0 14px 24px rgba(0,0,0,.45);`;
+    const bar = (p) => `width:${p}%;height:100%;border-radius:999px;background:linear-gradient(90deg,#c9a24a,#f2d58a);`;
+    const reading = [
+      { title: "Fortunata y Jacinta", author: "Benito Pérez Galdós", cover: cover("#2f4a2c", "#ecd9a6"), bar: bar(28), progress: "Página 312 de 1100" },
+      { title: "Campos de Castilla", author: "Antonio Machado", cover: cover("#7a1f24", "#ecd9a6"), bar: bar(61), progress: "Página 140 de 230" },
+      { title: "Frankenstein", author: "Mary Shelley", cover: cover("#e8dcc4", "#2a2118"), bar: bar(12), progress: "Página 36 de 300" }
+    ];
+    const palette = ["#7a1f24", "#1f3a5f", "#2f4a2c", "#5b3a29", "#c9b48a", "#3b2a4a", "#a0522d", "#22303a", "#8a6d2f", "#e8dcc4", "#0f3d3e", "#6d1a36"];
+    const spines = (seed, n) => Array.from({ length: n }, (_, i) => {
+      const c = palette[(seed + i * 5) % palette.length];
+      return `flex:none;width:${10 + ((seed + i * 7) % 9)}px;height:${58 + ((seed * 3 + i * 13) % 30)}px;border-radius:2px 2px 0 0;background:linear-gradient(90deg, rgba(0,0,0,.35), rgba(255,255,255,.12) 30%, rgba(0,0,0,.25)), ${c};`;
+    });
+    const shelves = [
+      { name: "Salón", count: "40 libros", spines: spines(1, 16) },
+      { name: "Despacho", count: "18 libros", spines: spines(4, 12) },
+      { name: "Sin estantería", count: "3 libros", spines: spines(9, 3) }
+    ];
+    return { reading, shelves };
+  }
+}
+</script>
+</body>
+</html>

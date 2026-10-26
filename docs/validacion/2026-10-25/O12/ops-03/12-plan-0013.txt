@@ -1,0 +1,8 @@
+Plan de migración · biblib-scratch · estado pending
+Head aplicado: 0012_model_account_deletion · pendientes: 0013_account_deletion
+[ok] prerequisite.auth.users: auth.users lo proporciona la plataforma.
+[ok] prerequisite.auth.uid(): auth.uid() lo proporciona la plataforma.
+[ok] prerequisite.role:authenticated: role:authenticated lo proporciona la plataforma.
+[ok] prerequisite.role:anon: role:anon lo proporciona la plataforma.
+Plan migrate guardado en .biblib\plans\ops03-0013.json (caduca 2026-10-25T08:45:22.437Z).
+Para aplicarlo: pnpm db:migrate:local --plan .biblib\plans\ops03-0013.json --expect-project biblib-scratch --expect-plan a1ce58fd168f595f2b69a5454221b22036f5334b5670387e14f8d07f942778e2

@@ -1,0 +1,3 @@
+Restore 20261025T082309Z-scratch-32be67 → scratch (biblib-scratch) completado en 4 s; tokens rotados: biblib.copies.version (12), biblib.editions.version (11), biblib.works.version (0), biblib.library_state.revision (3).
+Supresiones aplicadas antes de abrir: 1 cuenta(s) del respaldo eliminadas, 2 objeto(s) retirados, 1 marca(s).
+Siguiente paso: pnpm db:restore:verify --backup .biblib/backups/20261025T082309Z-scratch-32be67 --profile scratch

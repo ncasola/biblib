@@ -47,7 +47,11 @@
         "QA-02",
         "OPS-02"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O01 · merge bc00636",
+      "pending": [
+        "Bindings en 127.0.0.1: Docker Desktop 29.4.3 ignora host_binding_ipv4; decisión de Néstor (daemon.json o firewall), doctor avisa mientras tanto."
+      ]
     },
     {
       "id": "U-INF-02",
@@ -66,7 +70,11 @@
         "QA-01",
         "OPS-02"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O02 · merge 52cef6e; build:test aislado + check:bundle limpio (29 archivos)",
+      "pending": [
+        "El checkout principal tiene un .env no acreditado: dev:local lo rechaza hasta moverlo fuera del camino de carga (decisión de Néstor)."
+      ]
     },
     {
       "id": "U-INF-03",
@@ -86,7 +94,12 @@
         "OPS-01",
         "OPS-02"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O03 · merge 9ee6884; ensayo scratch con HolaERP intacto (docs/validacion/2026-10-23/O03/u-inf-03-informe.md)",
+      "pending": [
+        "bootstrap migrate/seed/verify en U-INF-06",
+        "Bindings no loopback: aviso de doctor hasta decisión A/B."
+      ]
     },
     {
       "id": "U-INF-04",
@@ -105,7 +118,12 @@
         "QA-02",
         "BE-02"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O04 · merge de u-inf-04; ensayo scratch 0000→0002, idempotencia, lock (7), drift/CRLF/adopción (5), fallo revertido (9) — docs/validacion/2026-10-23/O04/u-inf-04-informe.md",
+      "pending": [
+        "Ensayo nativo en Linux (CI, U-QA-04).",
+        "Preprod/prod: U-INF-07."
+      ]
     },
     {
       "id": "U-INF-05",
@@ -124,7 +142,11 @@
         "QA-01",
         "QA-02"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O05 · merge 2c2440c; ensayo scratch real (docs/validacion/2026-10-23/O05/)",
+      "pending": [
+        "Matriz RLS A/B completa en U-QA-01; políticas definitivas de assets en U-DAT-10."
+      ]
     },
     {
       "id": "U-INF-06",
@@ -143,7 +165,8 @@
         "QA-02",
         "OPS-02"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O06 · merge 011c627; reset físico acotado + SIGINT/continuación + bootstrap doble (docs/validacion/2026-10-23/O06/); G06 en g06-coordinador.md"
     },
     {
       "id": "U-INF-07",
@@ -164,7 +187,12 @@
         "QA-02",
         "OPS-02"
       ],
-      "status": "planned"
+      "status": "implemented-local",
+      "note": "Se entrega preparada: sin destino remoto autorizado.",
+      "evidence": "O08 · merge 9441517; 8/8 escenarios contra Postgres efímero con TLS y scratch",
+      "pending": [
+        "Toda verificación contra preprod/prod reales: autorización de Néstor, ref real, preprod inexistente, plan del proveedor."
+      ]
     },
     {
       "id": "U-DAT-01",
@@ -185,7 +213,11 @@
         "IMP-01",
         "UX-04"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O07 · merge ef95af7; 0003_library_revision; integración 45/45 con head 0003 (docs/validacion/2026-10-23/O07/dat-01/)",
+      "pending": [
+        "Ensayo desde vacío con db:reset:local --profile test no disponible desde worktree; cubierto por test:db (0000→0003)."
+      ]
     },
     {
       "id": "U-DAT-02",
@@ -205,7 +237,8 @@
         "IMP-03",
         "OPS-02"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O10 · merge de0a75d; 0006 + índices T8; snapshots 10/10 (docs/validacion/2026-10-23/O10/dat-02/)"
     },
     {
       "id": "U-DAT-03",
@@ -225,7 +258,11 @@
         "BE-06",
         "UX-04"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O09 · merge 3a0458b + 8d39ff1; 0005_library_jobs; test:integration:jobs 19/19 en scratch con código integrado (docs/validacion/2026-10-23/O09/dat-03/)",
+      "pending": [
+        "startImportJobAction sin consumidor en la UI."
+      ]
     },
     {
       "id": "U-DAT-04",
@@ -246,7 +283,8 @@
         "IMP-02",
         "IMP-03"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O11 · merge 1ca8433; 0008; restore 11/11; 10000 libros publican en 1,3–2,0 s; T1 resuelta (docs/validacion/2026-10-24/O11/dat-04/)"
     },
     {
       "id": "U-DAT-05",
@@ -266,7 +304,9 @@
         "IMP-02",
         "OPS-01"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O08 · merge 88570f3; 0004_catalogue_coordination; grupo catalogue 14/14 en scratch (docs/validacion/2026-10-23/O08/dat-05/)",
+      "pending": []
     },
     {
       "id": "U-DAT-06",
@@ -287,7 +327,13 @@
         "UX-01",
         "UX-08"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O12 · merge 28b4407; 0010–0012; T7 8,36→0,13 ms, T5 103,7→30,4 ms; 8 grupos en scratch 100/100 (docs/validacion/2026-10-24/O12/dat-06/)",
+      "pending": [
+        "Exportación y vista previa 20–50 % más lentas (dentro de presupuesto).",
+        "books_legacy congelada: retirada en F4.",
+        "verify no descuenta previews/jobs invalidados por restore (documentado)."
+      ]
     },
     {
       "id": "U-DAT-07",
@@ -310,7 +356,8 @@
         "UX-01",
         "UX-05"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O13 · bandeja /books/review con incidencias por dedupe_key, comparación por campo, decisiones y lotes de 50 con preview y versión; grupo review; schema 0014 (O13-D); G13 en docs/validacion/2026-10-25/O13/g13-coordinador.md"
     },
     {
       "id": "U-DAT-08",
@@ -330,7 +377,8 @@
         "BE-04",
         "UX-08"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O10 · merge c01f283; smoke y E2E en la puerta integrada"
     },
     {
       "id": "U-DAT-09",
@@ -351,7 +399,8 @@
         "IMP-02",
         "IMP-03"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O13 · CSV con parser propio por estados, mapeo versionado, source_row_key durable, informe con fórmulas escapadas; grupo csv; schema 0014 (O13-D); G13 en docs/validacion/2026-10-25/O13/g13-coordinador.md"
     },
     {
       "id": "U-DAT-10",
@@ -373,7 +422,13 @@
         "FE-02",
         "OPS-02"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "note": "Decisión de Néstor 24-10-2026: autorizado sharp (allowBuilds) como decodificador.",
+      "evidence": "O11 · merge dafbfc2; 0009; sharp 0.35.5; ensayo con portada privada backup→reset→restore→verify (docs/validacion/2026-10-24/O11/dat-10/)",
+      "pending": [
+        "Ningún proveedor concede rehostCover: «Guardar copia privada» oculto hasta revisar licencias.",
+        "Referencia de portada a edición/copia: U-DAT-06."
+      ]
     },
     {
       "id": "U-EXP-01",
@@ -391,7 +446,12 @@
         "UI-01",
         "FE-03"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O07 · merge ecbed9d; smoke 12/12 en Chrome",
+      "pending": [
+        "app/page.tsx y app/settings/page.tsx conservan su cabecera propia.",
+        "Recorrido con sesión real: U-QA-02."
+      ]
     },
     {
       "id": "U-EXP-02",
@@ -410,7 +470,8 @@
         "UX-06",
         "FE-03"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O10 · merge 4e24880 + afad8ea; 0007; views 5/5; G10 en docs/validacion/2026-10-24/O10/g10-coordinador.md"
     },
     {
       "id": "U-EXP-03",
@@ -432,7 +493,12 @@
         "UI-03",
         "FE-01"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O11 · merge a156509; axe 30/30 en Chromium/Firefox/WebKit, contraste, teclado, 320–1440 px y zoom; T6 INP móvil Estanterías 496→136 ms (docs/validacion/2026-10-24/O11/exp-03/)",
+      "pending": [
+        "Ensayos manuales reales: lector de pantalla de escritorio, VoiceOver, Safari/iOS, Edge (tests/accessibility/manual.md).",
+        "No certifica WCAG."
+      ]
     },
     {
       "id": "U-EXP-04",
@@ -451,7 +517,11 @@
         "UI-03",
         "FE-02"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O08 · merge 557e3e6 (OpenCode glm-5.3 → Codex por cuota); docs/validacion/2026-10-23/O08/exp-04.md",
+      "pending": [
+        "Recorrido 3D táctil y de teclado en navegador: U-QA-02/U-EXP-03."
+      ]
     },
     {
       "id": "U-EXP-05",
@@ -471,7 +541,8 @@
         "SEC-03",
         "UI-03"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O13 · Guardar y añadir otro, escáner ISBN con BarcodeDetector tras BIBLIB_ISBN_CAMERA y Permissions-Policy camera=(self) solo en /books/add; schema 0014 (O13-D); G13 en docs/validacion/2026-10-25/O13/g13-coordinador.md"
     },
     {
       "id": "U-EXP-06",
@@ -490,7 +561,8 @@
         "FE-02",
         "OPS-02"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O13 · avatar privado en biblib-media (WebP, sin EXIF), lib/media/server.ts compartido, media:purge:local; grupo media; schema 0014 (O13-D); G13 en docs/validacion/2026-10-25/O13/g13-coordinador.md"
     },
     {
       "id": "U-EXP-07",
@@ -511,7 +583,11 @@
         "UX-05",
         "UI-01"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O15 · merge 07f7dcf; E2E impresión 6/6, PDF A4/Carta, E2E completo 85 (docs/validacion/2026-10-26/O15/exp-07/); G15 docs/validacion/2026-10-26/O15/g15-coordinador.md",
+      "pending": [
+        "Firefox/WebKit y diálogo nativo de impresión sin probar."
+      ]
     },
     {
       "id": "U-EXP-08",
@@ -539,7 +615,12 @@
         "OPS-02",
         "FE-01"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O15 · merge b02afe7; E2E offline 7/7, cabeceras 53/53, a11y 10/10 (docs/validacion/2026-10-26/O15/exp-08/); G15",
+      "pending": [
+        "Parámetros de la copia (PIN/frase, PBKDF2 600k, TTL 7 días, 10 intentos) aprobados por el usuario el 26-10-2026, que decide activar BIBLIB_OFFLINE_SNAPSHOT en el despliegue (acción del usuario). Sin probar en Safari real: el WebKit de Playwright en Windows aceptaba un PIN incorrecto.",
+        "Firefox/WebKit, dispositivos reales y purga por SIGNED_OUT con sesión revocada en remoto sin probar."
+      ]
     },
     {
       "id": "U-PRO-01",
@@ -558,7 +639,8 @@
         "UX-01",
         "IMP-03"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O13 · notas, etiquetas normalizadas y valoración por ejemplar; filtros OR/AND; grupo personal; schema 0014 (O13-D); G13 en docs/validacion/2026-10-25/O13/g13-coordinador.md"
     },
     {
       "id": "U-PRO-02",
@@ -577,7 +659,11 @@
         "UI-01",
         "IMP-03"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O14 · merge 8bc4b47; integración reading 28/28, E2E lectura 4/4 en test (docs/validacion/2026-10-26/O14/pro-02/); G14",
+      "pending": [
+        "Las cifras «Leyendo»/«Leídos» del inicio cuentan el estado del libro y «Seguir leyendo» los ciclos abiertos. Decisión del usuario (26-10-2026): aclarar los textos sin cambiar qué se cuenta (las tarjetas se rotulan como estado del libro y «Seguir leyendo» explica que son lecturas abiertas). Pendiente de implementar."
+      ]
     },
     {
       "id": "U-PRO-03",
@@ -596,7 +682,8 @@
         "UX-02",
         "OPS-02"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O13 · /locations en árbol, ubicación por ejemplar con versión y foto privada; grupo locations; schema 0014 (O13-D); G13 en docs/validacion/2026-10-25/O13/g13-coordinador.md"
     },
     {
       "id": "U-PRO-04",
@@ -615,7 +702,8 @@
         "UX-01",
         "OPS-02"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O14 · merge 1e951dc; loans 10/10, reading-loans 19/19, E2E completo 74 y a11y 10/10 en test (docs/validacion/2026-10-26/O14/pro-04/); G14"
     },
     {
       "id": "U-PRO-05",
@@ -634,7 +722,8 @@
         "IMP-04",
         "UX-05"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O13 · /series con posición NUMERIC exacta y orden desconocido; grupo series; schema 0014 (O13-D); G13 en docs/validacion/2026-10-25/O13/g13-coordinador.md"
     },
     {
       "id": "U-QA-01",
@@ -655,7 +744,13 @@
         "QA-01",
         "QA-02"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O06 · merge 22a2b8c; test:integration:local 34/34 ×2 contra perfil test (docs/validacion/2026-10-23/O06/qa-01/)",
+      "pending": [
+        "Con GoTrue/Storage caídos, Kong cuelga ~60 s y el proxy no tiene timeout (UX-04/U-QA-02): en O16-FIX.",
+        "El runner no resiembra por el límite de correo de GoTrue (2/h).",
+        "Pruebas A/B de assets por propietario al integrar U-DAT-10."
+      ]
     },
     {
       "id": "U-QA-02",
@@ -675,7 +770,12 @@
         "FE-01",
         "UI-03"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O07 · merge 504c310; Chromium ×2, Firefox/WebKit 66/66; G07 en docs/validacion/2026-10-23/O08/g07-g08-coordinador.md",
+      "pending": [
+        "23 escenarios fixme ligados a unidades futuras.",
+        "Recuperación de portadas solo en smoke hasta U-BIB-05."
+      ]
     },
     {
       "id": "U-QA-03",
@@ -697,7 +797,12 @@
         "BE-04",
         "FE-02"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O09 · merge aa414de; 100/1000/10000 medidos (docs/validacion/rendimiento/2026-10-23/)",
+      "pending": [
+        "Repetir tras U-DAT-04 y U-DAT-06.",
+        "Tareas T1–T8: T3/T4 en U-FIX-02, T8 y T2 en U-DAT-02, T1 en U-DAT-04, T5/T7 en U-DAT-06, T6 en U-EXP-03."
+      ]
     },
     {
       "id": "U-QA-04",
@@ -718,7 +823,13 @@
         "QA-01",
         "QA-02"
       ],
-      "status": "planned"
+      "status": "implemented-local",
+      "evidence": "O09 · merge 8d58b4e; workflows PR, semanal y promoción (deshabilitada) validados localmente (docs/validacion/2026-10-23/O09/qa-04.md)",
+      "pending": [
+        "Ejecución real en GitHub: push de feature/spec-pendientes y PR (decisión de Néstor).",
+        "Integrar perf:local de U-QA-03.",
+        "Habilitar promoción tras autorizar destinos y respaldos."
+      ]
     },
     {
       "id": "U-QA-05",
@@ -811,7 +922,14 @@
         "OPS-01",
         "OPS-02"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O16 · matriz 35 hallazgos (34 implementado-local, 1 pendiente UI-03), entrega con cierre de código alcanzado y despliegue pendiente (docs/validacion/2026-10-26/O16/); O16-FIX merge 5a5adfe; O16-XB merge 78326f8; G16 docs/validacion/2026-10-26/O16/g16-coordinador.md",
+      "pending": [
+        "Lector de pantalla, Safari real (AES-KW) y dispositivos reales.",
+        "Intermitencia offline:318 en Chromium (1/7).",
+        "Run completo final de los tres navegadores interrumpido por memoria; aceptado por el usuario.",
+        "Todo lo remoto: preproducción, producción, Google OAuth real, cabeceras del alojamiento, alertas reales."
+      ]
     },
     {
       "id": "U-OPS-01",
@@ -829,7 +947,11 @@
         "BE-01",
         "BE-04"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O03 · merge 9536de8; primitivas F0, sin exportador remoto",
+      "pending": [
+        "Exportador, panel y alertas remotas: F1/F4."
+      ]
     },
     {
       "id": "U-OPS-02",
@@ -850,7 +972,11 @@
         "QA-02",
         "IMP-03"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O07 · merge 6e6eb9c; backup→reset→restore→verify en scratch (docs/validacion/2026-10-23/O07/ops-02/)",
+      "pending": [
+        "Procedimiento remoto: U-INF-07 y plan del proveedor."
+      ]
     },
     {
       "id": "U-OPS-03",
@@ -870,7 +996,8 @@
         "OPS-02",
         "SEC-05"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O12 · merge 06e76b6; 0013_account_deletion (29 políticas RESTRICTIVE de cuenta activa, Storage y definers); worker por pasos fuera de Next con ban + deleteUser; supresiones aplicadas en restore antes de abrir; grupo account en test; G12 en docs/validacion/2026-10-25/O12/g12-coordinador.md"
     },
     {
       "id": "U-OPS-04",
@@ -894,7 +1021,11 @@
         "BE-06",
         "OPS-02"
       ],
-      "status": "planned"
+      "status": "implemented-local",
+      "evidence": "O09 · merge fee2525; headers 35/35, integración security 19/19, service_role fuera de Next",
+      "pending": [
+        "HTTPS real, CDN, Google OAuth real y CSP en modo enforcement."
+      ]
     },
     {
       "id": "U-OPS-05",
@@ -909,7 +1040,8 @@
         "SEC-01",
         "FE-04"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O01 · merge efbea96; 32 dependencias huérfanas retiradas en consolidación"
     },
     {
       "id": "U-BIB-01",
@@ -927,7 +1059,12 @@
         "BE-04",
         "IMP-04"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O07 · merge 83b7cf9 + fix e6974f5 (actionError)",
+      "pending": [
+        "Importación y recuperación aún por el flujo legacy: U-BIB-05.",
+        "Adaptadores BNE (O08) y Google (O09)."
+      ]
     },
     {
       "id": "U-BIB-02",
@@ -944,7 +1081,8 @@
         "BE-04",
         "IMP-04"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O08 · merge ad0788e + f4dbfeb/ff890a1; 3 consultas públicas reales a BNE (docs/validacion/2026-10-23/O08/bib-02.md)"
     },
     {
       "id": "U-BIB-03",
@@ -963,8 +1101,12 @@
         "BE-04",
         "OPS-02"
       ],
-      "status": "planned",
-      "activationCondition": "Entrega técnica aceptable con fixtures y flag apagado. Live permanece deshabilitado hasta comprobar clave, cuota/coste, comunicación de privacidad y uso permitido; OL+BNE no dependen de su activación."
+      "status": "implemented",
+      "activationCondition": "Entrega técnica aceptable con fixtures y flag apagado. Live permanece deshabilitado hasta comprobar clave, cuota/coste, comunicación de privacidad y uso permitido; OL+BNE no dependen de su activación.",
+      "evidence": "O09 · merge e0dabf9; apagado por defecto, cero peticiones sin flag/clave",
+      "pending": [
+        "Activación real condicionada a consola/cuota/términos (Néstor)."
+      ]
     },
     {
       "id": "U-BIB-04",
@@ -985,7 +1127,13 @@
         "UX-08",
         "UX-01"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O09 · merge adf0d03 + f4fef4c; v2 tras BIBLIB_BIBLIOGRAPHY_REVIEW_ENABLED (apagado)",
+      "pending": [
+        "E2E con la bandera activa.",
+        "Ruta de búsqueda debe filtrar portadas google-books.",
+        "Idioma/formato persistidos con U-DAT-06; manually-verified con U-DAT-07."
+      ]
     },
     {
       "id": "U-BIB-05",
@@ -1008,7 +1156,114 @@
         "IMP-02",
         "FE-02"
       ],
-      "status": "planned"
+      "status": "implemented",
+      "evidence": "O10 · merge cbba289 + 9a25aa6; E2E de proveedores activados",
+      "pending": [
+        "Ficha solo-BNE requiere BIBLIB_BIBLIOGRAPHY_REVIEW_ENABLED.",
+        "Probe externo no ejecutado (requiere autorización)."
+      ]
+    },
+    {
+      "id": "U-LOC-01",
+      "title": "Login local con correo y contraseña (solo local/test)",
+      "phase": "F1",
+      "wave": "O07",
+      "dependsOn": [
+        "U-INF-02",
+        "U-INF-05"
+      ],
+      "size": "S",
+      "priority": "P2",
+      "document": "orquestacion-f1.md",
+      "auditRefs": [
+        "SEC-02",
+        "SEC-05"
+      ],
+      "status": "implemented",
+      "note": "Petición de Néstor del 23-10-2026. Doble puerta: constante de build solo en local/test y guarda de servidor con loopback.",
+      "evidence": "O07 · merge 8669cc0 + fix smoke 43ba28f; bundle sin formulario en build sin objetivo",
+      "pending": [
+        "Ensayo contra GoTrue real: U-QA-02 (en curso)."
+      ]
+    },
+    {
+      "id": "U-FIX-01",
+      "title": "Cero tráfico externo en modo fixture y 404 de ficha",
+      "phase": "F1",
+      "wave": "O09",
+      "dependsOn": [
+        "U-BIB-01",
+        "U-QA-02"
+      ],
+      "size": "S",
+      "priority": "P1",
+      "document": "orquestacion-f1.md",
+      "auditRefs": [
+        "BE-04",
+        "SEC-03"
+      ],
+      "status": "implemented",
+      "note": "Hallazgo de U-QA-02: en fixture la app salía a openlibrary.org.",
+      "evidence": "O09 · merge 0bfea68 + 136b2ea; cero fetch en fixture, 404 real, portadas Google filtradas (docs/validacion/2026-10-23/O09/fix-01.md)",
+      "pending": [
+        "Gateway de lotes en live: U-BIB-05."
+      ]
+    },
+    {
+      "id": "U-FIX-02",
+      "title": "Una verificación de sesión por petición y latencia con varias sesiones",
+      "phase": "F1",
+      "wave": "O10",
+      "dependsOn": [
+        "U-QA-03",
+        "U-OPS-04"
+      ],
+      "size": "M",
+      "priority": "P1",
+      "document": "orquestacion-f1.md",
+      "auditRefs": [
+        "BE-01",
+        "BE-03",
+        "SEC-05"
+      ],
+      "status": "implemented",
+      "note": "Tareas T3/T4 de U-QA-03.",
+      "evidence": "O10 · merge 2a604c1; 1,01–1,05 llamadas a GoTrue por acción; navegación @10 sesiones < 1 s (docs/validacion/rendimiento/2026-10-23-fix-02/informe.md)",
+      "pending": [
+        "Proxy en proceso distinto (p. ej. Vercel) vuelve a 2 llamadas: documentado.",
+        "Ajustes y previews >1 s con 5–10 sesiones: T1/U-DAT-04."
+      ]
+    },
+    {
+      "id": "U-UX-01",
+      "title": "Sistema visual «Biblioteca nocturna»",
+      "phase": "F3",
+      "wave": "O14",
+      "dependsOn": [
+        "U-EXP-03"
+      ],
+      "size": "L",
+      "priority": "P1",
+      "document": "07-rediseno.md",
+      "auditRefs": [],
+      "status": "implemented",
+      "evidence": "O14 · merge 4abc6fd; contraste AA mínimo 5,16:1 claro / 5,23:1 oscuro (docs/validacion/2026-10-26/UX/ux-01/); G14 docs/validacion/2026-10-26/O14/g14-coordinador.md"
+    },
+    {
+      "id": "U-UX-02",
+      "title": "Estantería 3D realista",
+      "phase": "F3",
+      "wave": "O14",
+      "dependsOn": [
+        "U-EXP-04",
+        "U-DAT-06"
+      ],
+      "size": "M",
+      "priority": "P1",
+      "document": "07-rediseno.md",
+      "auditRefs": [],
+      "status": "implemented",
+      "evidence": "O14 · merge fe974b8; E2E 3D 7/7, axe 0 violaciones en ambos temas (docs/validacion/2026-10-26/UX/ux-02/); G14"
     }
   ]
 }

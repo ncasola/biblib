@@ -2,11 +2,18 @@
 # Se autoriza exactamente lo que estaba autorizado antes: ni un paquete más.
 allowBuilds:
   unrs-resolver: true
-  # No estaban en la config previa, así que se deniegan. Ojo: sin compilar,
-  # sharp deja de optimizar imágenes en next/image. Si eso importa aquí, la
-  # decisión de autorizarlo es de una persona, no de este playbook.
+  # No estaba en la config previa, así que se deniega.
   esbuild: false
-  sharp: false
+  # Autorizado por Néstor el 24-10-2026 (docs/spec-pendientes/orquestacion-f2.md):
+  # sharp es el decodificador de U-DAT-10 (firma, decodificación real con
+  # limitInputPixels y reencodificación a WebP sin metadatos) y vuelve a dejar
+  # disponible la optimización de next/image. Sigue bajo el override de
+  # seguridad `>=0.35.5` de abajo; no autoriza ningún otro paquete.
+  sharp: true
+  # Supabase CLI fijada (U-INF-01). La 2.117.0 resuelve el binario mediante
+  # dependencias opcionales por plataforma; se autoriza por si una versión
+  # fijada posterior vuelve a descargarlo en su script de instalación.
+  supabase: true
 
 # Overrides de dependencias transitivas con avisos de seguridad. Todos son
 # saltos dentro del mismo major: sólo suben el paquete vulnerable, sin

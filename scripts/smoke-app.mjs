@@ -71,7 +71,7 @@ async function cleanup() {
   browserSocket?.close()
   await Promise.all([...children].map(stop))
   if (authServer) await new Promise((resolve) => authServer.close(resolve))
-  if (containerStarted) await command(docker, ["rm", "--force", containerName]).catch(() => {})
+  if (containerStarted) await command(docker, ["rm", "--force", "--volumes", containerName]).catch(() => {})
   if (workspace) {
     const resolved = await realpath(workspace)
     const temporaryRoot = await realpath(tmpdir())
@@ -143,7 +143,7 @@ async function prepareDatabase() {
   await command(docker, ["run", "--detach", "--rm", "--name", containerName, "--label", "biblib.test=smoke", "--publish", "127.0.0.1::5432", "--env", `POSTGRES_PASSWORD=${password}`, "--env", "POSTGRES_DB=biblib_smoke", "postgres:17-alpine"])
   containerStarted = true
   await poll(() => command(docker, ["exec", containerName, "pg_isready", "-h", "127.0.0.1", "-U", "postgres"]).then(() => true).catch(() => false), "Postgres de prueba", 30_000)
-  for (const file of ["tests/db/bootstrap.sql", "drizzle/0000_biblib_init.sql", "drizzle/0001_library_integrity.sql", "drizzle/0002_book_versions.sql"]) await sql(await readFile(path.join(repo, file), "utf8"))
+  for (const file of ["tests/db/bootstrap.sql", "drizzle/0000_biblib_init.sql", "drizzle/0001_library_integrity.sql", "drizzle/0002_book_versions.sql", "drizzle/0003_library_revision.sql", "drizzle/0004_catalogue_coordination.sql", "drizzle/0005_library_jobs.sql", "drizzle/0006_library_snapshots.sql", "drizzle/0007_saved_views.sql", "drizzle/0008_restore_sessions.sql", "drizzle/0009_cover_assets.sql", "drizzle/0010_works_editions_copies.sql", "drizzle/0011_copies_cutover.sql", "drizzle/0012_model_account_deletion.sql", "drizzle/0013_account_deletion.sql", "drizzle/0014_product_batch_o13.sql", "drizzle/0015_reading_and_loans.sql"]) await sql(await readFile(path.join(repo, file), "utf8"))
   await sql(`INSERT INTO auth.users(id) VALUES ('${userId}');
     INSERT INTO biblib.shelves(id,user_id,title,is_default) VALUES ('${defaultShelfId}','${userId}','Predeterminada',true),('${shelfId}','${userId}','Ensayo',false),('${secondShelfId}','${userId}','Narrativa',false);
     INSERT INTO biblib.books(id,user_id,isbn,title,authors,number_of_pages,status,shelf_id) VALUES ('${initialBookId}','${userId}','manual-${initialBookId}','Libro inicial de prueba','[{"name":"Autora inicial"}]',100,'unread','${defaultShelfId}');`)
@@ -155,12 +155,16 @@ async function prepareDatabase() {
 
 async function prepareApp(dbUrl) {
   workspace = await mkdtemp(path.join(tmpdir(), "biblib-smoke-"))
-  for (const directory of ["app", "components", "hooks", "lib", "public", "node_modules"]) {
+  // `scripts` (next.config.mjs) y `tests/fixtures` (lib/catalogue-fixtures.ts) son importados por la app.
+  for (const directory of ["app", "components", "hooks", "lib", "public", "scripts", "tests/fixtures", "node_modules"]) {
     const target = path.join(workspace, directory)
+    await mkdir(path.dirname(target), { recursive: true })
     await symlink(path.join(repo, directory), target, process.platform === "win32" ? "junction" : "dir")
     junctions.push(target)
   }
-  for (const file of ["package.json", "next.config.mjs", "postcss.config.mjs", "tsconfig.json", "next-env.d.ts", "proxy.ts"]) {
+  // `supabase/profiles.json` lo importa la guarda del acceso local (app/(auth)/login/actions.ts).
+  await mkdir(path.join(workspace, "supabase"), { recursive: true })
+  for (const file of ["package.json", "next.config.mjs", "postcss.config.mjs", "tsconfig.json", "next-env.d.ts", "proxy.ts", "supabase/profiles.json"]) {
     await copyFile(path.join(repo, file), path.join(workspace, file))
   }
   // Solo se hereda el entorno del proceso; las tres conexiones de la app son fixtures.
@@ -337,7 +341,7 @@ async function browserChecks(cdp) {
   await navigate("/books/add", "document.body.innerText.includes('Buscar libro')")
   await field("Número ISBN", "0-7475-3269-9")
   await click("Buscar libro")
-  await wait("document.body.innerText.includes('Este libro ya está en tu biblioteca')", "ISBN equivalente ya catalogado")
+  await wait("document.body.innerText.includes('Esta edición ya está en tu biblioteca')", "ISBN equivalente ya catalogado")
   assert.equal(await evaluate(`Boolean(document.querySelector('a[href="/book/${createdBookId}"]'))`), true)
   record("ISBN-10 con guiones detecta libro existente y conserva enlace")
 

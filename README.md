@@ -2,7 +2,7 @@
 
 Biblioteca personal con Next.js, React, Supabase y Drizzle ORM. Permite catalogar y editar libros, organizar estanterías, gestionar el estado de lectura y consultar la colección en tabla, cuadrícula o vista 3D.
 
-La [spec de pendientes](docs/spec-pendientes/README.md) organiza el trabajo futuro en 45 unidades, cinco fases y 17 olas: Supabase local completo, scripts por entorno, varios proveedores ISBN, recuperación, UX y funciones de biblioteca. Es una propuesta; sus comandos nuevos todavía no están implementados.
+La [spec de pendientes](docs/spec-pendientes/README.md) organiza el trabajo futuro en 45 unidades, cinco fases y 17 olas: Supabase local completo, scripts por entorno, varios proveedores ISBN, recuperación, UX y funciones de biblioteca. Sus comandos están implementados y ensayados en local; las operaciones remotas (Google OAuth real, preproducción y producción) siguen pendientes de autorización. El estado por hallazgo está en la [matriz de la auditoría](docs/validacion/2026-10-26/O16/matriz-auditoria.md). La política de dependencias, el inventario de scripts y la guía de contribución están en [mantenimiento](docs/mantenimiento.md).
 
 ## Desarrollo
 
@@ -24,6 +24,17 @@ Configura estas variables en `.env.local`, sin subir el archivo al repositorio:
 | `NEXT_PUBLIC_ENABLE_ANALYTICS` | Opcional: `true` antes del build para habilitar Analytics; desactivado por defecto. |
 
 El acceso utiliza Google OAuth mediante Supabase Auth. Registra los orígenes y callbacks de cada entorno. La [guía de operación](docs/operacion.md) explica conexión, migraciones, respaldo, restauración y privacidad.
+
+Para desarrollar sin conexión con ninguna base remota, usa el Supabase local propio de BibLib (requiere Docker; en un worktree, el perfil `scratch`). No necesita `.env.local` ni Google: el bootstrap migra, siembra las cuentas ficticias A/B y verifica el stack, y el formulario «Acceso local de desarrollo» de `/login` permite entrar con ellas ([Stack Supabase local](docs/operacion.md#stack-supabase-local) y [Fixtures y acceso local](docs/operacion.md#fixtures-y-acceso-local)):
+
+```bash
+pnpm install --frozen-lockfile
+pnpm db:local:doctor --profile scratch
+pnpm db:local:bootstrap --profile scratch
+pnpm dev:local --profile scratch          # http://127.0.0.1:3149
+pnpm db:local:credentials --as a --profile scratch   # en otra terminal interactiva
+pnpm db:local:down --profile scratch
+```
 
 ## Catalogar y organizar
 
@@ -86,11 +97,13 @@ GitHub Actions ejecuta instalación con lockfile congelado, lint, tipos, pruebas
 
 ## Migraciones
 
-`drizzle/0000_biblib_init.sql` crea el esquema, tablas, índices y RLS por usuario. `drizzle/0001_library_integrity.sql` añade procedencia bibliográfica, la relación de propietario entre libro y estantería, restricciones de contenido y protección de la predeterminada. `drizzle/0002_book_versions.sql` añade versiones de edición y su rotación en cada escritura, incluso mediante SQL. Aplica las migraciones pendientes antes de usar esta versión de la aplicación.
+`drizzle/0000_biblib_init.sql` crea el esquema, tablas, índices y RLS por usuario. `drizzle/0001_library_integrity.sql` añade procedencia bibliográfica, la relación de propietario entre libro y estantería, restricciones de contenido y protección de la predeterminada. `drizzle/0002_book_versions.sql` añade versiones de edición y su rotación en cada escritura, incluso mediante SQL. Las migraciones posteriores, hasta `0015_reading_and_loans`, están en `drizzle/` y se describen en la [guía de operación](docs/operacion.md). Aplica las migraciones pendientes antes de usar esta versión de la aplicación.
 
 ```bash
-pnpm db:generate
-pnpm db:migrate
+pnpm db:generate                                   # offline; genera una propuesta SQL
+pnpm db:status:local --profile scratch
+pnpm db:plan:local --profile scratch --out scratch.json
+pnpm db:migrate:local --plan .biblib/plans/scratch.json --expect-project biblib-scratch --expect-plan <sha256>
 ```
 
-Revisa los SQL generados y el destino antes de ejecutar una migración. El procedimiento y los requisitos de respaldo están en [Operación](docs/operacion.md#migraciones-y-recuperación). Las fotos, catálogos personales y copias de seguridad son datos privados: selecciona explícitamente los archivos al preparar un commit.
+`pnpm db:migrate` ya no aplica nada: sale con 2 y lista los comandos por objetivo. Preproducción y producción usan `db:status|plan|migrate:<objetivo>` con identidad, plan y respaldo explícitos ([Promoción](docs/promocion.md)). Revisa los SQL generados y el destino antes de ejecutar una migración. El procedimiento y los requisitos de respaldo están en [Operación](docs/operacion.md#migraciones-y-recuperación). Las fotos, catálogos personales y copias de seguridad son datos privados: selecciona explícitamente los archivos al preparar un commit.

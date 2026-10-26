@@ -1,0 +1,4 @@
+rest: stopped
+storage: stopped
+studio: stopped
+mailpit: stopped

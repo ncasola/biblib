@@ -1,0 +1,33 @@
+(node:38492) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/ncaso/orca/workspaces/biblib/u-qa-01/lib/account-deletion/worker.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-qa-01\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Grupo media · perfil test · biblib-test · run 3524766602cb
+(node:39012) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/ncaso/orca/workspaces/biblib/u-qa-01/lib/media/avatar-workflow.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-qa-01\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✖ avatar: subir, persistir, sustituir y quitar por acciones reales; Google no cambia (1448.8683ms)
+✔ avatar: B no lee la ruta ni modifica el perfil de A; ruta manipulada y versión antigua fallan (550.8559ms)
+✔ avatar: fallo de red de Storage conserva los bytes y la referencia anterior (163.5111ms)
+✔ media: purga cuarentenas vencidas y huérfanos, mantiene avatar citado y permite reintento (154.0782ms)
+✔ avatar: una cuenta inactiva no sube ni quita con su JWT anterior (428.8361ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 4
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4645.6348
+
+✖ failing tests:
+
+test at tests\integration\media\avatar.test.mjs:21:1
+✖ avatar: subir, persistir, sustituir y quitar por acciones reales; Google no cambia (1448.8683ms)
+  Error: Acción fallida: 404 
+      at value (file:///C:/Users/ncaso/orca/workspaces/biblib/u-qa-01/tests/integration/product/lib/context.mjs:155:65)
+      at TestContext.<anonymous> (file:///C:/Users/ncaso/orca/workspaces/biblib/u-qa-01/tests/integration/media/avatar.test.mjs:25:16)
+      at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+      at async Test.run (node:internal/test_runner/test:1113:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:358:3)

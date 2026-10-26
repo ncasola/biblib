@@ -1,0 +1,13 @@
+
+> biblib@1.0.0 db:local:up C:\Users\ncaso\orca\workspaces\biblib\u-inf-03
+> node scripts/local-stack.mjs up "--profile" "scratch"
+
+BibLib local · scratch · ea260283d87954c1c405cb5ee4875867dd8b103c86084460f3a74244e06b13fa
+[ok] up: Stack propio sano.
+[warn] bindings.loopback: Bindings fuera de loopback; consulta alternativas A/B en docs/operacion.md.
+postgres: healthy
+auth: healthy
+rest: running
+storage: healthy
+studio: healthy
+mailpit: healthy

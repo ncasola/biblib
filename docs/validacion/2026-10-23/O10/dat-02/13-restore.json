@@ -1,0 +1,5 @@
+
+> biblib@1.0.0 db:restore:local C:\Users\ncaso\orca\workspaces\biblib\u-inf-03
+> node scripts/db/restore-local.mjs "--backup" ".biblib/backups/20261023T215556Z-scratch-7adb9b" "--profile" "scratch" "--expect-project" "biblib-scratch" "--json"
+
+{"schemaVersion":1,"code":0,"runId":"b4ebfba1-e9a2-4ceb-a3c2-f41431fd45ca","backupId":"20261023T215556Z-scratch-7adb9b","profile":"scratch","project":"biblib-scratch","head":"0006_library_snapshots","pendingAfterRestore":[],"rotation":{"rotated":[{"token":"biblib.books.version","rows":9},{"token":"biblib.library_state.revision","rows":2}],"invalidated":[{"table":"biblib.import_previews","action":"delete","rows":0},{"table":"biblib.library_jobs","action":"lease-expired","rows":0}],"review":[],"staleWriteRejected":true,"snapshots":{"restored":1,"chunks":2,"expired":0,"capturing":0,"review":[]}},"durationMs":5213,"next":"pnpm db:restore:verify --backup .biblib/backups/20261023T215556Z-scratch-7adb9b --profile scratch"}

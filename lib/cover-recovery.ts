@@ -1,5 +1,6 @@
 import { DEFAULT_BOOK_COVER, normalizeBookCover } from "./book-covers"
 import { normalizeIsbn } from "./isbn"
+import { emitSafely, type TelemetryEmitter } from "./observability/emitter"
 import type { Book } from "./types"
 
 export const COVER_RECOVERY_BATCH_SIZE = 20
@@ -17,6 +18,13 @@ export interface CoverRecoveryResult {
   recovered: number
   unavailable: number
   skipped: number
+}
+
+/** Se llama después del commit; los contadores no contienen fichas ni cursores. */
+export function recordCoverRecovery(result: CoverRecoveryResult, telemetry: TelemetryEmitter): void {
+  for (const outcome of ["recovered", "unavailable", "skipped"] as const) {
+    if (result[outcome] > 0) emitSafely(telemetry, "cover.recovery", { operation: "cover.outcome", result: outcome, batch: result[outcome] })
+  }
 }
 
 export function isCoverRecoveryCandidate(cover: Book["cover"]): boolean {

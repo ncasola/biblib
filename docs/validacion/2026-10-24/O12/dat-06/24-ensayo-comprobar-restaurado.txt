@@ -1,0 +1,41 @@
+{
+ "etapa": "0011",
+ "fichas": 121,
+ "encontradas": 121,
+ "coinciden": 121,
+ "distintas": [],
+ "ejemplares": 121,
+ "ediciones": 119,
+ "obras": 0,
+ "edicionesCompartidas": [
+  [
+   "4f878cb5-18a9-4cd4-9d84-8b5f7fb8f954",
+   "fc11d3af-baa0-483d-8d5f-2b862dd72d0d"
+  ],
+  [
+   "45cafb8d-a835-4127-b49e-25aa342e75c7",
+   "d07ef099-4f2f-493b-8a8e-1c26956ea948"
+  ]
+ ],
+ "portadaPrivada": {
+  "asset": "3d90cc19-78ff-4433-9896-411272df5248",
+  "estado": "restored"
+ },
+ "informe": [
+  "0010_works_editions_copies:conflict=4",
+  "0010_works_editions_copies:invalid=1",
+  "0010_works_editions_copies:normalized=1",
+  "0010_works_editions_copies:summary=1",
+  "0011_copies_cutover:grouped=2",
+  "0011_copies_cutover:summary=1"
+ ],
+ "comparacion": {
+  "books": 121,
+  "works": 0,
+  "copies": 121,
+  "sample": [],
+  "accounts": 1,
+  "editions": 119,
+  "mismatches": 0
+ }
+}

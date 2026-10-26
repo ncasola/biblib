@@ -1,0 +1,16 @@
+{
+  "generatedAt": "2026-10-24T11:10:34.566Z",
+  "profile": "test",
+  "downCommand": "pnpm db:local:down --profile test",
+  "downExitCode": 0,
+  "scaleAccountRemoved": true,
+  "activeContainers": [],
+  "retainedNetworks": [
+    "biblib-test-network"
+  ],
+  "retainedVolumes": [
+    "supabase_db_biblib-test",
+    "supabase_storage_biblib-test"
+  ],
+  "foreignResources": "Sin operaciones sobre recursos ajenos; scratch no se levantó desde este worktree"
+}

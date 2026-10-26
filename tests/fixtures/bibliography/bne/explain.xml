@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<explainResponse xmlns="http://www.loc.gov/zing/srw/"><version>1.2</version><record><recordSchema>http://explain.z3950.org/dtd/2.1/</recordSchema><recordPacking>xml</recordPacking><recordData><explain xmlns="http://explain.z3950.org/dtd/2.0/" xmlns:ns="http://explain.z3950.org/dtd/2.1/"><indexInfo><set identifier="marcxml" name="alma"/><index sort="true">
+            <ns:title>Creator</ns:title>
+            <map>
+              <name set="alma">creator</name>
+            </map>
+            <configInfo>
+              <supports type="relation">all</supports>
+              <supports type="relation">=</supports>
+              <supports type="relation">==</supports>
+            </configInfo>
+          </index>
+<index>
+            <ns:title>ISBN</ns:title>
+            <map>
+              <name set="alma">isbn</name>
+            </map>
+            <configInfo>
+              <supports type="relation">all</supports>
+              <supports type="relation">=</supports>
+              <supports type="emptyTerm"/>
+            </configInfo>
+          </index>
+<index sort="true">
+            <ns:title>Title</ns:title>
+            <map>
+              <name set="alma">title</name>
+            </map>
+            <configInfo>
+              <supports type="relation">all</supports>
+              <supports type="relation">=</supports>
+              <supports type="relation">==</supports>
+              <supports type="emptyTerm"/>
+            </configInfo>
+          </index></indexInfo></explain></recordData></record></explainResponse>

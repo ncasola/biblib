@@ -1,0 +1,156 @@
+name: Promoción preparada (deshabilitada)
+
+# Solo invocación manual, sin push, PR, schedule ni workflow_call.
+# La constante false impide incluso acceder a los environments hasta una revisión autorizada.
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Objetivo autorizado
+        type: choice
+        options: [preprod, prod]
+        required: true
+      commit:
+        description: SHA completo con CI aceptada y lockfile fijado
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: promocion-${{ inputs.target }}
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    if: ${{ false }}
+    name: Build específico y plan de solo lectura
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: ${{ inputs.target }}-plan
+    outputs:
+      plan_hash: ${{ steps.plan.outputs.plan_hash }}
+    env:
+      BIBLIB_EXPECT_PROJECT_REF: ${{ vars.BIBLIB_EXPECT_PROJECT_REF }}
+      NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+      SUPABASE_DB_SSLMODE: verify-full
+      NEXT_TELEMETRY_DISABLED: "1"
+      RELEASE_TARGET: ${{ inputs.target }}
+      RELEASE_COMMIT: ${{ inputs.commit }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Exigir SHA completo
+        run: '[[ "$RELEASE_COMMIT" =~ ^[0-9a-f]{40}$ ]]'
+      - name: Descargar commit autorizado
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.commit }}
+          persist-credentials: false
+      - name: Preparar pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+      - name: Preparar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24.11.1"
+          cache: pnpm
+      - name: Instalar desde el mismo lockfile
+        run: pnpm install --frozen-lockfile
+      - name: Construir para este proyecto (sin migraciones)
+        run: pnpm "build:$RELEASE_TARGET"
+      - name: Verificar bundle remoto
+        run: pnpm check:bundle --dist-dir ".next-$RELEASE_TARGET" --forbid-local-login
+      - name: Sellar y verificar artefacto específico
+        run: |
+          pnpm ci:release create "$RELEASE_TARGET"
+          pnpm ci:release verify "$RELEASE_TARGET"
+      - name: Planificar sin DDL y publicar hash para revisión
+        id: plan
+        run: |
+          pnpm "db:plan:$RELEASE_TARGET" --out release.json --expect-project "$BIBLIB_EXPECT_PROJECT_REF"
+          node scripts/ci/review-plan.mjs
+      - name: Empaquetar el mismo build para aplicar y desplegar
+        run: tar --exclude=".next-$RELEASE_TARGET/cache" -cf "$RUNNER_TEMP/release.tar" ".next-$RELEASE_TARGET" public .biblib/ci/release.json .biblib/plans/release.json
+      - name: Conservar artefacto y plan revisables (sin credenciales ni respaldos)
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ inputs.target }}-${{ inputs.commit }}-${{ github.run_id }}
+          path: ${{ runner.temp }}/release.tar
+          if-no-files-found: error
+          retention-days: 7
+
+  apply:
+    if: ${{ false }}
+    name: Aplicación tras revisión del plan (preprod o prod independiente)
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # Configurar revisión obligatoria, ramas autorizadas y prohibir autoaprobación.
+    environment: ${{ inputs.target }}
+    env:
+      BIBLIB_EXPECT_PROJECT_REF: ${{ vars.BIBLIB_EXPECT_PROJECT_REF }}
+      NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+      SUPABASE_DB_SSLMODE: verify-full
+      RELEASE_TARGET: ${{ inputs.target }}
+      REVIEWED_PLAN_HASH: ${{ needs.plan.outputs.plan_hash }}
+      BACKUP_RECEIPT: ${{ vars.BIBLIB_BACKUP_RECEIPT_PATH }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Descargar el mismo commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.commit }}
+          persist-credentials: false
+      - name: Preparar pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+      - name: Preparar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24.11.1"
+          cache: pnpm
+      - name: Instalar desde el mismo lockfile (sin migraciones)
+        run: pnpm install --frozen-lockfile
+      - name: Recuperar build y plan de esta ejecución
+        uses: actions/download-artifact@v4
+        with:
+          name: release-${{ inputs.target }}-${{ inputs.commit }}-${{ github.run_id }}
+          path: ${{ runner.temp }}/release
+      - name: Recuperar el mismo binario y verificar huella y checksums
+        run: |
+          tar -xf "$RUNNER_TEMP/release/release.tar"
+          pnpm ci:release verify "$RELEASE_TARGET"
+      - name: Exigir provisión de respaldo privado ensayado
+        run: |
+          # Pendiente: adaptador del almacén privado; jamás descargar copias por artifacts públicos.
+          test -n "$BACKUP_RECEIPT" && test -f "$BACKUP_RECEIPT"
+      - name: Aplicar solo el hash autorizado con su recibo
+        run: pnpm "db:migrate:$RELEASE_TARGET" --plan .biblib/plans/release.json --expect-project "$BIBLIB_EXPECT_PROJECT_REF" --expect-plan "$REVIEWED_PLAN_HASH" --backup-receipt "$BACKUP_RECEIPT"
+      - name: Verificar historial posterior y el artefacto conservado
+        run: |
+          pnpm "db:status:$RELEASE_TARGET" --expect-project "$BIBLIB_EXPECT_PROJECT_REF"
+          pnpm ci:release verify "$RELEASE_TARGET"
+      - name: Publicación y smoke del alojamiento pendientes de adaptador autorizado
+        run: |
+          echo 'Pendiente: publicar este mismo binario compatible, comprobar el alojamiento y aceptar el release.'
+          exit 2
+      - name: Conservar registro sin secretos con estado anterior y posterior
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: promocion-${{ inputs.target }}-${{ inputs.commit }}-${{ github.run_id }}
+          path: .biblib/promotions/*.json
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 14

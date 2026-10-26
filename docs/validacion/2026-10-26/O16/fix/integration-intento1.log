@@ -1,0 +1,472 @@
+
+> biblib@1.0.0 test:integration:local C:\Users\ncaso\orca\workspaces\biblib\u-qa-01
+> node tests/integration/run.mjs "--profile" "test"
+
+Integración Supabase real · perfil test · biblib-test · huella b831ef825c09 · run 25fd2917331c
+Compilando la app para el perfil test…
+Bundle de cliente sin credenciales administrativas ni URLs privadas.
+(node:29452) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/ncaso/orca/workspaces/biblib/u-qa-01/lib/account-deletion/worker.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-qa-01\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ sesión viva (logout fallido): las acciones responden ACCOUNT_INACTIVE y no escriben (1527.8232ms)
+✔ sesión cerrada: el JWT antiguo no escribe ni por acciones, ni por la Data API, ni por Storage (587.8548ms)
+(node:37436) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/ncaso/orca/workspaces/biblib/u-qa-01/lib/account-deletion/worker.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-qa-01\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ una cuenta suprimida que vuelve con un respaldo anterior se retira entera antes de abrir; B no cambia (1299.4866ms)
+✔ un trabajo y una eliminación en ejecución en el respaldo se reanudan como reintento, sin su lease (276.6829ms)
+✔ una solicitud a medias restaurada con el respaldo también se aplica antes de abrir (366.1985ms)
+(node:32656) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/ncaso/orca/workspaces/biblib/u-qa-01/lib/account-deletion/worker.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-qa-01\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ sin sesión no hay solicitud ni estado (659.2964ms)
+✔ A solo pide su propia eliminación: un ID ajeno en la entrada se rechaza y B no cambia (747.4466ms)
+✔ doble clic y reintento con otra clave devuelven la misma solicitud (637.9084ms)
+✔ el worker bloquea la cuenta en GoTrue: ni un inicio de sesión nuevo ni un refresh antiguo funcionan (390.9379ms)
+(node:25568) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/ncaso/orca/workspaces/biblib/u-qa-01/lib/account-deletion/worker.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-qa-01\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ eliminación completa: trabajo en vuelo, Storage caído, worker interrumpido y continuación sin recrear datos (1606.0275ms)
+✔ un worker vencido tras terminar no recrea nada y repetir el ciclo no hace nada (473.1692ms)
+✔ A sube y adjunta su portada propia; la lee por la ruta autenticada y B no puede obtenerla ni firmarla, tampoco por Storage (6441.9464ms)
+✔ la subida propia pasa las mismas validaciones: tipo falso, SVG, políglota, tamaño y dimensiones; repetir no duplica (861.1808ms)
+✔ Google Books o una política sin rehostCover no generan red ni objeto, ni por la acción ni con un trabajo antiguo (368.7497ms)
+✔ tras un restore, la ruta revalida bytes y derechos vigentes del dueño antes de volver a servir (680.5625ms)
+✔ la descarga con derechos válidos se valida, se sube con la sesión y se adjunta con la versión vista (5128.046ms)
+✔ red simulada: redirección a localhost, respuesta lenta, tamaño mentido, DNS cambiante, MIME falso, SVG y dimensiones excesivas (911.6984ms)
+✔ una edición concurrente o una cancelación impiden adjuntar el resultado tardío (448.0356ms)
+✔ repetir no duplica y matar el trabajador entre subir y registrar deja un objeto purgable, no un enlace roto (2281.1354ms)
+✔ versiones anteriores retienen la referencia; licencia vencida, cuarentena caducada y purga (1954.6077ms)
+✔ cuotas y cuenta bloqueada: sin subidas, adquisiciones ni escrituras de un trabajo antiguo (476.4051ms)
+✔ Auth del perfil test solo contiene las cuentas ficticias A/B del censo, sin identidades externas (769.1392ms)
+✔ el correo local solo se entrega a Mailpit y a destinatarios @biblib.test (8.4531ms)
+✔ getUser identifica a A y B en GoTrue y rechaza un token alterado (4421.4654ms)
+✔ cookies SSR: nombre sb-<ref>-auth-token, Path=/, SameSite=Lax y sesión en base64url (0.5078ms)
+✔ renovación por el SDK: tokens nuevos, misma identidad y cookies actualizadas (131.0832ms)
+✔ anónimo en una ruta privada con consulta vuelve al acceso conservando la ruta (4.4734ms)
+✔ con sesión, /login devuelve a la ruta con consulta y descarta destinos externos (254.1634ms)
+✔ una sesión vencida con refresh válido se renueva en el proxy y mantiene el destino (257.9785ms)
+✔ cookies fragmentadas producidas por el SDK funcionan en el proxy y en las acciones (268.4192ms)
+✔ cerrar sesión elimina la vista privada, también con una copia antigua de las cookies (290.1109ms)
+✔ cierre y renovación concurrentes no dejan ninguna sesión utilizable (1968.0488ms)
+✔ authenticated y anon no leen ni escriben la caché compartida, las consultas en vuelo ni las cuotas (2600.5389ms)
+✔ ninguna función catalogue_* es ejecutable con rol de cliente (47.1868ms)
+✔ caché privada: A solo ve y purga lo suyo; no escribe, no actualiza y no toca lo de B (30.7153ms)
+✔ la Data API con el JWT real de A no expone tablas ni funciones de coordinación (63.9935ms)
+✔ dos procesos piden a la vez el mismo ISBN: una única consulta en vuelo y resultado equivalente (3011.2396ms)
+✔ ISBN distintos desde búsqueda, importación y portada respetan el intervalo global de OL (5628.8896ms)
+✔ OL y BNE no comparten reserva: cada proveedor tiene su cubo y su intervalo (1291.5788ms)
+✔ 429 con Retry-After: cooldown compartido entre procesos, sin peticiones y sin caché de ausencia (3785.6173ms)
+✔ worker muerto tras reservar: su concesión caduca, otro proceso la toma y la cuota sigue contando (1949.0156ms)
+✔ carrera de caducidad: un worker tardío no publica una entrada vieja sobre la reciente (fencing) (2608.5677ms)
+✔ caché malformada se descarta y se vuelve a consultar; nunca llega como ficha ni ausencia (589.4941ms)
+✔ cambio de política o de schema invalida entradas incompatibles; una política que deniega no escribe (2382.1904ms)
+✔ búsqueda de texto: caché privada por dueño con HMAC; B no reutiliza la de A y no queda el texto (478.8858ms)
+✔ Postgres no disponible: unavailable sin ráfaga externa (223.0532ms)
+(node:37908) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/ncaso/orca/workspaces/biblib/u-qa-01/lib/account-deletion/worker.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-qa-01\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ CSV real: BOM, Unicode, comillas y saltos; staging no publica, CAS JSON confirma y retry no duplica (2612.1694ms)
+✔ CSV real: remap invalida preview anterior, cambia hash y conserva source_row_key e IDs (988.9988ms)
+✔ CSV real: cambios de colección invalidan confirmación; B y anónimo no acceden a sesión, informe o perfiles (926.6014ms)
+✔ CSV real: errores por fila bloquean por defecto; omisión explícita tiene plan e informe sin fórmulas ejecutables (695.6155ms)
+✔ CSV real: omitir existente frente a otra copia reutiliza edición sin sobrescribirla (1220.0564ms)
+✔ CSV real: subida por trozos fuera de orden, multibyte partido, replay y hash corrupto (562.4256ms)
+✔ CSV real: cabecera duplicada y truncamiento bloquean incluso el modo parcial; límite propio de sesiones (979.4215ms)
+✔ B no lee, enumera ni confirma vistas previas u operaciones de A por SQL (2934.987ms)
+✔ authenticated no altera library_state, ni la suya ni la de otro; lock_library solo bloquea la propia (56.3509ms)
+✔ anon no accede a la revisión, las vistas previas ni la función de bloqueo (15.148ms)
+✔ la Data API no expone revisión, vistas previas, operaciones ni lock_library (47.3109ms)
+✔ reemplazo preparado y cambio posterior en otra sesión de A: conflicto, nada se borra y el reintento no lo fuerza (8438.5153ms)
+✔ una mutación de B no invalida la revisión de A; la confirmación aplica el plan una sola vez (727.4462ms)
+✔ doble confirmación simultánea con la misma clave produce una única operación (468.4653ms)
+✔ una vista previa caducada exige volver a revisar y no aplica nada (189.6114ms)
+✔ B no puede confirmar ni descubrir una vista previa de A (148.0091ms)
+✔ los 111 registros sintéticos legacy se revisan y se importan completos (1079.528ms)
+✔ los fixtures de A siguen intactos tras todos los escenarios (2.6751ms)
+✔ crear, recargar y continuar: otra sesión del dueño ve el mismo progreso y lo controla (7692.7654ms)
+✔ recuperar portadas desde Ajustes inicia un trabajo que el servidor completa (190.7881ms)
+✔ A no usa IDs de B: consultar, controlar o confirmar responde como inexistente y B no cambia (451.2471ms)
+✔ la entrada interna solo acepta el token del ejecutor y nunca un dueño de la petición (80.7528ms)
+✔ matar la publicación antes del commit: otro trabajador publica una sola vez, sin duplicados (5355.3828ms)
+✔ matar tras el commit con la respuesta perdida: consultar y repetir devuelven el mismo resultado (847.5067ms)
+✔ cancelar antes de publicar: no se aplica nada (775.5833ms)
+✔ cancelar durante la publicación atómica: espera al commit y responde que llegó después (3773.371ms)
+✔ cancelar en la fase de portadas: la importación publicada se conserva (719.126ms)
+✔ una revisión cambiada deja el trabajo en revisión y repetir no lo aplica (778.6882ms)
+✔ confirmImportAction publica mediante un trabajo y la misma clave recupera el mismo resultado (399.6165ms)
+✔ crear y continuar: los pasos confirman progreso y portadas sin tocar los libros del seed (4361.997ms)
+✔ dos trabajadores sobre el mismo elemento: solo el que tiene el lease vigente confirma (9684.7942ms)
+✔ matar el trabajador tras la consulta y antes de persistir: otro lo recupera sin duplicar (5849.8088ms)
+✔ lease vencido: el trabajador antiguo no escribe aunque nadie lo haya reclamado (4683.1242ms)
+✔ 429 con Retry-After: espera compartida, sin más peticiones y nunca «sin portada» (3938.3674ms)
+✔ 503 y JSON roto se reintentan con backoff y cuentan como intento; nunca son ausencia (5727.1308ms)
+✔ cancelar durante las portadas: el paso en curso no escribe (6726.6907ms)
+✔ cuenta bloqueada: el trabajador antiguo no escribe y el trabajo queda no autorizado (7198.5811ms)
+(node:39876) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/ncaso/orca/workspaces/biblib/u-qa-01/lib/account-deletion/worker.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-qa-01\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ loans: alta concurrente por acciones, un activo y reintento tras respuesta perdida sin escritura (1365.4832ms)
+✔ loans: dos conexiones simultáneas solo abren un préstamo (24.5465ms)
+✔ loans: alias y fechas inválidos; editar y borrar sin confirmar no escriben (325.7302ms)
+✔ loans: B no ve ni modifica préstamos de A por las acciones reales (357.0043ms)
+✔ loans: devolución con versión, reintento y préstamo sucesivo conservando historial (438.2201ms)
+✔ loans: editar confirmado rota versión y las pestañas antiguas no sobrescriben ni borran (246.7196ms)
+✔ loans: fechas civiles idénticas en varios husos, también en la lectura de la acción (113.3803ms)
+✔ loans: exportación e importación v2 por acciones conservan préstamos e historial (574.2644ms)
+✔ loans: borrado confirmado de un préstamo conserva el ejemplar; libro borrado no deja historial (412.8392ms)
+✔ loans: una cuenta inactiva no presta, devuelve, edita ni borra con su sesión anterior (302.9686ms)
+✔ B no ve las ubicaciones de A (1571.7099ms)
+✔ B manipula IDs de A en cada acción: responde como si no existieran y A no cambia (851.0872ms)
+✔ la foto de A no se sirve a B ni sin sesión, aunque se conozca la ruta (127.8033ms)
+✔ el anónimo no llega a las acciones ni a la pantalla (5.06ms)
+✔ crear un mueble y sus baldas; una ubicación vacía se conserva y aparece en la lista (1195.1033ms)
+✔ renombrar con la versión vista; una versión antigua no pisa el cambio (394.8706ms)
+✔ mover con todo lo que contiene; un ciclo (BL001) se rechaza con un mensaje claro y no cambia nada (377.8974ms)
+✔ más de 8 niveles (BL002), también al mover un subárbol, se rechaza con un mensaje claro (784.0334ms)
+✔ borrar: vacía se borra; ocupada exige vaciarla o la elección explícita, y nunca cambia estantería ni estado (685.6242ms)
+✔ el contenido de una ubicación se filtra por texto y estado, y puede incluir las interiores (561.2644ms)
+✔ sin ubicación física la ficha y la ubicación del ejemplar responden igual que antes (1261.0065ms)
+✔ asignar y mover con versión: ruta legible, la versión antigua se rechaza y la estantería y el estado no cambian (260.114ms)
+✔ la posición es manual: compartirla se avisa y ninguna otra se renumera (459.6873ms)
+✔ quitar la ubicación deja el ejemplar sin ella; con versión antigua se rechaza (188.1619ms)
+✔ borrar el ejemplar retira su ubicación y la ubicación se conserva (75.4237ms)
+✔ subir: se guarda un WebP sin EXIF ni GPS, solo en la ruta del dueño, y se lee por la ruta autenticada (1196.9745ms)
+✔ una foto inválida se rechaza sin cambiar la ubicación ni dejar imágenes en cuarentena (580.9322ms)
+✔ sustituir retira la anterior; una sustitución con versión antigua falla y conserva la foto vigente (542.8212ms)
+✔ quitar la foto la descarta; borrar una ubicación con foto también retira su imagen (348.1131ms)
+✔ la exportación v2 declara copies.locations y lleva el árbol (también la caja vacía), la foto por referencia y la ubicación del ejemplar (3050.2994ms)
+✔ reemplazar desde esa copia devuelve el árbol, la ubicación del ejemplar y la foto tras moverlos con las acciones (686.3467ms)
+✔ sustituir una foto que cita una versión anterior la conserva para poder restaurarla (188.7268ms)
+✔ un JSON antiguo (v1) se importa con la ubicación vacía y sin inventar ubicaciones (282.3117ms)
+✔ una cuenta en eliminación no escribe por ninguna acción de ubicaciones (ACCOUNT_INACTIVE) y no cambia nada (507.8049ms)
+(node:37824) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/ncaso/orca/workspaces/biblib/u-qa-01/lib/media/avatar-workflow.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-qa-01\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ avatar: subir, persistir, sustituir y quitar por acciones reales; Google no cambia (1938.4499ms)
+✔ avatar: B no lee la ruta ni modifica el perfil de A; ruta manipulada y versión antigua fallan (448.6977ms)
+✔ avatar: fallo de red de Storage conserva los bytes y la referencia anterior (165.6845ms)
+✔ media: purga cuarentenas vencidas y huérfanos, mantiene avatar citado y permite reintento (141.7791ms)
+✔ avatar: una cuenta inactiva no sube ni quita con su JWT anterior (450.8017ms)
+✔ dos copias de un ISBN: una edición, dos ejemplares con estado, ubicación y comprobación independientes (4845.6984ms)
+✔ cambiar una edición compartida informa de cuántos ejemplares afecta y exige confirmarlo (849.8305ms)
+✔ un libro sin ISBN: null en la edición, se edita, se exporta en v2 y se restaura con null (532.7754ms)
+✔ importar un v2 con dos copias de una edición conserva la edición compartida tras la vista previa (215.761ms)
+✔ aislamiento: B no cita ediciones ni ejemplares de A ni fusiona ediciones ajenas (486.5827ms)
+✔ concurrencia e idempotencia: altas simultáneas no duplican y repetir una clave recupera el resultado (380.7704ms)
+✔ fusionar ediciones: los ejemplares pasan con su estado y la revisión vieja se rechaza (816.6828ms)
+✔ ningún proveedor simulado acredita la comprobación física (279.1267ms)
+(node:33556) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/ncaso/orca/workspaces/biblib/u-qa-01/lib/account-deletion/worker.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-qa-01\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ personal: alta atómica, reintento idempotente y otra copia empieza vacía (1684.6599ms)
+✔ personal: CRUD, notas de 4000 puntos de código y ausencia explícita (1388.0052ms)
+✔ personal: duplicados simultáneos Unicode reutilizan un ID; ñ se distingue de n (348.187ms)
+✔ personal: aislamiento A/B en notas, vínculos, etiquetas y mutaciones (715.9267ms)
+✔ personal: dos ediciones concurrentes, incluso creación inicial y solo tags, producen un conflicto (785.5361ms)
+✔ personal: renombrar y borrar etiqueta conserva ejemplares y detecta borradores antiguos (573.088ms)
+✔ personal: borrar una etiqueta importada sin anotación invalida también el token null (422.7512ms)
+✔ personal: filtros OR/AND antes de paginar y en combinación con estantería (1075.0126ms)
+✔ personal: ida y vuelta v2 y reemplazo por importación antigua vacía personales (817.0791ms)
+✔ personal: al llegar a 1000 etiquetas se reutilizan las existentes y se rechazan las nuevas (432.7281ms)
+(node:19560) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/ncaso/orca/workspaces/biblib/u-qa-01/lib/account-deletion/worker.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-qa-01\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ B no lee nada de producto de A y A ve lo suyo (1032.6783ms)
+✔ B no escribe filas a nombre de A ni cita etiquetas, ubicaciones, series, ejemplares o ediciones de A (68.0061ms)
+✔ una cuenta en eliminación no escribe en ninguna tabla de producto ni reserva imágenes (BD001) (43.9783ms)
+(node:34756) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/ncaso/orca/workspaces/biblib/u-qa-01/lib/account-deletion/worker.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-qa-01\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ etiquetas únicas por nombre normalizado (mayúsculas y acentos) y la ñ distingue (873.7853ms)
+✔ hasta 20 etiquetas por ejemplar, también en una sola sentencia; notas de 4000 y valoración 1–5 o nula (47.8575ms)
+✔ ubicaciones: sin ciclos (también en una sentencia), máximo 8 niveles, ocupada o con hijas no se borra, la estantería lógica no cambia (80.463ms)
+✔ serie: posición NUMERIC exacta 1, 1.5, 2 con orden desconocido al final; una serie por edición; borrar la serie conserva ediciones (38.6155ms)
+(node:32584) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/ncaso/orca/workspaces/biblib/u-qa-01/lib/account-deletion/worker.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-qa-01\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ el worker retira etiquetas, notas, árbol de ubicaciones, series, evidencias, revisión, perfil, CSV e imágenes, y B sigue intacto (1673.7906ms)
+(node:30184) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/ncaso/orca/workspaces/biblib/u-qa-01/lib/account-deletion/worker.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-qa-01\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ la exportación v2 declara y lleva etiquetas, notas, ubicaciones, series y evidencias, con fotos por referencia y sha256 (1579.2676ms)
+✔ reemplazar desde la propia copia devuelve los datos de producto exactos, con los mismos IDs y fotos propias (319.4918ms)
+✔ la versión anterior que capturó el reemplazo restaura también sus datos de producto (320.3077ms)
+✔ otra cuenta importa el archivo sin las fotos de A y con IDs propios; los ejemplares ya existentes no reciben datos (476.3593ms)
+✔ un archivo anterior (v2 sin secciones nuevas o v1) se importa con los datos de producto vacíos (222.3447ms)
+(node:15600) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/ncaso/orca/workspaces/biblib/u-qa-01/lib/account-deletion/worker.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-qa-01\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ el bucket es privado, solo WebP y 5 MiB, con las tres políticas del dueño (1359.1696ms)
+✔ avatar propio: subida autorizada, B no lo lee ni lo sustituye, perfil privado y metadata OAuth intacta (170.7491ms)
+✔ sin reserva no se sube; otra ruta del mismo dueño tampoco; un asset en cuarentena no se cita (46.6156ms)
+✔ foto de ubicación: citada no se descarta; sustituida se descarta y su objeto se retira con la sesión del dueño (81.1952ms)
+(node:9940) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/ncaso/orca/workspaces/biblib/u-qa-01/lib/account-deletion/worker.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-qa-01\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ B no lee nada de la lectura ni de los préstamos de A y A ve lo suyo (963.2023ms)
+✔ B no escribe a nombre de A ni cita ejemplares o ciclos de A; las funciones no le revelan nada (37.1092ms)
+✔ B usa sus propios ejemplares con normalidad (9.6636ms)
+✔ una cuenta en eliminación no escribe lectura ni préstamos, tampoco por las funciones (BD001) (35.9412ms)
+(node:8756) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/ncaso/orca/workspaces/biblib/u-qa-01/lib/account-deletion/worker.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-qa-01\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ el worker retira ciclos, entradas y préstamos; la cuenta queda sin restos y B sigue intacta (1485.8439ms)
+(node:33584) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/ncaso/orca/workspaces/biblib/u-qa-01/lib/account-deletion/worker.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-qa-01\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ la exportación v2 declara y lleva lectura y préstamos: instantes en UTC, fechas civiles tal cual y nada inventado (1423.8735ms)
+✔ reemplazar desde la propia copia devuelve lectura y préstamos exactos con los mismos IDs (259.6458ms)
+✔ la versión anterior que capturó el reemplazo restaura también la lectura y los préstamos (285.7907ms)
+✔ otra cuenta fusiona el archivo con IDs propios y repetir la fusión no duplica nada (440.2888ms)
+✔ un archivo anterior (v1) con libros leídos se importa sin lectura ni préstamos (211.4843ms)
+(node:35712) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/ncaso/orca/workspaces/biblib/u-qa-01/lib/product/reading-loans.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-qa-01\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ dos dispositivos inician la misma lectura a la vez: un solo ciclo abierto y el mismo para ambos (928.39ms)
+✔ terminar con la versión y releer crea el ciclo 2; el 1 conserva estado y fechas, y el ejemplar no cambia (38.9055ms)
+✔ páginas: dentro del total conocido, nunca por encima (BR001); con total desconocido se registran sin porcentaje (52.1503ms)
+✔ el estado read actual no se convierte en ciclos, sesiones ni fechas (2.6511ms)
+(node:7600) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/ncaso/orca/workspaces/biblib/u-qa-01/lib/account-deletion/worker.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-qa-01\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ dos dispositivos prestan el mismo ejemplar a la vez: un solo préstamo activo (1236.3024ms)
+✔ devolver con la versión libera el ejemplar; el préstamo sucesivo conserva el historial (45.5445ms)
+✔ fechas civiles idénticas con cualquier huso de sesión; alias sin correo ni teléfono (68.1894ms)
+✔ prestar no cambia el estado de lectura y cambiarlo por la app no toca el préstamo (97.1871ms)
+✔ borrar el ejemplar por la app se lleva su lectura y sus préstamos; el resto de la cuenta sigue (99.1531ms)
+(node:4352) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/ncaso/orca/workspaces/biblib/u-qa-01/lib/account-deletion/worker.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-qa-01\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ B con los IDs de A: NOT_FOUND en cada acción y A no cambia (2375.5016ms)
+✔ las estadísticas y «Seguir leyendo» de B no cuentan nada de A (194.9765ms)
+✔ el anónimo no llega a las acciones de lectura (2.9235ms)
+✔ una cuenta en eliminación no escribe por ninguna acción de lectura (ACCOUNT_INACTIVE) y no cambia nada (598.0961ms)
+(node:23300) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/ncaso/orca/workspaces/biblib/u-qa-01/lib/account-deletion/worker.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-qa-01\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ estadísticas con cero ciclos: todo a cero, con periodo y denominador, y los leídos legados aparte (1033.8295ms)
+✔ «Seguir leyendo» no deduce lecturas del estado actual: sin ciclos abiertos, vacío aunque haya un libro «Leyendo» (65.9636ms)
+✔ consultar la lectura de un libro leído no crea ciclos ni fechas (81.4305ms)
+✔ al empezar a leer un libro legado, sus estadísticas solo cuentan lo registrado desde entonces (149.4766ms)
+(node:37492) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/ncaso/orca/workspaces/biblib/u-qa-01/lib/account-deletion/worker.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-qa-01\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ iniciar a la vez desde dos dispositivos: un solo ciclo abierto, el mismo para ambos y ninguno es un error (1183.729ms)
+✔ una versión vista en el otro dispositivo es un conflicto y no pisa el cambio (538.9952ms)
+✔ sesiones registradas a la vez desde los dos dispositivos se conservan las dos (306.4899ms)
+(node:35676) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/ncaso/orca/workspaces/biblib/u-qa-01/lib/account-deletion/worker.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-qa-01\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ instantes con +14:00 y -12:00 se guardan y se devuelven en UTC (1230.3895ms)
+✔ las sesiones a ambos lados de la medianoche UTC son dos días en UTC y uno en Madrid, Nueva York o Kiritimati (341.2621ms)
+✔ un cierre en la Nochevieja UTC cuenta en el año nuevo de Madrid y en el anterior en UTC (296.1168ms)
+(node:30100) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/ncaso/orca/workspaces/biblib/u-qa-01/lib/account-deletion/worker.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-qa-01\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ iniciar dos veces: la segunda devuelve el ciclo abierto sin crear otro (1085.4884ms)
+✔ registrar la misma sesión dos veces (mismo ID) no la duplica (238.2799ms)
+✔ corregir y borrar repetidos con la versión vieja: reintento propio (631.7935ms)
+✔ terminar dos veces con la misma fecha: reintento; con otra fecha o abandonando, conflicto (393.4309ms)
+✔ reabrir dos veces: la segunda ya lo encuentra en curso (249.602ms)
+✔ sin confirmación no se termina, no se reabre ni se borra (119.5365ms)
+(node:26464) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/ncaso/orca/workspaces/biblib/u-qa-01/lib/account-deletion/worker.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-qa-01\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ copia sin páginas: se registra la página y no hay porcentaje en la ficha ni en el inicio (1624.4035ms)
+✔ con total conocido: porcentaje real; negativa, invertida o por encima del total se rechazan sin escribir (424.9652ms)
+✔ un total corregido a la baja después: la nota se edita, la página no sube y no hay porcentaje (285.1075ms)
+(node:36632) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/ncaso/orca/workspaces/biblib/u-qa-01/lib/account-deletion/worker.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-qa-01\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ la relectura exige confirmarla y la última lectura vista (1428.3751ms)
+✔ releer crea la lectura n.º 2 y la primera conserva estado, fechas y sesiones (91.8581ms)
+✔ reabrir la primera con la relectura en curso: «ya hay una lectura en curso» (23505) y nada cambia (139.4147ms)
+✔ abandonar la relectura y reabrirla: vuelve a «Leyendo» sin fecha de fin y conserva su inicio (195.6703ms)
+✔ las fechas cruzadas (fin antes del inicio) se rechazan con un mensaje claro (141.036ms)
+✔ 2001 libros en dos partes se publican juntos; los observadores ven la colección anterior o la nueva, nunca una mezcla (13995.7614ms)
+✔ parte ausente, duplicada, corrupta o de otro conjunto y total falso: MANIFEST_MISMATCH sin tocar la colección (3145.8256ms)
+✖ partes v1 y v2 mezcladas se rechazan como formatos distintos sin publicar ni perder datos (379.1363ms)
+✔ estanterías vacías y compartidas entre partes: compatibles se unen; contradictorias se rechazan (3190.1183ms)
+✔ un error en la última sentencia o un timeout lo revierten todo, incluido el indicador de éxito, y conservan el staging (5511.4194ms)
+✔ lock_timeout de 1 s: otra transacción con el bloqueo de colección hace fallar la publicación sin aplicar nada (1703.6382ms)
+✔ repetir una parte o el commit da el mismo resultado; el mismo partId con otros bytes es conflicto (1078.721ms)
+✔ una edición en otra pestaña durante el staging invalida el CAS, conserva el staging y exige revisar (2551.8598ms)
+✔ A/B: B no ve, sube, valida, prepara, publica ni descarta la restauración de A, ni por SQL ni por la Data API (875.6347ms)
+✔ límites: más de 10 000 libros o de 80 MiB dan LIMIT_EXCEEDED antes de recibir bytes (165.4011ms)
+✔ las 111 fichas legacy restauran sin pérdida y una parte v1 sola sigue siendo importable (686.6405ms)
+✔ el restore administrativo trata el staging: integridad de trozos y sesiones sin publicar para revisión (197.795ms)
+(node:31240) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/ncaso/orca/workspaces/biblib/u-qa-01/lib/account-deletion/worker.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-qa-01\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ B no enumera incidencias, fuentes ni evidencias de A (1290.9563ms)
+✔ B no compara ni decide sobre una incidencia de A y la respuesta no confirma que exista (248.2029ms)
+✔ A compara su duda de foto: ve la foto citada como privada, sin ruta ni URL firmada (70.1954ms)
+(node:37020) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/ncaso/orca/workspaces/biblib/u-qa-01/lib/account-deletion/worker.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-qa-01\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ aceptar el título de la ficha de proveedor conserva los demás campos, cita la fuente y deja el ejemplar provisional (1342.6619ms)
+✔ una versión antigua de la incidencia o de la edición es un conflicto y no cambia nada (69.3495ms)
+✔ ignorar no borra evidencias, no se regenera sola y se puede reabrir (220.1636ms)
+✔ confirmar en el ejemplar exige la confirmación literal y conserva la foto como evidencia (185.4744ms)
+(node:32792) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/ncaso/orca/workspaces/biblib/u-qa-01/lib/account-deletion/worker.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-qa-01\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ la importación de referencia genera 94 incidencias y ninguna comprobación física falsa (1364.9326ms)
+✔ el cursor recorre todas las incidencias sin repetir y los filtros se combinan (985.4789ms)
+✔ una incidencia cuyo motivo desaparece se resuelve sola y conserva sus evidencias; si vuelve, se reabre la misma (201.9674ms)
+(node:22136) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/ncaso/orca/workspaces/biblib/u-qa-01/lib/account-deletion/worker.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-qa-01\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ homónimos y autores iguales con obras distintas no se proponen como duplicados (1164.7161ms)
+✔ dos revisores: el segundo choca con lo aplicado y no aplica la mitad; el modo parcial informa por fila (463.5218ms)
+✔ una fuente eliminada tras la vista previa es un conflicto: atómico no aplica nada, parcial aplica el resto (219.735ms)
+✔ un lote de más de 50, una vista previa alterada o ajena se rechazan sin aplicar nada (409.1318ms)
+✔ cada cuenta solo recibe su biblioteca desde las acciones (4120.965ms)
+✔ A no lee, modifica, mueve ni borra recursos de B manipulando IDs (822.5171ms)
+✔ anónimo no obtiene datos: el proxy redirige las acciones y la API responde 401 (6.4738ms)
+✔ CRUD propio como A: versión rotada por el trigger, conflicto con versión antigua y portada por defecto (618.5605ms)
+✔ la estantería predeterminada no se borra ni se renombra desde la app (111.5449ms)
+✔ la conexión de la app no arrastra claims: A, B, fallo de A y B otra vez (555.0292ms)
+✔ conexión reutilizada A → B → sin claims, también tras una transacción fallida (768.7222ms)
+✔ PostgREST rechaza el esquema biblib para anónimo y para A (lectura y escritura) (2333.9485ms)
+✔ el esquema público no expone tablas de BibLib (3.2191ms)
+✔ supabase-js con .schema('biblib') no obtiene datos (11.217ms)
+✔ GraphQL no expone libros ni estanterías (pg_graphql desactivado en el stack) (14.1166ms)
+✔ A solo ve sus filas: los libros y estanterías de B no existen para A (731.1405ms)
+✔ A no actualiza ni borra libros o estanterías de B (0 filas afectadas) (17.3462ms)
+✔ A no inserta para B ni enlaza sus libros con estanterías de B (32.4318ms)
+✔ la estantería predeterminada está protegida también para su dueño (15.9892ms)
+✔ anon no tiene acceso al esquema biblib, ni siquiera con claims de A (9.6748ms)
+✔ books_rotate_version rota la versión con el rol authenticated en alta, cambio y versión forzada (17.6109ms)
+(node:23952) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/ncaso/orca/workspaces/biblib/u-qa-01/lib/account-deletion/worker.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-qa-01\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ la exportación v2 declara la capacidad de series y lleva posiciones en texto canónico (1573.7507ms)
+✔ reemplazar desde la propia copia y restaurar la versión anterior devuelven el orden exacto (545.4053ms)
+✔ otra cuenta importa la copia con series de IDs propios y el orden intacto (439.7702ms)
+✔ un archivo v1 se importa sin series ni vínculos inventados (196.8302ms)
+(node:9492) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/ncaso/orca/workspaces/biblib/u-qa-01/lib/account-deletion/worker.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-qa-01\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ el mismo título en otra cuenta es válido y cada cuenta lista solo lo suyo (1505.0033ms)
+✔ B no abre, edita ni borra la serie de A: responde como una serie inexistente (248.9869ms)
+✔ B no vincula una edición de A ni usa una serie de A, y A no ve los de B (256.3207ms)
+✔ B no mueve ni quita el vínculo de A aunque conozca su versión (114.6904ms)
+✔ con SQL y los claims de B, ninguna fila de series cruza cuentas (23.2034ms)
+✔ sin sesión ninguna acción de series responde con datos (10.2359ms)
+✔ las series y los vínculos de A siguen intactos tras todos los intentos de B (53.504ms)
+(node:35680) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/ncaso/orca/workspaces/biblib/u-qa-01/lib/account-deletion/worker.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-qa-01\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ crea una serie privada con título y descripción opcional y la lista sin volúmenes (1065.1444ms)
+✔ el orden es exacto: 1, 1.5 y 2 por posición, con el orden desconocido al final y sin usar la fecha (270.4561ms)
+✔ una serie incompleta es válida y un volumen sin posición se muestra como orden desconocido, al final (131.9393ms)
+✔ rechaza posiciones con ceros a la izquierda, negativas o no numéricas sin tocar la serie (781.2873ms)
+✔ una edición pertenece a cero o una serie: vincularla otra vez es un conflicto (55.827ms)
+✔ mover un volumen cambia la posición con su versión y una versión antigua es un conflicto (231.8757ms)
+✔ mover un volumen a otra serie lo retira de la primera y conserva el libro (233.1599ms)
+✔ quitar un volumen exige su versión y no borra la edición ni el ejemplar (301.0138ms)
+✔ el estado de la ficha refleja el vínculo y las series disponibles (120.9718ms)
+✔ editar la serie compara su versión y borrarla retira los vínculos sin borrar libros (387.3755ms)
+✔ el filtro por serie del catálogo devuelve solo las ediciones de esa serie (455.0144ms)
+✔ reemplazar A crea exactamente una versión coherente; fusionar no crea ninguna y repetir la clave no duplica (4509.7919ms)
+✔ B no puede listar, descargar, comparar, restaurar ni borrar la versión de A (580.3141ms)
+✔ deshacer devuelve datos y referencias con IDs propios y versiones nuevas; repetir la clave recupera el resultado (497.0191ms)
+✔ una segunda pestaña que edita antes de confirmar provoca conflicto; comparar de nuevo permite restaurar (2425.9968ms)
+✔ un fallo entre la captura y la publicación conserva la colección original sin versión válida parcial (665.3898ms)
+✔ caducidad: una versión vencida no se lista ni se restaura y la siguiente captura la retira (788.966ms)
+✔ cuota agotada: bloquea reemplazar y restaurar con un mensaje claro sin borrar ninguna versión (876.6235ms)
+✔ borrar la versión mientras se prepara la restauración: confirmar no aplica nada (504.6365ms)
+✔ una cuenta bloqueada no admite versiones nuevas: ni restaurar ni reemplazar aplican nada (524.3406ms)
+✔ el restore administrativo comprueba en Postgres la integridad de las versiones restauradas (274.7421ms)
+✔ el bucket de fixtures es privado y rechaza la lectura anónima por todas las rutas (2306.0595ms)
+✔ una sesión de A tampoco lee el bucket de fixtures sin firma (sin políticas por cuenta todavía) (8.5969ms)
+✔ la URL firmada por el proceso de prueba descarga los bytes exactos; alterada o caducada se rechaza (2539.5854ms)
+✔ un objeto creado por el run se sirve solo firmado y se elimina sin tocar el fixture (67.7652ms)
+✔ la portada por defecto se sirve desde la app, sin red externa ni sesión (5.8085ms)
+✔ Chrome real: URL, recarga, atrás/adelante, selección, errores de red y estantería borrada (7792.249ms)
+✔ CRUD por acciones reales: persistencia, versiones y revisión de colección intacta (4580.0551ms)
+✔ A/B: B no ve, renombra, sobrescribe ni borra lo de A por acción, SQL o Data API (373.5409ms)
+✔ servidor y base rechazan nombres largos, duplicados y criterios arbitrarios (485.4543ms)
+✔ límite 100 en servidor y base, incluidas dos altas simultáneas para el último hueco (345.0671ms)
+ℹ tests 289
+ℹ suites 0
+ℹ pass 288
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 424017.4941
+
+✖ failing tests:
+
+test at tests\integration\restore\conjuntos.test.mjs:147:1
+✖ partes v1 y v2 mezcladas se rechazan como formatos distintos sin publicar ni perder datos (379.1363ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /formatos distintos/. Input:
+
+  'Las partes tienen más de una estantería predeterminada: no parecen de la misma copia.'
+
+      at TestContext.<anonymous> (file:///C:/Users/ncaso/orca/workspaces/biblib/u-qa-01/tests/integration/restore/conjuntos.test.mjs:162:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+      at async Test.run (node:internal/test_runner/test:1113:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'Las partes tienen más de una estantería predeterminada: no parecen de la misma copia.',
+    expected: /formatos distintos/,
+    operator: 'match',
+    diff: 'simple'
+  }
+✔ GoTrue caído con Kong vivo: el proxy cierra el acceso en menos de 9 s y conserva las rutas públicas (10225.6068ms)
+ℹ Proxy con GoTrue caído: redirección en 6007 ms.
+✔ con Auth y Storage inaccesibles no se sirven datos privados ni objetos, y todo vuelve al recuperarlos (11850.8427ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 26547.5831
+Cuentas de Auth sin cambios (2, todas @biblib.test). Limpieza del run completa.
+pnpm : Error [pruebas] (11): Fallaron 1 escenario(s); revisa los nombres marcados arriba.
+En línea: 2 Carácter: 1
++ pnpm test:integration:local --profile test *> .biblib/o16-fix-integra ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Error [pruebas]...arcados arriba.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+ ELIFECYCLE  Command failed with exit code 11.

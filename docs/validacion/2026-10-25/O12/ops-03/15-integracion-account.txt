@@ -1,0 +1,39 @@
+(node:24132) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/ncaso/orca/workspaces/biblib/u-inf-03/lib/account-deletion/worker.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-inf-03\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Grupo account · perfil scratch · biblib-scratch · run 8564651ee58b
+(node:21056) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/ncaso/orca/workspaces/biblib/u-inf-03/lib/account-deletion/worker.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-inf-03\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ sesión viva (logout fallido): las acciones responden ACCOUNT_INACTIVE y no escriben (1416.9443ms)
+✔ sesión cerrada: el JWT antiguo no escribe ni por acciones, ni por la Data API, ni por Storage (577.0569ms)
+(node:19640) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/ncaso/orca/workspaces/biblib/u-inf-03/lib/account-deletion/worker.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-inf-03\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ una cuenta suprimida que vuelve con un respaldo anterior se retira entera antes de abrir; B no cambia (1228.6558ms)
+✔ una solicitud a medias restaurada con el respaldo también se aplica antes de abrir (276.9646ms)
+(node:31088) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/ncaso/orca/workspaces/biblib/u-inf-03/lib/account-deletion/worker.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-inf-03\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ sin sesión no hay solicitud ni estado (601.2775ms)
+✔ A solo pide su propia eliminación: un ID ajeno en la entrada se rechaza y B no cambia (683.0718ms)
+✔ doble clic y reintento con otra clave devuelven la misma solicitud (565.572ms)
+✔ el worker bloquea la cuenta en GoTrue: ni un inicio de sesión nuevo ni un refresh antiguo funcionan (368.6621ms)
+(node:31836) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/ncaso/orca/workspaces/biblib/u-inf-03/lib/account-deletion/worker.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-inf-03\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ eliminación completa: trabajo en vuelo, Storage caído, worker interrumpido y continuación sin recrear datos (1503.2765ms)
+✔ un worker vencido tras terminar no recrea nada y repetir el ciclo no hace nada (421.8558ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 14429.3688

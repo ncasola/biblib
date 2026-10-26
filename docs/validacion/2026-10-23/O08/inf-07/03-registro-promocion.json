@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "kind": "biblib-promotion-record",
+  "operation": "migrate",
+  "recordId": "997af028-bcff-4f66-892f-f1b6f82558ee",
+  "target": {
+    "target": "preprod",
+    "project": "inf07ensayoremoto001",
+    "fingerprint": "1e9b3dc4e9d78ecd14b26d46d602db476601e8a1ec18a2f71e771b53e62be04f",
+    "host": "db.inf07ensayoremoto001.supabase.co",
+    "port": 5432,
+    "database": "postgres",
+    "user": "postgres",
+    "connection": "direct",
+    "tls": "verify-full"
+  },
+  "commit": "0cb90064dd365e5ff9b256e534444099094fd620",
+  "planHash": "5032fe85d059e15ef5901e8b47de61a542ae3c23dbf2baa6aabcea9b3ff1ea28",
+  "plan": ".biblib/plans/inf07-25520-desde-0000.json",
+  "headBefore": "0000_biblib_init",
+  "headAfter": "0004_catalogue_coordination",
+  "attempted": [
+    "0001_library_integrity",
+    "0002_book_versions",
+    "0003_library_revision",
+    "0004_catalogue_coordination"
+  ],
+  "backup": {
+    "backupId": "20261023T165446Z-ensayo-0a6465",
+    "receiptHash": "c8fd09f427b3ecdbc1c7cc8fa2a0ff0f7e2949bb408ac47e22c9231dfc8c309f",
+    "createdAt": "2026-10-23T16:54:46.187Z",
+    "rehearsal": {
+      "reportId": "5197e898-591e-4e43-9d0c-3191aaf7efef",
+      "at": "2026-10-23T16:54:49.318Z"
+    }
+  },
+  "lostWrites": {
+    "since": "2026-10-23T16:54:46.187Z",
+    "note": "Las escrituras en el destino posteriores a backup.createdAt no están en el respaldo: si hubiera que restaurar, se pierden o se recuperan por otra vía antes de abrir tráfico. Mantén la aplicación sin escrituras desde el respaldo hasta verificar la promoción."
+  },
+  "platform": {
+    "before": "d100fe8e05fbfa854192ebc883ed421577d6c72fd3da59c987f519fef3bb4df9",
+    "after": "d100fe8e05fbfa854192ebc883ed421577d6c72fd3da59c987f519fef3bb4df9",
+    "unchanged": true
+  },
+  "result": "aplicado: 0001_library_integrity → 0002_book_versions → 0003_library_revision → 0004_catalogue_coordination",
+  "code": 0,
+  "startedAt": "2026-10-23T16:54:50.117Z",
+  "finishedAt": "2026-10-23T16:54:50.499Z",
+  "checks": {
+    "ok": 138,
+    "fail": 0
+  },
+  "pendingAfter": []
+}

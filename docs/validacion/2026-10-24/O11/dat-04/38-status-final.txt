@@ -1,0 +1,3 @@
+Estado de migraciones · biblib-scratch · up-to-date
+Head aplicado: 0008_restore_sessions · esperado: 0008_restore_sessions · pendientes: ninguna
+326 comprobaciones correctas.

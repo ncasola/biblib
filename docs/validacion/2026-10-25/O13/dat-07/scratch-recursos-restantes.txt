@@ -1,0 +1,8 @@
+# Recursos Docker del perfil scratch tras db:local:down
+## Contenedores
+(ninguno)
+## Redes
+biblib-scratch-network
+## Volúmenes
+supabase_db_biblib-scratch
+supabase_storage_biblib-scratch

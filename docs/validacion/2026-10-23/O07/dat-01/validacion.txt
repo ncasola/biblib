@@ -1,0 +1,6 @@
+lint exit 0
+typecheck exit 0
+test exit 0
+test:scripts exit 0
+test:db exit 0
+db:status exit 0

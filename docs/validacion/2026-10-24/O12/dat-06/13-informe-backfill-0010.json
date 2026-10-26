@@ -1,0 +1,92 @@
+{
+ "migracionesAplicadas": 11,
+ "comparacion": {
+  "books": 10130,
+  "works": 0,
+  "copies": 10130,
+  "sample": 0,
+  "accounts": 4,
+  "editions": 10130,
+  "mismatches": 0
+ },
+ "modelo": {
+  "ejemplares": 10130,
+  "ediciones": 10130,
+  "obras": 0,
+  "ediciones_sin_isbn13": 1440,
+  "identificadores_legacy": 1440,
+  "comprobados": 1
+ },
+ "informe": [
+  {
+   "migration": "0010_works_editions_copies",
+   "kind": "conflict",
+   "filas": 4
+  },
+  {
+   "migration": "0010_works_editions_copies",
+   "kind": "invalid",
+   "filas": 1
+  },
+  {
+   "migration": "0010_works_editions_copies",
+   "kind": "normalized",
+   "filas": 1
+  },
+  {
+   "migration": "0010_works_editions_copies",
+   "kind": "summary",
+   "filas": 4
+  }
+ ],
+ "resumenesPorCuenta": [
+  {
+   "migracion": "0010_works_editions_copies",
+   "books": 10000,
+   "works": 0,
+   "copies": 10000,
+   "manual": 1420,
+   "invalid": 0,
+   "editions": 10000,
+   "conflicts": 0,
+   "normalized": 0,
+   "withIsbn13": 8580
+  },
+  {
+   "migracion": "0010_works_editions_copies",
+   "books": 121,
+   "works": 0,
+   "copies": 121,
+   "manual": 10,
+   "invalid": 1,
+   "editions": 121,
+   "conflicts": 4,
+   "normalized": 1,
+   "withIsbn13": 106
+  },
+  {
+   "migracion": "0010_works_editions_copies",
+   "books": 5,
+   "works": 0,
+   "copies": 5,
+   "manual": 3,
+   "invalid": 0,
+   "editions": 5,
+   "conflicts": 0,
+   "normalized": 0,
+   "withIsbn13": 2
+  },
+  {
+   "migracion": "0010_works_editions_copies",
+   "books": 4,
+   "works": 0,
+   "copies": 4,
+   "manual": 2,
+   "invalid": 0,
+   "editions": 4,
+   "conflicts": 0,
+   "normalized": 0,
+   "withIsbn13": 2
+  }
+ ]
+}

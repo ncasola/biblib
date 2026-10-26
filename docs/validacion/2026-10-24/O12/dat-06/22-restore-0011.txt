@@ -1,0 +1,2 @@
+Restore 20261025T003316Z-scratch-79b72f → scratch (biblib-scratch) completado en 9 s; tokens rotados: biblib.copies.version (10130), biblib.editions.version (10128), biblib.works.version (0), biblib.library_state.revision (4).
+Siguiente paso: pnpm db:restore:verify --backup .biblib/backups/20261025T003316Z-scratch-79b72f --profile scratch

@@ -1,0 +1,28 @@
+{
+  "version": "2.117.0",
+  "sources": [
+    {
+      "url": "https://raw.githubusercontent.com/supabase/cli/v2.117.0/apps/cli/src/command-internal/db-bootstrap/recreate-local-database.ts",
+      "sha256": "05b91384f24aa7a6403515fb999b18b42a33208eacd4a2041e1996611babfd10",
+      "bytes": 24304
+    },
+    {
+      "url": "https://raw.githubusercontent.com/supabase/cli/v2.117.0/apps/cli/src/command-internal/db-bootstrap/reset-local-database.ts",
+      "sha256": "5c955461110e446080e6e6e48fbb226b51bd55384d160cbe026b0780c30752e9",
+      "bytes": 12865
+    },
+    {
+      "url": "https://raw.githubusercontent.com/supabase/cli/v2.117.0/apps/cli/src/commands/db/reset/SIDE_EFFECTS.md",
+      "sha256": "124d01b4d5ea4d91251f799dfafff4c109a8890dafb44ede47bef76661aebbcc",
+      "bytes": 29910
+    }
+  ],
+  "postgres17": {
+    "removesContainerAndDbVolume": true,
+    "rebuildsDrizzleAndBusinessSchemaTogether": true,
+    "rebuildsAuthAndStorageMetadata": true,
+    "preservesStorageVolumeBytes": true,
+    "preservesMailpit": true,
+    "noPerResourceReceipt": true
+  }
+}

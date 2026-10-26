@@ -1,0 +1,71 @@
+Correcto: tests/db/bootstrap.sql
+Correcto: drizzle/0000_biblib_init.sql
+Correcto: tests/db/legacy.sql
+Correcto: drizzle/0001_library_integrity.sql
+Correcto: drizzle/0002_book_versions.sql
+Correcto: drizzle/0003_library_revision.sql
+Correcto: tests/db/versions.sql
+Correcto: tests/db/rls.sql
+Correcto: migraciones, aislamiento A/B, FK de propietario, predeterminada, integridad y rollback.
+Correcto: tests/db/revision.sql
+Correcto: revisión de colección, bloqueo, rotación única, aislamiento A/B, vistas previas e idempotencia.
+Correcto: drizzle/0004_catalogue_coordination.sql
+Correcto: tests/db/catalogue.sql
+Correcto: cuota atómica, intervalo, horizonte, tope por dueño, cooldown, fencing, caché sin caídas, invalidación y aislamiento A/B.
+Correcto: drizzle/0005_library_jobs.sql
+Correcto: tests/db/jobs.sql
+Correcto: trabajos (alta idempotente, A/B, permisos, lease, fencing, control, cuenta activa, caducidad y elementos)
+Correcto: drizzle/0006_library_snapshots.sql
+Correcto: tests/db/snapshots.sql
+Correcto: versiones anteriores (captura en la transacción, hashes, C/D, permisos, IDs ocupados, borrado, cuota, cuenta bloqueada, tamaño y cascadas)
+Correcto: drizzle/0007_saved_views.sql
+Correcto: drizzle/0008_restore_sessions.sql
+Correcto: tests/db/restore-sessions.sql
+Correcto: sesiones de restauración (RLS E/F, hash y tamaño de trozos, inmutabilidad, guarda de sesión, restore.commit, purga y cascadas)
+Correcto: drizzle/0009_cover_assets.sql
+Correcto: tests/db/cover-assets.sql
+Correcto: bucket privado biblib-covers con WebP y 5 MiB
+Correcto: subida propia en cuarentena, intento autorizado, registro con objeto presente e inmutable
+Correcto: deduplicación solo dentro del dueño; H y anon no ven, suben, registran ni descartan nada de G
+Correcto: guarda de adjunto (BA001), FK con propietario y sin escritura directa ni funciones de servidor para authenticated
+Correcto: adquisición idempotente atada a la ficha vigente, Google rechazado por Postgres y subida solo con lease y fencing vigentes
+Correcto: fichas y versiones anteriores retienen el asset; gracia, huérfanos y purga confirmada
+Correcto: la versión anterior retiene la referencia sin cambiar las fichas sin asset
+Correcto: restore deja los assets en revisión hasta revalidarlos
+Correcto: cuenta bloqueada sin subidas ni adquisiciones; cuota de cuarentena
+Correcto: tests/db/model-legacy.sql
+Correcto: estado legacy de 0009 para el backfill (111 fichas sintéticas y equivalencias)
+Correcto: drizzle/0010_works_editions_copies.sql
+Correcto: tests/db/model-expand.sql
+Correcto: backfill uno a uno con IDs, dueño y contenido conservados
+Correcto: comparación y resumen por cuenta
+Correcto: ISBN-10/13 equivalentes en conflicto, normalizados, no válidos y manual sin descartar filas
+Correcto: comprobación física en el ejemplar y procedencia en la edición
+Correcto: sincronización desde books durante la ventana de expansión
+Correcto: RLS y FK con propietario en obras, ediciones y ejemplares
+Correcto: un ISBN-13 canónico y válido por cuenta; la comprobación física nunca en la edición
+Correcto: ediciones con al menos un ejemplar y poda de ediciones y obras huérfanas
+Correcto: versiones y revisión de colección en obras, ediciones y ejemplares
+Correcto: permisos de cliente de 0010
+Correcto: drizzle/0011_copies_cutover.sql
+Correcto: tests/db/model.sql
+Correcto: books congelada como books_legacy y sustituida por la vista plana
+Correcto: equivalencias ISBN-10/13 compatibles agrupadas y el resto en conflicto, sin descartar filas
+Correcto: vista plana con ISBN opcional y token plano
+Correcto: dos ejemplares de una edición con estado, ubicación y comprobación independientes
+Correcto: escrituras de compatibilidad por la vista con RLS, unicidad por ISBN-13 y poda
+Correcto: versiones anteriores con ejemplares y ediciones (schema_version 2)
+Correcto: portadas privadas en la edición para purga y revalidación
+Correcto: operaciones del modelo y permisos de 0011
+Correcto: con 0011 el borrado de cuenta desde Auth falla en la poda (lo corrige 0012)
+Correcto: drizzle/0012_model_account_deletion.sql
+Correcto: tests/db/model-account-deletion.sql
+Correcto: borrar una cuenta desde Auth retira su modelo en cascada (0012)
+Correcto: drizzle/0013_account_deletion.sql
+Correcto: tests/db/account-deletion.sql
+Correcto: solicitud propia e idempotente; trabajos expirados
+Correcto: JWT antiguo sin escrituras (tablas, vista, bloqueo, funciones y Storage); B intacto; cuenta no reactivable
+Correcto: worker por pasos con lease, fencing, Storage pendiente, failed/reintento, identidad al final y marca mínima
+Correcto: marca de restore idempotente y plazo de la marca
+Correcto: inventario de eliminación y guarda de cuenta activa en todas las tablas con escritura de cliente
+Pruebas de base de datos completadas en un contenedor aislado.

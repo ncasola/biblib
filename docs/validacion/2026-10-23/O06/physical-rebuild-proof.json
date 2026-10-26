@@ -1,0 +1,24 @@
+{
+  "counts": {
+    "domain": {
+      "books": 8,
+      "shelves": 6
+    },
+    "auth": {
+      "users": 2,
+      "sessions": 0,
+      "refreshTokens": 0
+    },
+    "storage": {
+      "buckets": 1,
+      "objects": 1
+    },
+    "mailpit": {
+      "messages": 1
+    },
+    "ledger": 3
+  },
+  "allContainerIdsReplaced": true,
+  "allVolumeCreatedAtReplaced": true,
+  "networkIdPreserved": true
+}

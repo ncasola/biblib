@@ -1,0 +1,3 @@
+Estado de migraciones · biblib-scratch · up-to-date
+Head aplicado: 0002_book_versions · esperado: 0002_book_versions · pendientes: ninguna
+41 comprobaciones correctas.

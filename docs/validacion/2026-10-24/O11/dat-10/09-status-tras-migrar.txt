@@ -1,0 +1,3 @@
+Estado de migraciones · biblib-scratch · up-to-date
+Head aplicado: 0009_cover_assets · esperado: 0009_cover_assets · pendientes: ninguna
+377 comprobaciones correctas.

@@ -1,0 +1,416 @@
+{
+  "url": "/login",
+  "scope": "página completa",
+  "violations": [],
+  "incomplete": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "tags": [
+        "cat.color",
+        "wcag2aa",
+        "wcag143",
+        "TTv5",
+        "TT13.c",
+        "EN-301-549",
+        "EN-9.1.4.3",
+        "ACT",
+        "RGAAv4",
+        "RGAA-3.2.1"
+      ],
+      "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/color-contrast?application=playwright",
+      "nodes": [
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "9.8pt (13px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div data-slot=\"card\" class=\"bg-card bg-[image:var(--card-sheen)] text-card-foreground flex flex-col rounded-2xl border w-full max-w-md gap-0 px-6 py-8 shadow-2xl sm:px-8\">",
+                  "target": [
+                    ".bg-card"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<p class=\"eyebrow\">Biblioteca personal</p>",
+          "target": [
+            ".eyebrow"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "27.0pt (36px)",
+                "fontWeight": "bold",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "3:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div data-slot=\"card\" class=\"bg-card bg-[image:var(--card-sheen)] text-card-foreground flex flex-col rounded-2xl border w-full max-w-md gap-0 px-6 py-8 shadow-2xl sm:px-8\">",
+                  "target": [
+                    ".bg-card"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<h1 class=\"heading-vintage mt-1 text-center text-3xl sm:text-4xl\">Bienvenido a BibLib</h1>",
+          "target": [
+            "h1"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "12.0pt (16px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div data-slot=\"card\" class=\"bg-card bg-[image:var(--card-sheen)] text-card-foreground flex flex-col rounded-2xl border w-full max-w-md gap-0 px-6 py-8 shadow-2xl sm:px-8\">",
+                  "target": [
+                    ".bg-card"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<p class=\"mt-2 text-center text-foreground-light\">Inicia sesión con tu cuenta de Google</p>",
+          "target": [
+            ".mt-2"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div data-slot=\"card\" class=\"bg-card bg-[image:var(--card-sheen)] text-card-foreground flex flex-col rounded-2xl border w-full max-w-md gap-0 px-6 py-8 shadow-2xl sm:px-8\">",
+                  "target": [
+                    ".bg-card"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<p role=\"alert\" class=\"text-destructive text-sm\">No se pudo completar el acceso con Google. Vuelve a intentarlo.</p>",
+          "target": [
+            ".text-destructive"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "13.5pt (18px)",
+                "fontWeight": "bold",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<section aria-labelledby=\"_R_2dbsnpfjb_-title\" data-biblib-local-login=\"biblib-local-password-form\" class=\"mt-6 rounded-2xl border border-dashed border-control-border/70 bg-surface/60 p-4\">",
+                  "target": [
+                    "section"
+                  ]
+                },
+                {
+                  "html": "<div data-slot=\"card\" class=\"bg-card bg-[image:var(--card-sheen)] text-card-foreground flex flex-col rounded-2xl border w-full max-w-md gap-0 px-6 py-8 shadow-2xl sm:px-8\">",
+                  "target": [
+                    ".bg-card"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<h2 id=\"_R_2dbsnpfjb_-title\" class=\"heading-vintage text-lg\">Acceso local de desarrollo</h2>",
+          "target": [
+            "#_R_2dbsnpfjb_-title"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<section aria-labelledby=\"_R_2dbsnpfjb_-title\" data-biblib-local-login=\"biblib-local-password-form\" class=\"mt-6 rounded-2xl border border-dashed border-control-border/70 bg-surface/60 p-4\">",
+                  "target": [
+                    "section"
+                  ]
+                },
+                {
+                  "html": "<div data-slot=\"card\" class=\"bg-card bg-[image:var(--card-sheen)] text-card-foreground flex flex-col rounded-2xl border w-full max-w-md gap-0 px-6 py-8 shadow-2xl sm:px-8\">",
+                  "target": [
+                    ".bg-card"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<p class=\"mt-1 text-sm text-muted-foreground\">Solo existe en este entorno local. No aparece en preproducción ni en producción y solo acepta el Supabase local de este equipo.</p>",
+          "target": [
+            ".mt-1.text-muted-foreground"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<section aria-labelledby=\"_R_2dbsnpfjb_-title\" data-biblib-local-login=\"biblib-local-password-form\" class=\"mt-6 rounded-2xl border border-dashed border-control-border/70 bg-surface/60 p-4\">",
+                  "target": [
+                    "section"
+                  ]
+                },
+                {
+                  "html": "<div data-slot=\"card\" class=\"bg-card bg-[image:var(--card-sheen)] text-card-foreground flex flex-col rounded-2xl border w-full max-w-md gap-0 px-6 py-8 shadow-2xl sm:px-8\">",
+                  "target": [
+                    ".bg-card"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<label data-slot=\"label\" class=\"flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50\" for=\"_R_2dbsnpfjb_-email\">Correo</label>",
+          "target": [
+            "label[for=\"_R_2dbsnpfjb_-email\"]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<section aria-labelledby=\"_R_2dbsnpfjb_-title\" data-biblib-local-login=\"biblib-local-password-form\" class=\"mt-6 rounded-2xl border border-dashed border-control-border/70 bg-surface/60 p-4\">",
+                  "target": [
+                    "section"
+                  ]
+                },
+                {
+                  "html": "<div data-slot=\"card\" class=\"bg-card bg-[image:var(--card-sheen)] text-card-foreground flex flex-col rounded-2xl border w-full max-w-md gap-0 px-6 py-8 shadow-2xl sm:px-8\">",
+                  "target": [
+                    ".bg-card"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<label data-slot=\"label\" class=\"flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50\" for=\"_R_2dbsnpfjb_-password\">Contraseña</label>",
+          "target": [
+            "label[for=\"_R_2dbsnpfjb_-password\"]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div data-slot=\"card\" class=\"bg-card bg-[image:var(--card-sheen)] text-card-foreground flex flex-col rounded-2xl border w-full max-w-md gap-0 px-6 py-8 shadow-2xl sm:px-8\">",
+                  "target": [
+                    ".bg-card"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<p class=\"text-sm text-muted-foreground\">El acceso se gestiona con Google OAuth.<!-- --> <a class=\"link-quiet\" href=\"/\">Volver al inicio</a></p>",
+          "target": [
+            ".mt-6.text-center > .text-muted-foreground"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div data-slot=\"card\" class=\"bg-card bg-[image:var(--card-sheen)] text-card-foreground flex flex-col rounded-2xl border w-full max-w-md gap-0 px-6 py-8 shadow-2xl sm:px-8\">",
+                  "target": [
+                    ".bg-card"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<a class=\"link-quiet\" href=\"/\">Volver al inicio</a>",
+          "target": [
+            "a"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        }
+      ]
+    }
+  ],
+  "passes": [
+    "aria-allowed-attr",
+    "aria-allowed-role",
+    "aria-conditional-attr",
+    "aria-deprecated-role",
+    "aria-hidden-body",
+    "aria-hidden-focus",
+    "aria-prohibited-attr",
+    "aria-required-attr",
+    "aria-roles",
+    "aria-valid-attr-value",
+    "aria-valid-attr",
+    "autocomplete-valid",
+    "avoid-inline-spacing",
+    "button-name",
+    "bypass",
+    "color-contrast",
+    "document-title",
+    "duplicate-id-aria",
+    "empty-heading",
+    "form-field-multiple-labels",
+    "heading-order",
+    "html-has-lang",
+    "html-lang-valid",
+    "image-alt",
+    "image-redundant-alt",
+    "label-title-only",
+    "label",
+    "landmark-main-is-top-level",
+    "landmark-no-duplicate-main",
+    "landmark-one-main",
+    "landmark-unique",
+    "link-in-text-block",
+    "link-name",
+    "meta-viewport-large",
+    "meta-viewport",
+    "nested-interactive",
+    "page-has-heading-one",
+    "region"
+  ],
+  "engine": {
+    "name": "axe-core",
+    "version": "4.11.4"
+  }
+}

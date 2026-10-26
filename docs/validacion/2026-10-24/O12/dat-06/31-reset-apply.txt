@@ -1,0 +1,15 @@
+
+> biblib@1.0.0 db:reset:local C:\Users\ncaso\orca\workspaces\biblib\u-inf-03
+> node scripts/local-stack.mjs reset "--apply" "--plan" ".biblib/plans/dat06-reset-0012b.json" "--expect-project" "biblib-scratch" "--expect-plan" "3a20570117255e98a9cf1ac76da1dbb678755fd583e7c34c75fd5e1876aec687" "--discard-local-data"
+
+BibLib local · scratch · ea260283d87954c1c405cb5ee4875867dd8b103c86084460f3a74244e06b13fa
+[ok] bootstrap: Stack propio sano.
+[warn] bindings.loopback: Bindings fuera de loopback; consulta alternativas A/B en docs/operacion.md.
+[ok] bootstrap: preflight, stack, env, migrate, seed y verify completados y verificados.
+[ok] reset: Reset del perfil completado con migración, seed y verificación real.
+postgres: healthy
+auth: healthy
+rest: running
+storage: healthy
+studio: healthy
+mailpit: healthy

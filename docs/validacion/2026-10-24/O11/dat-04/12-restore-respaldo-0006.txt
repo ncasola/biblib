@@ -1,0 +1,3 @@
+Restore 20261023T215556Z-scratch-7adb9b → scratch (biblib-scratch) completado en 4 s; tokens rotados: biblib.books.version (9), biblib.library_state.revision (2).
+Migraciones pendientes tras restaurar: 0007_saved_views, 0008_restore_sessions (usa db:plan:local y db:migrate:local).
+Siguiente paso: pnpm db:restore:verify --backup .biblib/backups/20261023T215556Z-scratch-7adb9b --profile scratch

@@ -1,15 +1,22 @@
 "use client"
 
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react"
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react"
 import type { Session, User as SupabaseUser } from "@supabase/supabase-js"
 import { createClient } from "@/lib/supabase/client"
 import { getSafeRedirectPath } from "@/lib/auth-navigation"
+import { getProfileAvatarAction } from "@/app/actions/profile"
+import { purgeOfflineCopy } from "@/lib/offline-library"
+
+/** U-EXP-08: borra la copia de lectura de la cuenta en este dispositivo; un fallo local no impide cerrar sesión. */
+const purgeOfflineCopyQuietly = (userId: string) => purgeOfflineCopy(userId).catch(() => undefined)
 
 export interface User {
   id: string
   email: string
   name: string
   avatar?: string
+  googleAvatar?: string
+  ownAvatar?: boolean
   createdAt: string
 }
 
@@ -18,12 +25,11 @@ interface AuthContextType {
   session: Session | null
   loading: boolean
   signInWithGoogle: (nextPath?: string) => Promise<void>
-  signIn: (email: string, password: string) => Promise<void>
-  signUp: (email: string, password: string, name: string) => Promise<void>
   signOut: () => Promise<void>
-  resetPassword: (email: string) => Promise<void>
-  updatePassword: (newPassword: string) => Promise<void>
   updateProfile: (name: string) => Promise<void>
+  refreshAvatar: (saved?: { avatar?: string; version: string }) => Promise<void>
+  avatarVersion: string | null
+  avatarEditorEnabled: boolean
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -36,6 +42,7 @@ function mapUser(user: SupabaseUser): User {
     email: user.email ?? "",
     name: typeof fullName === "string" && fullName.length > 0 ? fullName : fallbackName,
     avatar: typeof user.user_metadata.avatar_url === "string" ? user.user_metadata.avatar_url : undefined,
+    googleAvatar: typeof user.user_metadata.avatar_url === "string" ? user.user_metadata.avatar_url : undefined,
     createdAt: user.created_at,
   }
 }
@@ -45,6 +52,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
+  const [privateProfile, setPrivateProfile] = useState<{ owner: string; avatar?: string; version: string | null; editorEnabled: boolean } | null>(null)
+  const owner = user?.id
+  // Última cuenta con sesión: si Supabase la cierra (otra pestaña, sesión revocada al reconectar), se purga su copia.
+  const lastUserId = useRef<string | null>(null)
+
+  useEffect(() => {
+    if (!owner) return
+    let active = true
+    void getProfileAvatarAction().then((result) => {
+      if (active && result.ok) setPrivateProfile({ owner, ...result.value })
+    }).catch(() => undefined)
+    return () => { active = false }
+  }, [owner])
+
+  const refreshAvatar = async (saved?: { avatar?: string; version: string }) => {
+    if (!owner) return
+    // La respuesta confirmada ya contiene URL y versión: no añadir una lectura de red que pueda
+    // presentar como fallido un guardado que terminó correctamente.
+    if (saved) {
+      setPrivateProfile((current) => ({ owner, ...saved, editorEnabled: current?.owner === owner && current.editorEnabled }))
+      return
+    }
+    const result = await getProfileAvatarAction()
+    if (!result.ok) throw new Error(result.error.message)
+    setPrivateProfile({ owner, ...result.value })
+  }
+  const ownProfile = privateProfile?.owner === owner ? privateProfile : null
+  const displayedUser = user ? { ...user, avatar: ownProfile?.avatar || user.avatar, ownAvatar: Boolean(ownProfile?.avatar) } : null
 
   useEffect(() => {
     let active = true
@@ -55,6 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (active && !receivedAuthEvent) {
           setSession(error ? null : initialSession)
           setUser(!error && initialSession?.user ? mapUser(initialSession.user) : null)
+          lastUserId.current = !error && initialSession?.user ? initialSession.user.id : null
         }
       } catch {
         if (active && !receivedAuthEvent) {
@@ -68,9 +104,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    } = supabase.auth.onAuthStateChange((event, nextSession) => {
       if (!active) return
       receivedAuthEvent = true
+      if (event === "SIGNED_OUT" && lastUserId.current) void purgeOfflineCopyQuietly(lastUserId.current)
+      lastUserId.current = nextSession?.user.id ?? null
       setSession(nextSession)
       setUser(nextSession?.user ? mapUser(nextSession.user) : null)
       setLoading(false)
@@ -99,20 +137,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  const signIn = async (_email: string, _password: string) => {
-    void _email
-    void _password
-    throw new Error("El inicio de sesión con correo/contraseña está deshabilitado. Usa Google.")
-  }
-
-  const signUp = async (_email: string, _password: string, _name: string) => {
-    void _email
-    void _password
-    void _name
-    throw new Error("El registro se gestiona con Google OAuth.")
-  }
-
   const signOut = async () => {
+    // Se borra antes de cerrar: la copia de esta cuenta no sobrevive al cierre de sesión en este dispositivo.
+    const current = user?.id ?? session?.user.id
+    if (current) await purgeOfflineCopyQuietly(current)
     const { error } = await supabase.auth.signOut()
     if (error) throw new Error("No se pudo cerrar la sesión. Vuelve a intentarlo.")
     setUser(null)
@@ -127,29 +155,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(mapUser(data.user))
   }
 
-  const resetPassword = async (_email: string) => {
-    void _email
-    throw new Error("La recuperación de contraseña no está disponible con Google OAuth")
-  }
-
-  const updatePassword = async (_newPassword: string) => {
-    void _newPassword
-    throw new Error("El cambio de contraseña no está disponible con Google OAuth")
-  }
-
   return (
     <AuthContext.Provider
       value={{
-        user,
+        user: displayedUser,
         session,
         loading,
         signInWithGoogle,
-        signIn,
-        signUp,
         signOut,
-        resetPassword,
-        updatePassword,
         updateProfile,
+        refreshAvatar,
+        avatarVersion: ownProfile?.version ?? null,
+        avatarEditorEnabled: ownProfile?.editorEnabled ?? false,
       }}
     >
       {children}

@@ -1,0 +1,4 @@
+Título,Autor
+=1+1,@SUM(A1:A2)
+"=HYPERLINK(""https://example.test"",""Abrir"")",Autor
+DROP TABLE biblib.copies; --,SQL como texto
