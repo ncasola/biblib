@@ -7,6 +7,7 @@ import { ArrowLeft, Edit2, Loader2, RefreshCw, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { BookForm } from "@/components/book-form"
 import { BookPersonalPanel } from "@/components/book-personal-panel"
+import { LoanPanel } from "@/components/loan-panel"
 import { BookCover } from "@/components/book-cover"
 import { BookCoverAssets } from "@/components/book-cover-assets"
 import { displayCover } from "@/lib/book-covers"
@@ -143,7 +144,7 @@ export function BookDetailsScreen({ bookId, returnPath }: BookDetailsScreenProps
             <BookCoverAssets book={book} disabled={Boolean(pending)} onBookChange={(updated) => { setBook(updated); setTargetShelf(updated.shelf_id); setError("") }} />
           </aside>
           <div className="space-y-5 min-w-0">
-            <div className="flex flex-col sm:flex-row items-start justify-between gap-4"><div className="min-w-0"><p className="eyebrow mb-2">Ficha del libro</p><h1 className="heading-vintage text-3xl leading-[1.08] break-words md:text-5xl">{book.title}</h1>{book.subtitle && <p className="text-lg text-foreground-light mt-2">{book.subtitle}</p>}<p className="mt-3 flex flex-wrap items-center gap-2 text-sm text-muted-foreground"><BookStatusBadge status={book.status} /><span>{book.shelf_name}</span></p></div><div className="flex flex-wrap gap-2"><Button ref={editButton} variant="outline" disabled={Boolean(pending)} onClick={() => { setEditing("copy"); setError(""); setMessage("") }}><Edit2 aria-hidden="true" className="w-4 h-4 mr-2" />Editar ficha</Button>{(book.edition?.copies ?? 1) > 1 && <Button variant="outline" disabled={Boolean(pending)} onClick={() => { setEditing("edition"); setError(""); setMessage("") }}>Editar la edición ({book.edition!.copies} ejemplares)</Button>}</div></div>
+            <div className="flex flex-col sm:flex-row sm:flex-wrap items-start justify-between gap-4"><div className="min-w-0"><p className="eyebrow mb-2">Ficha del libro</p><h1 className="heading-vintage text-3xl leading-[1.08] break-words md:text-5xl">{book.title}</h1>{book.subtitle && <p className="text-lg text-foreground-light mt-2">{book.subtitle}</p>}<p className="mt-3 flex flex-wrap items-center gap-2 text-sm text-muted-foreground"><BookStatusBadge status={book.status} /><span>{book.shelf_name}</span></p></div><div className="flex flex-wrap gap-2"><Button ref={editButton} variant="outline" disabled={Boolean(pending)} onClick={() => { setEditing("copy"); setError(""); setMessage("") }}><Edit2 aria-hidden="true" className="w-4 h-4 mr-2" />Editar ficha</Button>{(book.edition?.copies ?? 1) > 1 && <Button variant="outline" disabled={Boolean(pending)} onClick={() => { setEditing("edition"); setError(""); setMessage("") }}>Editar la edición ({book.edition!.copies} ejemplares)</Button>}</div></div>
             {message && <p role="status" className="rounded-xl border border-l-4 border-border border-l-[var(--status-read)] bg-card p-3 text-sm shadow-sm">{message}</p>}
             {error && !deleteOpen && <div role="alert" className="rounded-xl border border-destructive/30 p-3 text-sm text-destructive space-y-2"><p>{error}</p><Button variant="outline" onClick={() => { setError(""); setAttempt((current) => current + 1) }}>Recargar ficha</Button></div>}
             <dl className="surface-card rounded-2xl p-5 grid gap-4 sm:grid-cols-2">
@@ -162,6 +163,7 @@ export function BookDetailsScreen({ bookId, returnPath }: BookDetailsScreenProps
             <EditionCopiesPanel key={book.copyVersion} book={book} shelves={shelves} />
             {book.edition && <EditionSeriesPanel key={book.edition.id} editionId={book.edition.id} />}
             <BookPersonalPanel book={book} onChange={setBook} />
+            <LoanPanel key={book.id} copyId={book.id} />
             <AlertDialog open={deleteOpen} onOpenChange={(open) => { if (pending !== "delete") { setDeleteOpen(open); setError("") } }}>
               <AlertDialogTrigger asChild><Button variant="outline" disabled={Boolean(pending)} className="text-destructive border-destructive/40"><Trash2 aria-hidden="true" className="w-4 h-4 mr-2" />Eliminar libro</Button></AlertDialogTrigger>
               <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>¿Eliminar este libro?</AlertDialogTitle><AlertDialogDescription>{(book.edition?.copies ?? 1) > 1 ? `Se eliminará este ejemplar de «${book.title}». La edición y sus otros ${book.edition!.copies! - 1} ejemplares se conservan.` : `Se eliminará «${book.title}» de tu biblioteca.`} Esta acción no se puede deshacer.</AlertDialogDescription></AlertDialogHeader>

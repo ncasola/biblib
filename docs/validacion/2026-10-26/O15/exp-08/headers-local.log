@@ -1,0 +1,60 @@
+
+> biblib@1.0.0 security:headers:local C:\Users\ncaso\orca\workspaces\biblib\u-qa-01
+> node scripts/security/headers-local.mjs "--profile" "test" "--reuse-build" "--out" "docs/validacion/2026-10-26/O15/exp-08/headers-test.json"
+
+Cabeceras efectivas · perfil test · biblib-test
+[ok]   GET  a    /                                                        200 html-autenticado
+[ok]   GET  a    /books                                                   200 html-autenticado
+[ok]   GET  a    /books/add                                               200 html-autenticado
+[ok]   GET  a    /books/search                                            200 html-autenticado
+[ok]   GET  a    /book/:libroA                                            200 html-autenticado
+[ok]   GET  a    /shelves                                                 200 html-autenticado
+[ok]   GET  a    /shelves/3d                                              200 html-autenticado
+[ok]   GET  a    /series                                                  200 html-autenticado
+[ok]   GET  a    /series/:libroA                                          200 html-autenticado
+[ok]   GET  a    /locations                                               200 html-autenticado
+[ok]   GET  a    /loans                                                   200 html-autenticado
+[ok]   GET  a    /settings                                                200 html-autenticado
+[ok]   GET  a    /profile                                                 200 html-autenticado
+[ok]   GET  a    /books/review                                            200 html-autenticado
+[ok]   GET  a    /books/review/:libroA                                    200 html-autenticado
+[ok]   GET  anon /                                                        307 redireccion-sesion
+[ok]   GET  anon /books                                                   307 redireccion-sesion
+[ok]   GET  anon /books/add                                               307 redireccion-sesion
+[ok]   GET  anon /books/search                                            307 redireccion-sesion
+[ok]   GET  anon /book/:libroA                                            307 redireccion-sesion
+[ok]   GET  anon /shelves                                                 307 redireccion-sesion
+[ok]   GET  anon /shelves/3d                                              307 redireccion-sesion
+[ok]   GET  anon /series                                                  307 redireccion-sesion
+[ok]   GET  anon /series/:libroA                                          307 redireccion-sesion
+[ok]   GET  anon /locations                                               307 redireccion-sesion
+[ok]   GET  anon /loans                                                   307 redireccion-sesion
+[ok]   GET  anon /settings                                                307 redireccion-sesion
+[ok]   GET  anon /profile                                                 307 redireccion-sesion
+[ok]   GET  anon /books/review                                            307 redireccion-sesion
+[ok]   GET  anon /books/review/:libroA                                    307 redireccion-sesion
+[ok]   GET  anon /books/search?q=prueba                                   307 redireccion-sesion
+[ok]   GET  anon /login                                                   200 html-publico
+[ok]   GET  anon /offline                                                 200 html-publico
+[ok]   GET  a    /offline                                                 200 html-publico
+[ok]   GET  anon /sw.js                                                   200 service-worker
+[ok]   GET  a    /login?redirect=%2Fbooks                                 307 redireccion-sesion
+[ok]   GET  a    /login?redirect=https%3A%2F%2Fexterno.invalid%2F         307 redireccion-sesion
+[ok]   GET  anon /auth/callback?next=%2Fbooks                             303 callback
+[ok]   GET  anon /auth/callback?next=https%3A%2F%2Fexterno.invalid%2F     303 callback
+[ok]   GET  anon /auth/callback?next=%2F%2Fexterno.invalid                303 callback
+[ok]   GET  anon /auth/callback?next=%2F%5Cexterno.invalid                303 callback
+[ok]   GET  anon /ruta-inexistente                                        404 html-404
+[ok]   POST a    /                                                        200 accion
+[ok]   GET  anon /api/books/search?isbn=9780000000002                     401 api
+[ok]   POST anon /api/books/add                                           401 api
+[ok]   POST anon /api/internal/jobs/run                                   401 api
+[ok]   GET  anon /api/library/export?part=0                               401 api
+[ok]   GET  anon /api/covers/:libroA                                      401 api
+[ok]   GET  anon /api/media/:libroA                                       401 api
+[ok]   GET  anon /logo.png                                                200 estatico-public
+[ok]   GET  anon /default-book-cover.webp                                 200 estatico-public
+[ok]   GET  anon /manifest.webmanifest                                    200 estatico-public
+[ok]   GET  anon :chunk                                                   200 estatico-hash
+53/53 respuestas coinciden con la matriz · informe docs\validacion\2026-10-26\O15\exp-08\headers-test.json
+exit 0

@@ -1,0 +1,2544 @@
+{
+  "url": "/book/6f5dba6a-72c5-5ff3-a42a-73f33f63bc2d",
+  "scope": "página completa",
+  "violations": [],
+  "incomplete": [
+    {
+      "id": "aria-valid-attr-value",
+      "impact": "critical",
+      "tags": [
+        "cat.aria",
+        "wcag2a",
+        "wcag412",
+        "EN-301-549",
+        "EN-9.4.1.2",
+        "RGAAv4",
+        "RGAA-7.1.1"
+      ],
+      "description": "Ensure all ARIA attributes have valid values",
+      "help": "ARIA attributes must conform to valid values",
+      "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/aria-valid-attr-value?application=playwright",
+      "nodes": [
+        {
+          "any": [],
+          "all": [
+            {
+              "id": "aria-valid-attr-value",
+              "data": {
+                "messageKey": "controlsWithinPopup",
+                "needsReview": "aria-controls=\"radix-_r_9_\""
+              },
+              "relatedNodes": [],
+              "impact": "critical",
+              "message": "Unable to determine if aria-controls referenced ID exists on the page while using aria-haspopup: aria-controls=\"radix-_r_9_\""
+            }
+          ],
+          "none": [],
+          "impact": "critical",
+          "html": "<button data-slot=\"alert-dialog-trigger\" class=\"inline-flex min-h-11...\" type=\"button\" aria-haspopup=\"dialog\" aria-expanded=\"false\" aria-controls=\"radix-_r_9_\" data-state=\"closed\">",
+          "target": [
+            ".text-destructive"
+          ],
+          "failureSummary": "Fix all of the following:\n  Unable to determine if aria-controls referenced ID exists on the page while using aria-haspopup: aria-controls=\"radix-_r_9_\""
+        }
+      ]
+    },
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "tags": [
+        "cat.color",
+        "wcag2aa",
+        "wcag143",
+        "TTv5",
+        "TT13.c",
+        "EN-301-549",
+        "EN-9.1.4.3",
+        "ACT",
+        "RGAAv4",
+        "RGAA-3.2.1"
+      ],
+      "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/color-contrast?application=playwright",
+      "nodes": [
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "18.0pt (24px)",
+                "fontWeight": "bold",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "3:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<header class=\"sticky top-0 z-50 border-b border-border/70 bg-background/85 shadow-[0_10px_30px_-24px_rgb(0_0_0/0.6)] backdrop-blur-xl\">",
+                  "target": [
+                    "header"
+                  ]
+                },
+                {
+                  "html": "<body class=\"font-sans antialiased\">",
+                  "target": [
+                    "body"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"font-heading text-2xl font-bold tracking-tight text-heading\">BibLib</span>",
+          "target": [
+            ".font-bold"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "11.3pt (15px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<header class=\"sticky top-0 z-50 border-b border-border/70 bg-background/85 shadow-[0_10px_30px_-24px_rgb(0_0_0/0.6)] backdrop-blur-xl\">",
+                  "target": [
+                    "header"
+                  ]
+                },
+                {
+                  "html": "<body class=\"font-sans antialiased\">",
+                  "target": [
+                    "body"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<a tabindex=\"0\" class=\"inline-flex min-h-11 items-center rounded-full px-3.5 text-[0.9375rem] font-medium transition-colors text-foreground-light hover:bg-accent hover:text-accent-foreground\" href=\"/\">Inicio</a>",
+          "target": [
+            ".font-medium.text-\\[0\\.9375rem\\][href=\"/\"]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "11.3pt (15px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<header class=\"sticky top-0 z-50 border-b border-border/70 bg-background/85 shadow-[0_10px_30px_-24px_rgb(0_0_0/0.6)] backdrop-blur-xl\">",
+                  "target": [
+                    "header"
+                  ]
+                },
+                {
+                  "html": "<body class=\"font-sans antialiased\">",
+                  "target": [
+                    "body"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<a tabindex=\"0\" class=\"inline-flex min-h-11 items-center rounded-full px-3.5 text-[0.9375rem] font-medium transition-colors text-foreground-light hover:bg-accent hover:text-accent-foreground\" href=\"/shelves\">Estanterías</a>",
+          "target": [
+            "a[href$=\"shelves\"]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "11.3pt (15px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<header class=\"sticky top-0 z-50 border-b border-border/70 bg-background/85 shadow-[0_10px_30px_-24px_rgb(0_0_0/0.6)] backdrop-blur-xl\">",
+                  "target": [
+                    "header"
+                  ]
+                },
+                {
+                  "html": "<body class=\"font-sans antialiased\">",
+                  "target": [
+                    "body"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<a tabindex=\"0\" class=\"inline-flex min-h-11 items-center rounded-full px-3.5 text-[0.9375rem] font-medium transition-colors text-foreground-light hover:bg-accent hover:text-accent-foreground\" href=\"/series\">Series</a>",
+          "target": [
+            "a[href$=\"series\"]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "11.3pt (15px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<header class=\"sticky top-0 z-50 border-b border-border/70 bg-background/85 shadow-[0_10px_30px_-24px_rgb(0_0_0/0.6)] backdrop-blur-xl\">",
+                  "target": [
+                    "header"
+                  ]
+                },
+                {
+                  "html": "<body class=\"font-sans antialiased\">",
+                  "target": [
+                    "body"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<a tabindex=\"0\" class=\"inline-flex min-h-11 items-center rounded-full px-3.5 text-[0.9375rem] font-medium transition-colors text-foreground-light hover:bg-accent hover:text-accent-foreground\" href=\"/locations\">Ubicaciones</a>",
+          "target": [
+            ".font-medium.text-\\[0\\.9375rem\\][href$=\"locations\"]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "11.3pt (15px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<header class=\"sticky top-0 z-50 border-b border-border/70 bg-background/85 shadow-[0_10px_30px_-24px_rgb(0_0_0/0.6)] backdrop-blur-xl\">",
+                  "target": [
+                    "header"
+                  ]
+                },
+                {
+                  "html": "<body class=\"font-sans antialiased\">",
+                  "target": [
+                    "body"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<a tabindex=\"0\" class=\"inline-flex min-h-11 items-center rounded-full px-3.5 text-[0.9375rem] font-medium transition-colors text-foreground-light hover:bg-accent hover:text-accent-foreground\" href=\"/settings\">Ajustes</a>",
+          "target": [
+            "a[href$=\"settings\"]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<a data-slot=\"button\" tabindex=\"0\" class=\"inline-flex min-h-11...\" href=\"/books\">",
+                  "target": [
+                    ".mb-6"
+                  ]
+                },
+                {
+                  "html": "<body class=\"font-sans antialiased\">",
+                  "target": [
+                    "body"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<a data-slot=\"button\" tabindex=\"0\" class=\"inline-flex min-h-11...\" href=\"/books\">",
+          "target": [
+            ".mb-6"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<button data-slot=\"button\" class=\"inline-flex min-h-11...\" type=\"button\">",
+                  "target": [
+                    "aside > .w-full.bg-card\\/60[type=\"button\"]"
+                  ]
+                },
+                {
+                  "html": "<body class=\"font-sans antialiased\">",
+                  "target": [
+                    "body"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<button data-slot=\"button\" class=\"inline-flex min-h-11...\" type=\"button\">",
+          "target": [
+            "aside > .w-full.bg-card\\/60[type=\"button\"]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "9.0pt (12px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<body class=\"font-sans antialiased\">",
+                  "target": [
+                    "body"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<p class=\"text-xs text-muted-foreground\">Busca y sustituye la portada con la disponible en Open Library.</p>",
+          "target": [
+            "aside > .text-xs"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<section aria-labelledby=\"_r_2_-title\" class=\"surface-card space-y-3 rounded-2xl p-4 text-sm\">",
+                  "target": [
+                    "section[aria-labelledby=\"_r_2_-title\"]"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<h2 id=\"_r_2_-title\" class=\"font-semibold\">Portada privada</h2>",
+          "target": [
+            "#_r_2_-title"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "9.0pt (12px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<section aria-labelledby=\"_r_2_-title\" class=\"surface-card space-y-3 rounded-2xl p-4 text-sm\">",
+                  "target": [
+                    "section[aria-labelledby=\"_r_2_-title\"]"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<p class=\"text-xs text-muted-foreground\">Guarda una imagen solo para tu biblioteca. Se comprueba, se convierte a WebP sin metadatos y no se comparte con nadie.</p>",
+          "target": [
+            "section[aria-labelledby=\"_r_2_-title\"] > .text-xs:nth-child(2)"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<button data-slot=\"button\" class=\"inline-flex min-h-11...\" type=\"button\">",
+                  "target": [
+                    "section[aria-labelledby=\"_r_2_-title\"] > .w-full.bg-card\\/60[type=\"button\"]"
+                  ]
+                },
+                {
+                  "html": "<section aria-labelledby=\"_r_2_-title\" class=\"surface-card space-y-3 rounded-2xl p-4 text-sm\">",
+                  "target": [
+                    "section[aria-labelledby=\"_r_2_-title\"]"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<button data-slot=\"button\" class=\"inline-flex min-h-11...\" type=\"button\">",
+          "target": [
+            "section[aria-labelledby=\"_r_2_-title\"] > .w-full.bg-card\\/60[type=\"button\"]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "9.0pt (12px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<section aria-labelledby=\"_r_2_-title\" class=\"surface-card space-y-3 rounded-2xl p-4 text-sm\">",
+                  "target": [
+                    "section[aria-labelledby=\"_r_2_-title\"]"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<p class=\"text-xs text-muted-foreground\">JPEG, PNG o WebP de hasta 5 MiB y 10 megapíxeles.</p>",
+          "target": [
+            ".text-xs:nth-child(5)"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "9.8pt (13px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<body class=\"font-sans antialiased\">",
+                  "target": [
+                    "body"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<p class=\"eyebrow mb-2\">Ficha del libro</p>",
+          "target": [
+            ".eyebrow"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "36.0pt (48px)",
+                "fontWeight": "bold",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "3:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<body class=\"font-sans antialiased\">",
+                  "target": [
+                    "body"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<h1 class=\"heading-vintage text-3xl leading-[1.08] break-words md:text-5xl\">La isla de papel</h1>",
+          "target": [
+            "h1"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<body class=\"font-sans antialiased\">",
+                  "target": [
+                    "body"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span>Aventuras de prueba</span>",
+          "target": [
+            ".mt-3 > span:nth-child(2)"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<button data-slot=\"button\" class=\"inline-flex min-h-11...\">",
+                  "target": [
+                    ".flex-wrap.flex.gap-2 > .bg-card\\/60.shadow-xs.has-\\[\\>svg\\]\\:px-3\\.5"
+                  ]
+                },
+                {
+                  "html": "<body class=\"font-sans antialiased\">",
+                  "target": [
+                    "body"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<button data-slot=\"button\" class=\"inline-flex min-h-11...\">",
+          "target": [
+            ".flex-wrap.flex.gap-2 > .bg-card\\/60.shadow-xs.has-\\[\\>svg\\]\\:px-3\\.5"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "9.0pt (12px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<dl class=\"surface-card rounded-2xl p-5 grid gap-4 sm:grid-cols-2\">",
+                  "target": [
+                    "dl"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<dt class=\"text-xs font-semibold uppercase tracking-wider text-muted-foreground\">Autores</dt>",
+          "target": [
+            ".sm\\:col-span-2:nth-child(1) > dt"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "12.0pt (16px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<dl class=\"surface-card rounded-2xl p-5 grid gap-4 sm:grid-cols-2\">",
+                  "target": [
+                    "dl"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<dd class=\"mt-1\">Bruno Ficticio</dd>",
+          "target": [
+            ".sm\\:col-span-2:nth-child(1) > dd"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "9.0pt (12px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<dl class=\"surface-card rounded-2xl p-5 grid gap-4 sm:grid-cols-2\">",
+                  "target": [
+                    "dl"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<dt class=\"text-xs font-semibold uppercase tracking-wider text-muted-foreground\">Editoriales</dt>",
+          "target": [
+            "div:nth-child(2) > dt"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "12.0pt (16px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<dl class=\"surface-card rounded-2xl p-5 grid gap-4 sm:grid-cols-2\">",
+                  "target": [
+                    "dl"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<dd class=\"mt-1\">Desconocidas</dd>",
+          "target": [
+            "div:nth-child(2) > dd"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "9.0pt (12px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<dl class=\"surface-card rounded-2xl p-5 grid gap-4 sm:grid-cols-2\">",
+                  "target": [
+                    "dl"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<dt class=\"text-xs font-semibold uppercase tracking-wider text-muted-foreground\">Publicación</dt>",
+          "target": [
+            "div:nth-child(3) > dt"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "12.0pt (16px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<dl class=\"surface-card rounded-2xl p-5 grid gap-4 sm:grid-cols-2\">",
+                  "target": [
+                    "dl"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<dd class=\"mt-1\">2025</dd>",
+          "target": [
+            "div:nth-child(3) > dd"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "9.0pt (12px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<dl class=\"surface-card rounded-2xl p-5 grid gap-4 sm:grid-cols-2\">",
+                  "target": [
+                    "dl"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<dt class=\"text-xs font-semibold uppercase tracking-wider text-muted-foreground\">Páginas</dt>",
+          "target": [
+            "div:nth-child(4) > dt"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "12.0pt (16px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<dl class=\"surface-card rounded-2xl p-5 grid gap-4 sm:grid-cols-2\">",
+                  "target": [
+                    "dl"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<dd class=\"mt-1\">240</dd>",
+          "target": [
+            "div:nth-child(4) > dd"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "9.0pt (12px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<dl class=\"surface-card rounded-2xl p-5 grid gap-4 sm:grid-cols-2\">",
+                  "target": [
+                    "dl"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<dt class=\"text-xs font-semibold uppercase tracking-wider text-muted-foreground\">ISBN</dt>",
+          "target": [
+            "div:nth-child(5) > dt"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<dl class=\"surface-card rounded-2xl p-5 grid gap-4 sm:grid-cols-2\">",
+                  "target": [
+                    "dl"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<dd class=\"mt-1 font-mono text-sm break-all\">9780000000019</dd>",
+          "target": [
+            ".font-mono"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "9.0pt (12px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<dl class=\"surface-card rounded-2xl p-5 grid gap-4 sm:grid-cols-2\">",
+                  "target": [
+                    "dl"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<dt class=\"text-xs font-semibold uppercase tracking-wider text-muted-foreground\">Procedencia y edición</dt>",
+          "target": [
+            ".sm\\:col-span-2:nth-child(6) > dt"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "12.0pt (16px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<dl class=\"surface-card rounded-2xl p-5 grid gap-4 sm:grid-cols-2\">",
+                  "target": [
+                    "dl"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<p>Fuente principal: Open Library</p>",
+          "target": [
+            ".space-y-2 > p:nth-child(1)"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<dl class=\"surface-card rounded-2xl p-5 grid gap-4 sm:grid-cols-2\">",
+                  "target": [
+                    "dl"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<p class=\"text-sm text-muted-foreground\">Edición pendiente de verificar. El ISBN tiene un dígito de control válido, pero eso no confirma tu ejemplar: compruébalo y confírmalo al editar la ficha.</p>",
+          "target": [
+            ".space-y-2 > p:nth-child(2)"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<section class=\"surface-card rounded-2xl p-5\">",
+                  "target": [
+                    ".rounded-2xl:nth-child(3)"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<p class=\"text-sm text-muted-foreground\">Estado de lectura</p>",
+          "target": [
+            ".rounded-2xl:nth-child(3) > .space-y-3 > p"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<button data-slot=\"button\" class=\"inline-flex min-h-11...\" type=\"button\" aria-pressed=\"false\">",
+                  "target": [
+                    ".bg-card\\/60.shadow-xs[type=\"button\"]:nth-child(1)"
+                  ]
+                },
+                {
+                  "html": "<section class=\"surface-card rounded-2xl p-5\">",
+                  "target": [
+                    ".rounded-2xl:nth-child(3)"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<button data-slot=\"button\" class=\"inline-flex min-h-11...\" type=\"button\" aria-pressed=\"false\">",
+          "target": [
+            ".bg-card\\/60.shadow-xs[type=\"button\"]:nth-child(1)"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<button data-slot=\"button\" class=\"inline-flex min-h-11...\" type=\"button\" aria-pressed=\"false\">",
+                  "target": [
+                    ".grid-cols-2 > .bg-card\\/60.shadow-xs[type=\"button\"]:nth-child(2)"
+                  ]
+                },
+                {
+                  "html": "<section class=\"surface-card rounded-2xl p-5\">",
+                  "target": [
+                    ".rounded-2xl:nth-child(3)"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<button data-slot=\"button\" class=\"inline-flex min-h-11...\" type=\"button\" aria-pressed=\"false\">",
+          "target": [
+            ".grid-cols-2 > .bg-card\\/60.shadow-xs[type=\"button\"]:nth-child(2)"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<button data-slot=\"button\" class=\"inline-flex min-h-11...\" type=\"button\" aria-pressed=\"false\">",
+                  "target": [
+                    ".grid-cols-2 > .bg-card\\/60.shadow-xs[type=\"button\"]:nth-child(4)"
+                  ]
+                },
+                {
+                  "html": "<section class=\"surface-card rounded-2xl p-5\">",
+                  "target": [
+                    ".rounded-2xl:nth-child(3)"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<button data-slot=\"button\" class=\"inline-flex min-h-11...\" type=\"button\" aria-pressed=\"false\">",
+          "target": [
+            ".grid-cols-2 > .bg-card\\/60.shadow-xs[type=\"button\"]:nth-child(4)"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<section aria-labelledby=\"_r_3_-title\" class=\"surface-card space-y-4 rounded-2xl p-5\" data-testid=\"reading-panel\">",
+                  "target": [
+                    "section[aria-labelledby=\"_r_3_-title\"]"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<h2 id=\"_r_3_-title\" class=\"text-sm font-semibold\">Lectura</h2>",
+          "target": [
+            "#_r_3_-title"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<section aria-labelledby=\"_r_3_-title\" class=\"surface-card space-y-4 rounded-2xl p-5\" data-testid=\"reading-panel\">",
+                  "target": [
+                    "section[aria-labelledby=\"_r_3_-title\"]"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<p class=\"text-sm text-foreground-light\">Este libro está marcado como leído, pero no tiene lecturas registradas: no consta cuándo se leyó y no se le asigna ninguna fecha.</p>",
+          "target": [
+            ".space-y-3 > .text-foreground-light"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "9.0pt (12px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<section aria-labelledby=\"_r_3_-title\" class=\"surface-card space-y-4 rounded-2xl p-5\" data-testid=\"reading-panel\">",
+                  "target": [
+                    "section[aria-labelledby=\"_r_3_-title\"]"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<p class=\"text-xs text-muted-foreground\">El estado del libro (Leído, Leyendo…) se cambia aparte: registrar lecturas no lo modifica.</p>",
+          "target": [
+            "section[aria-labelledby=\"_r_3_-title\"] > .text-xs"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<section class=\"surface-card rounded-2xl p-5 space-y-3\">",
+                  "target": [
+                    ".rounded-2xl:nth-child(5)"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<label for=\"book-shelf\" class=\"text-sm font-semibold\">Estantería</label>",
+          "target": [
+            "label[for=\"book-shelf\"]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<section aria-labelledby=\"_r_7_-title\" class=\"surface-card rounded-2xl p-5 space-y-3\">",
+                  "target": [
+                    "section[aria-labelledby=\"_r_7_-title\"]"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<h2 id=\"_r_7_-title\" class=\"text-sm font-semibold\">Ubicación física</h2>",
+          "target": [
+            "#_r_7_-title"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<section aria-labelledby=\"_r_7_-title\" class=\"surface-card rounded-2xl p-5 space-y-3\">",
+                  "target": [
+                    "section[aria-labelledby=\"_r_7_-title\"]"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"text-muted-foreground\">Sin ubicación física. La estantería de la biblioteca no depende de ella.</span>",
+          "target": [
+            "p[data-testid=\"copy-location-path\"] > span"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<section aria-labelledby=\"_r_7_-title\" class=\"surface-card rounded-2xl p-5 space-y-3\">",
+                  "target": [
+                    "section[aria-labelledby=\"_r_7_-title\"]"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<p class=\"text-sm text-muted-foreground\">Aún no tienes ubicaciones. <a class=\"font-semibold text-primary underline underline-offset-4\" href=\"/locations\">Crea tus muebles y baldas en Ubicaciones</a>.</p>",
+          "target": [
+            "section[aria-labelledby=\"_r_7_-title\"] > p:nth-child(3)"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<section aria-labelledby=\"_r_7_-title\" class=\"surface-card rounded-2xl p-5 space-y-3\">",
+                  "target": [
+                    "section[aria-labelledby=\"_r_7_-title\"]"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<a class=\"font-semibold text-primary underline underline-offset-4\" href=\"/locations\">Crea tus muebles y baldas en Ubicaciones</a>",
+          "target": [
+            ".underline"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<section class=\"surface-card rounded-2xl p-5 space-y-3\" aria-labelledby=\"edition-copies-title\">",
+                  "target": [
+                    "section[aria-labelledby=\"edition-copies-title\"]"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<h2 id=\"edition-copies-title\" class=\"text-sm font-semibold\">Ejemplares de esta edición</h2>",
+          "target": [
+            "#edition-copies-title"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<section class=\"surface-card rounded-2xl p-5 space-y-3\" aria-labelledby=\"edition-copies-title\">",
+                  "target": [
+                    "section[aria-labelledby=\"edition-copies-title\"]"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<p class=\"text-sm text-muted-foreground\">Tienes un ejemplar de esta edición.</p>",
+          "target": [
+            "section[aria-labelledby=\"edition-copies-title\"] > p"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<section class=\"surface-card rounded-2xl p-5 space-y-3\" aria-labelledby=\"edition-copies-title\">",
+                  "target": [
+                    "section[aria-labelledby=\"edition-copies-title\"]"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<legend class=\"text-sm font-semibold\">Añadir otro ejemplar de esta edición</legend>",
+          "target": [
+            "legend"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "9.0pt (12px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<section class=\"surface-card rounded-2xl p-5 space-y-3\" aria-labelledby=\"edition-copies-title\">",
+                  "target": [
+                    "section[aria-labelledby=\"edition-copies-title\"]"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<p class=\"text-xs text-muted-foreground\">Tendrá su propia estantería y estado. La comprobación del ISBN también es de cada ejemplar: empieza sin verificar.</p>",
+          "target": [
+            "fieldset > .text-xs"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<section class=\"surface-card rounded-2xl p-5 space-y-3\" aria-labelledby=\"edition-copies-title\">",
+                  "target": [
+                    "section[aria-labelledby=\"edition-copies-title\"]"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<label for=\"_r_8_-shelf\" class=\"text-sm\">Estantería</label>",
+          "target": [
+            "label[for=\"_r_8_-shelf\"]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<section class=\"surface-card rounded-2xl p-5 space-y-3\" aria-labelledby=\"edition-copies-title\">",
+                  "target": [
+                    "section[aria-labelledby=\"edition-copies-title\"]"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<label for=\"_r_8_-status\" class=\"text-sm\">Estado de lectura</label>",
+          "target": [
+            "label[for=\"_r_8_-status\"]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<button data-slot=\"button\" class=\"inline-flex min-h-11...\" type=\"button\">",
+                  "target": [
+                    "fieldset > .bg-card\\/60.shadow-xs[type=\"button\"]"
+                  ]
+                },
+                {
+                  "html": "<section class=\"surface-card rounded-2xl p-5 space-y-3\" aria-labelledby=\"edition-copies-title\">",
+                  "target": [
+                    "section[aria-labelledby=\"edition-copies-title\"]"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<button data-slot=\"button\" class=\"inline-flex min-h-11...\" type=\"button\">",
+          "target": [
+            "fieldset > .bg-card\\/60.shadow-xs[type=\"button\"]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<section aria-labelledby=\"edition-series-title\" class=\"surface-card rounded-2xl p-5 space-y-3\">",
+                  "target": [
+                    "section[aria-labelledby=\"edition-series-title\"]"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<h2 id=\"edition-series-title\" class=\"text-sm font-semibold flex items-center gap-2\">",
+          "target": [
+            "#edition-series-title"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<section aria-labelledby=\"edition-series-title\" class=\"surface-card rounded-2xl p-5 space-y-3\">",
+                  "target": [
+                    "section[aria-labelledby=\"edition-series-title\"]"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<p class=\"text-sm text-muted-foreground\">Esta edición no pertenece a ninguna serie. Es opcional y no cambia nada más de la ficha.</p>",
+          "target": [
+            "section[aria-labelledby=\"edition-series-title\"] > .space-y-3 > p"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<button data-slot=\"button\" class=\"inline-flex min-h-11...\" type=\"button\">",
+                  "target": [
+                    "section[aria-labelledby=\"edition-series-title\"] > .space-y-3 > .bg-card\\/60.shadow-xs[type=\"button\"]"
+                  ]
+                },
+                {
+                  "html": "<section aria-labelledby=\"edition-series-title\" class=\"surface-card rounded-2xl p-5 space-y-3\">",
+                  "target": [
+                    "section[aria-labelledby=\"edition-series-title\"]"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<button data-slot=\"button\" class=\"inline-flex min-h-11...\" type=\"button\">",
+          "target": [
+            "section[aria-labelledby=\"edition-series-title\"] > .space-y-3 > .bg-card\\/60.shadow-xs[type=\"button\"]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "15.0pt (20px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<section aria-label=\"Datos personales\" class=\"surface-card space-y-4 p-5 md:p-6\">",
+                  "target": [
+                    ".md\\:p-6"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<h2 class=\"text-xl font-semibold\">Notas, etiquetas y valoración</h2>",
+          "target": [
+            ".md\\:p-6 > .text-xl"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "12.0pt (16px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<p class=\"whitespace-pre-wrap break-words rounded-xl border-l-4 border-brass bg-surface/60 px-4 py-3 text-foreground-light\">Sin notas privadas.</p>",
+                  "target": [
+                    ".whitespace-pre-wrap"
+                  ]
+                },
+                {
+                  "html": "<section aria-label=\"Datos personales\" class=\"surface-card space-y-4 p-5 md:p-6\">",
+                  "target": [
+                    ".md\\:p-6"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<p class=\"whitespace-pre-wrap break-words rounded-xl border-l-4 border-brass bg-surface/60 px-4 py-3 text-foreground-light\">Sin notas privadas.</p>",
+          "target": [
+            ".whitespace-pre-wrap"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "12.0pt (16px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<section aria-label=\"Datos personales\" class=\"surface-card space-y-4 p-5 md:p-6\">",
+                  "target": [
+                    ".md\\:p-6"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<p class=\"flex items-center gap-2\">Sin valoración</p>",
+          "target": [
+            ".md\\:p-6 > .flex"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<section aria-label=\"Datos personales\" class=\"surface-card space-y-4 p-5 md:p-6\">",
+                  "target": [
+                    ".md\\:p-6"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<p class=\"text-sm\">Etiquetas: Sin etiquetas</p>",
+          "target": [
+            "p:nth-child(4)"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<button data-slot=\"button\" class=\"inline-flex min-h-11...\" type=\"button\">",
+                  "target": [
+                    ".md\\:p-6 > .bg-card\\/60.shadow-xs[type=\"button\"]"
+                  ]
+                },
+                {
+                  "html": "<section aria-label=\"Datos personales\" class=\"surface-card space-y-4 p-5 md:p-6\">",
+                  "target": [
+                    ".md\\:p-6"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<button data-slot=\"button\" class=\"inline-flex min-h-11...\" type=\"button\">",
+          "target": [
+            ".md\\:p-6 > .bg-card\\/60.shadow-xs[type=\"button\"]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<section aria-label=\"Datos personales\" class=\"surface-card space-y-4 p-5 md:p-6\">",
+                  "target": [
+                    ".md\\:p-6"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<summary class=\"min-h-11 cursor-pointer text-sm font-semibold\">Gestionar etiquetas de la biblioteca</summary>",
+          "target": [
+            "summary"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<section aria-label=\"Datos personales\" class=\"surface-card space-y-4 p-5 md:p-6\">",
+                  "target": [
+                    ".md\\:p-6"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<button data-slot=\"button\" class=\"inline-flex min-h-11...\" type=\"button\">",
+          "target": [
+            ".h-9"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "18.0pt (24px)",
+                "fontWeight": "bold",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "3:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<section aria-labelledby=\"loans-heading\" class=\"surface-card p-5 space-y-5\">",
+                  "target": [
+                    "section[aria-labelledby=\"loans-heading\"]"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<h2 id=\"loans-heading\" class=\"heading-vintage text-2xl\">Préstamos</h2>",
+          "target": [
+            "#loans-heading"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "12.0pt (16px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<section aria-labelledby=\"loans-heading\" class=\"surface-card p-5 space-y-5\">",
+                  "target": [
+                    "section[aria-labelledby=\"loans-heading\"]"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<a class=\"link-quiet inline-flex min-h-11 items-center\" href=\"/loans\">Ver prestados</a>",
+          "target": [
+            ".link-quiet"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<button data-slot=\"button\" class=\"inline-flex min-h-11...\" type=\"button\">",
+                  "target": [
+                    "section[aria-labelledby=\"loans-heading\"] > .bg-card\\/60.shadow-xs[type=\"button\"]"
+                  ]
+                },
+                {
+                  "html": "<section aria-labelledby=\"loans-heading\" class=\"surface-card p-5 space-y-5\">",
+                  "target": [
+                    "section[aria-labelledby=\"loans-heading\"]"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<button data-slot=\"button\" class=\"inline-flex min-h-11...\" type=\"button\">",
+          "target": [
+            "section[aria-labelledby=\"loans-heading\"] > .bg-card\\/60.shadow-xs[type=\"button\"]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<section aria-labelledby=\"loans-heading\" class=\"surface-card p-5 space-y-5\">",
+                  "target": [
+                    "section[aria-labelledby=\"loans-heading\"]"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<p class=\"text-sm text-foreground-light\">Este ejemplar está disponible para prestar.</p>",
+          "target": [
+            "section[aria-labelledby=\"loans-heading\"] > .text-foreground-light"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<section aria-labelledby=\"loans-heading\" class=\"surface-card p-5 space-y-5\">",
+                  "target": [
+                    "section[aria-labelledby=\"loans-heading\"]"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<label for=\"new-6f5dba6a-72c5-5ff3-a42a-73f33f63bc2d-alias\" class=\"text-sm font-semibold\">Alias de la persona</label>",
+          "target": [
+            "fieldset > .space-y-1:nth-child(1) > label"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "9.0pt (12px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<section aria-labelledby=\"loans-heading\" class=\"surface-card p-5 space-y-5\">",
+                  "target": [
+                    "section[aria-labelledby=\"loans-heading\"]"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<p id=\"new-6f5dba6a-72c5-5ff3-a42a-73f33f63bc2d-hint\" class=\"text-xs text-muted-foreground\">Un alias corto, como «Ana» o «Vecina 3.º B», sin datos de contacto.</p>",
+          "target": [
+            "#new-6f5dba6a-72c5-5ff3-a42a-73f33f63bc2d-hint"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<section aria-labelledby=\"loans-heading\" class=\"surface-card p-5 space-y-5\">",
+                  "target": [
+                    "section[aria-labelledby=\"loans-heading\"]"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<label for=\"new-6f5dba6a-72c5-5ff3-a42a-73f33f63bc2d-due\" class=\"text-sm font-semibold\">Fecha acordada (opcional)</label>",
+          "target": [
+            "fieldset > .space-y-1:nth-child(2) > label"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "9.0pt (12px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<section aria-labelledby=\"loans-heading\" class=\"surface-card p-5 space-y-5\">",
+                  "target": [
+                    "section[aria-labelledby=\"loans-heading\"]"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<p class=\"text-xs text-muted-foreground\">Déjala vacía si no hay fecha acordada.</p>",
+          "target": [
+            ".space-y-1:nth-child(2) > .text-xs"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<section aria-labelledby=\"loans-heading\" class=\"surface-card p-5 space-y-5\">",
+                  "target": [
+                    "section[aria-labelledby=\"loans-heading\"]"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<label for=\"new-6f5dba6a-72c5-5ff3-a42a-73f33f63bc2d-note\" class=\"text-sm font-semibold\">Nota del préstamo (opcional)</label>",
+          "target": [
+            ".space-y-1:nth-child(3) > label"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<section aria-labelledby=\"loans-heading\" class=\"surface-card p-5 space-y-5\">",
+                  "target": [
+                    "section[aria-labelledby=\"loans-heading\"]"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<label for=\"loaned-6f5dba6a-72c5-5ff3-a42a-73f33f63bc2d\" class=\"text-sm font-semibold\">Fecha de salida</label>",
+          "target": [
+            ".space-y-1:nth-child(4) > label"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "15.0pt (20px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<section aria-labelledby=\"loans-heading\" class=\"surface-card p-5 space-y-5\">",
+                  "target": [
+                    "section[aria-labelledby=\"loans-heading\"]"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<h3 class=\"font-heading text-xl\">Historial de préstamos</h3>",
+          "target": [
+            "h3"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<p class=\"rounded-xl border border-dashed border-border bg-surface/50 p-4 text-sm text-muted-foreground\">Aún no hay devoluciones registradas.</p>",
+                  "target": [
+                    ".border-dashed"
+                  ]
+                },
+                {
+                  "html": "<section aria-labelledby=\"loans-heading\" class=\"surface-card p-5 space-y-5\">",
+                  "target": [
+                    "section[aria-labelledby=\"loans-heading\"]"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<p class=\"rounded-xl border border-dashed border-border bg-surface/50 p-4 text-sm text-muted-foreground\">Aún no hay devoluciones registradas.</p>",
+          "target": [
+            ".border-dashed"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<button data-slot=\"alert-dialog-trigger\" class=\"inline-flex min-h-11...\" type=\"button\" aria-haspopup=\"dialog\" aria-expanded=\"false\" aria-controls=\"radix-_r_9_\" data-state=\"closed\">",
+                  "target": [
+                    ".text-destructive"
+                  ]
+                },
+                {
+                  "html": "<body class=\"font-sans antialiased\">",
+                  "target": [
+                    "body"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<button data-slot=\"alert-dialog-trigger\" class=\"inline-flex min-h-11...\" type=\"button\" aria-haspopup=\"dialog\" aria-expanded=\"false\" aria-controls=\"radix-_r_9_\" data-state=\"closed\">",
+          "target": [
+            ".text-destructive"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        }
+      ]
+    }
+  ],
+  "passes": [
+    "aria-allowed-attr",
+    "aria-allowed-role",
+    "aria-conditional-attr",
+    "aria-deprecated-role",
+    "aria-hidden-body",
+    "aria-hidden-focus",
+    "aria-prohibited-attr",
+    "aria-required-attr",
+    "aria-roles",
+    "aria-valid-attr-value",
+    "aria-valid-attr",
+    "avoid-inline-spacing",
+    "button-name",
+    "bypass",
+    "color-contrast",
+    "definition-list",
+    "dlitem",
+    "document-title",
+    "duplicate-id-aria",
+    "empty-heading",
+    "form-field-multiple-labels",
+    "heading-order",
+    "html-has-lang",
+    "html-lang-valid",
+    "image-alt",
+    "image-redundant-alt",
+    "label-title-only",
+    "label",
+    "landmark-banner-is-top-level",
+    "landmark-complementary-is-top-level",
+    "landmark-main-is-top-level",
+    "landmark-no-duplicate-banner",
+    "landmark-no-duplicate-main",
+    "landmark-one-main",
+    "landmark-unique",
+    "link-name",
+    "meta-viewport-large",
+    "meta-viewport",
+    "nested-interactive",
+    "page-has-heading-one",
+    "presentation-role-conflict",
+    "region",
+    "select-name",
+    "skip-link",
+    "summary-name",
+    "tabindex"
+  ],
+  "engine": {
+    "name": "axe-core",
+    "version": "4.11.4"
+  }
+}

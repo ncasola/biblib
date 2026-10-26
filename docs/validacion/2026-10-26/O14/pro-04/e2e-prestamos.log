@@ -1,0 +1,24 @@
+
+> biblib@1.0.0 test:e2e:local C:\Users\ncaso\orca\workspaces\biblib\u-qa-01
+> node tests/e2e/run.mjs "--profile" "test" "--grep" "préstamos:"
+
+E2E · perfil test · biblib-test · huella b831ef825c09 · run 8e05366f55f2 · chromium
+Compilando la app para el perfil test…
+Bundle de cliente sin credenciales administrativas ni URLs privadas.
+
+Running 5 tests using 1 worker
+
+(node:31416) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 1 [chromium-sesion] › tests\e2e\sesion.setup.ts:11:3 › acceso local: A entra por el formulario y conserva la sesión (1.3s)
+  ok 2 [chromium-sesion] › tests\e2e\sesion.setup.ts:11:3 › acceso local: B entra por el formulario y conserva la sesión (886ms)
+(node:36444) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 3 [chromium-flujos] › tests\e2e\flujos\prestamos.spec.ts:15:1 › préstamos: prestar, listado vencido, devolución, préstamo sucesivo y confirmaciones (6.7s)
+  ok 4 [chromium-flujos] › tests\e2e\flujos\prestamos.spec.ts:74:1 › préstamos: alias rechazado conserva el borrador y no ofrece campos de contacto (1.8s)
+  ok 5 [chromium-flujos] › tests\e2e\flujos\prestamos.spec.ts:90:1 › préstamos: contraste, diálogos y reflujo en claro y oscuro (12.4s)
+
+  5 passed (30.4s)
+Servidor sin salidas de red externas durante el run.
+Cuentas de Auth sin cambios (2, todas @biblib.test). Datos del run limpiados y biblioteca de A restaurada si hizo falta.
+Resultado: 5 recorridos superados, 0 fallo(s) conocido(s), 0 pendientes (fixme), 0 fallidos, 0 repeticiones.

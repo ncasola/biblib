@@ -1659,6 +1659,18 @@ Evidencia: [O13/pro-03](validacion/2026-10-25/O13/pro-03/informe.md).
 - `pnpm test:scripts`: manifest de 0015 con hechos reales (`tests/fixtures/migrations/objects-0015.json`).
 - `pnpm test:integration:reading-loans --profile scratch|test [--reuse-build]`: grupo `tests/integration/reading-loans` con cuentas desechables (aislamiento A/B y cuenta en eliminación, dos conexiones que inician o prestan a la vez, relectura, páginas fuera de rango y total desconocido, fechas civiles con varios husos de sesión, copia borrada por la app, ida y vuelta v2 por la app con reemplazo, versión anterior, fusión en otra cuenta y archivo v1, y eliminación con el worker real). También corre en `pnpm test:integration:local`.
 
+## Préstamos privados por ejemplar · U-PRO-04 (O14)
+
+La ficha incluye un panel «Préstamos» con préstamo activo, devolución e historial; `/loans` muestra «Prestados» con filtro de vencidos. El inicio consulta el número real de préstamos activos, sin sustituir un fallo de carga por cero. Los componentes `loan-*` usan los tokens de «Biblioteca nocturna» y son independientes de los controles de lectura.
+
+- Acciones en `app/actions/loans.ts`: `getCopyLoansAction`, `listActiveLoansAction`, `getLoanCountAction`, `openLoanAction`, `returnLoanAction`, `updateLoanAction` y `deleteLoanAction`. Dueño de la sesión, RLS, bloqueo de biblioteca, versión de préstamo y errores de dominio; ninguna modifica el estado o la versión del ejemplar.
+- `openLoanAction` usa `loan_open`: reconoce su propio reintento por alias y fecha de salida y devuelve el préstamo existente sin escribir. Otro alias o fecha produce `CONFLICT`. `returnLoanAction` usa `loan_return`: misma fecha ya devuelta reconoce el reintento; una devolución distinta produce conflicto. Editar y borrar exigen versión y confirmación explícita (`confirmed: true`) también en el servidor.
+- Solo un alias corto, fecha de salida, fecha acordada y nota opcionales. Un alias rechazado explica cómo escribir otro alias sin ofrecer datos de contacto. Los errores conservan el borrador; «Recargar préstamos» permite revisar el estado de otra pestaña.
+- Fechas `DATE` como `AAAA-MM-DD`; se presentan sin convertir a instantes. «Hoy» y «vencido» usan `civilDateInZone` en la zona del navegador, actualizada al volver a la pestaña y cada minuto. Sin vencimiento: «Sin fecha acordada». `LOAN_REMINDERS_SENT = false`; no se implementa ni se anuncia ningún envío.
+- La migración `0015`, exportación v2, versiones anteriores, respaldo y supresión siguen el [contrato de O14](spec-pendientes/contratos-o14.md); esta unidad no añade tablas ni migraciones. Retirar los componentes mantiene el historial exportable.
+
+Pruebas: `tests/loans.test.ts`; `pnpm test:integration:loans --profile scratch|test [--reuse-build]` (grupo `loans` también en `SUITES` de integración local); `pnpm test:e2e:local --project chromium --grep "préstamos:"` (sesión real, préstamo/devolución, historial sucesivo, confirmaciones, listado, cifra del inicio, alias y reflujo). Evidencia y resultados reales en [O14/pro-04](validacion/2026-10-26/O14/pro-04/informe.md).
+
 ## Ciclos, sesiones y progreso de lectura · U-PRO-02 (O14)
 
 Acciones y pantallas sobre el contrato de 0015 ([contratos-o14](spec-pendientes/contratos-o14.md)). Sin migración propia. Evidencia: [O14/pro-02](validacion/2026-10-26/O14/pro-02/informe.md).
@@ -1707,3 +1719,40 @@ La consulta reutiliza `listBooksAction` en páginas de **100** y la ubicación f
 La copia incluye título, fecha del navegador, total y numeración. Se pueden elegir título, autor, ISBN, estado, ubicación, notas cuando existan y portada; la portada empieza desactivada. El estado se imprime como texto y los valores ausentes como «—». **Imprimir** delega en `window.print()` y no cambia la URL ni los filtros. El CSS de papel usa negro sobre blanco, Fraunces en el título, Inter en la tabla, cabecera repetida, filas sin cortes y márgenes de 12 mm en A4 y Carta; las reglas se limitan a esta vista.
 
 Pruebas: `pnpm test` cubre filtros, campos, límites, carga paginada y cambios durante la consulta; `pnpm test:e2e:local --project chromium --grep impresión` requiere el turno del worktree propietario de `test` y comprueba IDs reales, más de una página, vacío, estantería, serie/etiquetas, notas y ubicación. Genera las vistas A4/Carta en [O15/exp-07](validacion/2026-10-26/O15/exp-07/informe.md). No equivale a probar una impresora física ni la cancelación del diálogo nativo.
+
+## Copia de lectura sin conexión y PWA · U-EXP-08 (O15)
+
+Manifiesto, service worker de shell estático y copia de lectura opt-in, cifrada y por cuenta. Contrato: [contratos-o15](spec-pendientes/contratos-o15.md). Evidencia: [O15/exp-08](validacion/2026-10-26/O15/exp-08/informe.md). Sin migración ni datos nuevos en Supabase.
+
+### Activación
+
+1. La copia va detrás de `BIBLIB_OFFLINE_SNAPSHOT=1`, variable de **servidor**, apagada por defecto. Se lee en tiempo de ejecución: basta reiniciar la app, sin recompilar.
+2. Con la bandera, en `/settings` aparece «Copia de lectura sin conexión». Para activarla hay que elegir un PIN de 6 dígitos o una frase de 8 caracteres, repetirlo y confirmar que la copia queda en el dispositivo. Desde ahí también se ve la fecha de la copia y su caducidad, se renueva (pide el PIN) y se quita.
+3. Sin conexión, cualquier navegación lleva a `/offline`, donde se desbloquea la copia de la última cuenta que usó el dispositivo con conexión.
+4. El worker y el manifiesto están siempre activos en el build de producción (`next start`); en `next dev` no se registran. Para comprobar el worker en local hay que usar un build: `pnpm build:local` y `pnpm start:local`, o el E2E.
+
+Antes de activar la bandera para alguien, el usuario revisa las decisiones del contrato: TTL de 7 días, 10 intentos, sin recuperación del PIN y contenido excluido.
+
+### Recuperación
+
+| Situación | Qué hacer |
+| --- | --- |
+| PIN o frase olvidados | No hay recuperación. «Quitar copia de este dispositivo» en Ajustes (o «Borrar la copia dañada») y guardarla otra vez con conexión. |
+| Copia caducada (7 días sin validar) | Abrir BibLib con conexión y la misma cuenta: la validación la desbloquea. «Renovar copia» además trae los datos actuales. |
+| 10 intentos fallidos | La copia ya está borrada; se vuelve a guardar con conexión. |
+| Copia dañada o «sin espacio» | Borrarla desde Ajustes o desde `/offline`; liberar espacio del sitio si hace falta y volver a guardarla. |
+| Incidente con la copia | Quitar `BIBLIB_OFFLINE_SNAPSHOT` (desaparece el ajuste y no se validan copias, que vencen solas en 7 días) y publicar el worker de limpieza. El acceso con conexión no cambia. |
+
+### Worker de limpieza
+
+- **Con la app cargando:** `BIBLIB_SERVICE_WORKER=limpieza` y reiniciar. Cada página registra `/sw.js?…&modo=limpieza`, que borra todas las cachés del origen y las bases `biblib-offline-*` y se da de baja. Si ya no había worker, la página limpia directamente. Se vuelve al modo normal quitando la variable.
+- **Si la página no llega a cargar:** publicar `public/sw.js` con `FORZAR_LIMPIEZA = true`. El navegador compara el script en su siguiente comprobación de actualización (`sw.js` sale con `private, no-store` y se registra con `updateViaCache: "none"`) y lo instala como limpieza.
+- **Versión nueva del shell:** subir `SERVICE_WORKER_VERSION` en `lib/offline-config.ts`. El worker nuevo borra al activarse las cachés de las versiones anteriores; las copias de lectura no se tocan.
+- Un dispositivo desconectado no recibe nada de esto hasta que vuelve a conectarse.
+
+### Pruebas
+
+- `pnpm test`:
+  - `tests/offline-library.test.ts`: KDF y envoltura con los parámetros fijados (las iteraciones se reducen solo por inyección), IV por escritura, lista blanca, TTL, intentos, aislamiento A/B, corrupción, cuota y borrado total.
+  - `tests/offline-service-worker.test.ts`: `public/sw.js` en un contexto aislado. Comprueba qué guarda y qué no, la versión por URL, la limpieza de versiones anteriores, el modo de limpieza, la redirección sin red y las cabeceras de `sw.js` y `/offline`.
+- E2E: `tests/e2e/flujos/offline.spec.ts` (`pnpm test:e2e:local --grep "offline:"`, perfil `test`). El runner arranca la app con `BIBLIB_OFFLINE_SNAPSHOT=1`. Cubre el shell sin consentimiento, la activación con PIN, la consulta sin red, A/B en el mismo navegador, el cierre de sesión, el TTL con reloj simulado, la actualización del worker y el borrado de datos del sitio (solo en Chromium, por CDP).

@@ -1,0 +1,945 @@
+{
+  "url": "/shelves/3d",
+  "scope": "página completa",
+  "violations": [],
+  "incomplete": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "tags": [
+        "cat.color",
+        "wcag2aa",
+        "wcag143",
+        "TTv5",
+        "TT13.c",
+        "EN-301-549",
+        "EN-9.1.4.3",
+        "ACT",
+        "RGAAv4",
+        "RGAA-3.2.1"
+      ],
+      "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/color-contrast?application=playwright",
+      "nodes": [
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "18.0pt (24px)",
+                "fontWeight": "bold",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "3:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<header class=\"sticky top-0 z-50 border-b border-border/70 bg-background/85 shadow-[0_10px_30px_-24px_rgb(0_0_0/0.6)] backdrop-blur-xl\">",
+                  "target": [
+                    "header"
+                  ]
+                },
+                {
+                  "html": "<body class=\"font-sans antialiased\">",
+                  "target": [
+                    "body"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"font-heading text-2xl font-bold tracking-tight text-heading\">BibLib</span>",
+          "target": [
+            ".font-heading"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "11.3pt (15px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<header class=\"sticky top-0 z-50 border-b border-border/70 bg-background/85 shadow-[0_10px_30px_-24px_rgb(0_0_0/0.6)] backdrop-blur-xl\">",
+                  "target": [
+                    "header"
+                  ]
+                },
+                {
+                  "html": "<body class=\"font-sans antialiased\">",
+                  "target": [
+                    "body"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<a tabindex=\"0\" class=\"inline-flex min-h-11 items-center rounded-full px-3.5 text-[0.9375rem] font-medium transition-colors text-foreground-light hover:bg-accent hover:text-accent-foreground\" href=\"/\">Inicio</a>",
+          "target": [
+            ".text-foreground-light.px-3\\.5[href=\"/\"]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "11.3pt (15px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<header class=\"sticky top-0 z-50 border-b border-border/70 bg-background/85 shadow-[0_10px_30px_-24px_rgb(0_0_0/0.6)] backdrop-blur-xl\">",
+                  "target": [
+                    "header"
+                  ]
+                },
+                {
+                  "html": "<body class=\"font-sans antialiased\">",
+                  "target": [
+                    "body"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<a tabindex=\"0\" class=\"inline-flex min-h-11 items-center rounded-full px-3.5 text-[0.9375rem] font-medium transition-colors text-foreground-light hover:bg-accent hover:text-accent-foreground\" href=\"/books\">Libros</a>",
+          "target": [
+            "a[href$=\"books\"]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "11.3pt (15px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<header class=\"sticky top-0 z-50 border-b border-border/70 bg-background/85 shadow-[0_10px_30px_-24px_rgb(0_0_0/0.6)] backdrop-blur-xl\">",
+                  "target": [
+                    "header"
+                  ]
+                },
+                {
+                  "html": "<body class=\"font-sans antialiased\">",
+                  "target": [
+                    "body"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<a tabindex=\"0\" class=\"inline-flex min-h-11 items-center rounded-full px-3.5 text-[0.9375rem] font-medium transition-colors text-foreground-light hover:bg-accent hover:text-accent-foreground\" href=\"/series\">Series</a>",
+          "target": [
+            "a[href$=\"series\"]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "11.3pt (15px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<header class=\"sticky top-0 z-50 border-b border-border/70 bg-background/85 shadow-[0_10px_30px_-24px_rgb(0_0_0/0.6)] backdrop-blur-xl\">",
+                  "target": [
+                    "header"
+                  ]
+                },
+                {
+                  "html": "<body class=\"font-sans antialiased\">",
+                  "target": [
+                    "body"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<a tabindex=\"0\" class=\"inline-flex min-h-11 items-center rounded-full px-3.5 text-[0.9375rem] font-medium transition-colors text-foreground-light hover:bg-accent hover:text-accent-foreground\" href=\"/locations\">Ubicaciones</a>",
+          "target": [
+            "a[href$=\"locations\"]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "11.3pt (15px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<header class=\"sticky top-0 z-50 border-b border-border/70 bg-background/85 shadow-[0_10px_30px_-24px_rgb(0_0_0/0.6)] backdrop-blur-xl\">",
+                  "target": [
+                    "header"
+                  ]
+                },
+                {
+                  "html": "<body class=\"font-sans antialiased\">",
+                  "target": [
+                    "body"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<a tabindex=\"0\" class=\"inline-flex min-h-11 items-center rounded-full px-3.5 text-[0.9375rem] font-medium transition-colors text-foreground-light hover:bg-accent hover:text-accent-foreground\" href=\"/settings\">Ajustes</a>",
+          "target": [
+            "a[href$=\"settings\"]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "9.0pt (12px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<body class=\"font-sans antialiased\">",
+                  "target": [
+                    "body"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<p class=\"mb-1 text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground\">Estantería 3D</p>",
+          "target": [
+            ".mb-1"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "27.0pt (36px)",
+                "fontWeight": "bold",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "3:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<body class=\"font-sans antialiased\">",
+                  "target": [
+                    "body"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<h1 class=\"mb-2 break-words text-3xl font-bold heading-vintage md:text-4xl\">Aventuras de prueba</h1>",
+          "target": [
+            "h1"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "12.0pt (16px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<body class=\"font-sans antialiased\">",
+                  "target": [
+                    "body"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<p class=\"text-base text-muted-foreground\">Saca un libro de la balda para ver su tapa y abrir su ficha.</p>",
+          "target": [
+            ".text-base"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<body class=\"font-sans antialiased\">",
+                  "target": [
+                    "body"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<label for=\"shelf-3d-select\" class=\"text-sm font-medium text-foreground\">Estantería</label>",
+          "target": [
+            "label[for=\"shelf-3d-select\"]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<a data-slot=\"button\" tabindex=\"0\" class=\"inline-flex min-w-11...\" href=\"/books?shelf=b879401...\">",
+                  "target": [
+                    ".bg-card\\/60.shadow-xs.py-2"
+                  ]
+                },
+                {
+                  "html": "<body class=\"font-sans antialiased\">",
+                  "target": [
+                    "body"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<a data-slot=\"button\" tabindex=\"0\" class=\"inline-flex min-w-11...\" href=\"/books?shelf=b879401...\">",
+          "target": [
+            ".bg-card\\/60.shadow-xs.py-2"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<body class=\"font-sans antialiased\">",
+                  "target": [
+                    "body"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<p aria-live=\"polite\" aria-atomic=\"true\" class=\"text-sm text-muted-foreground\">Estantería «Aventuras de prueba» · 2 libros · página 1 de 1</p>",
+          "target": [
+            "p[aria-atomic=\"true\"]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "9.0pt (12px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<body class=\"font-sans antialiased\">",
+                  "target": [
+                    "body"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<p class=\"mb-4 text-xs text-muted-foreground\">La escena muestra hasta 48 libros por página, ordenados por título; la tabla tiene exactamente los mismos.</p>",
+          "target": [
+            ".mb-4"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div class=\"s3-root\" data-madera=\"nogal\">",
+                  "target": [
+                    ".s3-root"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<button type=\"button\" class=\"s3-pill\">Recentrar vista</button>",
+          "target": [
+            ".s3-pill"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "6.8pt (9px)",
+                "fontWeight": "normal",
+                "messageKey": "bgOverlap",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element's background color could not be determined because it is overlapped by another element"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"s3-spine-title\">La isla de papel</span>",
+          "target": [
+            "span[data-lomo=\"nervios\"] > .s3-spine-title"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "9.8pt (13px)",
+                "fontWeight": "bold",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<span class=\"s3-face s3-cover\"><span class=\"s3-cover-frame\"><span class=\"s3-cover-title\">La isla de papel</span><span class=\"s3-cover-rule\"></span><span class=\"s3-cover-author\">Bruno Ficticio</span></span></span>",
+                  "target": [
+                    "#book-row-6f5dba6a-72c5-5ff3-a42a-73f33f63bc2d > .s3-move[aria-hidden=\"true\"] > .s3-cover.s3-face"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"s3-cover-title\">La isla de papel</span>",
+          "target": [
+            "#book-row-6f5dba6a-72c5-5ff3-a42a-73f33f63bc2d > .s3-move[aria-hidden=\"true\"] > .s3-cover.s3-face > .s3-cover-frame > .s3-cover-title"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "6.8pt (9px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<span class=\"s3-face s3-cover\"><span class=\"s3-cover-frame\"><span class=\"s3-cover-title\">La isla de papel</span><span class=\"s3-cover-rule\"></span><span class=\"s3-cover-author\">Bruno Ficticio</span></span></span>",
+                  "target": [
+                    "#book-row-6f5dba6a-72c5-5ff3-a42a-73f33f63bc2d > .s3-move[aria-hidden=\"true\"] > .s3-cover.s3-face"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"s3-cover-author\">Bruno Ficticio</span>",
+          "target": [
+            "#book-row-6f5dba6a-72c5-5ff3-a42a-73f33f63bc2d > .s3-move[aria-hidden=\"true\"] > .s3-cover.s3-face > .s3-cover-frame > .s3-cover-author"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "6.8pt (9px)",
+                "fontWeight": "normal",
+                "messageKey": "bgOverlap",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element's background color could not be determined because it is overlapped by another element"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"s3-spine-title\">Mapas de una ciudad inventada</span>",
+          "target": [
+            "span[data-lomo=\"bloque\"] > .s3-spine-title"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "9.8pt (13px)",
+                "fontWeight": "bold",
+                "messageKey": "bgOverlap",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element's background color could not be determined because it is overlapped by another element"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"s3-cover-title\">Mapas de una ciudad inventada</span>",
+          "target": [
+            "#book-row-a03fe701-9b5e-533d-aed0-4d64ac283396 > .s3-move[aria-hidden=\"true\"] > .s3-cover.s3-face > .s3-cover-frame > .s3-cover-title"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "6.8pt (9px)",
+                "fontWeight": "normal",
+                "messageKey": "bgOverlap",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element's background color could not be determined because it is overlapped by another element"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"s3-cover-author\">Alba Inventada</span>",
+          "target": [
+            "#book-row-a03fe701-9b5e-533d-aed0-4d64ac283396 > .s3-move[aria-hidden=\"true\"] > .s3-cover.s3-face > .s3-cover-frame > .s3-cover-author"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "6.0pt (8px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<span class=\"s3-plaque\">L – M</span>",
+                  "target": [
+                    ".s3-board-edge.s3-wood[aria-hidden=\"true\"]:nth-child(10) > .s3-plaque"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"s3-plaque\">L – M</span>",
+          "target": [
+            ".s3-board-edge.s3-wood[aria-hidden=\"true\"]:nth-child(10) > .s3-plaque"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "6.8pt (9px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<span class=\"s3-plaque\">Aventuras de prueba</span>",
+                  "target": [
+                    ".s3-crown > .s3-plaque"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"s3-plaque\">Aventuras de prueba</span>",
+          "target": [
+            ".s3-crown > .s3-plaque"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "21.0pt (28px)",
+                "fontWeight": "bold",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "3:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<section aria-label=\"Libro seleccionado\" class=\"s3-panel\" data-con-libro=\"false\">",
+                  "target": [
+                    ".s3-panel"
+                  ]
+                },
+                {
+                  "html": "<div class=\"s3-root\" data-madera=\"nogal\">",
+                  "target": [
+                    ".s3-root"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<h2 class=\"s3-panel-title\">Saca un libro de la balda</h2>",
+          "target": [
+            "h2"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "11.3pt (15px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<section aria-label=\"Libro seleccionado\" class=\"s3-panel\" data-con-libro=\"false\">",
+                  "target": [
+                    ".s3-panel"
+                  ]
+                },
+                {
+                  "html": "<div class=\"s3-root\" data-madera=\"nogal\">",
+                  "target": [
+                    ".s3-root"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<p class=\"s3-panel-text\">Pasa el puntero por los lomos o recórrelos con las flechas del teclado. Al pulsar uno, sale de la estantería y gira para enseñarte la tapa.</p>",
+          "target": [
+            ".s3-panel-text:nth-child(2)"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "11.3pt (15px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<section aria-label=\"Libro seleccionado\" class=\"s3-panel\" data-con-libro=\"false\">",
+                  "target": [
+                    ".s3-panel"
+                  ]
+                },
+                {
+                  "html": "<div class=\"s3-root\" data-madera=\"nogal\">",
+                  "target": [
+                    ".s3-root"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<p class=\"s3-panel-text\">Mueve el puntero sobre el mueble para verlo desde otro ángulo.</p>",
+          "target": [
+            ".s3-panel-text:nth-child(3)"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "9.8pt (13px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<section aria-label=\"Libro seleccionado\" class=\"s3-panel\" data-con-libro=\"false\">",
+                  "target": [
+                    ".s3-panel"
+                  ]
+                },
+                {
+                  "html": "<div class=\"s3-root\" data-madera=\"nogal\">",
+                  "target": [
+                    ".s3-root"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<p class=\"s3-summary\">2 libros en 1 balda. El grosor de cada lomo sale de su número de páginas.</p>",
+          "target": [
+            ".s3-summary"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        }
+      ]
+    }
+  ],
+  "passes": [
+    "aria-allowed-attr",
+    "aria-allowed-role",
+    "aria-conditional-attr",
+    "aria-deprecated-role",
+    "aria-hidden-body",
+    "aria-hidden-focus",
+    "aria-prohibited-attr",
+    "aria-required-attr",
+    "aria-roles",
+    "aria-valid-attr-value",
+    "aria-valid-attr",
+    "avoid-inline-spacing",
+    "button-name",
+    "bypass",
+    "color-contrast",
+    "document-title",
+    "duplicate-id-aria",
+    "empty-heading",
+    "form-field-multiple-labels",
+    "heading-order",
+    "html-has-lang",
+    "html-lang-valid",
+    "image-alt",
+    "image-redundant-alt",
+    "label-title-only",
+    "landmark-banner-is-top-level",
+    "landmark-main-is-top-level",
+    "landmark-no-duplicate-banner",
+    "landmark-no-duplicate-main",
+    "landmark-one-main",
+    "landmark-unique",
+    "link-name",
+    "meta-viewport-large",
+    "meta-viewport",
+    "nested-interactive",
+    "page-has-heading-one",
+    "presentation-role-conflict",
+    "region",
+    "select-name",
+    "skip-link",
+    "tabindex"
+  ],
+  "engine": {
+    "name": "axe-core",
+    "version": "4.11.4"
+  }
+}

@@ -1,0 +1,1530 @@
+{
+  "url": "/",
+  "scope": "página completa",
+  "violations": [],
+  "incomplete": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "tags": [
+        "cat.color",
+        "wcag2aa",
+        "wcag143",
+        "TTv5",
+        "TT13.c",
+        "EN-301-549",
+        "EN-9.1.4.3",
+        "ACT",
+        "RGAAv4",
+        "RGAA-3.2.1"
+      ],
+      "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/color-contrast?application=playwright",
+      "nodes": [
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "18.0pt (24px)",
+                "fontWeight": "bold",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "3:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<header class=\"sticky top-0 z-50 border-b border-border/70 bg-background/85 shadow-[0_10px_30px_-24px_rgb(0_0_0/0.6)] backdrop-blur-xl\">",
+                  "target": [
+                    "header"
+                  ]
+                },
+                {
+                  "html": "<body class=\"font-sans antialiased\">",
+                  "target": [
+                    "body"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"font-heading text-2xl font-bold tracking-tight text-heading\">BibLib</span>",
+          "target": [
+            ".tracking-tight"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "11.3pt (15px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<header class=\"sticky top-0 z-50 border-b border-border/70 bg-background/85 shadow-[0_10px_30px_-24px_rgb(0_0_0/0.6)] backdrop-blur-xl\">",
+                  "target": [
+                    "header"
+                  ]
+                },
+                {
+                  "html": "<body class=\"font-sans antialiased\">",
+                  "target": [
+                    "body"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<a tabindex=\"0\" class=\"inline-flex min-h-11 items-center rounded-full px-3.5 text-[0.9375rem] font-medium transition-colors text-foreground-light hover:bg-accent hover:text-accent-foreground\" href=\"/books\">Libros</a>",
+          "target": [
+            ".px-3\\.5.font-medium[href$=\"books\"]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "11.3pt (15px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<header class=\"sticky top-0 z-50 border-b border-border/70 bg-background/85 shadow-[0_10px_30px_-24px_rgb(0_0_0/0.6)] backdrop-blur-xl\">",
+                  "target": [
+                    "header"
+                  ]
+                },
+                {
+                  "html": "<body class=\"font-sans antialiased\">",
+                  "target": [
+                    "body"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<a tabindex=\"0\" class=\"inline-flex min-h-11 items-center rounded-full px-3.5 text-[0.9375rem] font-medium transition-colors text-foreground-light hover:bg-accent hover:text-accent-foreground\" href=\"/shelves\">Estanterías</a>",
+          "target": [
+            ".px-3\\.5.font-medium[href$=\"shelves\"]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "11.3pt (15px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<header class=\"sticky top-0 z-50 border-b border-border/70 bg-background/85 shadow-[0_10px_30px_-24px_rgb(0_0_0/0.6)] backdrop-blur-xl\">",
+                  "target": [
+                    "header"
+                  ]
+                },
+                {
+                  "html": "<body class=\"font-sans antialiased\">",
+                  "target": [
+                    "body"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<a tabindex=\"0\" class=\"inline-flex min-h-11 items-center rounded-full px-3.5 text-[0.9375rem] font-medium transition-colors text-foreground-light hover:bg-accent hover:text-accent-foreground\" href=\"/series\">Series</a>",
+          "target": [
+            "a[href$=\"series\"]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "11.3pt (15px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<header class=\"sticky top-0 z-50 border-b border-border/70 bg-background/85 shadow-[0_10px_30px_-24px_rgb(0_0_0/0.6)] backdrop-blur-xl\">",
+                  "target": [
+                    "header"
+                  ]
+                },
+                {
+                  "html": "<body class=\"font-sans antialiased\">",
+                  "target": [
+                    "body"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<a tabindex=\"0\" class=\"inline-flex min-h-11 items-center rounded-full px-3.5 text-[0.9375rem] font-medium transition-colors text-foreground-light hover:bg-accent hover:text-accent-foreground\" href=\"/locations\">Ubicaciones</a>",
+          "target": [
+            "a[href$=\"locations\"]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "11.3pt (15px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<header class=\"sticky top-0 z-50 border-b border-border/70 bg-background/85 shadow-[0_10px_30px_-24px_rgb(0_0_0/0.6)] backdrop-blur-xl\">",
+                  "target": [
+                    "header"
+                  ]
+                },
+                {
+                  "html": "<body class=\"font-sans antialiased\">",
+                  "target": [
+                    "body"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<a tabindex=\"0\" class=\"inline-flex min-h-11 items-center rounded-full px-3.5 text-[0.9375rem] font-medium transition-colors text-foreground-light hover:bg-accent hover:text-accent-foreground\" href=\"/settings\">Ajustes</a>",
+          "target": [
+            "a[href$=\"settings\"]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "9.8pt (13px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<body class=\"font-sans antialiased\">",
+                  "target": [
+                    "body"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<p class=\"eyebrow\">Tu biblioteca</p>",
+          "target": [
+            ".eyebrow"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "42.0pt (56px)",
+                "fontWeight": "bold",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "3:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<body class=\"font-sans antialiased\">",
+                  "target": [
+                    "body"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<h1 id=\"inicio-titulo\" class=\"heading-vintage text-4xl leading-[1.04] sm:text-5xl lg:text-[3.5rem]\">4 libros y una lectura a medias.</h1>",
+          "target": [
+            "#inicio-titulo"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "13.5pt (18px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<body class=\"font-sans antialiased\">",
+                  "target": [
+                    "body"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<p class=\"text-lg leading-relaxed text-foreground-light\">Retoma «El cuaderno de la bruma» donde la dejaste o recorre tus estanterías.</p>",
+          "target": [
+            ".text-lg"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "12.0pt (16px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<a data-slot=\"button\" tabindex=\"0\" class=\"inline-flex min-h-11...\" href=\"/books\">",
+                  "target": [
+                    ".bg-card\\/60"
+                  ]
+                },
+                {
+                  "html": "<body class=\"font-sans antialiased\">",
+                  "target": [
+                    "body"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<a data-slot=\"button\" tabindex=\"0\" class=\"inline-flex min-h-11...\" href=\"/books\">",
+          "target": [
+            ".bg-card\\/60"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "22.5pt (30px)",
+                "fontWeight": "bold",
+                "messageKey": "shortTextContent",
+                "expectedContrastRatio": "3:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div class=\"surface-card flex flex-col gap-1 p-4\"><span class=\"font-heading text-3xl font-bold leading-none text-heading\">4</span><span class=\"text-sm text-muted-foreground\">Libros</span></div>",
+                  "target": [
+                    ".gap-1.p-4.surface-card:nth-child(1)"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element content is too short to determine if it is actual text content"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"font-heading text-3xl font-bold leading-none text-heading\">4</span>",
+          "target": [
+            ".text-3xl.leading-none.text-heading"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element content is too short to determine if it is actual text content"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div class=\"surface-card flex flex-col gap-1 p-4\"><span class=\"font-heading text-3xl font-bold leading-none text-heading\">4</span><span class=\"text-sm text-muted-foreground\">Libros</span></div>",
+                  "target": [
+                    ".gap-1.p-4.surface-card:nth-child(1)"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"text-sm text-muted-foreground\">Libros</span>",
+          "target": [
+            ".gap-1.p-4.surface-card:nth-child(1) > .text-muted-foreground.text-sm"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "22.5pt (30px)",
+                "fontWeight": "bold",
+                "messageKey": "shortTextContent",
+                "expectedContrastRatio": "3:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div class=\"surface-card flex flex-col gap-1 p-4\"><span class=\"font-heading text-3xl font-bold leading-none text-[var(--status-reading)]\">1</span><span class=\"text-sm text-muted-foreground\">Leyendo</span></div>",
+                  "target": [
+                    ".gap-1.p-4.surface-card:nth-child(2)"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element content is too short to determine if it is actual text content"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"font-heading text-3xl font-bold leading-none text-[var(--status-reading)]\">1</span>",
+          "target": [
+            ".text-\\[var\\(--status-reading\\)\\]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element content is too short to determine if it is actual text content"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div class=\"surface-card flex flex-col gap-1 p-4\"><span class=\"font-heading text-3xl font-bold leading-none text-[var(--status-reading)]\">1</span><span class=\"text-sm text-muted-foreground\">Leyendo</span></div>",
+                  "target": [
+                    ".gap-1.p-4.surface-card:nth-child(2)"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"text-sm text-muted-foreground\">Leyendo</span>",
+          "target": [
+            ".gap-1.p-4.surface-card:nth-child(2) > .text-muted-foreground.text-sm"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "22.5pt (30px)",
+                "fontWeight": "bold",
+                "messageKey": "shortTextContent",
+                "expectedContrastRatio": "3:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div class=\"surface-card flex flex-col gap-1 p-4\"><span class=\"font-heading text-3xl font-bold leading-none text-[var(--status-to-read)]\">1</span><span class=\"text-sm text-muted-foreground\">Por leer</span></div>",
+                  "target": [
+                    ".gap-1.p-4.surface-card:nth-child(3)"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element content is too short to determine if it is actual text content"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"font-heading text-3xl font-bold leading-none text-[var(--status-to-read)]\">1</span>",
+          "target": [
+            ".text-\\[var\\(--status-to-read\\)\\]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element content is too short to determine if it is actual text content"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div class=\"surface-card flex flex-col gap-1 p-4\"><span class=\"font-heading text-3xl font-bold leading-none text-[var(--status-to-read)]\">1</span><span class=\"text-sm text-muted-foreground\">Por leer</span></div>",
+                  "target": [
+                    ".gap-1.p-4.surface-card:nth-child(3)"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"text-sm text-muted-foreground\">Por leer</span>",
+          "target": [
+            ".gap-1.p-4.surface-card:nth-child(3) > .text-muted-foreground.text-sm"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "22.5pt (30px)",
+                "fontWeight": "bold",
+                "messageKey": "shortTextContent",
+                "expectedContrastRatio": "3:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div class=\"surface-card flex flex-col gap-1 p-4\"><span class=\"font-heading text-3xl font-bold leading-none text-[var(--status-read)]\">1</span><span class=\"text-sm text-muted-foreground\">Leído</span></div>",
+                  "target": [
+                    ".gap-1.p-4.surface-card:nth-child(4)"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element content is too short to determine if it is actual text content"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"font-heading text-3xl font-bold leading-none text-[var(--status-read)]\">1</span>",
+          "target": [
+            ".text-\\[var\\(--status-read\\)\\]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element content is too short to determine if it is actual text content"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div class=\"surface-card flex flex-col gap-1 p-4\"><span class=\"font-heading text-3xl font-bold leading-none text-[var(--status-read)]\">1</span><span class=\"text-sm text-muted-foreground\">Leído</span></div>",
+                  "target": [
+                    ".gap-1.p-4.surface-card:nth-child(4)"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"text-sm text-muted-foreground\">Leído</span>",
+          "target": [
+            ".gap-1.p-4.surface-card:nth-child(4) > .text-muted-foreground.text-sm"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "22.5pt (30px)",
+                "fontWeight": "bold",
+                "messageKey": "shortTextContent",
+                "expectedContrastRatio": "3:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<a class=\"surface-card flex flex-col gap-1 p-4 hover:shadow-xl motion-safe:hover:-translate-y-0.5\" href=\"/loans\"><span class=\"font-heading text-3xl font-bold leading-none text-[var(--status-loaned)]\">0</span><span class=\"text-sm text-muted-foreground\">Prestados</span></a>",
+                  "target": [
+                    "a[href$=\"loans\"]"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element content is too short to determine if it is actual text content"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"font-heading text-3xl font-bold leading-none text-[var(--status-loaned)]\">0</span>",
+          "target": [
+            ".text-\\[var\\(--status-loaned\\)\\]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element content is too short to determine if it is actual text content"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<a class=\"surface-card flex flex-col gap-1 p-4 hover:shadow-xl motion-safe:hover:-translate-y-0.5\" href=\"/loans\"><span class=\"font-heading text-3xl font-bold leading-none text-[var(--status-loaned)]\">0</span><span class=\"text-sm text-muted-foreground\">Prestados</span></a>",
+                  "target": [
+                    "a[href$=\"loans\"]"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"text-sm text-muted-foreground\">Prestados</span>",
+          "target": [
+            "a[href$=\"loans\"] > .text-muted-foreground.text-sm"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "21.0pt (28px)",
+                "fontWeight": "bold",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "3:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<body class=\"font-sans antialiased\">",
+                  "target": [
+                    "body"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<h2 id=\"lectura-registrada\" class=\"heading-vintage text-2xl md:text-[1.75rem]\">Tu lectura registrada</h2>",
+          "target": [
+            "#lectura-registrada"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<body class=\"font-sans antialiased\">",
+                  "target": [
+                    "body"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<p class=\"text-sm text-foreground-light\">Solo cuenta lo que registras en la ficha de cada libro. Fechas en tu zona horaria (Europe/Madrid).</p>",
+          "target": [
+            "section[aria-labelledby=\"lectura-registrada\"] > p:nth-child(2)"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "12.0pt (16px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<p class=\"rounded-2xl border border-dashed border-control-border/60 bg-surface/50 p-6 text-foreground-light\">Aún no hay lecturas registradas. Empieza una desde la ficha de un libro para ver aquí tus sesiones y tus lecturas terminadas.</p>",
+                  "target": [
+                    ".rounded-2xl"
+                  ]
+                },
+                {
+                  "html": "<body class=\"font-sans antialiased\">",
+                  "target": [
+                    "body"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<p class=\"rounded-2xl border border-dashed border-control-border/60 bg-surface/50 p-6 text-foreground-light\">Aún no hay lecturas registradas. Empieza una desde la ficha de un libro para ver aquí tus sesiones y tus lecturas terminadas.</p>",
+          "target": [
+            ".rounded-2xl"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<body class=\"font-sans antialiased\">",
+                  "target": [
+                    "body"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<li>1 libro marcado como leído no tiene lecturas registradas: no cuenta aquí ni recibe fecha.</li>",
+          "target": [
+            ".list-disc > li"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "21.0pt (28px)",
+                "fontWeight": "bold",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "3:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<body class=\"font-sans antialiased\">",
+                  "target": [
+                    "body"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<h2 id=\"estanterias-inicio\" class=\"heading-vintage text-2xl md:text-[1.75rem]\">Estanterías</h2>",
+          "target": [
+            "#estanterias-inicio"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "12.0pt (16px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<body class=\"font-sans antialiased\">",
+                  "target": [
+                    "body"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<a class=\"link-quiet inline-flex min-h-11 items-center\" href=\"/shelves/3d\">Abrir en 3D</a>",
+          "target": [
+            "a[href=\"/shelves/3d\"]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "12.0pt (16px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<body class=\"font-sans antialiased\">",
+                  "target": [
+                    "body"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<a class=\"link-quiet inline-flex min-h-11 items-center\" href=\"/shelves\">Gestionar estanterías</a>",
+          "target": [
+            ".link-quiet.inline-flex[href$=\"shelves\"]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "15.0pt (20px)",
+                "fontWeight": "bold",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "3:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<a class=\"surface-card group flex h-full flex-col gap-3.5 p-4 transition-[transform,box-shadow] duration-300 hover:shadow-xl motion-safe:hover:-translate-y-0.5\" href=\"/books?shelf=9848339c-d370-4cc4-b3b9-ccdaa69853c3\">",
+                  "target": [
+                    "li:nth-child(1) > .h-full.gap-3\\.5.transition-\\[transform\\,box-shadow\\]"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"font-heading text-xl font-bold text-heading group-hover:underline group-hover:decoration-brass group-hover:underline-offset-4\">Sin estantería</span>",
+          "target": [
+            "li:nth-child(1) > .h-full.gap-3\\.5.transition-\\[transform\\,box-shadow\\] > .items-baseline.gap-3.justify-between > .group-hover\\:underline.group-hover\\:decoration-brass.group-hover\\:underline-offset-4"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<a class=\"surface-card group flex h-full flex-col gap-3.5 p-4 transition-[transform,box-shadow] duration-300 hover:shadow-xl motion-safe:hover:-translate-y-0.5\" href=\"/books?shelf=9848339c-d370-4cc4-b3b9-ccdaa69853c3\">",
+                  "target": [
+                    "li:nth-child(1) > .h-full.gap-3\\.5.transition-\\[transform\\,box-shadow\\]"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"shrink-0 text-sm text-muted-foreground\">1 libro</span>",
+          "target": [
+            "li:nth-child(1) > .h-full.gap-3\\.5.transition-\\[transform\\,box-shadow\\] > .items-baseline.gap-3.justify-between > .text-muted-foreground.shrink-0.text-sm"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "15.0pt (20px)",
+                "fontWeight": "bold",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "3:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<a class=\"surface-card group flex h-full flex-col gap-3.5 p-4 transition-[transform,box-shadow] duration-300 hover:shadow-xl motion-safe:hover:-translate-y-0.5\" href=\"/books?shelf=b879401a-9bb0-5555-af08-c8444855817e\">",
+                  "target": [
+                    "li:nth-child(2) > .h-full.gap-3\\.5.transition-\\[transform\\,box-shadow\\]"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"font-heading text-xl font-bold text-heading group-hover:underline group-hover:decoration-brass group-hover:underline-offset-4\">Aventuras de prueba</span>",
+          "target": [
+            "li:nth-child(2) > .h-full.gap-3\\.5.transition-\\[transform\\,box-shadow\\] > .items-baseline.gap-3.justify-between > .group-hover\\:underline.group-hover\\:decoration-brass.group-hover\\:underline-offset-4"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<a class=\"surface-card group flex h-full flex-col gap-3.5 p-4 transition-[transform,box-shadow] duration-300 hover:shadow-xl motion-safe:hover:-translate-y-0.5\" href=\"/books?shelf=b879401a-9bb0-5555-af08-c8444855817e\">",
+                  "target": [
+                    "li:nth-child(2) > .h-full.gap-3\\.5.transition-\\[transform\\,box-shadow\\]"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"shrink-0 text-sm text-muted-foreground\">2 libros</span>",
+          "target": [
+            "li:nth-child(2) > .h-full.gap-3\\.5.transition-\\[transform\\,box-shadow\\] > .items-baseline.gap-3.justify-between > .text-muted-foreground.shrink-0.text-sm"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "15.0pt (20px)",
+                "fontWeight": "bold",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "3:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<a class=\"surface-card group flex h-full flex-col gap-3.5 p-4 transition-[transform,box-shadow] duration-300 hover:shadow-xl motion-safe:hover:-translate-y-0.5\" href=\"/books?shelf=d7f4b27f-b220-5487-a02c-6c295d4d0a55\">",
+                  "target": [
+                    "li:nth-child(3) > .h-full.gap-3\\.5.transition-\\[transform\\,box-shadow\\]"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"font-heading text-xl font-bold text-heading group-hover:underline group-hover:decoration-brass group-hover:underline-offset-4\">Ensayos de prueba</span>",
+          "target": [
+            "li:nth-child(3) > .h-full.gap-3\\.5.transition-\\[transform\\,box-shadow\\] > .items-baseline.gap-3.justify-between > .group-hover\\:underline.group-hover\\:decoration-brass.group-hover\\:underline-offset-4"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<a class=\"surface-card group flex h-full flex-col gap-3.5 p-4 transition-[transform,box-shadow] duration-300 hover:shadow-xl motion-safe:hover:-translate-y-0.5\" href=\"/books?shelf=d7f4b27f-b220-5487-a02c-6c295d4d0a55\">",
+                  "target": [
+                    "li:nth-child(3) > .h-full.gap-3\\.5.transition-\\[transform\\,box-shadow\\]"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"shrink-0 text-sm text-muted-foreground\">1 libro</span>",
+          "target": [
+            "li:nth-child(3) > .h-full.gap-3\\.5.transition-\\[transform\\,box-shadow\\] > .items-baseline.gap-3.justify-between > .text-muted-foreground.shrink-0.text-sm"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "21.0pt (28px)",
+                "fontWeight": "bold",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "3:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<body class=\"font-sans antialiased\">",
+                  "target": [
+                    "body"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<h2 id=\"ultimas\" class=\"heading-vintage text-2xl md:text-[1.75rem]\">Últimas incorporaciones</h2>",
+          "target": [
+            "#ultimas"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "12.0pt (16px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<ul class=\"surface-card divide-y divide-border overflow-hidden p-0\">",
+                  "target": [
+                    ".divide-y"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"font-semibold text-foreground\">Mapas de una ciudad inventada</span>",
+          "target": [
+            "li:nth-child(1) > .hover\\:bg-accent\\/50.py-3.px-4 > .flex-1.min-w-0.flex-col > .text-foreground.font-semibold"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<ul class=\"surface-card divide-y divide-border overflow-hidden p-0\">",
+                  "target": [
+                    ".divide-y"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"text-sm text-muted-foreground\">Alba Inventada · Aventuras de prueba</span>",
+          "target": [
+            "li:nth-child(1) > .hover\\:bg-accent\\/50.py-3.px-4 > .flex-1.min-w-0.flex-col > .text-muted-foreground.text-sm"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "12.0pt (16px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<ul class=\"surface-card divide-y divide-border overflow-hidden p-0\">",
+                  "target": [
+                    ".divide-y"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"font-semibold text-foreground\">El cuaderno de la bruma</span>",
+          "target": [
+            "li:nth-child(2) > .hover\\:bg-accent\\/50.py-3.px-4 > .flex-1.min-w-0.flex-col > .text-foreground.font-semibold"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<ul class=\"surface-card divide-y divide-border overflow-hidden p-0\">",
+                  "target": [
+                    ".divide-y"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"text-sm text-muted-foreground\">Alba Inventada · Sin estantería</span>",
+          "target": [
+            "li:nth-child(2) > .hover\\:bg-accent\\/50.py-3.px-4 > .flex-1.min-w-0.flex-col > .text-muted-foreground.text-sm"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "12.0pt (16px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<ul class=\"surface-card divide-y divide-border overflow-hidden p-0\">",
+                  "target": [
+                    ".divide-y"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"font-semibold text-foreground\">La isla de papel</span>",
+          "target": [
+            "li:nth-child(3) > .hover\\:bg-accent\\/50.py-3.px-4 > .flex-1.min-w-0.flex-col > .text-foreground.font-semibold"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<ul class=\"surface-card divide-y divide-border overflow-hidden p-0\">",
+                  "target": [
+                    ".divide-y"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"text-sm text-muted-foreground\">Bruno Ficticio · Aventuras de prueba</span>",
+          "target": [
+            "li:nth-child(3) > .hover\\:bg-accent\\/50.py-3.px-4 > .flex-1.min-w-0.flex-col > .text-muted-foreground.text-sm"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "12.0pt (16px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<ul class=\"surface-card divide-y divide-border overflow-hidden p-0\">",
+                  "target": [
+                    ".divide-y"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"font-semibold text-foreground\">El reloj de las mareas</span>",
+          "target": [
+            "li:nth-child(4) > .hover\\:bg-accent\\/50.py-3.px-4 > .flex-1.min-w-0.flex-col > .text-foreground.font-semibold"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<ul class=\"surface-card divide-y divide-border overflow-hidden p-0\">",
+                  "target": [
+                    ".divide-y"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"text-sm text-muted-foreground\">Clara Imaginaria · Ensayos de prueba</span>",
+          "target": [
+            "li:nth-child(4) > .hover\\:bg-accent\\/50.py-3.px-4 > .flex-1.min-w-0.flex-col > .text-muted-foreground.text-sm"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "15.0pt (20px)",
+                "fontWeight": "bold",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "3:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<section aria-labelledby=\"revision-inicio\" class=\"surface-card flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between\">",
+                  "target": [
+                    ".sm\\:items-center"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<h2 id=\"revision-inicio\" class=\"heading-vintage text-xl\">Revisión de fichas</h2>",
+          "target": [
+            "#revision-inicio"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "contrastRatio": 0,
+                "fontSize": "12.0pt (16px)",
+                "fontWeight": "normal",
+                "messageKey": "bgGradient",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<section aria-labelledby=\"revision-inicio\" class=\"surface-card flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between\">",
+                  "target": [
+                    ".sm\\:items-center"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element's background color could not be determined due to a background gradient"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<p class=\"text-foreground-light\">Comprueba fichas sin ISBN, sin portada o posibles duplicados en la bandeja.</p>",
+          "target": [
+            ".gap-1.flex-col > p"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        }
+      ]
+    }
+  ],
+  "passes": [
+    "aria-allowed-attr",
+    "aria-allowed-role",
+    "aria-conditional-attr",
+    "aria-deprecated-role",
+    "aria-hidden-body",
+    "aria-hidden-focus",
+    "aria-prohibited-attr",
+    "aria-required-attr",
+    "aria-roles",
+    "aria-valid-attr-value",
+    "aria-valid-attr",
+    "avoid-inline-spacing",
+    "button-name",
+    "bypass",
+    "color-contrast",
+    "document-title",
+    "duplicate-id-aria",
+    "empty-heading",
+    "heading-order",
+    "html-has-lang",
+    "html-lang-valid",
+    "image-alt",
+    "image-redundant-alt",
+    "landmark-banner-is-top-level",
+    "landmark-main-is-top-level",
+    "landmark-no-duplicate-banner",
+    "landmark-no-duplicate-main",
+    "landmark-one-main",
+    "landmark-unique",
+    "link-name",
+    "list",
+    "listitem",
+    "meta-viewport-large",
+    "meta-viewport",
+    "nested-interactive",
+    "page-has-heading-one",
+    "presentation-role-conflict",
+    "region",
+    "skip-link",
+    "tabindex"
+  ],
+  "engine": {
+    "name": "axe-core",
+    "version": "4.11.4"
+  }
+}

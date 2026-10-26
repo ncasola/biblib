@@ -16,6 +16,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { getBookTitlesAction, getLibraryCountsAction, prepareLibraryExportAction, type ExportPartLink, type PreparedLibraryExport } from "@/app/actions/library-export"
 import { confirmImportAction, prepareImportAction, type PreparedImport } from "@/app/actions/import-preview"
 import { RestoreSetPanel } from "@/components/restore-set-panel"
+import { OfflineCopySettings } from "@/components/offline-copy-settings"
 import {
   deleteLibrarySnapshotAction, listLibrarySnapshotsAction, previewSnapshotRestoreAction, restoreSnapshotAction,
   type SnapshotRestorePreview,
@@ -547,6 +548,8 @@ export default function SettingsPage() {
           <RestoreSetPanel disabled={busy || loading || !counts} onNotice={setMessage} onCommitted={() => { setResult(null); setHistoryKey((key) => key + 1); void refreshCounts() }} />
 
           <CoverRecoveryJobPanel disabled={busy || loading || !counts} onRunningChange={setIsRecovering} onFinish={refresh} />
+
+          <OfflineCopySettings />
 
           <section className="surface-card rounded-2xl p-5 md:p-6"><h2 className="font-bold mb-3">Tus datos y copias</h2><ul className="list-disc pl-5 text-sm text-muted-foreground space-y-2"><li>Los datos están vinculados a tu cuenta y se guardan en la base de datos.</li><li>La copia JSON conserva fichas, estanterías y estado de lectura; no descarga las imágenes de las portadas.</li><li>Guarda copias periódicas y antes de reemplazar una colección.</li></ul></section>
         </div>

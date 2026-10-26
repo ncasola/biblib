@@ -38,9 +38,11 @@ export const RESPONSE_TYPES = Object.freeze({
   "api": { status: [401], cache: [PRIVATE], contentType: /^application\/json/, csp: "absent", varyCookie: true },
   "estatico-hash": { status: [200], cache: ["public, max-age=31536000, immutable"], csp: "absent", varyCookie: false, noCookies: true },
   "estatico-public": { status: [200], cache: ["public, max-age=0"], csp: "any", varyCookie: false, noCookies: true },
+  // U-EXP-08: el service worker nunca lleva caché larga; el navegador lo vuelve a pedir en cada comprobación.
+  "service-worker": { status: [200], cache: [PRIVATE], contentType: /javascript/, csp: "present", varyCookie: true, noCookies: true },
 })
 
-const PROTECTED = ["/", "/books", "/books/add", "/books/search", "/book/:libroA", "/shelves", "/shelves/3d", "/series", "/series/:libroA", "/locations", "/settings", "/profile", "/books/review", "/books/review/:libroA", "/books/print"]
+const PROTECTED = ["/", "/books", "/books/add", "/books/search", "/book/:libroA", "/shelves", "/shelves/3d", "/series", "/series/:libroA", "/locations", "/loans", "/settings", "/profile", "/books/review", "/books/review/:libroA", "/books/print"]
 
 /**
  * Inventario de peticiones. `as`: anon o a (sesión real de A). `location`: destino exacto esperado;
@@ -52,6 +54,10 @@ export const REQUESTS = Object.freeze([
   ...PROTECTED.map((route) => ({ route, as: "anon", type: "redireccion-sesion", loginRedirect: route })),
   { route: "/books/search?q=prueba", as: "anon", type: "redireccion-sesion", location: `/login?redirect=${encodeURIComponent("/books/search?q=prueba")}` },
   { route: "/login", as: "anon", type: "html-publico" },
+  // U-EXP-08: vista sin conexión pública; no depende de la sesión (el worker la guarda pedida sin cookies).
+  { route: "/offline", as: "anon", type: "html-publico" },
+  { route: "/offline", as: "a", type: "html-publico" },
+  { route: "/sw.js", as: "anon", type: "service-worker" },
   { route: "/login?redirect=%2Fbooks", as: "a", type: "redireccion-sesion", location: "/books" },
   { route: "/login?redirect=https%3A%2F%2Fexterno.invalid%2F", as: "a", type: "redireccion-sesion", location: "/" },
   { route: "/auth/callback?next=%2Fbooks", as: "anon", type: "callback", location: "/login?error=oauth&redirect=%2Fbooks" },
