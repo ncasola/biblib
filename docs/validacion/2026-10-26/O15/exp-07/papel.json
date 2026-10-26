@@ -1,0 +1,35 @@
+{
+  "expectedBooks": 105,
+  "paper": [
+    {
+      "file": "catalogo-A4.pdf",
+      "bytes": 104303,
+      "sha256": "5aba04996c198acb81df3c2fa9c3c4ad64afd0974277112fee5c3b37d69cc6be",
+      "mediaBoxes": [
+        "0 0 595.91998 842.88"
+      ],
+      "pages": 14,
+      "fonts": [
+        "AAAAAA+Fraunces-9pt-NonWonky",
+        "BAAAAA+Inter",
+        "CAAAAA+Inter-Bold",
+        "DAAAAA+Inter"
+      ]
+    },
+    {
+      "file": "catalogo-Letter.pdf",
+      "bytes": 104065,
+      "sha256": "591ef732957d690c613fb918bf0609af8f8fc0da5d6871c96827818d24e6e379",
+      "mediaBoxes": [
+        "0 0 612 792"
+      ],
+      "pages": 14,
+      "fonts": [
+        "AAAAAA+Fraunces-9pt-NonWonky",
+        "BAAAAA+Inter",
+        "CAAAAA+Inter-Bold",
+        "DAAAAA+Inter"
+      ]
+    }
+  ]
+}

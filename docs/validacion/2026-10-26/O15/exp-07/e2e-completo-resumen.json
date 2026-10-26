@@ -1,0 +1,26 @@
+{
+  "passed": 85,
+  "known": [],
+  "pending": 17,
+  "unexpected": [],
+  "repeated": [],
+  "skipped": [
+    "capturas U-UX-02: 1440 y 375 px, ambos temas, con un libro sacado de la balda",
+    "dos copias de la misma edición y libro sin ISBN como ejemplares · se activa con U-DAT-06",
+    "fallo durante la publicación sin datos parciales · se activa con U-DAT-04",
+    "deshacer una importación con conflictos posteriores · se activa con U-DAT-02",
+    "cerrar y reabrir el navegador con un trabajo en curso · se activa con U-DAT-03",
+    "worker interrumpido y lease vencido · se activa con U-DAT-03",
+    "pausa, cancelación y reintento idempotente · se activa con U-DAT-03",
+    "archivo v1 y formato nuevo en la misma restauración · se activa con U-DAT-04",
+    "partes fuera de orden, repetida, ausente o alterada · se activa con U-DAT-04",
+    "restauración sin pérdida de IDs definidos · se activa con U-DAT-04",
+    "edición discrepante entre proveedores · se activa con U-BIB-04",
+    "clave de Google Books ausente · se activa con U-BIB-03",
+    "objetos privados por propietario · se activa con U-DAT-10",
+    "borrado de cuenta · se activa con U-OPS-03",
+    "notas, etiquetas y valoración · se activa con U-PRO-01",
+    "ubicación física · se activa con U-PRO-03",
+    "series y volúmenes · se activa con U-PRO-05"
+  ]
+}
