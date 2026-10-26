@@ -1,6 +1,6 @@
 import assert from "node:assert/strict"
 import { randomUUID } from "node:crypto"
-import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmdirSync, rmSync, symlinkSync } from "node:fs"
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmdirSync, rmSync, symlinkSync, unlinkSync } from "node:fs"
 import { tmpdir } from "node:os"
 import path from "node:path"
 import { after, test } from "node:test"
@@ -193,8 +193,11 @@ test("registro privado rechaza enlaces a otro directorio", () => {
   mkdirSync(path.join(f.root, ".biblib"))
   symlinkSync(other.root, path.join(f.root, ".biblib/fixtures"), "junction")
   assert.throws(() => fixtureFile(f.resolved), { code: EXIT.IDENTITY_MISMATCH })
-  // Quitar solo la junction; el directorio de destino pertenece a otra raíz temporal.
-  rmdirSync(path.join(f.root, ".biblib/fixtures"))
+  // Quitar solo el enlace; el directorio de destino pertenece a otra raíz temporal. Fuera de Windows
+  // "junction" se ignora y queda un symlink, que se borra con unlink y no con rmdir.
+  const link = path.join(f.root, ".biblib/fixtures")
+  if (process.platform === "win32") rmdirSync(link)
+  else unlinkSync(link)
 })
 
 test("SQL de dominio usa una transacción, scope por propietario y fixtureKey, sin tocar version ni auth", async () => {
