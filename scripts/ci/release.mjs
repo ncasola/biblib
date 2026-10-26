@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto"
 import { spawnSync } from "node:child_process"
-import { lstatSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs"
+import { lstatSync, mkdirSync, readFileSync, readdirSync, realpathSync, writeFileSync } from "node:fs"
 import path from "node:path"
 import { pathToFileURL } from "node:url"
 import { loadTarget, targetInputs } from "../db/environment.mjs"
@@ -13,6 +13,18 @@ const sha = (value) => createHash("sha256").update(value).digest("hex")
 const fail = (code, message) => { throw new BiblibError(code, "release", message) }
 export const RELEASE_FILE = ".biblib/ci/release.json"
 
+function externalPackageLink(root, prefix, directory, name) {
+  if (!prefix.startsWith(".next") || directory !== `${prefix}/node_modules`) return null
+  let real, modules
+  try {
+    real = realpathSync(path.join(root, directory, name))
+    modules = realpathSync(path.join(root, "node_modules"))
+  } catch { return null }
+  const relative = path.relative(modules, real)
+  if (!relative || relative.startsWith("..") || path.isAbsolute(relative) || !lstatSync(real).isDirectory()) return null
+  return `node_modules/${relative.split(path.sep).join("/")}`
+}
+
 export function fileHashes(root, directory, prefix = directory) {
   const result = {}
   const folder = path.join(root, directory)
@@ -21,7 +33,14 @@ export function fileHashes(root, directory, prefix = directory) {
     // Caché de compilación: no es un recurso de ejecución ni se distribuye.
     if (directory === prefix && prefix.startsWith(".next") && entry.name === "cache") continue
     const relative = `${directory}/${entry.name}`
-    if (entry.isSymbolicLink()) fail(EXIT.IDENTITY_MISMATCH, "Un artefacto no puede contener enlaces.")
+    if (entry.isSymbolicLink()) {
+      // Next enlaza en <build>/node_modules los paquetes externos del servidor (p. ej. sharp-<hash>). Solo se
+      // admiten ahí y hacia node_modules del repo, que ya fija el lockfile; se registra el destino, no su contenido.
+      const target = externalPackageLink(root, prefix, directory, entry.name)
+      if (!target) fail(EXIT.IDENTITY_MISMATCH, "Un artefacto no puede contener enlaces.")
+      result[relative] = sha(`link:${target}`)
+      continue
+    }
     if (entry.isDirectory()) Object.assign(result, fileHashes(root, relative, prefix))
     else if (entry.isFile()) result[relative] = sha(readFileSync(path.join(root, relative)))
     else fail(EXIT.IDENTITY_MISMATCH, "El artefacto contiene un archivo especial.")
