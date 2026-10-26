@@ -238,14 +238,14 @@ Esto no prueba un CDN: localmente no hay caché compartida. La garantía local e
 
 ## Pendientes
 
-Ninguno de estos puntos se ha verificado en local; no se presentan como superados.
+Los puntos 5 y 6 tienen verificación local; sus comprobaciones en el alojamiento siguen pendientes. El resto no se presenta como superado.
 
 1. **HTTPS real del alojamiento:** atributos `Secure` de las cookies SSR, HSTS (lo gestiona el alojamiento; no se fija en `next.config.mjs`), `upgrade-insecure-requests` y repetición de `security:headers:local` contra la URL publicada. No hay alojamiento ni destino remoto autorizados.
 2. **CDN:** comprobar en el alojamiento que HTML, acciones, callback y API no se guardan (cabeceras de caché del proveedor, `x-vercel-cache` o equivalente) y que los estáticos sí.
 3. **Google OAuth real con cuenta de prueba:** acceso, callback con `next`, fallo/cancelación del proveedor y cierre. Requiere configurar el proveedor en un proyecto no productivo.
 4. **CSP en enforcement:** recoger informes en el alojamiento (se necesita un endpoint `report-to`, coordinado con la observabilidad de U-OPS-01), silenciar la sonda de Zod y solo entonces cambiar a `Content-Security-Policy`. Ante cualquier rotura, volver a informe.
-5. **Repetición al integrar U-EXP-05 (cámara):** `Permissions-Policy: camera=(self)` solo en su ruta; repetir la matriz y la prueba en navegador de esa área.
-6. **Repetición al integrar U-EXP-08 (offline):** service worker sin HTML autenticado, acciones ni respuestas con cookies en caché; repetir aislamiento A/B y matriz.
+5. **Cámara (U-EXP-05), verificada en local en G13:** `Permissions-Policy: camera=(self)` solo en `/books/add`, permiso tras una acción explícita y alternativa manual disponible ([G13](validacion/2026-10-25/O13/g13-coordinador.md#criterios-de-g13); recorridos en `tests/e2e/flujos/alta-consecutiva.spec.ts`). En remoto queda repetir las cabeceras efectivas y el permiso con HTTPS y dispositivos reales; responsable: Néstor.
+6. **Offline (U-EXP-08), verificado en local en O15:** el worker guarda solo el shell estático y `/offline` sin identidad ni contenido privado; excluye HTML autenticado, acciones, RSC, API y respuestas con cookies. Las unitarias del worker y los E2E comprueban caché, aislamiento A/B y purga al cerrar sesión; la matriz dio 53/53, incluidas `/offline` y `/sw.js` ([evidencia O15](validacion/2026-10-26/O15/exp-08/informe.md#puerta-g15-parte-de-u-exp-08), [ejecuciones](validacion/2026-10-26/O15/exp-08/informe.md#ejecuciones)). En remoto queda repetir con el alojamiento, CDN, HTTPS y navegadores reales; responsable: Néstor.
 7. **Rol de base dedicado** para el servidor en preproducción/producción, en lugar de la URL con acceso total (fuera de U-OPS-04).
 
 ## Avatar e imágenes privadas de O13 (U-EXP-06)

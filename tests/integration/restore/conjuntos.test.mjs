@@ -34,7 +34,17 @@ test("2001 libros en dos partes se publican juntos; los observadores ven la cole
   const set = ctx.backupSet(library)
   assert.equal(set.files.length, 2)
   assert.ok(set.bytes[0].byteLength > CHUNK, "la primera parte viaja en varios trozos")
-  const { view, validated, prepared } = await ctx.staged(a, set)
+  // El transporte puede entregar las partes fuera de orden: el manifiesto conserva su orden lógico.
+  const begun = await ctx.begin(a, { manifest: set.manifestObject })
+  assert.ok(ok(begun))
+  const view = begun.value.value
+  await ctx.uploadAll(a, { ...view, parts: [...view.parts].reverse() }, set.bytes)
+  const validation = await ctx.call("validateRestoreSessionAction", [{ sessionId: view.sessionId }], a)
+  assert.ok(ok(validation))
+  const validated = validation.value.value
+  const preview = await ctx.call("prepareRestoreSessionAction", [{ sessionId: view.sessionId }], a)
+  assert.ok(ok(preview))
+  const prepared = preview.value.value
   assert.equal(view.parts[0].totalChunks, Math.ceil(set.bytes[0].byteLength / CHUNK))
   assert.deepEqual(validated.session.totals, { books: 2001, shelves: 4 })
   assert.equal(validated.manifest.exportSetId, set.manifest.exportSetId)
@@ -132,6 +142,29 @@ test("parte ausente, duplicada, corrupta o de otro conjunto y total falso: MANIF
   const foreign = await ctx.call("validateRestoreSessionAction", [{ sessionId: mixed.value.value.sessionId }], a)
   assert.ok(failed(foreign, "MANIFEST_MISMATCH"), `parte de otra copia (${foreign.value?.error?.code}: ${foreign.value?.error?.message})`)
   assert.deepEqual(await ctx.libraryRows(ctx.users.a), before, "ningún rechazo cambia la colección activa ni sus versiones")
+})
+
+test("partes v1 y v2 mezcladas se rechazan como formatos distintos sin publicar ni perder datos", async () => {
+  const before = await ctx.libraryRows(ctx.users.a)
+  const libraryV1 = ctx.library("mezcla-v1", 1)
+  const legacy = ctx.backupSet(libraryV1)
+  const libraryV2 = ctx.library("mezcla-v2", 1)
+  // Compartir las estanterías aísla el defecto de formato; dos predeterminadas distintas se rechazan antes.
+  libraryV2.shelves = libraryV1.shelves
+  libraryV2.books[0].shelf_id = libraryV1.books[0].shelf_id
+  libraryV2.books[0].catalogue = { schemaVersion: 2, source: "bne", isbnVerified: false,
+    fields: { title: { provider: "bne", recordId: "ficticio", retrievedAt: "2026-10-26T00:00:00.000Z", selection: "user-selected" } } }
+  const modern = ctx.backupSet(libraryV2)
+  assert.equal(legacy.formatVersion, 1)
+  assert.equal(modern.formatVersion, 2)
+  const bytes = [legacy.bytes[0], modern.bytes[0]]
+  const begun = await ctx.begin(a, { parts: bytes.map((part) => ({ byteLength: part.byteLength, sha256: sha256(part) })) })
+  assert.ok(ok(begun))
+  await ctx.uploadAll(a, begun.value.value, bytes)
+  const validated = await ctx.call("validateRestoreSessionAction", [{ sessionId: begun.value.value.sessionId }], a)
+  assert.ok(failed(validated, "MANIFEST_MISMATCH"))
+  assert.match(validated.value.error.message, /formatos distintos/)
+  assert.deepEqual(await ctx.libraryRows(ctx.users.a), before)
 })
 
 test("estanterías vacías y compartidas entre partes: compatibles se unen; contradictorias se rechazan", async () => {

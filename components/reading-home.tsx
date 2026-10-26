@@ -1,12 +1,11 @@
 "use client"
 
-import { useEffect, useState } from "react"
 import Link from "next/link"
 import { BookCover } from "@/components/book-cover"
 import { ReadingCycleBadge, ReadingProgressView, ReadingTime } from "@/components/reading-progress"
-import { getContinueReadingAction, getReadingStatsAction, type ContinueReadingItem } from "@/app/actions/reading"
+import type { getContinueReadingAction, getReadingStatsAction, ContinueReadingItem } from "@/app/actions/reading"
 import { displayCover } from "@/lib/book-covers"
-import { cycleLabel, formatCivilDate, type ReadingStats } from "@/lib/reading"
+import { cycleLabel, formatCivilDate } from "@/lib/reading"
 
 // Inicio (U-PRO-02): «Seguir leyendo» con los ciclos abiertos reales y estadísticas que solo cuentan lo registrado, con
 // su periodo y su denominador a la vista. Un libro marcado como leído sin lecturas registradas no recibe fecha: se
@@ -23,21 +22,13 @@ function SectionTitle({ id, title, aside }: { id: string; title: string; aside?:
 }
 
 /** Ciclos abiertos (leyendo y en pausa) con su progreso; la sección no aparece si no hay ninguno. */
-export function ReadingContinueSection() {
-  const [data, setData] = useState<{ items: ContinueReadingItem[]; open: number } | null>(null)
-  const [error, setError] = useState(false)
-
-  useEffect(() => {
-    let active = true
-    getContinueReadingAction().then((result) => { if (active) { if (result.ok) setData(result.value); else setError(true) } }, () => { if (active) setError(true) })
-    return () => { active = false }
-  }, [])
-
-  if (error) return <section aria-labelledby="seguir-leyendo" className="flex flex-col gap-4">
+export function ReadingContinueSection({ result }: { result: Awaited<ReturnType<typeof getContinueReadingAction>> | null }) {
+  if (!result?.ok) return <section aria-labelledby="seguir-leyendo" className="flex flex-col gap-4">
     <SectionTitle id="seguir-leyendo" title="Seguir leyendo" />
     <p className="surface-card p-5 text-foreground-light">No se pudieron cargar tus lecturas en curso. Recarga la página para intentarlo de nuevo.</p>
   </section>
-  if (!data || data.items.length === 0) return null
+  const data = result.value
+  if (data.items.length === 0) return null
   return <section aria-labelledby="seguir-leyendo" className="flex flex-col gap-4" data-testid="reading-continue">
     <SectionTitle id="seguir-leyendo" title="Seguir leyendo" aside={data.open > data.items.length
       ? <span className="text-sm text-muted-foreground">{`${data.items.length} de ${plural(data.open, "lectura en curso", "lecturas en curso")}`}</span> : undefined} />
@@ -72,22 +63,12 @@ function Stat({ label, value, period, detail }: { label: string; value: number; 
 }
 
 /** Cifras de lectura registrada con periodo y denominador; sin lecturas registradas, lo dice sin inventar nada. */
-export function ReadingStatsSection() {
-  const [stats, setStats] = useState<ReadingStats | null>(null)
-  const [error, setError] = useState(false)
-
-  useEffect(() => {
-    let active = true
-    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
-    getReadingStatsAction({ timeZone }).then((result) => { if (active) { if (result.ok) setStats(result.value); else setError(true) } }, () => { if (active) setError(true) })
-    return () => { active = false }
-  }, [])
-
-  if (error) return <section aria-labelledby="lectura-registrada" className="flex flex-col gap-4">
+export function ReadingStatsSection({ result }: { result: Awaited<ReturnType<typeof getReadingStatsAction>> | null }) {
+  if (!result?.ok) return <section aria-labelledby="lectura-registrada" className="flex flex-col gap-4">
     <SectionTitle id="lectura-registrada" title="Tu lectura registrada" />
     <p className="surface-card p-5 text-foreground-light">No se pudieron calcular tus estadísticas de lectura. Recarga la página para intentarlo de nuevo.</p>
   </section>
-  if (!stats) return null
+  const stats = result.value
   const { periods, sessions, year } = stats
   const last30 = `Últimos ${sessions.days} días: del ${formatCivilDate(periods.sessionsFrom)} al ${formatCivilDate(periods.today)}`
   const notes = [

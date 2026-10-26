@@ -5,6 +5,8 @@ if (target !== undefined) validateTarget(target)
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Next 16 escribe agents.md al arrancar; en Windows coincide con nuestras instrucciones AGENTS.md.
+  agentRules: false,
   distDir: target ? `.next-${target}` : ".next",
   // Primera puerta del acceso local: debe estar definida siempre ("" fuera de local/test), porque Next
   // solo sustituye las variables NEXT_PUBLIC_ definidas y solo así el compilador elimina el formulario.

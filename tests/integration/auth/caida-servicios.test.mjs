@@ -12,10 +12,10 @@ import { setupSuite } from "../lib/suite.mjs"
 // Caída de Auth y Storage tal como la ve la app: se detiene el gateway (Kong) del perfil test, por
 // el que pasan GoTrue y Storage, y se vuelve a arrancar. Solo se actúa sobre el ID registrado tras
 // acreditar la propiedad; la prueba se ejecuta la última y siempre deja el gateway sano.
-// (Detener GoTrue o Storage por separado deja a Kong esperando ~60 s al upstream: no aporta más.)
+// GoTrue se detiene también por separado para probar el plazo del proxy con Kong todavía vivo.
 
 const run = promisify(execFile)
-let s, cookies, kong, signedUrl
+let s, cookies, kong, signedUrl, gotrue, authStopped = false
 
 before(async () => {
   s = await setupSuite()
@@ -26,6 +26,9 @@ before(async () => {
   const container = resources.containers.find((c) => c.name === `supabase_kong_${stack.profile.projectId}`)
   assert.ok(container && state.resources.containers.some((r) => r.id === container.id), "El gateway debe estar registrado como propio.")
   kong = container.id
+  const auth = resources.containers.find((c) => c.name === `supabase_auth_${stack.profile.projectId}`)
+  assert.ok(auth && state.resources.containers.some((r) => r.id === auth.id), "GoTrue debe estar registrado como propio.")
+  gotrue = auth.id
   cookies = liveCookies(await signIn("a"))
   const signed = await s.admin().storage.from(BUCKET).createSignedUrl(ASSET, 300)
   assert.equal(signed.error, null)
@@ -33,8 +36,44 @@ before(async () => {
 })
 
 after(async () => {
+  if (authStopped) await startAuth()
   if (kong) await start().catch(() => {})
   await s?.close()
+})
+
+async function startAuth() {
+  await run("docker", ["container", "start", gotrue], { windowsHide: true })
+  const deadline = Date.now() + 60_000
+  while (Date.now() < deadline) {
+    if (await reachable(`${s.ctx.env.SUPABASE_URL}/auth/v1/health`) === 200) { authStopped = false; return }
+    await new Promise((resolve) => setTimeout(resolve, 500))
+  }
+  throw new Error("GoTrue del perfil test no recuperó la salud en 60 s.")
+}
+
+test("GoTrue caído con Kong vivo: el proxy cierra el acceso en menos de 9 s y conserva las rutas públicas", async (t) => {
+  assert.equal((await get(s.app, "/books", { cookies })).status, 200)
+  await run("docker", ["container", "stop", "--time", "5", gotrue], { windowsHide: true })
+  authStopped = true
+  try {
+    const started = performance.now()
+    const page = await get(s.app, "/books?status=read", { cookies })
+    const elapsed = Math.round(performance.now() - started)
+    t.diagnostic(`Proxy con GoTrue caído: redirección en ${elapsed} ms.`)
+    assert.ok(elapsed < 9_000, "No debe esperar los ~60 s de Kong.")
+    assert.equal(page.status, 307)
+    const target = new URL(page.location, s.app.url)
+    assert.equal(target.pathname, "/login")
+    assert.equal(target.searchParams.get("error"), "session")
+    assert.equal(target.searchParams.get("redirect"), "/books?status=read")
+    assert.equal((await get(s.app, "/login")).status, 200)
+    const login = await get(s.app, "/login?error=session", { cookies })
+    assert.equal(login.status, 200, "El acceso sigue público incluso con una cookie que Auth no puede validar.")
+    assert.match(login.body.toString("utf8"), /No se pudo comprobar tu sesión/)
+    assert.equal((await get(s.app, "/offline")).status, 200)
+    assert.equal((await get(s.app, "/default-book-cover.webp")).status, 200)
+  } finally { await startAuth() }
+  assert.equal((await get(s.app, "/books", { cookies })).status, 200)
 })
 
 async function status() {

@@ -1,5 +1,5 @@
 import assert from "node:assert/strict"
-import { mkdtempSync, readFileSync, rmSync } from "node:fs"
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import path from "node:path"
 import test from "node:test"
@@ -234,4 +234,21 @@ test("las tablas generadas solo contienen cifras: sin sesiones, contraseñas ni 
 test("un libro suelto se genera igual que dentro del dataset completo", () => {
   const dataset = scaleDataset(1000)
   assert.deepEqual(bookAt(500, dataset.shelves), dataset.books[499])
+})
+
+test("tablas enlaza el informe más cercano también desde subcarpetas", () => {
+  const root = mkdtempSync(path.join(tmpdir(), "biblib-perf-links-"))
+  try {
+    const nested = path.join(root, "mediciones", "10000")
+    mkdirSync(nested, { recursive: true })
+    writeFileSync(path.join(root, "informe.md"), "# Análisis común\n")
+    const payload = { manifest: { generadoEn: "2026-10-26" }, all: { tamanos: { 100: sample(100) } } }
+    writeTables(root, payload)
+    assert.match(readFileSync(path.join(root, "tablas.md"), "utf8"), /\[informe\]\(informe\.md\)/)
+    writeTables(nested, payload)
+    assert.match(readFileSync(path.join(nested, "tablas.md"), "utf8"), /\[informe\]\(\.\.\/\.\.\/informe\.md\)/)
+    writeFileSync(path.join(nested, "informe.md"), "# Análisis específico\n")
+    writeTables(nested, payload)
+    assert.match(readFileSync(path.join(nested, "tablas.md"), "utf8"), /\[informe\]\(informe\.md\)/)
+  } finally { rmSync(root, { recursive: true, force: true }) }
 })

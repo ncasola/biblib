@@ -12,6 +12,7 @@ import Link from "next/link"
 import { useCallback, useEffect, useState, type ReactNode } from "react"
 import { getLibrarySummaryAction } from "@/app/actions/library"
 import { getShelvesAction } from "@/app/actions/shelves"
+import { getContinueReadingAction, getReadingStatsAction } from "@/app/actions/reading"
 import { displayCover } from "@/lib/book-covers"
 import type { Book, Shelf } from "@/lib/types"
 import { ArrowRight, ClipboardCheck, Plus } from "lucide-react"
@@ -52,24 +53,25 @@ export default function Dashboard() {
   const [loadError, setLoadError] = useState(false)
   const [shelves, setShelves] = useState<Shelf[] | null>(null)
   const [shelvesError, setShelvesError] = useState(false)
+  const [continueReading, setContinueReading] = useState<Awaited<ReturnType<typeof getContinueReadingAction>> | null>(null)
+  const [readingStats, setReadingStats] = useState<Awaited<ReturnType<typeof getReadingStatsAction>> | null>(null)
 
-  const loadData = useCallback(() => getLibrarySummaryAction().then((loaded) => {
-      setData(loaded)
-      setLoadError(false)
-    }).catch((error: unknown) => {
-      console.error("Error loading library data:", error)
-      setLoadError(true)
-    }).finally(() => {
-      setLoading(false)
-    }), [])
+  // Mantener la reserva inicial hasta conocer todas las secciones evita insertar lecturas por encima
+  // de estanterías ya pintadas. Se solicitan juntas; un fallo auxiliar conserva su mensaje propio.
+  const loadData = useCallback(() => Promise.allSettled([
+    getLibrarySummaryAction(), getShelvesAction(), getContinueReadingAction(),
+    getReadingStatsAction({ timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone }),
+  ]).then(([summary, loadedShelves, reading, stats]) => {
+    setData(summary.status === "fulfilled" ? summary.value : null)
+    setLoadError(summary.status === "rejected")
+    setShelves(loadedShelves.status === "fulfilled" ? loadedShelves.value : null)
+    setShelvesError(loadedShelves.status === "rejected")
+    setContinueReading(reading.status === "fulfilled" ? reading.value : null)
+    setReadingStats(stats.status === "fulfilled" ? stats.value : null)
+    setLoading(false)
+  }), [])
 
   useEffect(() => { void loadData() }, [loadData])
-  useEffect(() => {
-    void getShelvesAction().then((loaded) => { setShelves(loaded); setShelvesError(false) }).catch((error: unknown) => {
-      console.error("Error loading shelves for dashboard:", error)
-      setShelvesError(true)
-    })
-  }, [])
 
   if (loading && !data) {
     return (
@@ -97,7 +99,7 @@ export default function Dashboard() {
           <div role="alert" className="surface-card mx-auto max-w-xl p-8 text-center">
             <h1 className="heading-vintage mb-2 text-3xl">No se pudo cargar tu biblioteca</h1>
             <p className="mb-5 text-foreground-light">Inténtalo de nuevo para consultar tus libros y estanterías.</p>
-            <Button onClick={() => void loadData()} disabled={loading}>{loading ? "Cargando…" : "Reintentar"}</Button>
+            <Button onClick={() => { setLoading(true); void loadData() }} disabled={loading}>{loading ? "Cargando…" : "Reintentar"}</Button>
           </div>
         ) : data ? <>
         <section aria-labelledby="inicio-titulo" className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
@@ -122,8 +124,8 @@ export default function Dashboard() {
         </section>
 
         {/* U-PRO-02: ciclos de lectura abiertos reales y estadísticas de lo registrado (components/reading-home.tsx). */}
-        <ReadingContinueSection />
-        <ReadingStatsSection />
+        <ReadingContinueSection result={continueReading} />
+        <ReadingStatsSection result={readingStats} />
 
         <section aria-labelledby="estanterias-inicio" className="flex flex-col gap-4">
           <SectionTitle id="estanterias-inicio" title="Estanterías" action={<span className="flex flex-wrap gap-x-5"><Link href="/shelves/3d" className="link-quiet inline-flex min-h-11 items-center">Abrir en 3D</Link><Link href="/shelves" className="link-quiet inline-flex min-h-11 items-center">Gestionar estanterías</Link></span>} />
