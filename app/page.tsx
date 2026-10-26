@@ -6,6 +6,7 @@ import { LoadingState } from "@/components/loading-state"
 import { BookCover } from "@/components/book-cover"
 import { BookStatusBadge } from "@/components/book-status-badge"
 import { ShelfSpines } from "@/components/shelf-spines"
+import { LoanSummary } from "@/components/loan-summary"
 import Link from "next/link"
 import { useCallback, useEffect, useState, type ReactNode } from "react"
 import { getLibrarySummaryAction } from "@/app/actions/library"
@@ -115,7 +116,7 @@ export default function Dashboard() {
             <StatCard value={booksReading} label="Leyendo" tone="text-[var(--status-reading)]" />
             <StatCard value={booksToRead} label="Por leer" tone="text-[var(--status-to-read)]" />
             <StatCard value={booksRead} label={booksRead === 1 ? "Leído" : "Leídos"} tone="text-[var(--status-read)]" />
-            {/* Hueco para «Prestados» (préstamos, O14): no se muestra hasta que existan datos reales. */}
+            <LoanSummary />
           </div>
         </section>
 
