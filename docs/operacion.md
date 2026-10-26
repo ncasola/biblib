@@ -43,7 +43,7 @@ El workflow `.github/workflows/ci.yml` utiliza valores públicos ficticios de Su
 
 `pnpm db:generate` genera una propuesta SQL a partir del esquema, sin conexión. Revísala junto con el historial de Drizzle. `pnpm db:migrate` ya no modifica ninguna base: es un despachador que sale con 2 y lista los comandos explícitos. En local se usa `db:status:local` → `db:plan:local` → `db:migrate:local` (ver [Migraciones](#migraciones)).
 
-**Preproducción y producción no tienen todavía comando de migración** (U-INF-07, fase F1). Hasta entonces no se aplica `0001`/`0002` a la base real. Cuando exista, el procedimiento conservará estos pasos previos a aplicar `0001_library_integrity.sql` y `0002_book_versions.sql`:
+**Preproducción y producción** tienen desde U-INF-07 `db:status|plan|migrate|adopt:<objetivo>` ([Promoción](#promoción-a-preproducción-y-producción--u-inf-07)), preparados pero **sin ejecutar contra ningún destino real**: no se ha aplicado ninguna migración a la base remota. El procedimiento conserva estos pasos previos a aplicar `0001_library_integrity.sql` y `0002_book_versions.sql` (y las posteriores):
 
 1. Identifica proyecto, entorno y versión de esquema. Confirma que la operación sobre esa base real está autorizada y acordada.
 2. Exporta las colecciones afectadas desde BibLib y crea además un respaldo de la base que incluya esquema, datos e historial de migraciones mediante el procedimiento del proveedor. El JSON de un usuario no sustituye un respaldo administrativo.
@@ -121,7 +121,7 @@ Dentro de cada bloque el orden es: shadow, API (Auth/REST/Storage), Postgres, St
 
 ### Ensayo manual (perfil `scratch`)
 
-Hasta que existan los wrappers, este es el procedimiento ensayado. En un worktree solo se usa `scratch`.
+Procedimiento histórico de U-INF-01, anterior a los wrappers. **Usa en su lugar `pnpm db:local:up|down --profile scratch`** ([Ciclo de vida del stack](#ciclo-de-vida-del-stack)): crear la red o arrancar a mano deja recursos sin registro de propiedad que los wrappers rechazan con 3. En un worktree solo se usa `scratch`.
 
 ```powershell
 node scripts/lib/profiles.mjs generate scratch
