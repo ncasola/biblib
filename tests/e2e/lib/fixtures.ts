@@ -68,6 +68,8 @@ interface Observed { text: string; at: number }
 const NAVIGATION_ABORT_CONSOLE = /^Error loading [a-z ]+: (TypeError: (Load failed|NetworkError when attempting to fetch resource\.)|JSHandle@object) \[/
 /** Rechazo con el que WebKit informa de un fetch cancelado por la navegación. */
 const ACCESS_CONTROL_ABORT = /^Excepción JS: .* due to access control checks\.$/
+/** Firefox: carga que atendía el service worker de la app y que una navegación canceló (G16, logos de /login). */
+const SW_INTERCEPT_ABORT = /^\[JavaScript Error: "Failed to load ‘([^’]+)’\. A ServiceWorker intercepted the request and encountered an unexpected error\." \{file: "[^"]+\/sw\.js\?v=[^"]+" line: \d+\}\] \[\/sw\.js\]$/
 
 export const e2eDir = process.env.BIBLIB_E2E_DIR ?? path.join(process.cwd(), ".biblib", "e2e")
 
@@ -268,11 +270,14 @@ export const test = base.extend<{ account: Session; guard: Guard; data: Data }, 
     }
     // Firefox y WebKit informan de las peticiones de la app que una navegación cancela (prefetch RSC,
     // acciones en curso) como error de consola o, en WebKit, como rechazo «access control checks» (sin
-    // `requestfailed` para la acción). Solo se toleran esas firmas, sobre la propia app y en los 3 s
-    // posteriores al inicio de una navegación del marco principal; quedan anotadas en el informe.
+    // `requestfailed` para la acción) y, en Firefox, como fallo del service worker que la atendía. Solo se
+    // toleran esas firmas, sobre la propia app y en los 3 s posteriores al inicio de una navegación del marco
+    // principal; quedan anotadas en el informe.
     const appHost = new URL(stack.appUrl).host
     const navigationAbort = (entry: Observed) => {
-      const signature = ACCESS_CONTROL_ABORT.test(entry.text) ? entry.text.includes(`/${appHost}/`) : NAVIGATION_ABORT_CONSOLE.test(entry.text)
+      const intercepted = SW_INTERCEPT_ABORT.exec(entry.text)
+      const signature = intercepted ? URL.canParse(intercepted[1]) && new URL(intercepted[1]).host === appHost
+        : ACCESS_CONTROL_ABORT.test(entry.text) ? entry.text.includes(`/${appHost}/`) : NAVIGATION_ABORT_CONSOLE.test(entry.text)
       return signature && navigations.some((at) => entry.at >= at - 100 && entry.at - at < 3_000)
     }
     const watch = async (target: BrowserContext) => {
