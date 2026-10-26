@@ -1,0 +1,39 @@
+
+> biblib@1.0.0 test:integration:loans C:\Users\ncaso\orca\workspaces\biblib\u-qa-01
+> node tests/integration/loans/run.mjs "--profile" "test" "--reuse-build"
+
+pnpm : (node:4160) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of 
+file:///C:/Users/ncaso/orca/workspaces/biblib/u-qa-01/lib/account-deletion/worker.ts is not specified and it doesn't 
+parse as CommonJS.
+En línea: 2 Carácter: 168
++ ... ento-1.log; pnpm test:integration:loans --profile test --reuse-build  ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:4160) [MO...se as CommonJS.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-qa-01\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Grupo loans · perfil test · biblib-test · run 5db52d09c89a
+(node:34556) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/ncaso/orca/workspaces/biblib/u-qa-01/lib/account-deletion/worker.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-qa-01\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ loans: alta concurrente por acciones, un activo y reintento tras respuesta perdida sin escritura (1722.9025ms)
+✔ loans: dos conexiones simultáneas solo abren un préstamo (23.7708ms)
+✔ loans: alias y fechas inválidos; editar y borrar sin confirmar no escriben (348.5463ms)
+✔ loans: B no ve ni modifica préstamos de A por las acciones reales (374.472ms)
+✔ loans: devolución con versión, reintento y préstamo sucesivo conservando historial (451.0924ms)
+✔ loans: editar confirmado rota versión y las pestañas antiguas no sobrescriben ni borran (252.1728ms)
+✔ loans: fechas civiles idénticas en varios husos, también en la lectura de la acción (104.7276ms)
+✔ loans: exportación e importación v2 por acciones conservan préstamos e historial (782.1199ms)
+✔ loans: borrado confirmado de un préstamo conserva el ejemplar; libro borrado no deja historial (474.1319ms)
+✔ loans: una cuenta inactiva no presta, devuelve, edita ni borra con su sesión anterior (365.8603ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6617.0047

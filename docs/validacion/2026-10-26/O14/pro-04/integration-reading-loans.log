@@ -1,0 +1,64 @@
+
+> biblib@1.0.0 test:integration:reading-loans C:\Users\ncaso\orca\workspaces\biblib\u-qa-01
+> node tests/integration/reading-loans/run.mjs "--profile" "test" "--reuse-build"
+
+pnpm : (node:13856) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of 
+file:///C:/Users/ncaso/orca/workspaces/biblib/u-qa-01/lib/account-deletion/worker.ts is not specified and it doesn't 
+parse as CommonJS.
+En línea: 2 Carácter: 432
++ ... loansCode"; pnpm test:integration:reading-loans --profile test --reus ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:13856) [M...se as CommonJS.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-qa-01\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Grupo reading-loans · perfil test · biblib-test · run 56f8ec9e7069
+(node:17964) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/ncaso/orca/workspaces/biblib/u-qa-01/lib/account-deletion/worker.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-qa-01\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ B no lee nada de la lectura ni de los préstamos de A y A ve lo suyo (969.2617ms)
+✔ B no escribe a nombre de A ni cita ejemplares o ciclos de A; las funciones no le revelan nada (55.2351ms)
+✔ B usa sus propios ejemplares con normalidad (18.4839ms)
+✔ una cuenta en eliminación no escribe lectura ni préstamos, tampoco por las funciones (BD001) (44.204ms)
+(node:39364) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/ncaso/orca/workspaces/biblib/u-qa-01/lib/account-deletion/worker.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-qa-01\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ el worker retira ciclos, entradas y préstamos; la cuenta queda sin restos y B sigue intacta (1402.7064ms)
+(node:23452) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/ncaso/orca/workspaces/biblib/u-qa-01/lib/account-deletion/worker.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-qa-01\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ la exportación v2 declara y lleva lectura y préstamos: instantes en UTC, fechas civiles tal cual y nada inventado (1848.6981ms)
+✔ reemplazar desde la propia copia devuelve lectura y préstamos exactos con los mismos IDs (351.871ms)
+✔ la versión anterior que capturó el reemplazo restaura también la lectura y los préstamos (313.2025ms)
+✔ otra cuenta fusiona el archivo con IDs propios y repetir la fusión no duplica nada (440.2326ms)
+✔ un archivo anterior (v1) con libros leídos se importa sin lectura ni préstamos (221.929ms)
+(node:35024) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/ncaso/orca/workspaces/biblib/u-qa-01/lib/product/reading-loans.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-qa-01\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ dos dispositivos inician la misma lectura a la vez: un solo ciclo abierto y el mismo para ambos (883.6614ms)
+✔ terminar con la versión y releer crea el ciclo 2; el 1 conserva estado y fechas, y el ejemplar no cambia (51.5521ms)
+✔ páginas: dentro del total conocido, nunca por encima (BR001); con total desconocido se registran sin porcentaje (57.1438ms)
+✔ el estado read actual no se convierte en ciclos, sesiones ni fechas (2.1877ms)
+(node:23548) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/ncaso/orca/workspaces/biblib/u-qa-01/lib/account-deletion/worker.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-qa-01\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ dos dispositivos prestan el mismo ejemplar a la vez: un solo préstamo activo (1019.7703ms)
+✔ devolver con la versión libera el ejemplar; el préstamo sucesivo conserva el historial (49.5779ms)
+✔ fechas civiles idénticas con cualquier huso de sesión; alias sin correo ni teléfono (76.9906ms)
+✔ prestar no cambia el estado de lectura y cambiarlo por la app no toca el préstamo (171.728ms)
+✔ borrar el ejemplar por la app se lleva su lectura y sus préstamos; el resto de la cuenta sigue (121.0999ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 17134.389

@@ -1,0 +1,11 @@
+supabase_studio_biblib-test | Up 21 minutes (healthy) | 0.0.0.0:55333->3000/tcp, [::]:55333->3000/tcp
+supabase_pg_meta_biblib-test | Up 21 minutes (healthy) | 8080/tcp
+supabase_storage_biblib-test | Up 21 minutes (healthy) | 5000/tcp
+supabase_rest_biblib-test | Up 21 minutes | 3000/tcp
+supabase_inbucket_biblib-test | Up 21 minutes (healthy) | 0.0.0.0:55334->8025/tcp, [::]:55334->8025/tcp
+supabase_auth_biblib-test | Up 21 minutes (healthy) | 9999/tcp
+supabase_kong_biblib-test | Up 21 minutes (healthy) | 0.0.0.0:55331->8000/tcp, [::]:55331->8000/tcp
+supabase_db_biblib-test | Up 21 minutes (healthy) | 0.0.0.0:55332->5432/tcp, [::]:55332->5432/tcp
+biblib-test-network
+supabase_db_biblib-test
+supabase_storage_biblib-test
