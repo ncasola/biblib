@@ -1,0 +1,271 @@
+{
+  "perfil": "test",
+  "cuenta": "A ficticia",
+  "metodo": "runWebVitals de perf:local, 3 contextos por perfil",
+  "web": {
+    "escritorio": {
+      "perfil": {
+        "id": "escritorio-local",
+        "descripcion": "Chrome estable en modo headless, ventana 1280×800, DPR 1, es-ES. Sin limitación de red (la app y el stack están en loopback) ni de CPU. Caché HTTP vacía en frío; poblada en caliente."
+      },
+      "navegador": "155.0.8059.86",
+      "pantallas": {
+        "inicio": {
+          "ruta": "/",
+          "frio": {
+            "lcpMs": 444,
+            "cls": 0.118,
+            "fcpMs": 172,
+            "datosListosMs": 882,
+            "reposoRedMs": 1387,
+            "lcpElemento": "h1",
+            "muestras": 3
+          },
+          "caliente": {
+            "lcpMs": 340,
+            "cls": 0.118,
+            "fcpMs": 104,
+            "datosListosMs": 724,
+            "reposoRedMs": 1235,
+            "muestras": 3
+          },
+          "interaccion": {
+            "inpMs": 24,
+            "inpPeorMs": 24,
+            "interacciones": 2,
+            "clsConGestos": 0.118,
+            "exportMs": null,
+            "tareasLargas": 0,
+            "tareasLargasMs": 0,
+            "muestras": 3
+          },
+          "gestosNoDisponibles": []
+        }
+      },
+      "peticionesExternasAbortadas": [],
+      "erroresDeConsola": []
+    },
+    "movil": {
+      "perfil": {
+        "id": "movil-cpu-x4",
+        "descripcion": "Chrome estable en modo headless emulando un móvil (390×844, DPR 3, táctil) con la CPU 4× más lenta (Emulation.setCPUThrottlingRate) y sin limitación de red. Caché vacía en frío; poblada en caliente."
+      },
+      "navegador": "155.0.8059.86",
+      "pantallas": {
+        "inicio": {
+          "ruta": "/",
+          "frio": {
+            "lcpMs": 1080,
+            "cls": 0.037,
+            "fcpMs": 292,
+            "datosListosMs": 1562,
+            "reposoRedMs": 2063,
+            "lcpElemento": "h1",
+            "muestras": 3
+          },
+          "caliente": {
+            "lcpMs": 900,
+            "cls": 0.037,
+            "fcpMs": 172,
+            "datosListosMs": 1264,
+            "reposoRedMs": 1778,
+            "muestras": 3
+          },
+          "interaccion": {
+            "inpMs": 56,
+            "inpPeorMs": 64,
+            "interacciones": 2,
+            "clsConGestos": 0.037,
+            "exportMs": null,
+            "tareasLargas": 2,
+            "tareasLargasMs": 233,
+            "muestras": 3
+          },
+          "gestosNoDisponibles": []
+        }
+      },
+      "peticionesExternasAbortadas": [],
+      "erroresDeConsola": []
+    }
+  },
+  "desplazamientos": {
+    "escritorio": [
+      {
+        "instante": 396.5,
+        "valor": 0.00356495931148529,
+        "fuentes": [
+          {
+            "elemento": "NAV",
+            "id": "",
+            "clase": "hidden items-center gap-1 lg:flex",
+            "antes": {
+              "x": 270.625,
+              "y": 7,
+              "width": 544.859375,
+              "height": 58,
+              "top": 7,
+              "right": 815.484375,
+              "bottom": 65,
+              "left": 270.625
+            },
+            "despues": {
+              "x": 309.65625,
+              "y": 7,
+              "width": 544.859375,
+              "height": 58,
+              "top": 7,
+              "right": 854.515625,
+              "bottom": 65,
+              "left": 309.65625
+            }
+          },
+          {
+            "elemento": "DIV",
+            "id": "",
+            "clase": "flex min-w-0 items-center gap-2",
+            "antes": {
+              "x": 914.796875,
+              "y": 3,
+              "width": 333.203125,
+              "height": 78,
+              "top": 3,
+              "right": 1248,
+              "bottom": 81,
+              "left": 914.796875
+            },
+            "despues": {
+              "x": 992.875,
+              "y": 3,
+              "width": 255.125,
+              "height": 78,
+              "top": 3,
+              "right": 1248,
+              "bottom": 81,
+              "left": 992.875
+            }
+          }
+        ]
+      },
+      {
+        "instante": 516.7000000178814,
+        "valor": 0.03213834228515625,
+        "fuentes": [
+          {
+            "elemento": "SECTION",
+            "id": "",
+            "clase": "flex flex-col gap-4",
+            "antes": {
+              "x": 13,
+              "y": 579.46875,
+              "width": 1254,
+              "height": 220.53125,
+              "top": 579.46875,
+              "right": 1267,
+              "bottom": 800,
+              "left": 13
+            },
+            "despues": {
+              "x": 13,
+              "y": 731.46875,
+              "width": 1254,
+              "height": 68.53125,
+              "top": 731.46875,
+              "right": 1267,
+              "bottom": 800,
+              "left": 13
+            }
+          }
+        ]
+      },
+      {
+        "instante": 887.8000000119209,
+        "valor": 0.08258221786022187,
+        "fuentes": [
+          {
+            "elemento": "SECTION",
+            "id": "",
+            "clase": "flex flex-col gap-4",
+            "antes": {
+              "x": 13,
+              "y": 451.46875,
+              "width": 1254,
+              "height": 259,
+              "top": 451.46875,
+              "right": 1267,
+              "bottom": 710.46875,
+              "left": 13
+            },
+            "despues": {
+              "x": 13,
+              "y": 698.796875,
+              "width": 1254,
+              "height": 101.203125,
+              "top": 698.796875,
+              "right": 1267,
+              "bottom": 800,
+              "left": 13
+            }
+          },
+          {
+            "elemento": "SECTION",
+            "id": "",
+            "clase": "flex flex-col gap-4",
+            "antes": {
+              "x": 13,
+              "y": 731.46875,
+              "width": 1254,
+              "height": 68.53125,
+              "top": 731.46875,
+              "right": 1267,
+              "bottom": 800,
+              "left": 13
+            },
+            "despues": {
+              "x": 0,
+              "y": 0,
+              "width": 0,
+              "height": 0,
+              "top": 0,
+              "right": 0,
+              "bottom": 0,
+              "left": 0
+            }
+          }
+        ]
+      }
+    ],
+    "movil": [
+      {
+        "instante": 1467.4000000059605,
+        "valor": 0.036774780440690914,
+        "fuentes": [
+          {
+            "elemento": "SECTION",
+            "id": "",
+            "clase": "flex flex-col gap-4",
+            "antes": {
+              "x": 0,
+              "y": 769.875,
+              "width": 390,
+              "height": 74.125,
+              "top": 769.875,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            },
+            "despues": {
+              "x": 0,
+              "y": 0,
+              "width": 0,
+              "height": 0,
+              "top": 0,
+              "right": 0,
+              "bottom": 0,
+              "left": 0
+            }
+          }
+        ]
+      }
+    ]
+  }
+}
