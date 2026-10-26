@@ -1,0 +1,80 @@
+
+> biblib@1.0.0 test:integration:loans C:\Users\ncaso\orca\workspaces\biblib\u-qa-01
+> node tests/integration/loans/run.mjs "--profile" "test"
+
+pnpm : (node:29088) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of 
+file:///C:/Users/ncaso/orca/workspaces/biblib/u-qa-01/lib/account-deletion/worker.ts is not specified and it doesn't 
+parse as CommonJS.
+En línea: 2 Carácter: 87
++ ... | Out-Null; pnpm test:integration:loans --profile test *> docs/valida ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:29088) [M...se as CommonJS.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-qa-01\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Grupo loans · perfil test · biblib-test · run aca8385f292f
+Compilando la app para el perfil test…
+(node:31384) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/ncaso/orca/workspaces/biblib/u-qa-01/lib/account-deletion/worker.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-qa-01\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ loans: alta concurrente por acciones, un activo y reintento tras respuesta perdida sin escritura (1759.2556ms)
+✔ loans: dos conexiones simultáneas solo abren un préstamo (23.96ms)
+✔ loans: alias y fechas inválidos; editar y borrar sin confirmar no escriben (351.8845ms)
+✔ loans: B no ve ni modifica préstamos de A por las acciones reales (372.1327ms)
+✔ loans: devolución con versión, reintento y préstamo sucesivo conservando historial (482.8337ms)
+✔ loans: editar confirmado rota versión y las pestañas antiguas no sobrescriben ni borran (267.2962ms)
+✔ loans: fechas civiles idénticas en varios husos, también en la lectura de la acción (136.3364ms)
+✖ loans: exportación e importación v2 por acciones conservan préstamos e historial (771.0406ms)
+✖ loans: borrado confirmado de un préstamo conserva el ejemplar; libro borrado no deja historial (59.4871ms)
+✔ loans: una cuenta inactiva no presta, devuelve, edita ni borra con su sesión anterior (323.1542ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 8
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6460.2693
+
+✖ failing tests:
+
+test at tests\integration\loans\acciones.test.mjs:104:1
+✖ loans: exportación e importación v2 por acciones conservan préstamos e historial (771.0406ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+      {
+        borrowerLabel: 'Vecina 3.º B',
+  +     id: '13ed13ff-d097-4e51-95f4-21bdab898cf1',
+  -     id: '6ef22f89-bc91-4eee-a415-92d5a3388431',
+        loanedOn: '2026-04-06',
+        note: 'Sin prisa'
+      },
+      {
+        borrowerLabel: 'Ana',
+  
+      at TestContext.<anonymous> (file:///C:/Users/ncaso/orca/workspaces/biblib/u-qa-01/tests/integration/loans/acciones.test.mjs:120:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+      at async Test.run (node:internal/test_runner/test:1113:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ { id: '13ed13ff-d097-4e51-95f4-21bdab898cf1', borrowerLabel: 'Vecina 3.º B', loanedOn: '2026-04-06', note: 'Sin prisa' }, { id: 'c270ed8c-3495-41a3-ba6d-2e7051b1e0fb', borrowerLabel: 'Ana', loanedOn: '2026-03-29', returnedOn: '2026-04-05' } ],
+    expected: [ { id: '6ef22f89-bc91-4eee-a415-92d5a3388431', borrowerLabel: 'Vecina 3.º B', loanedOn: '2026-04-06', note: 'Sin prisa' }, { id: 'c270ed8c-3495-41a3-ba6d-2e7051b1e0fb', borrowerLabel: 'Ana', loanedOn: '2026-03-29', returnedOn: '2026-04-05' } ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests\integration\loans\acciones.test.mjs:124:1
+✖ loans: borrado confirmado de un préstamo conserva el ejemplar; libro borrado no deja historial (59.4871ms)
+  Error: Acción fallida: NOT_FOUND El préstamo ya no está disponible.
+      at value (file:///C:/Users/ncaso/orca/workspaces/biblib/u-qa-01/tests/integration/product/lib/context.mjs:155:65)
+      at TestContext.<anonymous> (file:///C:/Users/ncaso/orca/workspaces/biblib/u-qa-01/tests/integration/loans/acciones.test.mjs:125:3)
+      at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+      at async Test.run (node:internal/test_runner/test:1113:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:788:7)
+ ELIFECYCLE  Command failed with exit code 11.

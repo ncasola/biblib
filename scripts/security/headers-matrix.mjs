@@ -42,7 +42,7 @@ export const RESPONSE_TYPES = Object.freeze({
   "service-worker": { status: [200], cache: [PRIVATE], contentType: /javascript/, csp: "present", varyCookie: true, noCookies: true },
 })
 
-const PROTECTED = ["/", "/books", "/books/add", "/books/search", "/book/:libroA", "/shelves", "/shelves/3d", "/series", "/series/:libroA", "/locations", "/settings", "/profile", "/books/review", "/books/review/:libroA"]
+const PROTECTED = ["/", "/books", "/books/add", "/books/search", "/book/:libroA", "/shelves", "/shelves/3d", "/series", "/series/:libroA", "/locations", "/loans", "/settings", "/profile", "/books/review", "/books/review/:libroA"]
 
 /**
  * Inventario de peticiones. `as`: anon o a (sesión real de A). `location`: destino exacto esperado;
