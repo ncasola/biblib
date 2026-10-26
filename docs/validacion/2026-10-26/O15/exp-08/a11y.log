@@ -1,0 +1,26 @@
+
+> biblib@1.0.0 test:a11y:local C:\Users\ncaso\orca\workspaces\biblib\u-qa-01
+> node tests/accessibility/run.mjs "--profile" "test"
+
+E2E · perfil test · biblib-test · huella b831ef825c09 · run 292545457a2c · chromium
+Compilando la app para el perfil test…
+Bundle de cliente sin credenciales administrativas ni URLs privadas.
+
+Running 10 tests using 1 worker
+
+  ok  1 [chromium-sesion] › tests\e2e\sesion.setup.ts:11:3 › acceso local: A entra por el formulario y conserva la sesión (1.2s)
+  ok  2 [chromium-sesion] › tests\e2e\sesion.setup.ts:11:3 › acceso local: B entra por el formulario y conserva la sesión (972ms)
+  ok  3 [chromium-flujos] › tests\accessibility\audit.spec.ts:40:3 › axe: recorridos principales y diálogos, tema light (23.6s)
+  ok  4 [chromium-flujos] › tests\accessibility\audit.spec.ts:40:3 › axe: recorridos principales y diálogos, tema dark (23.3s)
+  ok  5 [chromium-flujos] › tests\accessibility\audit.spec.ts:87:5 › login sin sesión › axe: acceso y error OAuth en tema light (1.3s)
+  ok  6 [chromium-flujos] › tests\accessibility\audit.spec.ts:87:5 › login sin sesión › axe: acceso y error OAuth en tema dark (1.3s)
+  ok  7 [chromium-flujos] › tests\accessibility\audit.spec.ts:106:1 › reflujo: 320, 375, 768, 1440 y zoom equivalente 200/400 % en ambos temas (2.0m)
+  ok  8 [chromium-flujos] › tests\accessibility\audit.spec.ts:156:1 › diálogos: atrapan/devuelven foco, menú móvil, errores únicos y movimiento reducido (8.7s)
+  ok  9 [chromium-flujos] › tests\accessibility\contrast.spec.ts:6:1 › contraste: colores compuestos, estados, componentes y foco en ambos temas (5.7s)
+  ok 10 [chromium] › tests\accessibility\keyboard.spec.ts:20:1 › teclado: alta, búsqueda, selección, movimiento, edición, foco y cierre de sesión (7.0s)
+
+  10 passed (3.9m)
+Servidor sin salidas de red externas durante el run.
+Cuentas de Auth sin cambios (2, todas @biblib.test). Datos del run limpiados y biblioteca de A restaurada si hizo falta.
+Resultado: 10 recorridos superados, 0 fallo(s) conocido(s), 0 pendientes (fixme), 0 fallidos, 0 repeticiones.
+exit 0
