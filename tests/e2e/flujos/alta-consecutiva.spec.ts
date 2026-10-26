@@ -3,6 +3,23 @@ import { actionRequest, alerts, expect, test, titleField } from "../lib/fixtures
 // U-EXP-05: GoTrue/acciones/DB reales; solo la capacidad física de cámara se simula en el navegador.
 // El runner de test debe arrancar la app con BIBLIB_ISBN_CAMERA=1 para los recorridos de cámara.
 
+/**
+ * Base de la cámara simulada. El WebKit de Playwright en Windows se compila sin pila multimedia: no tiene
+ * `navigator.mediaDevices` ni `MediaStream` y su `srcObject` rechaza un flujo que no lo sea (G16). Solo si
+ * faltan se crean y `srcObject` guarda el flujo simulado; en Chromium y Firefox se usan las del navegador.
+ */
+function cameraShim() {
+  if (!navigator.mediaDevices) Object.defineProperty(navigator, "mediaDevices", { configurable: true, value: {} })
+  if (typeof MediaStream !== "undefined") return
+  Object.defineProperty(window, "MediaStream", { configurable: true, writable: true, value: class { getTracks(): { stop(): void }[] { return [] } } })
+  const sources = new WeakMap<HTMLMediaElement, unknown>()
+  Object.defineProperty(HTMLMediaElement.prototype, "srcObject", {
+    configurable: true,
+    get(this: HTMLMediaElement) { return sources.get(this) ?? null },
+    set(this: HTMLMediaElement, value: unknown) { sources.set(this, value) },
+  })
+}
+
 test("alta consecutiva: informa éxito, limpia ficha y conserva estado y estantería entre altas", async ({ page, stack, data }) => {
   const slug = data.slug("consecutiva")
   const shelf = await data.shelf("a", `Consecutiva ${slug}`)
@@ -88,6 +105,7 @@ test("alta consecutiva: ISBN duplicado abre la ficha existente y no añade una c
 })
 
 test("cámara denegada permite completar y guardar un libro manualmente", async ({ page, stack, data }) => {
+  await page.addInitScript(cameraShim)
   await page.addInitScript(() => {
     Object.defineProperty(window, "BarcodeDetector", { configurable: true, value: class {
       static async getSupportedFormats() { return ["ean_13"] }
@@ -116,6 +134,7 @@ test("cámara denegada permite completar y guardar un libro manualmente", async 
 })
 
 test("cámara: descarta checksum inválido y requiere confirmar ISBN antes de buscar", async ({ page }) => {
+  await page.addInitScript(cameraShim)
   await page.addInitScript(() => {
     const state = window as unknown as { __cameraRequests: number; __cameraStops: number; __detections: number }
     state.__cameraRequests = 0; state.__cameraStops = 0; state.__detections = 0
@@ -156,6 +175,7 @@ test("cámara no compatible mantiene visible el formulario ISBN y la entrada man
 })
 
 test("cámara: detener y cambiar a manual liberan la captura sin buscar un ISBN", async ({ page }) => {
+  await page.addInitScript(cameraShim)
   await page.addInitScript(() => {
     const state = window as unknown as { __cameraStops: number }
     state.__cameraStops = 0
