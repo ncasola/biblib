@@ -15,9 +15,10 @@ const ONLY_B = "Versos para un faro"
 const STATIC_PATHS = new Set(["/offline", "/logo-mark.png", "/logo.png", "/logo-transparent.png", "/logo-dark.png", "/manifest.webmanifest", "/default-book-cover.webp"])
 /**
  * Peticiones que fallan a propósito sin red (refresco de sesión, recursos de la página) y su registro en consola.
- * WebKit registra la carga sin red como «internal error»: solo se admite en /offline y en la renovación de GoTrue.
+ * WebKit registra como «internal error» la carga que corta la red, como Chromium con ERR_INTERNET_DISCONNECTED:
+ * /offline, la renovación de GoTrue o la acción de /settings en curso (G16). El guard ya bloquea otros orígenes.
  */
-const OFFLINE_CONSOLE = /net::ERR_INTERNET_DISCONNECTED|Failed to fetch|AuthRetryableFetchError|ERR_NAME_NOT_RESOLVED|^Failed to load resource: WebKit encountered an internal error \[\/(offline|auth\/v1\/token)\]$/
+const OFFLINE_CONSOLE = /net::ERR_INTERNET_DISCONNECTED|Failed to fetch|AuthRetryableFetchError|ERR_NAME_NOT_RESOLVED|^Failed to load resource: WebKit encountered an internal error \[\/[^\]]*\]$/
 
 // WebKit bloquea los workers en todo su proyecto (playwright.config.ts); aquí son el objeto de la prueba.
 test.use({ account: "a", serviceWorkers: "allow" })
@@ -333,7 +334,12 @@ test("offline: una versión nueva del worker borra las cachés anteriores y cons
   // La página vuelve a registrar la versión publicada: se instala y borra la caché de la versión de prueba.
   await page.reload()
   // La instalación descarga /offline y sus estáticos antes de activarse: se espera al worker activo de esa versión.
-  await expect.poll(() => page.evaluate(async () => (await navigator.serviceWorker.getRegistration())?.active?.scriptURL ?? ""), { timeout: 30_000 }).toContain(`v=${current.version}`)
+  // Si no llega a activarse, el mensaje muestra también el worker en instalación o en espera.
+  await expect.poll(() => page.evaluate(async () => {
+    const registration = await navigator.serviceWorker.getRegistration()
+    const describe = (worker?: ServiceWorker | null) => worker ? `${new URL(worker.scriptURL).search} (${worker.state})` : "ninguno"
+    return `activo ${describe(registration?.active)} · en espera ${describe(registration?.waiting)} · instalando ${describe(registration?.installing)}`
+  }), { timeout: 30_000 }).toContain(`activo ?v=${current.version} (`)
   await expect.poll(async () => Object.keys(await cachedEntries(page)), { timeout: 30_000 }).toEqual([current.cache])
   await expect.poll(async () => (await workerInfo(page)).version).toBe(current.version)
   expect(await offlineDatabases(page), "Actualizar el worker no toca la copia").toHaveLength(1)
