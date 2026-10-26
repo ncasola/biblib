@@ -101,6 +101,7 @@ test("offline: sin consentimiento solo hay shell estático, sin base IndexedDB n
   await workerReady(page)
   await expect(copySection(page)).toHaveAttribute("data-offline-copy", "none")
   expect(await offlineDatabases(page)).toEqual([])
+  expect(await page.evaluate(() => Object.keys(localStorage).filter((key) => key.startsWith("biblib-offline")))).toEqual([])
 
   const entries = await cachedEntries(page)
   const keys = Object.keys(entries)

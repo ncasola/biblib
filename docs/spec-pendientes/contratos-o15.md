@@ -63,7 +63,7 @@ Proyección con **lista blanca** (`buildOfflineSnapshot`, formato `1`) sobre la 
 ## 5. Aislamiento por cuenta
 
 - Cada cuenta tiene **su base IndexedDB**, `biblib-offline-<32 hex del identificador opaco>`. Nunca se comparte ni se lista una copia de otra cuenta.
-- La vista sin conexión solo abre la copia de la **última cuenta que usó el dispositivo con conexión** (`localStorage["biblib-offline-cuenta"]`, que guarda el identificador opaco, no el id). Al entrar otra cuenta, la vista anterior queda bloqueada; si la copia está abierta en otra pestaña, se bloquea al cambiar la cuenta o al caducar.
+- La vista sin conexión solo abre la copia de la **última cuenta que usó el dispositivo con conexión** (`localStorage["biblib-offline-cuenta"]`, que guarda el identificador opaco, no el id, y solo existe si esa cuenta tiene copia). Al entrar otra cuenta, la vista anterior queda bloqueada; si la copia está abierta en otra pestaña, se bloquea al cambiar la cuenta o al caducar.
 - Una base copiada sobre la de otra cuenta no se abre: la meta está ligada a la cuenta y el cifrado autentica la cuenta.
 
 ## 6. Cierre de sesión y reconexión

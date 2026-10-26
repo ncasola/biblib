@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, type ReactNode } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { confirmOfflineSessionAction } from "@/app/actions/offline-library"
-import { browserOfflineLibrary, offlineAccountId, OFFLINE_DB_PREFIX, writeOfflineAccountPointer } from "@/lib/offline-library"
+import { browserOfflineLibrary, offlineAccountId, OFFLINE_DB_PREFIX, readOfflineAccountPointer, writeOfflineAccountPointer } from "@/lib/offline-library"
 
 // U-EXP-08 · Registro del service worker de shell estático y validación con conexión de la copia de
 // lectura (contrato: docs/spec-pendientes/contratos-o15.md). Las banderas llegan del servidor como props.
@@ -76,10 +76,13 @@ export function OfflineRuntime({ snapshotEnabled, serviceWorkerUrl, registerWork
     const sync = async () => {
       if (!navigator.onLine) return
       try {
-        // La cuenta con sesión pasa a ser la de la vista sin conexión: la de otra cuenta queda bloqueada.
         const accountId = await offlineAccountId(userId)
+        const status = await browserOfflineLibrary().status(accountId)
         if (!active) return
-        writeOfflineAccountPointer(accountId)
+        // La cuenta con sesión pasa a ser la de la vista sin conexión y la de otra cuenta queda bloqueada.
+        // Sin copia de esta cuenta (sin consentimiento) no se guarda nada en el dispositivo.
+        if (status.state !== "none") writeOfflineAccountPointer(accountId)
+        else if (readOfflineAccountPointer() !== null) writeOfflineAccountPointer(null)
         await revalidateOfflineCopy(userId)
       } catch { /* Sin IndexedDB o sin red: la copia sigue como estaba y vence con su TTL. */ }
     }
