@@ -15,7 +15,7 @@ function cell(book: PrintBook, field: PrintField) {
     case "status": return PRINT_STATUS_LABELS[book.status]
     case "location": return book.locationText || "—"
     case "notes": return book.notes || "—"
-    case "cover": return <BookCover cover={displayCover(book)} title={book.title} className="print-cover w-10" sizes="40px" />
+    case "cover": return <BookCover cover={displayCover(book)} title={book.title} className="print-cover w-10" sizes="40px" priority />
   }
 }
 

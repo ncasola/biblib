@@ -1,4 +1,4 @@
-import { normalizeBookSearchQuery, parseBookSearchFilters, type BookSearchFilters } from "./book-search"
+import { buildCollectionPath, normalizeBookSearchQuery, parseBookSearchFilters, type BookSearchFilters } from "./book-search"
 import type { Book } from "./types"
 
 export const PRINT_LIMIT = 2000
@@ -21,18 +21,7 @@ export function printQuery(params: URLSearchParams, page = 1) {
 
 export function printHref(filters: BookSearchFilters): string {
   // El serializador compartido conserva también página y vista para «Volver».
-  const params = new URLSearchParams()
-  params.set("q", filters.q)
-  params.set("status", filters.status)
-  params.set("shelf", filters.shelf)
-  if (filters.series) params.set("series", filters.series)
-  params.set("sort", filters.sort)
-  params.set("page", String(filters.page))
-  params.set("view", filters.view)
-  if (filters.pageSize) params.set("pageSize", String(filters.pageSize))
-  for (const id of filters.tagIds ?? []) params.append("tag", id)
-  if (filters.tagMode) params.set("tagMode", filters.tagMode)
-  return `/books/print?${params}`
+  return buildCollectionPath("/books/print", filters)
 }
 
 /** Lista blanca y orden estable; una selección vacía se mantiene vacía para deshabilitar la impresión. */
