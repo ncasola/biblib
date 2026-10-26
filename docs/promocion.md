@@ -51,6 +51,14 @@ Cada ejecución recibe en su entorno, y solo en él:
 | `SUPABASE_DB_SSLMODE` | `verify-full`. Cualquier otro valor o su ausencia sale con **3**. |
 | `SUPABASE_DB_SSLROOTCERT` | Opcional: ruta absoluta a la CA del proveedor (archivo regular, sin enlaces). Sin ella se usan las CA del sistema; la verificación del nombre se mantiene. |
 
+### Archivo privado del destino (`.biblib/remote/<objetivo>.env`)
+
+Para no inyectar las variables a mano, `db:status|plan|migrate|adopt:<preprod|prod>` cargan `.biblib/remote/<objetivo>.env` si existe (`scripts/db/remote-env.mjs`). Está bajo `.biblib/`, fuera de Git y del camino de carga de Next.
+
+- **Generarlo desde Vercel:** `pnpm db:remote-env:prod` (o `:preprod`) ejecuta `vercel env pull` del entorno `production` (o `preview`) en una carpeta temporal y conserva solo lo necesario. Deriva `BIBLIB_EXPECT_PROJECT_REF` de la URL pública, fija `SUPABASE_DB_SSLMODE=verify-full` y, si la conexión de la aplicación es el pooler en modo transacción (6543), usa el modo sesión (5432) del mismo pooler con la misma credencial. Requiere el repo enlazado (`vercel link`). Las variables marcadas como sensibles en Vercel no se pueden descargar: en ese caso se escriben a mano en el archivo.
+- **CA:** si existe `.biblib/remote/<objetivo>-ca.crt` (certificado descargado del panel de Supabase, Database → SSL), se usa como `SUPABASE_DB_SSLROOTCERT`. Una ruta relativa en el archivo se resuelve desde `.biblib/remote/`.
+- **Reglas:** solo admite `BIBLIB_EXPECT_PROJECT_REF`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_DB_URL`, `SUPABASE_DB_SSLMODE` y `SUPABASE_DB_SSLROOTCERT`; otra clave, una repetida, un enlace o (fuera de Windows) permisos distintos de 600 salen con error. Si la sesión ya inyecta alguna de esas variables, también: nunca se mezclan dos fuentes. `--expect-project <ref>` sigue siendo obligatorio como confirmación explícita del destino.
+
 ### Contrato de identidad remota
 
 Antes de abrir ninguna conexión (`scripts/db/remote-preflight.mjs`, `describeRemote`):

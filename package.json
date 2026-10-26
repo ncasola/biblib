@@ -89,7 +89,9 @@
     "test:integration:reading-loans": "node tests/integration/reading-loans/run.mjs",
     "test:integration:reading": "node tests/integration/reading/run.mjs",
     "test:integration:loans": "node tests/integration/loans/run.mjs",
-    "docs:links": "node scripts/check-doc-links.mjs"
+    "docs:links": "node scripts/check-doc-links.mjs",
+    "db:remote-env:preprod": "node scripts/db/remote-env.mjs preprod",
+    "db:remote-env:prod": "node scripts/db/remote-env.mjs prod"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "1.1.15",

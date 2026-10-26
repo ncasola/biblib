@@ -7,6 +7,7 @@ import { sanitize } from "../lib/process.mjs"
 import { compareLedger, LEDGER, MIGRATIONS_DIR, sha256 } from "./journal-guard.mjs"
 import { inspectObjects, MANIFEST, verifyManifest } from "./objects-manifest.mjs"
 import { canonical } from "./plan.mjs"
+import { withRemoteEnvFile } from "./remote-env.mjs"
 import { acquireMigrationLock, LOCK_WAIT_MS, parseArgs, printPromotion, releaseMigrationLock, runPromotion } from "./migrate.mjs"
 import { classify, inspectDatabase, readLedger } from "./target.mjs"
 
@@ -172,7 +173,7 @@ export async function main(argv = process.argv.slice(2)) {
   process.on("SIGINT", abort)
   try {
     const options = parseArgs(["adopt", ...argv])
-    const { code, result } = await runPromotion({ ...options, signal: controller.signal }, { kind: "adopt-ledger", apply: applyAdoption })
+    const { code, result } = await runPromotion({ ...options, env: withRemoteEnvFile(options.target), signal: controller.signal }, { kind: "adopt-ledger", apply: applyAdoption })
     printPromotion(json, "adopt", code, result)
     return code
   } catch (error) {

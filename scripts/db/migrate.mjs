@@ -13,6 +13,7 @@ import { compareLedger, inspectJournal, LEDGER, loadJournal, MIGRATIONS_DIR } fr
 import { inspectObjects, verifyManifest } from "./objects-manifest.mjs"
 import { assertPlanMatchesTarget, createPlan, gitCommit, readPlan, validatePlan } from "./plan.mjs"
 import { assertSupportedTarget, closeConnection, connect, connectionError, drizzleVersion, inspectDatabase, readLedger, resolveLocal } from "./target.mjs"
+import { withRemoteEnvFile } from "./remote-env.mjs"
 import { assertReceiptMatchesDatabase, connectRemote, dataPreflight, describeRemote, isRemoteTarget, platformFingerprint, probeRemote, remoteConnectionError, validateBackupReceipt } from "./remote-preflight.mjs"
 import { analyzeAdoption, applyAdoption } from "./adopt.mjs"
 
@@ -371,8 +372,9 @@ export async function main(argv = process.argv.slice(2)) {
       return code
     }
     if (isRemoteTarget(options.target)) {
-      if (options.command === "status") { const { code, result } = await statusRemote(options); printRemoteStatus(json, code, result); return code }
-      const { code, result } = await runPromotion({ ...options, signal: controller.signal }, options.command === "adopt" ? { kind: "adopt-ledger", apply: applyAdoption } : { kind: "migrate" })
+      const env = withRemoteEnvFile(options.target)
+      if (options.command === "status") { const { code, result } = await statusRemote({ ...options, env }); printRemoteStatus(json, code, result); return code }
+      const { code, result } = await runPromotion({ ...options, env, signal: controller.signal },options.command === "adopt" ? { kind: "adopt-ledger", apply: applyAdoption } : { kind: "migrate" })
       printPromotion(json, options.command, code, result)
       return code
     }

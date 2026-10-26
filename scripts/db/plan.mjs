@@ -9,6 +9,7 @@ import { sanitize } from "../lib/process.mjs"
 import { inspectJournal, LEDGER, MIGRATIONS_DIR, sha256, summarizeDdl } from "./journal-guard.mjs"
 import { expectedObjects } from "./objects-manifest.mjs"
 import { assertSupportedTarget, closeConnection, connect, connectionError, drizzleVersion, inspectDatabase, resolveLocal } from "./target.mjs"
+import { withRemoteEnvFile } from "./remote-env.mjs"
 import { connectRemote, dataPreflight, describeRemote, isRemoteTarget, probeRemote, remoteConnectionError } from "./remote-preflight.mjs"
 import { analyzeAdoption } from "./adopt.mjs"
 
@@ -237,7 +238,7 @@ export async function main(argv = process.argv.slice(2)) {
   const json = argv.includes("--json")
   try {
     const options = parsePlanArgs(argv)
-    const { code, result } = isRemoteTarget(options.target) ? await createRemotePlan(options) : await createPlan(options)
+    const { code, result } = isRemoteTarget(options.target) ? await createRemotePlan({ ...options, env: withRemoteEnvFile(options.target) }) : await createPlan(options)
     if (json) console.log(JSON.stringify({ schemaVersion: 1, code, ...result }))
     else {
       console.log(`Plan de migración · ${result.target?.project ?? options.profile} · estado ${result.state}`)
