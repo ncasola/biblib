@@ -40,10 +40,12 @@ for (const mode of ["light", "dark"] as const) {
   test(`axe: recorridos principales y diálogos, tema ${mode}`, async ({ page, stack }, info) => {
     await theme(page, mode)
     const id = stack.fixtureBookId("a", "isla")
+    // La vista 3D se audita en la estantería de «La isla de papel», con un libro sacado de la balda (U-UX-02).
+    const [{ shelf_id: islandShelf }] = await stack.sql<{ shelf_id: string }[]>`select shelf_id from biblib.books where id = ${id}`
     const routes = [
       ["inicio", "/"], ["tabla", "/books"], ["cuadricula", "/books?view=grid"],
       ["busqueda", "/books/search"], ["revision", "/books/review"], ["alta", "/books/add"], ["ficha", `/book/${id}`],
-      ["estanterias", "/shelves"], ["3d", "/shelves/3d"], ["perfil", "/profile"],
+      ["estanterias", "/shelves"], ["3d", `/shelves/3d?shelf=${islandShelf}`], ["perfil", "/profile"],
     ] as const
     for (const [name, route] of routes) {
       await page.goto(route)
@@ -59,6 +61,16 @@ for (const mode of ["light", "dark"] as const) {
         await page.keyboard.press("Escape")
         await page.getByRole("button", { name: "Editar ficha", exact: true }).click()
         await audit(page, info, `${mode}-edicion`)
+      }
+      if (name === "3d") {
+        const island = page.getByRole("button", { name: /^La isla de papel, de Bruno Ficticio./ })
+        // Se pulsa la cara visible del lomo: la caja del botón incluye la profundidad proyectada del libro.
+        await island.locator(".s3-spine").click()
+        await expect(island).toHaveAttribute("aria-pressed", "true")
+        await expect(page.getByRole("link", { name: "Abrir ficha" })).toBeVisible()
+        await audit(page, info, `${mode}-3d-seleccion`)
+        await page.keyboard.press("Escape")
+        await expect(island).toHaveAttribute("aria-pressed", "false")
       }
       if (name === "estanterias") {
         await page.getByRole("button", { name: "Nueva estantería", exact: true }).click()
