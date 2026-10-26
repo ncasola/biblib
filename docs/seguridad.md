@@ -25,6 +25,7 @@ La protección la decide `isProtectedPath` (`lib/auth-navigation.ts`) en `proxy.
 | `/books` | Página | Privada | Por acciones | Colección. |
 | `/books/add` | Página | Privada | Por acciones | Alta manual o por ISBN. |
 | `/books/search` | Página | Privada | Por acciones | Filtros en la URL. |
+| `/books/print` | Página | Privada | Por acciones | Catálogo filtrado para impresión, hasta 2.000 ejemplares. |
 | `/book/[id]` | Página | Privada | Servidor + acciones | Un ID de otra cuenta responde 404 (U-FIX-01). |
 | `/shelves`, `/shelves/3d` | Página | Privada | Por acciones | |
 | `/settings` | Página | Privada | Por acciones | Exportar/importar. |
