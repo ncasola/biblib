@@ -1,4 +1,16 @@
+import { mkdirSync, writeFileSync } from "node:fs"
+import path from "node:path"
+import AxeBuilder from "@axe-core/playwright"
+import type { Page } from "@playwright/test"
 import { capture, expect, test } from "../lib/fixtures"
+
+async function noOverflow(page: Page) {
+  const metrics = await page.evaluate(() => ({
+    width: innerWidth, scroll: document.documentElement.scrollWidth,
+    outside: [...document.querySelectorAll<HTMLElement>("main *")].filter((node) => node.getBoundingClientRect().right > innerWidth + 1).map((node) => ({ tag: node.tagName, text: node.textContent?.slice(0, 80), class: node.className, parent: node.parentElement?.className, right: node.getBoundingClientRect().right })).slice(-12),
+  }))
+  expect(metrics.scroll, JSON.stringify(metrics)).toBeLessThanOrEqual(metrics.width + 1)
+}
 
 test("préstamos: prestar, listado vencido, devolución, préstamo sucesivo y confirmaciones", async ({ page, stack, data }, testInfo) => {
   const shelf = await data.shelf("a", `Préstamos ${data.slug("loan")}`)
@@ -16,11 +28,11 @@ test("préstamos: prestar, listado vencido, devolución, préstamo sucesivo y co
   await capture(page, testInfo, "prestamo-activo")
   for (const width of [320, 375, 768, 1440]) {
     await page.setViewportSize({ width, height: 900 })
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
+    await noOverflow(page)
   }
   await page.goto("/")
   const [{ n }] = await stack.sql`select count(*)::int as n from biblib.loans where user_id = ${stack.users.a} and returned_on is null`
-  await expect(page.getByRole("link", { name: new RegExp(`^${n}Prestados$`) })).toBeVisible()
+  await expect(page.getByRole("link", { name: new RegExp(`^${n}\\s*Prestados$`) })).toBeVisible()
   await page.goto(`/book/${bookId}`)
 
   await panel.getByRole("button", { name: "Editar préstamo", exact: true }).click()
@@ -73,4 +85,44 @@ test("préstamos: alias rechazado conserva el borrador y no ofrece campos de con
   await form.getByLabel("Alias de la persona").fill("Ana")
   await form.getByRole("button", { name: "Prestar ejemplar" }).click()
   await expect(panel.getByRole("status")).toHaveText("Préstamo registrado.")
+})
+
+test("préstamos: contraste, diálogos y reflujo en claro y oscuro", async ({ page, data }, info) => {
+  const directory = path.resolve("docs/validacion/2026-10-26/O14/pro-04")
+  mkdirSync(directory, { recursive: true })
+  const shelf = await data.shelf("a", `Visual ${data.slug("loans-axe")}`)
+  const [bookId] = await data.books("a", shelf, [{ title: "Préstamo de prueba visual", status: "unread" }])
+  await page.goto(`/book/${bookId}`)
+  const panel = page.getByRole("region", { name: "Préstamos", exact: true })
+  const form = panel.getByRole("form", { name: "Nuevo préstamo" })
+  await form.getByLabel("Alias de la persona").fill("Vecina 3.º B")
+  await form.getByLabel("Fecha de salida").fill("2026-03-29")
+  await form.getByLabel("Fecha acordada (opcional)").fill("2026-04-01")
+  await form.getByRole("button", { name: "Prestar ejemplar" }).click()
+  await expect(panel.getByRole("status")).toHaveText("Préstamo registrado.")
+  for (const theme of ["light", "dark"] as const) {
+    await page.evaluate((value) => localStorage.setItem("theme", value), theme)
+    await page.reload()
+    await expect(panel.getByRole("button", { name: "Borrar préstamo" })).toBeVisible()
+    for (const width of [320, 375, 768, 1440]) {
+      await page.setViewportSize({ width, height: 900 })
+      await noOverflow(page)
+    }
+    await page.waitForLoadState("networkidle")
+    const detail = await new AxeBuilder({ page }).analyze()
+    await panel.scrollIntoViewIfNeeded()
+    await capture(page, info, `prestamos-${theme}-ficha`)
+    await panel.getByRole("button", { name: "Borrar préstamo" }).click()
+    const modal = await new AxeBuilder({ page }).include('[role="alertdialog"]').analyze()
+    await page.getByRole("alertdialog").getByRole("button", { name: "Cancelar", exact: true }).click()
+    await page.goto("/loans")
+    await expect(page.getByRole("list", { name: "Ejemplares prestados" })).toBeVisible()
+    await page.waitForLoadState("networkidle")
+    const list = await new AxeBuilder({ page }).analyze()
+    await capture(page, info, `prestamos-${theme}-listado`)
+    const report = { theme, widths: [320, 375, 768, 1440], overflow: 0, detail: detail.violations, modal: modal.violations, list: list.violations, incomplete: { detail: detail.incomplete, modal: modal.incomplete, list: list.incomplete } }
+    writeFileSync(path.join(directory, `${info.project.name}-prestamos-${theme}-axe.json`), JSON.stringify(report, null, 2) + "\n")
+    expect([...detail.violations, ...modal.violations, ...list.violations].filter(({ impact }) => impact === "serious" || impact === "critical")).toEqual([])
+    await page.goto(`/book/${bookId}`)
+  }
 })

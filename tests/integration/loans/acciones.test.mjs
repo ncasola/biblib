@@ -111,7 +111,7 @@ test("loans: exportación e importación v2 por acciones conservan préstamos e 
   const exported = file.copies.find((copy) => copy.id === lib.books[0].id).loans
   assert.equal(exported.length, 2)
   assert.equal(exported.find((loan) => loan.id === first.id).returnedOn, "2026-04-05")
-  value(await ctx.call("deleteLoanAction", [{ id: current.id, expectedVersion: current.version, confirmed: true }], sa))
+  value(await ctx.call("updateLoanAction", [{ id: current.id, expectedVersion: current.version, borrowerLabel: "Cambio tras exportación", confirmed: true }], sa))
   const preview = value(await ctx.call("prepareImportAction", [file, "replace"], sa))
   const committed = value(await ctx.call("confirmImportAction", [{ previewId: preview.previewId, expectedRevision: preview.revision, idempotencyKey: ctx.key("loans-v2") }], sa))
   assert.equal(committed.status, "committed")
