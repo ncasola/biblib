@@ -10,6 +10,8 @@ La aplicación necesita `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_K
 
 `OPEN_LIBRARY_CONTACT` es opcional e identifica al responsable del despliegue ante Open Library. Configura un contacto real; si falta, se identifica la aplicación como `BibLib/1.0`. La caché y el control de frecuencia bibliográficos son por proceso, no una cuota global distribuida entre varias instancias.
 
+`BIBLIB_SESSION_ATTESTATION_SECRET` (servidor, ≥ 32 caracteres aleatorios) comparte la clave de la atestación de sesión entre el proxy y las funciones cuando el alojamiento los ejecuta en procesos distintos, como Vercel: así cada petición consulta a Supabase Auth una sola vez ([seguridad](seguridad.md)). Rotarlo solo invalida las atestaciones en vuelo (viven ≤ 30 s).
+
 Configura Google OAuth en Supabase y los callbacks del entorno correspondiente. Comprueba acceso directo a una ruta privada, regreso desde Google y cierre de sesión. No mezcles cookies ni bases de pruebas con una cuenta de producción.
 
 **Región de las funciones.** `vercel.json` fija `regions: ["lhr1"]` (Londres), junto a la base de producción (Supabase `eu-west-2`). Cada pantalla con sesión hace varias idas y vueltas en serie (sesión en Auth, transacción con claims y rol, consultas y cierre); con las funciones en `iad1` cada una cruzaba el Atlántico (unos 75 ms). Si la base cambia de región, cambia también esta.

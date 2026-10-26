@@ -2,7 +2,7 @@ import assert from "node:assert/strict"
 import { randomBytes } from "node:crypto"
 import { test } from "node:test"
 import {
-  ATTESTATION_MAX_AGE_MS, createRequestMemo, createSessionAttestation, unverifiedSubject, verifySessionAttestation,
+  ATTESTATION_MAX_AGE_MS, ATTESTATION_SECRET_MIN_LENGTH, attestationKey, createRequestMemo, createSessionAttestation, unverifiedSubject, verifySessionAttestation,
 } from "../lib/supabase/session-attestation"
 
 // U-FIX-02 · Atestación de sesión del proxy y memo por petición. Sin red ni Next.
@@ -38,6 +38,20 @@ test("sin cabecera o con una cabecera falsificada por el cliente no hay atestaci
 test("una atestación firmada por otro proceso (otra clave) se rechaza", () => {
   assert.deepEqual(check(attest({ key: randomBytes(32) })), { ok: false, reason: "signature" })
   assert.deepEqual(check(attest(), { key: randomBytes(32) }), { ok: false, reason: "signature" })
+})
+
+test("clave compartida por secreto: dos procesos con el mismo secreto se aceptan; otro secreto o uno corto, no", () => {
+  const secret = "s".repeat(ATTESTATION_SECRET_MIN_LENGTH)
+  const proxy = attestationKey(secret)
+  const action = attestationKey(` ${secret} `)
+  assert.ok(proxy && action)
+  assert.deepEqual(check(attest({ key: proxy }), { key: action }), { ok: true, userId: USER_A })
+  assert.deepEqual(check(attest({ key: proxy }), { key: attestationKey("t".repeat(ATTESTATION_SECRET_MIN_LENGTH))! }), { ok: false, reason: "signature" })
+  assert.equal(attestationKey("corto"), null)
+  assert.equal(attestationKey(""), null)
+  assert.equal(attestationKey(undefined), null)
+  // La clave derivada no es el secreto: aunque se filtrase una firma, no revela el valor configurado.
+  assert.notDeepEqual(proxy, Buffer.from(secret))
 })
 
 test("la atestación de otro token o de otro usuario no sirve: no se puede cambiar el sujeto", () => {

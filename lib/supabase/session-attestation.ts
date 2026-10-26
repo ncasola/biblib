@@ -18,10 +18,22 @@ const KEY = Symbol.for("biblib.session-attestation.key")
 
 type KeyHolder = typeof globalThis & { [KEY]?: Buffer }
 
-/** Clave del proceso: aleatoria al primer uso, solo en memoria; nunca se registra, exporta ni persiste. */
+/** Secreto mínimo para derivar una clave compartida; uno más corto se ignora y se usa la clave del proceso. */
+export const ATTESTATION_SECRET_MIN_LENGTH = 32
+
+/**
+ * Clave de firma. Con `BIBLIB_SESSION_ATTESTATION_SECRET` (servidor, ≥ 32 caracteres) se deriva de él, para que
+ * el proxy y las funciones la compartan cuando el alojamiento los ejecuta en procesos distintos (Vercel). Sin él,
+ * aleatoria al primer uso del proceso. En ambos casos solo vive en memoria; nunca se registra, exporta ni persiste.
+ */
+export function attestationKey(secret = process.env.BIBLIB_SESSION_ATTESTATION_SECRET): Buffer | null {
+  const value = secret?.trim()
+  return value && value.length >= ATTESTATION_SECRET_MIN_LENGTH ? createHash("sha256").update(`biblib.session-attestation.v1|${value}`).digest() : null
+}
+
 function processKey(): Buffer {
   const holder = globalThis as KeyHolder
-  holder[KEY] ??= randomBytes(32)
+  holder[KEY] ??= attestationKey() ?? randomBytes(32)
   return holder[KEY]
 }
 

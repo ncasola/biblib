@@ -38,6 +38,8 @@ export const RESPONSE_TYPES = Object.freeze({
   "api": { status: [401], cache: [PRIVATE], contentType: /^application\/json/, csp: "absent", varyCookie: true },
   "estatico-hash": { status: [200], cache: ["public, max-age=31536000, immutable"], csp: "absent", varyCookie: false, noCookies: true },
   "estatico-public": { status: [200], cache: ["public, max-age=0"], csp: "any", varyCookie: false, noCookies: true },
+  // Logos y portada por defecto: un día en caché (next.config.mjs, STATIC_ASSET_CACHE).
+  "estatico-marca": { status: [200], cache: ["public, max-age=86400, stale-while-revalidate=604800"], csp: "any", varyCookie: false, noCookies: true },
   // U-EXP-08: el service worker nunca lleva caché larga; el navegador lo vuelve a pedir en cada comprobación.
   "service-worker": { status: [200], cache: [PRIVATE], contentType: /javascript/, csp: "present", varyCookie: true, noCookies: true },
 })
@@ -72,8 +74,9 @@ export const REQUESTS = Object.freeze([
   { route: "/api/library/export?part=0", as: "anon", type: "api" },
   { route: "/api/covers/:libroA", as: "anon", type: "api" },
   { route: "/api/media/:libroA", as: "anon", type: "api" },
-  { route: "/logo.png", as: "anon", type: "estatico-public" },
-  { route: "/default-book-cover.webp", as: "anon", type: "estatico-public" },
+  { route: "/logo.png", as: "anon", type: "estatico-marca" },
+  { route: "/logo-mark.png", as: "anon", type: "estatico-marca" },
+  { route: "/default-book-cover.webp", as: "anon", type: "estatico-marca" },
   { route: "/manifest.webmanifest", as: "anon", type: "estatico-public" },
   { route: ":chunk", as: "anon", type: "estatico-hash" },
 ])
