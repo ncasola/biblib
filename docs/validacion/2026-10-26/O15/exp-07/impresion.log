@@ -1,0 +1,25 @@
+
+> biblib@1.0.0 test:e2e:local C:\Users\ncaso\orca\workspaces\biblib\u-qa-01
+> node tests/e2e/run.mjs "--profile" "test" "--project" "chromium" "--grep" "impresión"
+
+E2E · perfil test · biblib-test · huella b831ef825c09 · run 7cd3dad7d81e · chromium
+Compilando la app para el perfil test…
+Bundle de cliente sin credenciales administrativas ni URLs privadas.
+
+Running 6 tests using 1 worker
+
+(node:10320) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 1 [chromium-sesion] › tests\e2e\sesion.setup.ts:11:3 › acceso local: A entra por el formulario y conserva la sesión (1.5s)
+  ok 2 [chromium-sesion] › tests\e2e\sesion.setup.ts:11:3 › acceso local: B entra por el formulario y conserva la sesión (1.0s)
+(node:31096) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 3 [chromium-flujos] › tests\e2e\flujos\impresion.spec.ts:6:3 › impresión › colección vacía: recuento cero y acción deshabilitada (759ms)
+  ok 4 [chromium-flujos] › tests\e2e\flujos\impresion.spec.ts:17:3 › impresión › más de una página: IDs iguales a consulta filtrada, A4 y Carta sin controles (4.0s)
+  ok 5 [chromium-flujos] › tests\e2e\flujos\impresion.spec.ts:50:3 › impresión › estantería: acceso directo, campos opcionales y cancelar conserva filtros (2.3s)
+  ok 6 [chromium-flujos] › tests\e2e\flujos\impresion.spec.ts:74:3 › impresión › serie y etiquetas: la impresión mantiene la intersección de filtros (2.1s)
+
+  6 passed (20.2s)
+Servidor sin salidas de red externas durante el run.
+Cuentas de Auth sin cambios (2, todas @biblib.test). Datos del run limpiados y biblioteca de A restaurada si hizo falta.
+Resultado: 6 recorridos superados, 0 fallo(s) conocido(s), 0 pendientes (fixme), 0 fallidos, 0 repeticiones.
