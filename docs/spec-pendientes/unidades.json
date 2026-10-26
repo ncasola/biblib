@@ -588,7 +588,7 @@
         "UX-05",
         "UI-01"
       ],
-      "status": "planned"
+      "status": "in-progress"
     },
     {
       "id": "U-EXP-08",
@@ -616,7 +616,7 @@
         "OPS-02",
         "FE-01"
       ],
-      "status": "planned"
+      "status": "in-progress"
     },
     {
       "id": "U-PRO-01",
@@ -655,7 +655,7 @@
         "UI-01",
         "IMP-03"
       ],
-      "status": "planned"
+      "status": "implemented"
     },
     {
       "id": "U-PRO-03",
@@ -694,7 +694,7 @@
         "UX-01",
         "OPS-02"
       ],
-      "status": "planned"
+      "status": "implemented"
     },
     {
       "id": "U-PRO-05",
@@ -1233,7 +1233,7 @@
       "priority": "P1",
       "document": "07-rediseno.md",
       "auditRefs": [],
-      "status": "in-progress"
+      "status": "implemented"
     },
     {
       "id": "U-UX-02",
@@ -1248,7 +1248,7 @@
       "priority": "P1",
       "document": "07-rediseno.md",
       "auditRefs": [],
-      "status": "in-progress"
+      "status": "implemented"
     }
   ]
 }
