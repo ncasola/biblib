@@ -37,7 +37,6 @@ test.describe("Proveedores · BNE y Google Books", () => {
 test.describe("Privacidad · pendientes", () => {
   pending("U-DAT-10", "objetos privados por propietario")
   pending("U-OPS-03", "borrado de cuenta")
-  pending("U-EXP-08", "copia offline bloqueada para otra cuenta")
 })
 
 test.describe("Producto", () => {

@@ -8,6 +8,8 @@ import { fraunces, inter } from "./fonts"
 import { AuthProvider } from "@/lib/auth-context"
 import { ThemeProvider } from "@/components/theme-provider"
 import { PRIVATE_ROBOTS } from "@/lib/route-metadata"
+import { OfflineRuntime } from "@/components/offline-runtime"
+import { offlineSnapshotEnabled, serviceWorkerMode, serviceWorkerUrl } from "@/lib/offline-config"
 
 export const metadata: Metadata = {
   title: { default: "BibLib", template: "%s · BibLib" },
@@ -40,11 +42,17 @@ export default async function RootLayout({
   // no salga con s-maxage de página estática; el script inline de next-themes recibe el mismo nonce.
   await connection()
   const nonce = (await headers()).get("x-nonce") ?? undefined
+  // U-EXP-08: banderas de servidor del worker de shell estático y de la copia de lectura (sin NEXT_PUBLIC_).
+  const workerMode = serviceWorkerMode()
   return (
     <html lang="es" suppressHydrationWarning className={`${inter.variable} ${fraunces.variable}`}>
       <body className={`font-sans antialiased`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem enableColorScheme disableTransitionOnChange storageKey="theme" nonce={nonce}>
-          <AuthProvider>{children}</AuthProvider>
+          <AuthProvider>
+            <OfflineRuntime snapshotEnabled={offlineSnapshotEnabled()} serviceWorkerUrl={serviceWorkerUrl(workerMode)} cleanup={workerMode === "limpieza"} registerWorker={process.env.NODE_ENV !== "development"}>
+              {children}
+            </OfflineRuntime>
+          </AuthProvider>
         </ThemeProvider>
         {process.env.NEXT_PUBLIC_ENABLE_ANALYTICS === "true" && <Analytics />}
       </body>

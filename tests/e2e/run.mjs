@@ -142,7 +142,8 @@ export async function runE2E(argv = process.argv.slice(2), out = process.stdout,
     }
     const usersBefore = await listUsers(admin)
 
-    const env = childEnvironment({ BIBLIB_ISBN_CAMERA: "1", BIBLIB_PRIVATE_MEDIA_UPLOADS: "1" })
+    // U-EXP-08: la copia de lectura sin conexión va detrás de su bandera de servidor; el E2E la recorre activada.
+    const env = childEnvironment({ BIBLIB_ISBN_CAMERA: "1", BIBLIB_PRIVATE_MEDIA_UPLOADS: "1", BIBLIB_OFFLINE_SNAPSHOT: "1" })
     if (!options.reuseBuild) {
       out.write("Compilando la app para el perfil test…\n")
       const code = await run(process.execPath, ["scripts/next-target.mjs", "build", "local", "--profile", PROFILE], { env, logFile: path.join(E2E_DIR, "build.log") })
