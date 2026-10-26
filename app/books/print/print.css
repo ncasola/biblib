@@ -1,0 +1,25 @@
+.print-paper { background: white; color: black; padding: 1.5rem; border: 1px solid var(--border); border-radius: 12px; }
+.print-paper h1 { color: black; }
+.print-table-scroll { overflow-x: auto; }
+.print-table { width: 100%; border-collapse: collapse; font-family: var(--font-inter), sans-serif; font-size: 10pt; }
+.print-table th, .print-table td { border: 1px solid #666; padding: 6px; text-align: left; vertical-align: top; overflow-wrap: anywhere; white-space: pre-wrap; }
+.print-table th { font-weight: 700; }
+@page { size: auto; margin: 12mm; }
+@media print {
+  html:has(.print-catalogue), body:has(.print-catalogue) { background: white !important; color: black !important; color-scheme: light; }
+  body:has(.print-catalogue) header, body:has(.print-catalogue) nav,
+  body:has(.print-catalogue) button, body:has(.print-catalogue) input,
+  body:has(.print-catalogue) [role="dialog"], body:has(.print-catalogue) a[href="#main-content"],
+  .print-controls { display: none !important; }
+  body:has(.print-catalogue) main { width: 100%; max-width: none; margin: 0; padding: 0; }
+  body:has(.print-catalogue) .min-h-screen { min-height: 0; }
+  .print-catalogue, .print-paper { margin: 0; padding: 0; border: 0; border-radius: 0; box-shadow: none; background: white; color: black; }
+  .print-paper h1 { font-family: var(--font-fraunces), serif; font-size: 22pt; }
+  .print-table-scroll { overflow: visible; }
+  .print-table { table-layout: fixed; }
+  .print-table th:first-child, .print-table td:first-child { width: 9mm; }
+  .print-table thead { display: table-header-group; }
+  .print-table tr { break-inside: avoid; page-break-inside: avoid; }
+  .print-table th, .print-table td { background: white !important; color: black !important; box-shadow: none; text-shadow: none; }
+  .print-cover { width: 12mm; box-shadow: none; }
+}

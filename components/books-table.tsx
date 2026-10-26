@@ -20,6 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { LoadingState } from "@/components/loading-state"
 import { SavedBookViews } from "@/components/saved-book-views"
+import { PrintCatalogueLink } from "@/components/print-catalogue-link"
 import { applySavedView, type SavedViewFilters } from "@/lib/saved-views"
 import { BOOK_PAGE_SIZE, bookRowAnchor, buildBookDetailHref, buildCollectionPath, defaultBookSearchFilters, parseBookRowAnchor, normalizeBookSearchQuery, parseBookSearchFilters, serializeBookSearchFilters, type BookSearchFilters, type BookSort, type BookSortKey, type BookStatusFilter, type BookView } from "@/lib/book-search"
 import type { Book, Shelf } from "@/lib/types"
@@ -307,6 +308,7 @@ export function BooksTable({ initialView = "table" }: BooksTableProps) {
       {shelvesError && <div role="alert" className="flex flex-col items-start justify-between gap-3 rounded-xl border border-destructive/40 bg-destructive/5 p-4 sm:flex-row sm:items-center"><p className="text-sm text-foreground">No se pudieron cargar las estanterías; el filtro no está disponible.</p><Button variant="outline" size="sm" onClick={() => void loadShelves()}>Reintentar estanterías</Button></div>}
 
       <SavedBookViews filters={filters} onApply={applyView} />
+      <PrintCatalogueLink filters={filters} disabled={loading || listError} />
       {Boolean(filters.tagIds?.length) && <p className="text-sm text-muted-foreground">Para conservar los filtros por etiquetas, guarda la dirección de esta página. Las vistas guardadas todavía no admiten etiquetas.</p>}
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(16rem,2fr)_minmax(12rem,1fr)_minmax(12rem,1fr)]">
