@@ -84,6 +84,30 @@ async function useSessionOf(context: BrowserContext, testInfo: TestInfo, account
   await context.addCookies(state.cookies)
 }
 
+/**
+ * Firefox no puede recorrer estas pruebas: con `context.setOffline` de Playwright (el modo «Trabajar sin conexión»)
+ * ninguna navegación llega al worker, ni siquiera la de /offline, y `page.goto` responde NS_ERROR_OFFLINE (G16,
+ * comprobado con `location.assign` y con la red cortada por `route`: las peticiones del worker no pasan por ella).
+ * Abrir /offline con red no sirve: la validación con conexión renovaría el TTL que se está probando.
+ */
+const FIREFOX_OFFLINE = "Firefox con Playwright no deja que el worker atienda navegaciones sin red (NS_ERROR_OFFLINE); cubierto en Chromium y WebKit. Ver docs/validacion/2026-10-26/O16/xb/informe.md."
+
+/**
+ * Si el motor detecta una clave AES-KW equivocada (RFC 3394). El WebKit 27.2 de Playwright en Windows no lo hace:
+ * desenvuelve con cualquier PIN y la copia se ve «dañada» al descifrar (G16). Chrome, Firefox y Safari sí.
+ */
+async function aesKwRejectsWrongKey(page: Page, testInfo: TestInfo): Promise<boolean> {
+  const rejects = await page.evaluate(async () => {
+    const subtle = crypto.subtle
+    const kek = () => subtle.generateKey({ name: "AES-KW", length: 256 }, false, ["wrapKey", "unwrapKey"])
+    const data = await subtle.generateKey({ name: "AES-GCM", length: 256 }, true, ["encrypt"])
+    const wrapped = await subtle.wrapKey("raw", data, await kek(), "AES-KW")
+    try { await subtle.unwrapKey("raw", wrapped, await kek(), "AES-KW", "AES-GCM", false, ["encrypt"]); return false } catch { return true }
+  })
+  if (!rejects) testInfo.annotations.push({ type: "omisión parcial", description: "Este motor no comprueba la integridad de AES-KW: no se prueba el aviso de PIN o frase incorrectos (sí en Chromium)." })
+  return rejects
+}
+
 function noSaveControls(page: Page) {
   return page.getByRole("main").getByRole("button", { name: /guardar|editar|eliminar|añadir|mover|cambiar|prestar|devolver/i })
 }
@@ -117,7 +141,8 @@ test("offline: sin consentimiento solo hay shell estático, sin base IndexedDB n
   for (const trace of [stack.email("a"), stack.users.a, "El cuaderno de la bruma", stack.displayName("a")]) expect(html.includes(trace)).toBe(false)
 })
 
-test("offline: activar con PIN y consultar sin conexión una copia de solo lectura con su antigüedad", async ({ page, context, guard }, testInfo) => {
+test("offline: activar con PIN y consultar sin conexión una copia de solo lectura con su antigüedad", async ({ page, context, guard, browserName }, testInfo) => {
+  test.skip(browserName === "firefox", FIREFOX_OFFLINE)
   test.setTimeout(120_000)
   allowOffline(guard)
   await page.emulateMedia({ colorScheme: "light" })
@@ -149,8 +174,10 @@ test("offline: activar con PIN y consultar sin conexión una copia de solo lectu
   await expect(page.getByRole("status").filter({ hasText: "Sin conexión" })).toBeVisible()
   await capture(page, testInfo, "offline-bloqueada-oscuro")
 
-  await unlock(page, "000000")
-  await expect(alerts(page)).toContainText("Te quedan 9 intentos")
+  if (await aesKwRejectsWrongKey(page, testInfo)) {
+    await unlock(page, "000000")
+    await expect(alerts(page)).toContainText("Te quedan 9 intentos")
+  }
   await unlock(page, PIN_A)
   const list = page.getByRole("list", { name: "Libros de la copia" })
   for (const title of BOOKS_A) await expect(list.getByRole("heading", { name: title })).toBeVisible()
@@ -179,7 +206,8 @@ test("offline: activar con PIN y consultar sin conexión una copia de solo lectu
   expect(await offlineDatabases(page)).toHaveLength(1)
 })
 
-test("offline: A y B en el mismo navegador no ven la copia del otro", async ({ page, context, guard }, testInfo) => {
+test("offline: A y B en el mismo navegador no ven la copia del otro", async ({ page, context, guard, browserName }, testInfo) => {
+  test.skip(browserName === "firefox", FIREFOX_OFFLINE)
   test.setTimeout(150_000)
   allowOffline(guard)
   await page.goto("/settings")
@@ -201,8 +229,11 @@ test("offline: A y B en el mismo navegador no ven la copia del otro", async ({ p
   expect(await offlineDatabases(page)).toHaveLength(2)
   await context.setOffline(true)
   await page.goto("/offline")
-  await unlock(page, PIN_A)
-  await expect(alerts(page)).toContainText("no son correctos")
+  const wrongSecretRejected = await aesKwRejectsWrongKey(page, testInfo)
+  if (wrongSecretRejected) {
+    await unlock(page, PIN_A)
+    await expect(alerts(page)).toContainText("no son correctos")
+  }
   await unlock(page, PHRASE_B)
   await expect(page.getByRole("heading", { name: ONLY_B })).toBeVisible()
   await expect(page.getByText("El cuaderno de la bruma")).toHaveCount(0)
@@ -214,8 +245,10 @@ test("offline: A y B en el mismo navegador no ven la copia del otro", async ({ p
   await expect(copySection(page)).toHaveAttribute("data-offline-copy", "locked")
   await context.setOffline(true)
   await page.goto("/offline")
-  await unlock(page, PHRASE_B)
-  await expect(alerts(page)).toContainText("no son correctos")
+  if (wrongSecretRejected) {
+    await unlock(page, PHRASE_B)
+    await expect(alerts(page)).toContainText("no son correctos")
+  }
   await unlock(page, PIN_A)
   await expect(page.getByRole("heading", { name: "El cuaderno de la bruma" })).toBeVisible()
   await expect(page.getByText(ONLY_B)).toHaveCount(0)
@@ -249,7 +282,8 @@ test.describe(() => {
   })
 })
 
-test("offline: un TTL vencido bloquea la copia sin borrarla y la validación con conexión la reabre", async ({ page, context, guard }) => {
+test("offline: un TTL vencido bloquea la copia sin borrarla y la validación con conexión la reabre", async ({ page, context, guard, browserName }) => {
+  test.skip(browserName === "firefox", FIREFOX_OFFLINE)
   test.setTimeout(120_000)
   allowOffline(guard)
   await page.goto("/settings")
