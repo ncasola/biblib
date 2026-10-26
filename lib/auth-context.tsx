@@ -1,10 +1,14 @@
 "use client"
 
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react"
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react"
 import type { Session, User as SupabaseUser } from "@supabase/supabase-js"
 import { createClient } from "@/lib/supabase/client"
 import { getSafeRedirectPath } from "@/lib/auth-navigation"
 import { getProfileAvatarAction } from "@/app/actions/profile"
+import { purgeOfflineCopy } from "@/lib/offline-library"
+
+/** U-EXP-08: borra la copia de lectura de la cuenta en este dispositivo; un fallo local no impide cerrar sesión. */
+const purgeOfflineCopyQuietly = (userId: string) => purgeOfflineCopy(userId).catch(() => undefined)
 
 export interface User {
   id: string
@@ -50,6 +54,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [privateProfile, setPrivateProfile] = useState<{ owner: string; avatar?: string; version: string | null; editorEnabled: boolean } | null>(null)
   const owner = user?.id
+  // Última cuenta con sesión: si Supabase la cierra (otra pestaña, sesión revocada al reconectar), se purga su copia.
+  const lastUserId = useRef<string | null>(null)
 
   useEffect(() => {
     if (!owner) return
@@ -84,6 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (active && !receivedAuthEvent) {
           setSession(error ? null : initialSession)
           setUser(!error && initialSession?.user ? mapUser(initialSession.user) : null)
+          lastUserId.current = !error && initialSession?.user ? initialSession.user.id : null
         }
       } catch {
         if (active && !receivedAuthEvent) {
@@ -97,9 +104,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    } = supabase.auth.onAuthStateChange((event, nextSession) => {
       if (!active) return
       receivedAuthEvent = true
+      if (event === "SIGNED_OUT" && lastUserId.current) void purgeOfflineCopyQuietly(lastUserId.current)
+      lastUserId.current = nextSession?.user.id ?? null
       setSession(nextSession)
       setUser(nextSession?.user ? mapUser(nextSession.user) : null)
       setLoading(false)
@@ -129,6 +138,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const signOut = async () => {
+    // Se borra antes de cerrar: la copia de esta cuenta no sobrevive al cierre de sesión en este dispositivo.
+    const current = user?.id ?? session?.user.id
+    if (current) await purgeOfflineCopyQuietly(current)
     const { error } = await supabase.auth.signOut()
     if (error) throw new Error("No se pudo cerrar la sesión. Vuelve a intentarlo.")
     setUser(null)
