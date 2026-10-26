@@ -65,7 +65,7 @@ Validación de O16-XB:
 - **G16 aceptada por decisión del usuario** sin el tercer run completo de los tres navegadores.
 - **Intermitencia abierta:** `offline:318` en Chromium (activación del worker publicado, 1 de 7 ejecuciones). Tiene diagnóstico añadido y se deja como pendiente.
 - **Sin probar:** Safari real (AES-KW), lector de pantalla y dispositivos reales. Son pendientes externos del usuario.
-- **Pendientes de U-QA-05 y G15 que siguen vigentes:**
-  - las cifras del inicio «Leyendo» y «Seguir leyendo»;
-  - los parámetros de la copia offline antes de activar `BIBLIB_OFFLINE_SNAPSHOT`;
-  - la reproducción de la contención de `test:scripts` en `scratch`.
+- **Pendientes de U-QA-05 y G15:**
+  - **Cifras del inicio** «Leyendo» y «Seguir leyendo»: el usuario decidió (26 de octubre de 2026) aclarar los textos sin cambiar qué se cuenta. Pendiente de implementar.
+  - **Copia offline:** el usuario aprobó los parámetros y decidió activar `BIBLIB_OFFLINE_SNAPSHOT` en el despliegue, que hace él. Sigue sin probar en un Safari real.
+  - La reproducción de la contención de `test:scripts` en `scratch` sigue vigente.

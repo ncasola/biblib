@@ -618,7 +618,7 @@
       "status": "implemented",
       "evidence": "O15 · merge b02afe7; E2E offline 7/7, cabeceras 53/53, a11y 10/10 (docs/validacion/2026-10-26/O15/exp-08/); G15",
       "pending": [
-        "Parámetros de la copia (PIN/frase, PBKDF2 600k, TTL 7 días, 10 intentos) fijados por el coordinador: revisión del usuario antes de activar BIBLIB_OFFLINE_SNAPSHOT.",
+        "Parámetros de la copia (PIN/frase, PBKDF2 600k, TTL 7 días, 10 intentos) aprobados por el usuario el 26-10-2026, que decide activar BIBLIB_OFFLINE_SNAPSHOT en el despliegue (acción del usuario). Sin probar en Safari real: el WebKit de Playwright en Windows aceptaba un PIN incorrecto.",
         "Firefox/WebKit, dispositivos reales y purga por SIGNED_OUT con sesión revocada en remoto sin probar."
       ]
     },
@@ -662,7 +662,7 @@
       "status": "implemented",
       "evidence": "O14 · merge 8bc4b47; integración reading 28/28, E2E lectura 4/4 en test (docs/validacion/2026-10-26/O14/pro-02/); G14",
       "pending": [
-        "Las cifras «Leyendo»/«Leídos» del inicio cuentan el estado del libro y «Seguir leyendo» los ciclos abiertos: unificarlas es decisión de diseño del usuario."
+        "Las cifras «Leyendo»/«Leídos» del inicio cuentan el estado del libro y «Seguir leyendo» los ciclos abiertos. Decisión del usuario (26-10-2026): aclarar los textos sin cambiar qué se cuenta (las tarjetas se rotulan como estado del libro y «Seguir leyendo» explica que son lecturas abiertas). Pendiente de implementar."
       ]
     },
     {
