@@ -1,0 +1,22 @@
+{
+  "perfil": "test",
+  "seMantieneLevantado": true,
+  "contenedores": [
+    "supabase_studio_biblib-test | Up 4 hours (healthy)",
+    "supabase_pg_meta_biblib-test | Up 4 hours (healthy)",
+    "supabase_storage_biblib-test | Up 4 hours (healthy)",
+    "supabase_rest_biblib-test | Up 4 hours",
+    "supabase_inbucket_biblib-test | Up 4 hours (healthy)",
+    "supabase_auth_biblib-test | Up 14 minutes (healthy)",
+    "supabase_kong_biblib-test | Up 13 minutes (healthy)",
+    "supabase_db_biblib-test | Up 4 hours (healthy)"
+  ],
+  "redes": [
+    "biblib-test-network"
+  ],
+  "volumenes": [
+    "supabase_db_biblib-test",
+    "supabase_storage_biblib-test"
+  ],
+  "puertoAppOcupado": false
+}
