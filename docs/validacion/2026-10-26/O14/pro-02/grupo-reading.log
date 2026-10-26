@@ -1,0 +1,73 @@
+
+> biblib@1.0.0 test:integration:reading C:\Users\ncaso\orca\workspaces\biblib\u-inf-03
+> node tests/integration/reading/run.mjs "--profile" "scratch" "--reuse-build"
+
+(node:31952) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/ncaso/orca/workspaces/biblib/u-inf-03/lib/account-deletion/worker.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-inf-03\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Grupo reading · perfil scratch · biblib-scratch · run 076c4303386b
+(node:31556) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/ncaso/orca/workspaces/biblib/u-inf-03/lib/account-deletion/worker.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-inf-03\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ B con los IDs de A: NOT_FOUND en cada acción y A no cambia (3441.0418ms)
+✔ las estadísticas y «Seguir leyendo» de B no cuentan nada de A (236.8578ms)
+✔ el anónimo no llega a las acciones de lectura (3.3292ms)
+✔ una cuenta en eliminación no escribe por ninguna acción de lectura (ACCOUNT_INACTIVE) y no cambia nada (622.5214ms)
+(node:31344) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/ncaso/orca/workspaces/biblib/u-inf-03/lib/account-deletion/worker.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-inf-03\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ estadísticas con cero ciclos: todo a cero, con periodo y denominador, y los leídos legados aparte (1286.8113ms)
+✔ «Seguir leyendo» no deduce lecturas del estado actual: sin ciclos abiertos, vacío aunque haya un libro «Leyendo» (82.8129ms)
+✔ consultar la lectura de un libro leído no crea ciclos ni fechas (74.4663ms)
+✔ al empezar a leer un libro legado, sus estadísticas solo cuentan lo registrado desde entonces (142.5359ms)
+(node:23672) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/ncaso/orca/workspaces/biblib/u-inf-03/lib/account-deletion/worker.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-inf-03\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ iniciar a la vez desde dos dispositivos: un solo ciclo abierto, el mismo para ambos y ninguno es un error (1126.551ms)
+✔ una versión vista en el otro dispositivo es un conflicto y no pisa el cambio (542.2459ms)
+✔ sesiones registradas a la vez desde los dos dispositivos se conservan las dos (514.2992ms)
+(node:32160) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/ncaso/orca/workspaces/biblib/u-inf-03/lib/account-deletion/worker.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-inf-03\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ instantes con +14:00 y -12:00 se guardan y se devuelven en UTC (1955.9932ms)
+✔ las sesiones a ambos lados de la medianoche UTC son dos días en UTC y uno en Madrid, Nueva York o Kiritimati (444.6488ms)
+✔ un cierre en la Nochevieja UTC cuenta en el año nuevo de Madrid y en el anterior en UTC (427.2073ms)
+(node:34416) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/ncaso/orca/workspaces/biblib/u-inf-03/lib/account-deletion/worker.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-inf-03\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ iniciar dos veces: la segunda devuelve el ciclo abierto sin crear otro (1430.9571ms)
+✔ registrar la misma sesión dos veces (mismo ID) no la duplica (286.7806ms)
+✔ corregir y borrar repetidos con la versión vieja: reintento propio (718.9844ms)
+✔ terminar dos veces con la misma fecha: reintento; con otra fecha o abandonando, conflicto (400.3727ms)
+✔ reabrir dos veces: la segunda ya lo encuentra en curso (407.4421ms)
+✔ sin confirmación no se termina, no se reabre ni se borra (147.6653ms)
+(node:6276) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/ncaso/orca/workspaces/biblib/u-inf-03/lib/account-deletion/worker.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-inf-03\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ copia sin páginas: se registra la página y no hay porcentaje en la ficha ni en el inicio (1622.9099ms)
+✔ con total conocido: porcentaje real; negativa, invertida o por encima del total se rechazan sin escribir (638.1836ms)
+✔ un total corregido a la baja después: la nota se edita, la página no sube y no hay porcentaje (339.3361ms)
+(node:39324) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/ncaso/orca/workspaces/biblib/u-inf-03/lib/account-deletion/worker.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-inf-03\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ la relectura exige confirmarla y la última lectura vista (1840.086ms)
+✔ releer crea la lectura n.º 2 y la primera conserva estado, fechas y sesiones (105.2057ms)
+✔ reabrir la primera con la relectura en curso: «ya hay una lectura en curso» (23505) y nada cambia (183.688ms)
+✔ abandonar la relectura y reabrirla: vuelve a «Leyendo» sin fecha de fin y conserva su inicio (279.7461ms)
+✔ las fechas cruzadas (fin antes del inicio) se rechazan con un mensaje claro (228.9282ms)
+ℹ tests 28
+ℹ suites 0
+ℹ pass 28
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 35234.0854
