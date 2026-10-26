@@ -71,6 +71,7 @@ export function ShelfCard({ shelf, bookCount, onUpdate, onDelete, isDefault }: S
       <div className="h-px bg-border" />
 
       <Link tabIndex={0} href={`/books?shelf=${encodeURIComponent(shelf.id)}`} className="link-quiet inline-flex min-h-11 items-center text-sm">Ver libros de esta estantería<span className="sr-only">: {shelf.title}</span></Link>
+      <Button asChild variant="outline"><Link href={`/books/print?shelf=${encodeURIComponent(shelf.id)}`} aria-label={`Imprimir catálogo: ${shelf.title}`}>Imprimir catálogo</Link></Button>
 
       <div className="flex gap-2">
         <Dialog open={isEditDialogOpen} onOpenChange={(open) => { if (!pending) { setIsEditDialogOpen(open); setError(null) } }}>

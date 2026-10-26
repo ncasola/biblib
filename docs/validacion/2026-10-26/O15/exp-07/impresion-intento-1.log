@@ -1,0 +1,60 @@
+
+> biblib@1.0.0 test:e2e:local C:\Users\ncaso\orca\workspaces\biblib\u-qa-01
+> node tests/e2e/run.mjs "--profile" "test" "--project" "chromium" "--grep" "impresión"
+
+E2E · perfil test · biblib-test · huella b831ef825c09 · run 54d941bb044d · chromium
+Compilando la app para el perfil test…
+Bundle de cliente sin credenciales administrativas ni URLs privadas.
+
+Running 6 tests using 1 worker
+
+(node:36016) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 1 [chromium-sesion] › tests\e2e\sesion.setup.ts:11:3 › acceso local: A entra por el formulario y conserva la sesión (1.4s)
+  ok 2 [chromium-sesion] › tests\e2e\sesion.setup.ts:11:3 › acceso local: B entra por el formulario y conserva la sesión (1.1s)
+(node:39580) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 3 [chromium-flujos] › tests\e2e\flujos\impresion.spec.ts:6:3 › impresión › colección vacía: recuento cero y acción deshabilitada (791ms)
+  ok 4 [chromium-flujos] › tests\e2e\flujos\impresion.spec.ts:17:3 › impresión › más de una página: IDs iguales a consulta filtrada, A4 y Carta sin controles (3.7s)
+  x  5 [chromium-flujos] › tests\e2e\flujos\impresion.spec.ts:50:3 › impresión › estantería: acceso directo, campos opcionales y cancelar conserva filtros (1.0m)
+(node:30704) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 6 [chromium-flujos] › tests\e2e\flujos\impresion.spec.ts:74:3 › impresión › serie y etiquetas: la impresión mantiene la intersección de filtros (1.9s)
+
+
+  1) [chromium-flujos] › tests\e2e\flujos\impresion.spec.ts:50:3 › impresión › estantería: acceso directo, campos opcionales y cancelar conserva filtros
+
+    Test timeout of 60000ms exceeded.
+
+    Error: write CONNECTION_ENDED 127.0.0.1:55332
+        at Query.handler (C:\Users\ncaso\orca\workspaces\biblib\u-qa-01\node_modules\.pnpm\postgres@3.4.9\node_modules\postgres\src\index.js:331:34)
+        at Query.handle (C:\Users\ncaso\orca\workspaces\biblib\u-qa-01\node_modules\.pnpm\postgres@3.4.9\node_modules\postgres\src\query.js:140:65)
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    .biblib\e2e\artefactos\flujos-impresion-impresión-d8366-y-cancelar-conserva-filtros-chromium-flujos\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: .biblib\e2e\artefactos\flujos-impresion-impresión-d8366-y-cancelar-conserva-filtros-chromium-flujos\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    .biblib\e2e\artefactos\flujos-impresion-impresión-d8366-y-cancelar-conserva-filtros-chromium-flujos\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace .biblib\e2e\artefactos\flujos-impresion-impresión-d8366-y-cancelar-conserva-filtros-chromium-flujos\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium-flujos] › tests\e2e\flujos\impresion.spec.ts:50:3 › impresión › estantería: acceso directo, campos opcionales y cancelar conserva filtros
+  5 passed (1.9m)
+Servidor sin salidas de red externas durante el run.
+Cuentas de Auth sin cambios (2, todas @biblib.test). Datos del run limpiados y biblioteca de A restaurada si hizo falta.
+pnpm : Error [pruebas] (11): Recorridos fallidos o repetidos (1 fallidos, 0 con repetición); revisa los nombres
+marcados arriba y .biblib/e2e/report.
+En línea: 2 Carácter: 1
++ pnpm test:e2e:local --profile test --project chromium --grep impresió ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Error [pruebas]...lib/e2e/report.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+ ELIFECYCLE  Command failed with exit code 11.
