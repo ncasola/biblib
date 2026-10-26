@@ -60,13 +60,13 @@ function makeBackup(root, { key = null, source = "local", dirName } = {}) {
   return { dir, manifest, relative: path.relative(root, dir) }
 }
 
-test("db:backup:prod es solo un contrato que rechaza con 2 y sin conectar", async () => {
-  for (const target of ["prod", "preprod"]) assert.throws(() => parseBackupArgs([target]), (error) => error.code === EXIT.INVALID_ARGS && error.message === PROD_PENDING && /U-INF-07/.test(error.message))
+test("db:backup:local rechaza preprod/prod con 2 y sin conectar: el respaldo remoto es otro comando", async () => {
+  for (const target of ["prod", "preprod"]) assert.throws(() => parseBackupArgs([target]), (error) => error.code === EXIT.INVALID_ARGS && error.message === PROD_PENDING && /backup-remote/.test(error.message))
   const original = console.error
   const printed = []
   console.error = (line) => printed.push(line)
   try { assert.equal(await backupMain(["prod", "--profile", "scratch"]), EXIT.INVALID_ARGS) } finally { console.error = original }
-  assert.match(printed.join("\n"), /pendiente de U-INF-07 y de un destino autorizado/)
+  assert.match(printed.join("\n"), /solo respalda perfiles locales/)
 })
 
 test("los wrappers no admiten URLs, flags remotos ni perfiles desconocidos", () => {
@@ -250,7 +250,7 @@ test("streamCommand captura bytes y entrega la entrada por stdin, no por argv", 
   assert.equal(result.code, 0)
   assert.deepEqual(result.stdout, Buffer.concat([Buffer.from([0, 255]), Buffer.from("secreto-por-stdin")]))
   await assert.rejects(streamCommand(process.execPath, ["-e", "process.stdout.write(Buffer.alloc(2048))"], { maxBytes: 1024, timeoutMs: 10000 }), { code: EXIT.SERVICE_UNAVAILABLE })
-  assert.equal(readFileSync(path.join(repo, "package.json"), "utf8").includes("\"db:backup:prod\": \"node scripts/db/backup-local.mjs prod\""), true)
+  assert.equal(readFileSync(path.join(repo, "package.json"), "utf8").includes("\"db:backup:prod\": \"node scripts/db/backup-remote.mjs prod\""), true)
 })
 
 test("verify excluye lo que la rotación renueva en library_state (trigger de 0003)", () => {

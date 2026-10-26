@@ -20,7 +20,7 @@ import { RECEIPT_COVERAGE, RECEIPT_KIND, receiptHash } from "./remote-preflight.
 import { loadCensus, resolveSeedTarget } from "./seed-local.mjs"
 import { closeConnection, connect, connectionError, drizzleVersion, inspectDatabase } from "./target.mjs"
 
-export const PROD_PENDING = "db:backup:prod está pendiente de U-INF-07 y de un destino autorizado; no se ha conectado con ninguna base remota."
+export const PROD_PENDING = "db:backup:local solo respalda perfiles locales; para preprod/prod usa db:backup:<objetivo> (scripts/db/backup-remote.mjs). No se ha conectado con ninguna base remota."
 export const RECEIPT_FILE = "receipt.json"
 const fail = (code, message, phase = "respaldo") => { throw new BiblibError(code, phase, message) }
 

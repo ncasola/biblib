@@ -110,7 +110,8 @@ describe("argumentos de promoción", () => {
       assert.equal(scripts[`db:migrate:${target}`], `node scripts/db/migrate.mjs apply ${target}`)
       assert.equal(scripts[`db:adopt:${target}`], `node scripts/db/adopt.mjs ${target}`)
     }
-    assert.equal(scripts["db:backup:prod"], "node scripts/db/backup-local.mjs prod")
+    assert.equal(scripts["db:backup:prod"], "node scripts/db/backup-remote.mjs prod")
+    assert.equal(scripts["db:backup:preprod"], "node scripts/db/backup-remote.mjs preprod")
   })
 })
 

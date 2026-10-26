@@ -22,7 +22,7 @@ Contrato de origen: [01 · Entorno y migraciones](spec-pendientes/01-entorno-y-m
 | `pnpm db:migrate:<preprod\|prod> --plan <plan.json> --expect-project <ref> --expect-plan <sha256> --backup-receipt <recibo.json> [--json]` | Aplica exactamente los pendientes del plan vigente. |
 | `pnpm db:adopt:<preprod\|prod> --plan <plan.json> --expect-project <ref> --expect-plan <sha256> --backup-receipt <recibo.json> [--json]` | Operación excepcional: escribe solo las filas del ledger de un esquema equivalente demostrado. No es un alias de migrate. |
 
-`<ref>` es la referencia del proyecto Supabase (minúsculas y dígitos), no una URL ni una contraseña. Los planes caducan a los **30 minutos**. `db:backup:prod` sigue saliendo con **2**: el respaldo remoto real depende del plan del proveedor (ver «Condiciones abiertas»).
+`<ref>` es la referencia del proyecto Supabase (minúsculas y dígitos), no una URL ni una contraseña. Los planes caducan a los **30 minutos**. `db:backup:<objetivo> --expect-project <ref>` produce el recibo (ver [Recuperación](recuperacion.md#respaldo-remoto-dbbackuppreprodprod)).
 
 | Salida | Significado en estos comandos |
 | --- | --- |
@@ -157,7 +157,7 @@ El respaldo refleja el destino en su `createdAt`. Si hubiera que restaurarlo, **
 | Identidad real | Producción: proyecto existente, referencia **no inspeccionada**. Preproducción: **no configurada**. Hay que fijar la referencia de cada una y comprobar que la URL pública y la conexión administrativa son del mismo proyecto. |
 | Estado real de la base | **No inspeccionado.** Puede tener ledger de `drizzle-kit` (con o sin hash CRLF), un esquema manual sin ledger o datos incompatibles con `0001`. `status`/`plan` lo determinarán en solo lectura. |
 | Plan del proveedor | **No se presupone PITR** ni la descarga de backups. Hay que saber qué respaldo ofrece el plan contratado, su retención y cómo se restaura en un proyecto aislado. Los backups de base no incluyen los bytes de Storage. |
-| Respaldo remoto (`db:backup:prod`) | **Pendiente** (U-OPS-02 + proveedor): debe producir un recibo con este contrato. El productor del ensayo no es apto para producción. |
+| Respaldo remoto (`db:backup:prod`) | **Implementado** (`scripts/db/backup-remote.mjs`): volcado de BibLib con snapshot, cuentas Auth de BibLib sin secretos, Storage vacío comprobado y ensayo en copia desechable del mismo major. No sustituye a los backups del proveedor ni cubre bytes de Storage. |
 | Permisos del rol | En Supabase alojado, `postgres` no es superusuario: comprobar propiedad de `biblib`/`drizzle`, `CREATE` en la base y `REFERENCES` sobre `auth.users` (lo comprueba `status`). |
 | Conectividad y TLS | La conexión directa puede ser solo IPv6 según el proyecto; el pooler en modo sesión es la alternativa IPv4. Fijar la CA del proveedor en `SUPABASE_DB_SSLROOTCERT` si las CA del sistema no la incluyen. |
 | Versión de Postgres | Local 17; comprobar el major remoto (aviso si difiere) y ensayar en una copia de ese major. |

@@ -1,9 +1,11 @@
 import assert from "node:assert/strict"
+import { execFileSync } from "node:child_process"
 import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import path from "node:path"
 import { after, before, describe, test } from "node:test"
 import { applyAdoption } from "../../scripts/db/adopt.mjs"
+import { backupRemote } from "../../scripts/db/backup-remote.mjs"
 import { loadJournal } from "../../scripts/db/journal-guard.mjs"
 import { applyPlan, runPromotion, statusRemote } from "../../scripts/db/migrate.mjs"
 import { inspectDatabase } from "../../scripts/db/target.mjs"
@@ -359,5 +361,28 @@ describe("promoción contra un remoto simulado [stack]", { skip }, () => {
     assert.equal(status.result.checks.some((c) => c.id === "ledger.unknown"), false)
     assert.equal((await admin`select count(*)::integer as n from drizzle.__drizzle_migrations`)[0].n, 1)
     assert.equal(await ledger(), null)
+  })
+  test("11 · db:backup remoto: snapshot, ensayo en copia desechable y recibo que acepta la adopción", async () => {
+    // Como producción: esquema manual hasta 0001, sin ledger propio y con el de otra app en drizzle.
+    reset()
+    applyManually(remote, tags[1])
+    seedSynthetic(remote)
+    remote.psql(legacyLedger("f".repeat(64), 1778674633700))
+    // En el ensayo el destino no es accesible por nombre desde otro contenedor: pg_dump corre dentro del suyo, con el mismo snapshot.
+    const dumpInside = (_described, { snapshot, schemas }) => execFileSync("docker", ["exec", remote.id, "pg_dump", "-U", "postgres", "-d", "postgres", "--format", "plain", "--quote-all-identifiers", "--snapshot", snapshot, ...schemas.flatMap((s) => ["--schema", s])], { encoding: "utf8", maxBuffer: 64 * 1024 * 1024, windowsHide: true })
+    const backup = await backupRemote({ target: TARGET, expectProject: REF, env, root: repo }, { resolveHost: deps.resolveHost, dumpDomain: dumpInside })
+    track(path.dirname(backup.result.receipt))
+    assert.equal(backup.result.state, "adoption-required")
+    assert.equal(backup.result.head, null)
+    assert.deepEqual(backup.result.rehearsal.map((c) => c.status), ["ok", "ok", "ok", "ok"])
+    assert.ok(backup.result.counts.authUsers > 0)
+    const auth = JSON.parse(readFileSync(path.join(repo, path.dirname(backup.result.receipt), "db", "auth.json"), "utf8"))
+    assert.doesNotMatch(JSON.stringify(auth), /encrypted_password|recovery_token|confirmation_token/)
+    const planned = await plan("respaldo-remoto")
+    assert.equal(planned.plan.kind, "adopt-ledger")
+    const adopted = await promote(planned, backup.result.receipt, { kind: "adopt-ledger" })
+    assert.equal(adopted.code, EXIT.OK)
+    assert.deepEqual(await ledger(), journal.entries.slice(0, 2).map((e) => ({ hash: e.hash, created_at: e.when })))
+    assert.equal((await admin`select count(*)::integer as n from drizzle.__drizzle_migrations`)[0].n, 1)
   })
 })

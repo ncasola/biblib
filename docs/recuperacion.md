@@ -34,7 +34,17 @@ pnpm db:restore:verify --backup .biblib/backups/<backupId> --profile scratch
 pnpm db:local:down --profile scratch
 ```
 
-`pnpm db:backup:prod` es solo un contrato: sale con **2** («pendiente de U-INF-07 y de un destino autorizado») sin conectar con nada.
+### Respaldo remoto (`db:backup:<preprod|prod>`)
+
+`pnpm db:backup:prod --expect-project <ref>` (`scripts/db/backup-remote.mjs`) produce el recibo que exigen `db:adopt` y `db:migrate`. Lee la configuración del destino de la sesión o de `.biblib/remote/<objetivo>.env` ([promoción](promocion.md#archivo-privado-del-destino-biblibremoteobjetivoenv)) y solo lee del destino:
+
+1. Preflight de identidad, TLS y permisos, como `db:status`.
+2. En una transacción `repeatable read read only`: estado (`adoption-required`, `pending` o `up-to-date`; otro estado detiene el respaldo), hechos de catálogo, filas por tabla de `biblib` y snapshot exportado.
+3. `pg_dump` de `biblib` y `biblib_migrations` (si existe) con ese snapshot, en un contenedor `postgres:<major del destino>-alpine`, con TLS `verify-full` contra la CA del archivo y la credencial por entorno, nunca en argumentos.
+4. **Proyecto compartido:** de Auth, solo las cuentas con datos en BibLib (`auth.users` e `identities`), sin contraseñas ni tokens (`db/auth.json`). No se copian cuentas de otras apps. Storage de BibLib debe estar vacío: si tiene objetos, el respaldo se detiene, porque sus bytes exigen la clave `service_role`.
+5. Ensayo de restauración en un Postgres desechable del mismo major (sustituto mínimo de Auth/Storage de `test:db` y los roles que cite el volcado): ledger, estado, hechos de catálogo y filas por tabla idénticos. Solo si pasa, el recibo sirve para promover.
+
+Todo queda en `.biblib/backups/<backupId>/` (fuera de Git, permisos privados): `db/biblib.sql`, `db/auth.json`, `rehearsal.json` y `receipt.json`. Contiene datos personales: guárdalo como un respaldo de producción. El recibo caduca a las 24 h y debe repetirse si el destino cambia (por ejemplo, tras una adopción). Prueba con Docker: escenario 11 de `tests/scripts/promotion-stack.test.mjs`.
 
 ### Respaldo (`db:backup:local`)
 
@@ -148,7 +158,7 @@ Comprueba los archivos del respaldo; que hay un restore completado de ese respal
 | Código | Significado en estos comandos |
 | --- | --- |
 | 0 | Completado y, en verify, sin discrepancias. |
-| 2 | Argumentos no admitidos, `db:backup:prod` o clave con formato incorrecto. |
+| 2 | Argumentos no admitidos, `db:backup:local` con preprod/prod o clave con formato incorrecto. |
 | 3 | Identidad ajena: proyecto, perfil, worktree, `BIBLIB_TARGET`, recurso o ruta. |
 | 5 | Historial divergente o drift. |
 | 6 | Falta la clave, no corresponde, destino no vacío o perfil sin esquema. |

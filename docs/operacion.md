@@ -578,7 +578,7 @@ pnpm db:restore:verify --backup .biblib/backups/<backupId> --profile scratch [--
 - `db:backup:local` guarda en `.biblib/backups/<backupId>/` (ignorado por Git) el volcado de `biblib` y del ledger `biblib_migrations` con snapshot exportado, los datos de identidad de Auth con `supabase db dump --local --data-only --schema auth` y los bytes Storage leídos por la API del perfil, más el recibo `backup.json` con hashes, alcance y exclusiones. Usa `docker exec` sobre el ID registrado del contenedor Postgres, sin credenciales en argv ni en la salida.
 - `db:restore:local` solo restaura en un stack local propio, acreditado como reset y **vacío o recién reseteado**; antes de tocarlo valida archivos, clave e historial. Rota `books.version` (y `library_state.revision` si existe), invalida previews y leases y reasigna las credenciales de las cuentas fixture. No envía correo ni llama a proveedores.
 - `db:restore:verify` comprueba objetos de esquema, ledger, cantidades, tokens rotados, muestra de fichas, sesiones A/B reales con RLS y objetos Storage por sha256, y escribe el informe de recuperación. Una discrepancia sale con **11**.
-- `db:backup:prod` sale con **2**: pendiente de U-INF-07 y de un destino autorizado.
+- `db:backup:prod` (y `:preprod`) respalda el destino remoto con su recibo y ensayo de restauración: ver [Recuperación](recuperacion.md#respaldo-remoto-dbbackuppreprodprod).
 
 `pnpm test:scripts` incluye `tests/scripts/backup.test.mjs` (sin Docker). Ensayo real sobre scratch: [validacion/2026-10-23/O07/ops-02](validacion/2026-10-23/O07/ops-02/informe.md).
 

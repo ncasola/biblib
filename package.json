@@ -38,7 +38,7 @@
     "db:reset:local": "node scripts/local-stack.mjs reset",
     "test:integration:local": "node tests/integration/run.mjs",
     "db:backup:local": "node scripts/db/backup-local.mjs local",
-    "db:backup:prod": "node scripts/db/backup-local.mjs prod",
+    "db:backup:prod": "node scripts/db/backup-remote.mjs prod",
     "db:restore:local": "node scripts/db/restore-local.mjs",
     "db:restore:verify": "node scripts/db/restore-verify.mjs",
     "db:local:credentials": "node scripts/db/local-credentials.mjs",
@@ -91,7 +91,8 @@
     "test:integration:loans": "node tests/integration/loans/run.mjs",
     "docs:links": "node scripts/check-doc-links.mjs",
     "db:remote-env:preprod": "node scripts/db/remote-env.mjs preprod",
-    "db:remote-env:prod": "node scripts/db/remote-env.mjs prod"
+    "db:remote-env:prod": "node scripts/db/remote-env.mjs prod",
+    "db:backup:preprod": "node scripts/db/backup-remote.mjs preprod"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "1.1.15",
