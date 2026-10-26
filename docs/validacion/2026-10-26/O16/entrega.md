@@ -13,7 +13,7 @@ Un punto puede tener partes con etiquetas distintas: cada parte figura por separ
 
 | Cierre | Estado | Qué significa |
 | --- | --- | --- |
-| **Cierre de código (local)** | **Alcanzado**, con un ensayo manual pendiente (lector de pantalla, UI-03) y la revalidación del coordinador en `test` por anotar. | Los 35 hallazgos tienen implementación verificada con servicios reales locales y evidencia enlazada ([matriz](matriz-auditoria.md)). Instalación limpia, migración desde la versión previa, respaldo y restauración, y benchmark repetidos en `scratch` ([informe](qa-05/informe.md)). |
+| **Cierre de código (local)** | **Alcanzado**, con un ensayo manual pendiente (lector de pantalla, UI-03). Revalidación del coordinador en `test` anotada ([G16](g16-coordinador.md)). | Los 35 hallazgos tienen implementación verificada con servicios reales locales y evidencia enlazada ([matriz](matriz-auditoria.md)). Instalación limpia, migración desde la versión previa, respaldo y restauración, y benchmark repetidos en `scratch` ([informe](qa-05/informe.md)). |
 | **Cierre de despliegue (remoto)** | **Pendiente.** | No existe preproducción. Producción no se ha inspeccionado ni tocado. Nada remoto se ha verificado y ninguna casilla remota se marca con un mock. Responsable: Néstor (usuario). |
 
 ## Puntos 1–7
@@ -26,7 +26,7 @@ Un punto puede tener partes con etiquetas distintas: cada parte figura por separ
 | | | Adopción y migración en preproducción y producción | **pendiente externo** | Preproducción no existe. Requiere autorización, ref real, plan del proveedor y respaldo ensayado del destino ([promoción](../../../promocion.md)). Los comandos están preparados y ensayados contra un Postgres efímero con TLS ([O08/inf-07](../../2026-10-23/O08/inf-07/informe.md)). | Néstor |
 | 2 | Integración y E2E con navegadores; lector, zoom, móvil y ambos temas; sin errores JS ni de hidratación ni éxitos falsos. | Recorrido HTTP con sesiones GoTrue reales A/B (13 rutas) y redirección anónima | **hecho localmente** | [qa-05/07-acceso-app.json](qa-05/07-acceso-app.json) | U-QA-05 |
 | | | Bordes de paginación 0/1/10/11 y filtro desde página posterior (UX-06) en la app real con Chrome | **hecho localmente** | [qa-05/22-paginacion.json](qa-05/22-paginacion.json) | U-QA-05 |
-| | | Integración completa, E2E (Chromium, Firefox, WebKit) y a11y en el perfil `test` | **pendiente de la revalidación del coordinador** (local) | Se anota abajo. Última referencia: [G15](../O15/g15-coordinador.md) (`07f7dcf`): integración 289/289 ×2, E2E Chromium 85/0 y a11y 10/10. Firefox y WebKit no se han ejecutado desde O07/O11: G15 los deja para U-QA-05, pero esta unidad no puede usar `test`, así que forman parte de la revalidación de G16 del coordinador. | Coordinador |
+| | | Integración completa, E2E (Chromium, Firefox, WebKit) y a11y en el perfil `test` | **hecho localmente** | [G16](g16-coordinador.md): integración 291/291 ×2, E2E Chromium completo, Firefox 82/82 y WebKit 79+9 por separado tras [O16-XB](xb/informe.md) (omisiones de motor inventariadas), a11y 10/10. El tercer run completo de los tres navegadores se interrumpió por memoria y el usuario dio por buenos los runs. | Coordinador |
 | | | Lector de pantalla, Safari macOS/iOS, Edge y dispositivos móviles reales | **pendiente externo** (ensayo manual) | `tests/accessibility/manual.md`, [accesibilidad](../../../accesibilidad.md). No se afirma ninguna prueba inexistente. | Néstor |
 | 3 | Benchmark final y comparación con G09: cambio de modelo, restauración, conexiones, workers y límites globales. | `perf:local` 100/1 000/10 000 en `scratch` y comparación con G09 | **hecho localmente** | [qa-05/rendimiento/informe.md](qa-05/rendimiento/informe.md) | U-QA-05 |
 | | | Rendimiento con datos, red y alojamiento reales | **pendiente externo** | Las cifras locales no son un SLA. | Néstor |
@@ -58,4 +58,13 @@ Todos son de Néstor (usuario). Ninguno se ha simulado.
 
 ## Revalidación del coordinador (perfil `test`)
 
-*Pendiente.* El coordinador anota aquí los resultados de `test:integration:local`, `test:e2e:local` (Chromium, Firefox y WebKit) y `test:a11y:local` sobre el commit integrado.
+Hecha el 26 de octubre de 2026 sobre `5a5adfe`; las correcciones de pruebas se integraron en `78326f8`. Acta: [g16-coordinador.md](g16-coordinador.md).
+
+| Suite | Resultado |
+| --- | --- |
+| `test:integration:local --profile test` | 291/291 en dos pasadas seguidas |
+| `test:integration:media` / `security` / `reading` | 5/5 · 24/24 · 28/28 |
+| `security:headers:local` | 55/55 |
+| `test:e2e:local` Chromium | completo, sin fallos |
+| `test:e2e:local` Firefox y WebKit | 48 fallos de prueba en G16, sin defectos de producto. Corregidos en [O16-XB](xb/informe.md): Firefox 82/82 y WebKit 79+9 por separado, con omisiones de motor inventariadas. El run completo final se interrumpió por memoria y el usuario lo dio por bueno. |
+| `test:a11y:local` | 10/10 |

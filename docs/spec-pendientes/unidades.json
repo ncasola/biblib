@@ -922,7 +922,14 @@
         "OPS-01",
         "OPS-02"
       ],
-      "status": "in-progress"
+      "status": "implemented",
+      "evidence": "O16 · matriz 35 hallazgos (34 implementado-local, 1 pendiente UI-03), entrega con cierre de código alcanzado y despliegue pendiente (docs/validacion/2026-10-26/O16/); O16-FIX merge 5a5adfe; O16-XB merge 78326f8; G16 docs/validacion/2026-10-26/O16/g16-coordinador.md",
+      "pending": [
+        "Lector de pantalla, Safari real (AES-KW) y dispositivos reales.",
+        "Intermitencia offline:318 en Chromium (1/7).",
+        "Run completo final de los tres navegadores interrumpido por memoria; aceptado por el usuario.",
+        "Todo lo remoto: preproducción, producción, Google OAuth real, cabeceras del alojamiento, alertas reales."
+      ]
     },
     {
       "id": "U-OPS-01",
