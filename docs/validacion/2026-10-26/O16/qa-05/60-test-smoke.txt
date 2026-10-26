@@ -1,0 +1,39 @@
+
+> biblib@1.0.0 test:smoke C:\Users\ncaso\orca\workspaces\biblib\u-inf-03
+> node scripts/smoke-app.mjs
+
+Construyendo BibLib en carpeta temporal sin archivos .env…
+✓ Proxy protege inicio/detalle; callback rechaza destinos externos y conserva error OAuth
+✓ Login móvil y tema oscuro, sin errores de hidratación
+✓ Inicio privado con datos de Postgres aislado
+✓ Conflicto concurrente conserva borrador y DB, permite recarga explícita
+✓ Alta, edición completa, autores con coma, verificación ISBN, ubicación y estado
+✓ ISBN-10 con guiones detecta libro existente y conserva enlace
+✓ Exportación descarga JSON versionado con datos actuales y verificación ISBN
+✓ Importación: revisión sin escrituras, confirmación y fusión aditiva
+✓ Eliminación confirmada sin afectar otros libros
+✓ Recuperación de portadas omite manuales sin ISBN y no realiza HTTP externo
+✓ Exportación de 2001 libros descarga dos partes importables, sin pérdidas ni duplicados
+✓ Perfil guarda nombre en Auth y muestra confirmación real
+{
+  "ok": true,
+  "checks": [
+    "Proxy protege inicio/detalle; callback rechaza destinos externos y conserva error OAuth",
+    "Login móvil y tema oscuro, sin errores de hidratación",
+    "Inicio privado con datos de Postgres aislado",
+    "Conflicto concurrente conserva borrador y DB, permite recarga explícita",
+    "Alta, edición completa, autores con coma, verificación ISBN, ubicación y estado",
+    "ISBN-10 con guiones detecta libro existente y conserva enlace",
+    "Exportación descarga JSON versionado con datos actuales y verificación ISBN",
+    "Importación: revisión sin escrituras, confirmación y fusión aditiva",
+    "Eliminación confirmada sin afectar otros libros",
+    "Recuperación de portadas omite manuales sin ISBN y no realiza HTTP externo",
+    "Exportación de 2001 libros descarga dos partes importables, sin pérdidas ni duplicados",
+    "Perfil guarda nombre en Auth y muestra confirmación real"
+  ],
+  "artifacts": "C:\\Users\\ncaso\\AppData\\Local\\Temp\\biblib-smoke-results-1793003759289"
+}
+
+real	1m7.180s
+user	0m0.015s
+sys	0m0.015s

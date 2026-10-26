@@ -9,7 +9,7 @@
 
 Se siguieron solo `README.md`, `docs/operacion.md`, `docs/recuperacion.md` y `docs/retencion.md`, como lo haría una persona nueva. Los documentos que fallaban o estaban desfasados se corrigieron con cambios mínimos (§5).
 
-Ninguna operación tocó nada remoto: ni preproducción, ni producción, ni Google, ni proveedores con clave. El perfil `test` no se usó. HolaERP no estaba en marcha durante el trabajo (0 contenedores `*holaerp*`) y no se arrancó ni se tocó.
+Ninguna operación tocó nada remoto: ni preproducción, ni producción, ni Google, ni proveedores con clave. El perfil `test` no se usó. HolaERP estuvo parado durante todo el trabajo: sus 11 contenedores llevaban detenidos más de 11 horas y no se arrancaron ni se tocaron ([62-recursos-restantes.txt](62-recursos-restantes.txt)).
 
 ## 1. Instalación limpia
 
@@ -145,7 +145,26 @@ El análisis completo está en [rendimiento/informe.md](rendimiento/informe.md).
 
 ## 6. Enlaces y validación de la rama
 
-PENDIENTE_VALIDACION
+**Enlaces.** `pnpm docs:links` es el nuevo `scripts/check-doc-links.mjs`, con su prueba `tests/scripts/doc-links.test.mjs` (3/3). Recorre `docs/**/*.md`, `README.md` y `agents.md`.
+- **Primera pasada:** 101 documentos, 539 enlaces relativos y 9 rotos (§5).
+- **Tras corregirlos y añadir la evidencia de O16:** 107 documentos, 795 enlaces y **0 rotos** ([60-docs-links.txt](60-docs-links.txt)).
+- **Alcance:** no comprueba anclajes; los de esta entrega se revisaron a mano.
+
+**Validación de la rama.** Se ejecutó sobre el código integrado: `u-qa-05` con `feature/spec-pendientes` y U-EXP-07.
+
+| Comando | Resultado |
+| --- | --- |
+| `pnpm lint` | Correcto ([60-lint.txt](60-lint.txt)). |
+| `pnpm typecheck` | Correcto ([60-typecheck.txt](60-typecheck.txt)). |
+| `pnpm test` | **521/521** ([60-test.txt](60-test.txt)). |
+| `pnpm test:scripts` | **281/281 en serie** (`node --test --test-concurrency=1`, [60-test-scripts-serie.txt](60-test-scripts-serie.txt)). Hubo dos intentos previos en paralelo con 280/281: <ul><li>[intento 1](60-test-scripts-intento-1.txt): la prueba `[stack]` de promoción vio cambiar el commit del checkout a mitad del plan porque se commiteó durante la ejecución. Es un error de procedimiento de este worker.</li><li>[intento 2](60-test-scripts-intento-2.txt): `deadlock detected` en la prueba `[stack]` de drift, con otras pruebas `[stack]` usando `scratch` a la vez.</li></ul> Es la misma interferencia entre archivos `[stack]` paralelos que anotó O14-D; en serie pasa entera. |
+| `pnpm test:db` | Correcto ([60-test-db.txt](60-test-db.txt)). |
+| `pnpm build` | Correcto ([60-build.txt](60-build.txt)). |
+| `pnpm test:smoke` | Correcto ([60-test-smoke.txt](60-test-smoke.txt)). |
+| `pnpm docs:links` | 0 rotos. |
+| `pnpm db:local:down --profile scratch` | Correcto. Solo quedan la red y los dos volúmenes del perfil ([61-down.txt](61-down.txt), [62-recursos-restantes.txt](62-recursos-restantes.txt)). |
+
+Lo ejecuta el coordinador en el perfil `test` y queda fuera de esta tabla: `test:integration:local`, `test:e2e:local` (Chromium, Firefox, WebKit) y `test:a11y:local`.
 
 ## 7. No verificado o fuera de alcance
 
