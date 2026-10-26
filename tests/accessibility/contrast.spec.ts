@@ -1,7 +1,7 @@
 import { mkdirSync, writeFileSync } from "node:fs"
 import path from "node:path"
 import AxeBuilder from "@axe-core/playwright"
-import { expect, test } from "../e2e/lib/fixtures"
+import { evidenceDir, expect, test } from "../e2e/lib/fixtures"
 
 test("contraste: colores compuestos, estados, componentes y foco en ambos temas", async ({ page, stack }, info) => {
   await page.goto(`/book/${stack.fixtureBookId("a", "isla")}`)
@@ -111,7 +111,7 @@ test("contraste: colores compuestos, estados, componentes y foco en ambos temas"
     results.push({ theme, measurements: rows })
     expect(rows.filter(({ ratio, minimum }) => ratio < minimum).map(({ name, ratio, minimum }) => ({ name, ratio, minimum }))).toEqual([])
   }
-  const out = path.resolve("docs/validacion/2026-10-24/O11/exp-03")
+  const out = evidenceDir("2026-10-24/O11/exp-03")
   mkdirSync(out, { recursive: true })
   writeFileSync(path.join(out, `${info.project.name}-contraste.json`), `${JSON.stringify(results, null, 2)}\n`)
 })

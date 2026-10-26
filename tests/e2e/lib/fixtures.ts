@@ -80,6 +80,15 @@ export function stateFile(testInfo: TestInfo, account: Account): string {
 }
 
 /**
+ * Carpeta de evidencia de una unidad (`relative`, p. ej. `2026-10-26/O14/pro-04`). Por defecto vive en
+ * .biblib/e2e/evidencia (ignorada por Git), para que un run no reescriba la evidencia ya publicada de
+ * otras olas. Solo con `BIBLIB_E2E_EVIDENCE_DIR=docs/validacion` (u otra raíz) se publica allí.
+ */
+export function evidenceDir(relative: string): string {
+  return path.resolve(process.env.BIBLIB_E2E_EVIDENCE_DIR ?? path.join(e2eDir, "evidencia"), relative)
+}
+
+/**
  * Captura de evidencia en .biblib/e2e/capturas/<navegador>-<nombre>.png. Solo se usa en pantallas con
  * datos ficticios (censo A/B o fichas marcadas) y nunca con una contraseña escrita.
  */

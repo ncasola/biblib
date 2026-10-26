@@ -2,7 +2,7 @@ import { mkdirSync, writeFileSync } from "node:fs"
 import path from "node:path"
 import AxeBuilder from "@axe-core/playwright"
 import type { Page } from "@playwright/test"
-import { capture, expect, test } from "../lib/fixtures"
+import { capture, evidenceDir, expect, test } from "../lib/fixtures"
 
 async function noOverflow(page: Page) {
   const metrics = await page.evaluate(() => ({
@@ -88,7 +88,7 @@ test("préstamos: alias rechazado conserva el borrador y no ofrece campos de con
 })
 
 test("préstamos: contraste, diálogos y reflujo en claro y oscuro", async ({ page, data }, info) => {
-  const directory = path.resolve("docs/validacion/2026-10-26/O14/pro-04")
+  const directory = evidenceDir("2026-10-26/O14/pro-04")
   mkdirSync(directory, { recursive: true })
   const shelf = await data.shelf("a", `Visual ${data.slug("loans-axe")}`)
   const [bookId] = await data.books("a", shelf, [{ title: "Préstamo de prueba visual", status: "unread" }])
