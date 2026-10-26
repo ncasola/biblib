@@ -4,7 +4,7 @@ import os from "node:os"
 import path from "node:path"
 import test from "node:test"
 import { EXIT } from "../../scripts/lib/exit-codes.mjs"
-import { childEnvironment, parseArgs, playwrightArgs, readOutbound, summarizeReport } from "../e2e/run.mjs"
+import { childEnvironment, E2E_DIR, evidenceEnvironment, parseArgs, playwrightArgs, readOutbound, summarizeReport } from "../e2e/run.mjs"
 import { forgetSnapshot, readE2EManifest, recordSnapshot } from "../e2e/lib/e2e-manifest.mjs"
 import { externalHost } from "../e2e/lib/server-network-guard.mjs"
 
@@ -43,6 +43,20 @@ test("e2e: el entorno hijo no hereda Supabase, Postgres, BIBLIB ni NODE_OPTIONS"
   } finally {
     for (const key of Object.keys(process.env)) if (!(key in saved)) delete process.env[key]
     Object.assign(process.env, saved)
+  }
+})
+
+test("e2e: la evidencia solo se publica en docs/validacion si se pide", () => {
+  assert.deepEqual(evidenceEnvironment({}), {})
+  assert.deepEqual(evidenceEnvironment({ BIBLIB_E2E_EVIDENCE_DIR: "  " }), {})
+  const root = path.dirname(path.dirname(E2E_DIR))
+  assert.deepEqual(evidenceEnvironment({ BIBLIB_E2E_EVIDENCE_DIR: "docs/validacion" }), { BIBLIB_E2E_EVIDENCE_DIR: path.join(root, "docs", "validacion") })
+  // childEnvironment no hereda BIBLIB_*: la variable solo llega a Playwright por evidenceEnvironment.
+  const saved = process.env.BIBLIB_E2E_EVIDENCE_DIR
+  process.env.BIBLIB_E2E_EVIDENCE_DIR = "docs/validacion"
+  try { assert.equal(childEnvironment({}).BIBLIB_E2E_EVIDENCE_DIR, undefined) } finally {
+    if (saved === undefined) delete process.env.BIBLIB_E2E_EVIDENCE_DIR
+    else process.env.BIBLIB_E2E_EVIDENCE_DIR = saved
   }
 })
 

@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto"
 import { readFile } from "node:fs/promises"
 import type { Page } from "@playwright/test"
 import { forgetSnapshot, recordSnapshot, restoreLibrary, snapshotLibrary } from "../lib/e2e-manifest.mjs"
-import { actionRequest, alerts, capture, type Data, expect, type Stack, test } from "../lib/fixtures"
+import { actionRequest, alerts, capture, type Data, expect, type Stack, test, v2Residue } from "../lib/fixtures"
 
 // Importación (U-DAT-01) en Ajustes como A: exportación, revisión sin escrituras, colección cambiada en
 // otra pestaña → conflicto sin borrar y con el archivo conservado, fusión, confirmación repetida tras
@@ -47,6 +47,7 @@ test.describe.configure({ mode: "serial" })
 
 test("la exportación descarga un JSON v1 con la colección actual de A y la verificación del ISBN", async ({ page, stack, data }) => {
   const slug = data.slug("exportar")
+  expect(await v2Residue(stack, "a"), "Precondición: la biblioteca de A no tiene datos que exijan v2").toEqual({})
   const [verified] = await data.books("a", await data.defaultShelf("a"), [{ title: `Verificado ${slug}`, isbn: "9780131103627", verified: true }])
   await openSettings(page)
   const download = page.waitForEvent("download")

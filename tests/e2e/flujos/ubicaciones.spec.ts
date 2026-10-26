@@ -30,12 +30,17 @@ const createForm = (page: Page) => page.getByRole("form", { name: "Nueva ubicaci
 const tree = (page: Page) => page.getByRole("navigation", { name: "Árbol de ubicaciones" })
 
 async function createLocation(page: Page, name: string, kind: string) {
+  const selected = () => new URL(page.url()).searchParams.get("ubicacion")
+  const before = selected()
   const form = createForm(page)
   await form.getByLabel("Nombre").fill(name)
   await form.getByLabel("Tipo").selectOption({ label: kind })
   await form.getByRole("button", { name: "Crear ubicación" }).click()
   await expect(page.getByRole("status")).toHaveText(`Ubicación «${name}» creada.`)
   await expect(page.getByRole("heading", { level: 2, name })).toBeVisible()
+  // La nueva queda elegida con una navegación cliente (?ubicacion=<id>). Se espera a que termine: si la prueba
+  // navega antes, Firefox cancela la carga RSC y la app recae en una navegación completa (G16, NS_BINDING_ABORTED).
+  await expect.poll(() => { const current = selected(); return current !== null && current !== before }).toBe(true)
 }
 
 test("ubicaciones: mueble y balda, ejemplar situado desde la ficha, contenido filtrado y borrado con elección explícita", async ({ page, stack, data }, testInfo) => {

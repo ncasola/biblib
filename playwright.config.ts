@@ -11,7 +11,10 @@ const browsers = {
   // PR: el Chrome instalado en el sistema. Cierre de ola: Firefox y WebKit descargados por Playwright.
   chromium: { ...devices["Desktop Chrome"], channel: "chrome" },
   firefox: { ...devices["Desktop Firefox"] },
-  webkit: { ...devices["Desktop Safari"] },
+  // WebKit no aplica route() a las peticiones de una página controlada por un service worker (G16: el
+  // guard de red, los cortes simulados y el logout simulado dejaban de aplicarse). Sin worker salvo en
+  // las pruebas offline, que lo piden con `serviceWorkers: "allow"`. Es la recomendación de Playwright.
+  webkit: { ...devices["Desktop Safari"], serviceWorkers: "block" },
 } as const
 
 /**

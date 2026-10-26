@@ -13,10 +13,15 @@ const PHRASE_B = "faro del norte"
 const BOOKS_A = ["El cuaderno de la bruma", "La isla de papel", "El reloj de las mareas", "Mapas de una ciudad inventada"]
 const ONLY_B = "Versos para un faro"
 const STATIC_PATHS = new Set(["/offline", "/logo-mark.png", "/logo.png", "/logo-transparent.png", "/logo-dark.png", "/manifest.webmanifest", "/default-book-cover.webp"])
-/** Peticiones que fallan a propósito sin red (refresco de sesión, recursos de la página) y su registro en consola. */
-const OFFLINE_CONSOLE = /net::ERR_INTERNET_DISCONNECTED|Failed to fetch|AuthRetryableFetchError|ERR_NAME_NOT_RESOLVED/
+/**
+ * Peticiones que fallan a propósito sin red (refresco de sesión, recursos de la página) y su registro en consola.
+ * WebKit registra como «internal error» la carga que corta la red, como Chromium con ERR_INTERNET_DISCONNECTED:
+ * /offline, la renovación de GoTrue o la acción de /settings en curso (G16). El guard ya bloquea otros orígenes.
+ */
+const OFFLINE_CONSOLE = /net::ERR_INTERNET_DISCONNECTED|Failed to fetch|AuthRetryableFetchError|ERR_NAME_NOT_RESOLVED|^Failed to load resource: WebKit encountered an internal error \[\/[^\]]*\]$/
 
-test.use({ account: "a" })
+// WebKit bloquea los workers en todo su proyecto (playwright.config.ts); aquí son el objeto de la prueba.
+test.use({ account: "a", serviceWorkers: "allow" })
 
 function allowOffline(guard: Guard) {
   guard.allowConsole(OFFLINE_CONSOLE)
@@ -83,6 +88,30 @@ async function useSessionOf(context: BrowserContext, testInfo: TestInfo, account
   await context.addCookies(state.cookies)
 }
 
+/**
+ * Firefox no puede recorrer estas pruebas: con `context.setOffline` de Playwright (el modo «Trabajar sin conexión»)
+ * ninguna navegación llega al worker, ni siquiera la de /offline, y `page.goto` responde NS_ERROR_OFFLINE (G16,
+ * comprobado con `location.assign` y con la red cortada por `route`: las peticiones del worker no pasan por ella).
+ * Abrir /offline con red no sirve: la validación con conexión renovaría el TTL que se está probando.
+ */
+const FIREFOX_OFFLINE = "Firefox con Playwright no deja que el worker atienda navegaciones sin red (NS_ERROR_OFFLINE); cubierto en Chromium y WebKit. Ver docs/validacion/2026-10-26/O16/xb/informe.md."
+
+/**
+ * Si el motor detecta una clave AES-KW equivocada (RFC 3394). El WebKit 27.2 de Playwright en Windows no lo hace:
+ * desenvuelve con cualquier PIN y la copia se ve «dañada» al descifrar (G16). Chrome, Firefox y Safari sí.
+ */
+async function aesKwRejectsWrongKey(page: Page, testInfo: TestInfo): Promise<boolean> {
+  const rejects = await page.evaluate(async () => {
+    const subtle = crypto.subtle
+    const kek = () => subtle.generateKey({ name: "AES-KW", length: 256 }, false, ["wrapKey", "unwrapKey"])
+    const data = await subtle.generateKey({ name: "AES-GCM", length: 256 }, true, ["encrypt"])
+    const wrapped = await subtle.wrapKey("raw", data, await kek(), "AES-KW")
+    try { await subtle.unwrapKey("raw", wrapped, await kek(), "AES-KW", "AES-GCM", false, ["encrypt"]); return false } catch { return true }
+  })
+  if (!rejects) testInfo.annotations.push({ type: "omisión parcial", description: "Este motor no comprueba la integridad de AES-KW: no se prueba el aviso de PIN o frase incorrectos (sí en Chromium)." })
+  return rejects
+}
+
 function noSaveControls(page: Page) {
   return page.getByRole("main").getByRole("button", { name: /guardar|editar|eliminar|añadir|mover|cambiar|prestar|devolver/i })
 }
@@ -116,7 +145,8 @@ test("offline: sin consentimiento solo hay shell estático, sin base IndexedDB n
   for (const trace of [stack.email("a"), stack.users.a, "El cuaderno de la bruma", stack.displayName("a")]) expect(html.includes(trace)).toBe(false)
 })
 
-test("offline: activar con PIN y consultar sin conexión una copia de solo lectura con su antigüedad", async ({ page, context, guard }, testInfo) => {
+test("offline: activar con PIN y consultar sin conexión una copia de solo lectura con su antigüedad", async ({ page, context, guard, browserName }, testInfo) => {
+  test.skip(browserName === "firefox", FIREFOX_OFFLINE)
   test.setTimeout(120_000)
   allowOffline(guard)
   await page.emulateMedia({ colorScheme: "light" })
@@ -148,8 +178,10 @@ test("offline: activar con PIN y consultar sin conexión una copia de solo lectu
   await expect(page.getByRole("status").filter({ hasText: "Sin conexión" })).toBeVisible()
   await capture(page, testInfo, "offline-bloqueada-oscuro")
 
-  await unlock(page, "000000")
-  await expect(alerts(page)).toContainText("Te quedan 9 intentos")
+  if (await aesKwRejectsWrongKey(page, testInfo)) {
+    await unlock(page, "000000")
+    await expect(alerts(page)).toContainText("Te quedan 9 intentos")
+  }
   await unlock(page, PIN_A)
   const list = page.getByRole("list", { name: "Libros de la copia" })
   for (const title of BOOKS_A) await expect(list.getByRole("heading", { name: title })).toBeVisible()
@@ -178,7 +210,8 @@ test("offline: activar con PIN y consultar sin conexión una copia de solo lectu
   expect(await offlineDatabases(page)).toHaveLength(1)
 })
 
-test("offline: A y B en el mismo navegador no ven la copia del otro", async ({ page, context, guard }, testInfo) => {
+test("offline: A y B en el mismo navegador no ven la copia del otro", async ({ page, context, guard, browserName }, testInfo) => {
+  test.skip(browserName === "firefox", FIREFOX_OFFLINE)
   test.setTimeout(150_000)
   allowOffline(guard)
   await page.goto("/settings")
@@ -200,8 +233,11 @@ test("offline: A y B en el mismo navegador no ven la copia del otro", async ({ p
   expect(await offlineDatabases(page)).toHaveLength(2)
   await context.setOffline(true)
   await page.goto("/offline")
-  await unlock(page, PIN_A)
-  await expect(alerts(page)).toContainText("no son correctos")
+  const wrongSecretRejected = await aesKwRejectsWrongKey(page, testInfo)
+  if (wrongSecretRejected) {
+    await unlock(page, PIN_A)
+    await expect(alerts(page)).toContainText("no son correctos")
+  }
   await unlock(page, PHRASE_B)
   await expect(page.getByRole("heading", { name: ONLY_B })).toBeVisible()
   await expect(page.getByText("El cuaderno de la bruma")).toHaveCount(0)
@@ -213,32 +249,45 @@ test("offline: A y B en el mismo navegador no ven la copia del otro", async ({ p
   await expect(copySection(page)).toHaveAttribute("data-offline-copy", "locked")
   await context.setOffline(true)
   await page.goto("/offline")
-  await unlock(page, PHRASE_B)
-  await expect(alerts(page)).toContainText("no son correctos")
+  if (wrongSecretRejected) {
+    await unlock(page, PHRASE_B)
+    await expect(alerts(page)).toContainText("no son correctos")
+  }
   await unlock(page, PIN_A)
   await expect(page.getByRole("heading", { name: "El cuaderno de la bruma" })).toBeVisible()
   await expect(page.getByText(ONLY_B)).toHaveCount(0)
 })
 
-test("offline: el cierre de sesión con conexión borra la copia y su clave del dispositivo", async ({ page, stack, guard }) => {
-  test.setTimeout(120_000)
-  guard.allowConsole(SIGN_OUT_RSC_404)
-  // GoTrue responde sin revocar: las sesiones guardadas de A siguen sirviendo a los demás recorridos.
-  await page.route(`${stack.apiOrigin}/auth/v1/logout**`, (route) => route.fulfill({ status: 204, body: "" }))
-  await page.goto("/settings")
-  await workerReady(page)
-  await enableCopy(page, PIN_A)
-  expect(await offlineDatabases(page)).toHaveLength(1)
-  expect(await page.evaluate(() => localStorage.getItem("biblib-offline-cuenta"))).toMatch(/^[0-9a-f]{64}$/)
+test.describe(() => {
+  // WebKit no aplica page.route a las peticiones de una página controlada por el worker (la de GoTrue pasa
+  // por su evento fetch aunque no la responda): el logout real con scope=global revocaba las sesiones
+  // guardadas de A para el resto del proyecto (G16). La purga al cerrar sesión la hace la página, no el
+  // worker, así que en WebKit se comprueba sin worker y en Chromium/Firefox con él.
+  test.use({ serviceWorkers: async ({ browserName }, provide) => provide(browserName === "webkit" ? "block" : "allow") })
 
-  await signOut(page, stack, "a")
-  await expect.poll(() => offlineDatabases(page)).toEqual([])
-  expect(await page.evaluate(() => localStorage.getItem("biblib-offline-cuenta"))).toBeNull()
-  await page.goto("/offline")
-  await expect(page.getByText(/No hay ninguna copia de lectura disponible/)).toBeVisible()
+  test("offline: el cierre de sesión con conexión borra la copia y su clave del dispositivo", async ({ page, stack, guard, browserName }) => {
+    test.setTimeout(120_000)
+    guard.allowConsole(SIGN_OUT_RSC_404)
+    // GoTrue responde sin revocar: las sesiones guardadas de A siguen sirviendo a los demás recorridos.
+    let logouts = 0
+    await page.route(`${stack.apiOrigin}/auth/v1/logout**`, (route) => { logouts++; return route.fulfill({ status: 204, body: "" }) })
+    await page.goto("/settings")
+    if (browserName !== "webkit") await workerReady(page)
+    await enableCopy(page, PIN_A)
+    expect(await offlineDatabases(page)).toHaveLength(1)
+    expect(await page.evaluate(() => localStorage.getItem("biblib-offline-cuenta"))).toMatch(/^[0-9a-f]{64}$/)
+
+    await signOut(page, stack, "a")
+    expect(logouts, "El cierre de sesión se simula: una revocación real dejaría sin sesión al resto del proyecto").toBe(1)
+    await expect.poll(() => offlineDatabases(page)).toEqual([])
+    expect(await page.evaluate(() => localStorage.getItem("biblib-offline-cuenta"))).toBeNull()
+    await page.goto("/offline")
+    await expect(page.getByText(/No hay ninguna copia de lectura disponible/)).toBeVisible()
+  })
 })
 
-test("offline: un TTL vencido bloquea la copia sin borrarla y la validación con conexión la reabre", async ({ page, context, guard }) => {
+test("offline: un TTL vencido bloquea la copia sin borrarla y la validación con conexión la reabre", async ({ page, context, guard, browserName }) => {
+  test.skip(browserName === "firefox", FIREFOX_OFFLINE)
   test.setTimeout(120_000)
   allowOffline(guard)
   await page.goto("/settings")
@@ -285,7 +334,12 @@ test("offline: una versión nueva del worker borra las cachés anteriores y cons
   // La página vuelve a registrar la versión publicada: se instala y borra la caché de la versión de prueba.
   await page.reload()
   // La instalación descarga /offline y sus estáticos antes de activarse: se espera al worker activo de esa versión.
-  await expect.poll(() => page.evaluate(async () => (await navigator.serviceWorker.getRegistration())?.active?.scriptURL ?? ""), { timeout: 30_000 }).toContain(`v=${current.version}`)
+  // Si no llega a activarse, el mensaje muestra también el worker en instalación o en espera.
+  await expect.poll(() => page.evaluate(async () => {
+    const registration = await navigator.serviceWorker.getRegistration()
+    const describe = (worker?: ServiceWorker | null) => worker ? `${new URL(worker.scriptURL).search} (${worker.state})` : "ninguno"
+    return `activo ${describe(registration?.active)} · en espera ${describe(registration?.waiting)} · instalando ${describe(registration?.installing)}`
+  }), { timeout: 30_000 }).toContain(`activo ?v=${current.version} (`)
   await expect.poll(async () => Object.keys(await cachedEntries(page)), { timeout: 30_000 }).toEqual([current.cache])
   await expect.poll(async () => (await workerInfo(page)).version).toBe(current.version)
   expect(await offlineDatabases(page), "Actualizar el worker no toca la copia").toHaveLength(1)

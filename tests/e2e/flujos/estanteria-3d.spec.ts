@@ -86,7 +86,7 @@ test("estantería 3D: sacar un libro, abrir su ficha y volver con el foco en el 
   await expect(spine(page, titles[1])).toBeFocused()
 })
 
-test("estantería 3D con teclado: flechas, Intro, Tab a «Abrir ficha» y Escape devuelve el foco al lomo", async ({ page, data }) => {
+test("estantería 3D con teclado: flechas, Intro, Tab a «Abrir ficha» y Escape devuelve el foco al lomo", async ({ page, data, browserName }, testInfo) => {
   const slug = data.slug("teclado")
   const { shelfId, titles } = await seedShelf(data, slug, 6)
   await openScene(page, shelfId)
@@ -110,7 +110,15 @@ test("estantería 3D con teclado: flechas, Intro, Tab a «Abrir ficha» y Escape
   await expect(third).toHaveAttribute("aria-pressed", "true")
   await expect(panel(page).getByRole("heading", { level: 2 })).toHaveText(titles[2])
   await page.keyboard.press("Tab")
-  await expect(panel(page).getByRole("link", { name: "Abrir ficha" })).toBeFocused()
+  if (browserName === "webkit") {
+    // Safari no lleva Tab a los enlaces (preferencia «tabsToLinks», desactivada por defecto) y el WebKit de Playwright
+    // en Windows tampoco con Opción+Tab (G16, probado con Tab, Alt+Tab, Meta+Tab y Control+Alt+Tab). Se comprueba que
+    // Tab entra en el panel por su primer control que no es un enlace, justo detrás de «Abrir ficha».
+    testInfo.annotations.push({ type: "omisión parcial", description: "WebKit no enfoca enlaces con Tab: el foco en «Abrir ficha» se prueba en Chromium y Firefox." })
+    await expect(panel(page).getByRole("button", { name: "Devolver a la balda" })).toBeFocused()
+  } else {
+    await expect(panel(page).getByRole("link", { name: "Abrir ficha" })).toBeFocused()
+  }
 
   await page.keyboard.press("Escape")
   await expect(third).toHaveAttribute("aria-pressed", "false")

@@ -65,6 +65,15 @@ export function childEnvironment(extra) {
   return { ...base, BIBLIB_TARGET: "local", BIBLIB_PROFILE: PROFILE, NODE_ENV: "test", ...extra }
 }
 
+/**
+ * Raíz de la evidencia que escriben las pruebas. Sin pedirlo, las pruebas usan .biblib/e2e/evidencia y un
+ * run no toca docs/validacion; con BIBLIB_E2E_EVIDENCE_DIR=docs/validacion se publica allí a propósito.
+ */
+export function evidenceEnvironment(env = process.env) {
+  const root = env.BIBLIB_E2E_EVIDENCE_DIR?.trim()
+  return root ? { BIBLIB_E2E_EVIDENCE_DIR: path.resolve(REPO_ROOT, root) } : {}
+}
+
 /** Lo anotado por el guard del servidor: si vigiló algún proceso y qué hosts externos bloqueó (sin la URL completa). */
 export function readOutbound(file) {
   const entries = existsSync(file) ? readFileSync(file, "utf8").split("\n").filter(Boolean).map((line) => JSON.parse(line)) : []
@@ -164,7 +173,7 @@ export async function runE2E(argv = process.argv.slice(2), out = process.stdout,
     const results = path.join(E2E_DIR, "resultados.json")
     rmSync(results, { force: true })
     const code = await run(process.execPath, playwrightArgs(options), {
-      env: { ...env, BIBLIB_E2E_RUN_ID: runId, BIBLIB_E2E_BASE_URL: ctx.appUrl, BIBLIB_E2E_DIR: E2E_DIR },
+      env: { ...env, ...evidenceEnvironment(), BIBLIB_E2E_RUN_ID: runId, BIBLIB_E2E_BASE_URL: ctx.appUrl, BIBLIB_E2E_DIR: E2E_DIR },
       onOutput: (stream) => pipeRedacted(stream, out, redact),
     })
     if (interrupted) fail(EXIT.INTERRUPTED, "pruebas", "E2E interrumpido; el manifiesto de restos se conserva para el siguiente intento.")

@@ -2,11 +2,11 @@ import { mkdirSync, writeFileSync } from "node:fs"
 import path from "node:path"
 import AxeBuilder from "@axe-core/playwright"
 import type { Page, TestInfo } from "@playwright/test"
-import { alerts, expect, test } from "../e2e/lib/fixtures"
+import { alerts, evidenceDir, expect, test } from "../e2e/lib/fixtures"
 
 import { tabTo } from "./keyboard-helpers"
 
-const evidence = path.resolve("docs/validacion/2026-10-24/O11/exp-03")
+const evidence = evidenceDir("2026-10-24/O11/exp-03")
 function save(info: TestInfo, name: string, result: unknown) {
   mkdirSync(evidence, { recursive: true })
   writeFileSync(path.join(evidence, `${info.project.name}-${name}.json`), `${JSON.stringify(result, null, 2)}\n`)

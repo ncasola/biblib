@@ -1,6 +1,6 @@
 import { mkdir } from "node:fs/promises"
 import path from "node:path"
-import { expect, test } from "../lib/fixtures"
+import { evidenceDir, expect, test } from "../lib/fixtures"
 
 test.describe("impresión", () => {
   test("colección vacía: recuento cero y acción deshabilitada", async ({ page, data }) => {
@@ -39,7 +39,7 @@ test.describe("impresión", () => {
     expect(await page.locator("thead").evaluate((node) => getComputedStyle(node).display)).toBe("table-header-group")
     expect(await page.locator("tbody tr").first().evaluate((node) => getComputedStyle(node).breakInside)).toBe("avoid")
     if (testInfo.project.name.startsWith("chromium")) {
-      const evidence = path.join(process.cwd(), "docs/validacion/2026-10-26/O15/exp-07")
+      const evidence = evidenceDir("2026-10-26/O15/exp-07")
       await mkdir(evidence, { recursive: true })
       await page.evaluate(() => document.fonts.ready)
       for (const format of ["A4", "Letter"] as const) await page.pdf({ path: path.join(evidence, `catalogo-${format}.pdf`), format, printBackground: false, preferCSSPageSize: false })

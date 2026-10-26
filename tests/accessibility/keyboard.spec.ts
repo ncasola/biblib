@@ -1,7 +1,7 @@
 import { mkdirSync, writeFileSync } from "node:fs"
 import path from "node:path"
 import type { Page, TestInfo } from "@playwright/test"
-import { accountMenu, expect, loginWithForm, SIGN_OUT_RSC_404, test, titleField } from "../e2e/lib/fixtures"
+import { accountMenu, evidenceDir, expect, loginWithForm, SIGN_OUT_RSC_404, test, titleField } from "../e2e/lib/fixtures"
 import { tabTo } from "./keyboard-helpers"
 
 // Cada cierre abre su propia sesión: signOut global revoca las de los otros motores.
@@ -12,7 +12,7 @@ async function ready(page: Page) {
   await page.waitForLoadState("networkidle")
 }
 function save(info: TestInfo, name: string, result: unknown) {
-  const evidence = path.resolve("docs/validacion/2026-10-24/O11/exp-03")
+  const evidence = evidenceDir("2026-10-24/O11/exp-03")
   mkdirSync(evidence, { recursive: true })
   writeFileSync(path.join(evidence, `${info.project.name}-${name}.json`), JSON.stringify(result, null, 2) + "\n")
 }

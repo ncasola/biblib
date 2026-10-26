@@ -2,7 +2,7 @@ import { mkdirSync, writeFileSync } from "node:fs"
 import path from "node:path"
 import AxeBuilder from "@axe-core/playwright"
 import type { Page } from "@playwright/test"
-import { capture, expect, test } from "../lib/fixtures"
+import { capture, evidenceDir, expect, test } from "../lib/fixtures"
 
 async function noOverflow(page: Page) {
   const metrics = await page.evaluate(() => ({
@@ -13,8 +13,12 @@ async function noOverflow(page: Page) {
 }
 
 test("préstamos: prestar, listado vencido, devolución, préstamo sucesivo y confirmaciones", async ({ page, stack, data }, testInfo) => {
-  const shelf = await data.shelf("a", `Préstamos ${data.slug("loan")}`)
-  const [bookId] = await data.books("a", shelf, [{ title: "Libro para prestar", authors: ["Autora"], status: "reading" }])
+  // Los títulos llevan el fragmento de la prueba: la limpieza de `data` borra por él y, con el ejemplar, sus
+  // préstamos (G16: sin él quedaban en A y la exportación de los proyectos siguientes pasaba a v2).
+  const slug = data.slug("loan")
+  const shelf = await data.shelf("a", `Préstamos ${slug}`)
+  const title = `Libro para prestar ${slug}`
+  const [bookId] = await data.books("a", shelf, [{ title, authors: ["Autora"], status: "reading" }])
   await page.goto(`/book/${bookId}`)
   const panel = page.getByRole("region", { name: "Préstamos", exact: true })
   const form = panel.getByRole("form", { name: "Nuevo préstamo" })
@@ -46,7 +50,7 @@ test("préstamos: prestar, listado vencido, devolución, préstamo sucesivo y co
   await panel.getByRole("link", { name: "Ver prestados" }).click()
   await expect(page).toHaveTitle("Prestados · BibLib")
   const list = page.getByRole("list", { name: "Ejemplares prestados" })
-  await expect(list.getByRole("link", { name: data.marked("Libro para prestar"), exact: true })).toBeVisible()
+  await expect(list.getByRole("link", { name: data.marked(title), exact: true })).toBeVisible()
   await page.getByLabel("Solo vencidos").check()
   await expect(list).toContainText("Vencido desde el 01/04/2026")
   await list.locator(`a[href="/book/${bookId}#loans-heading"]`).click()
@@ -72,8 +76,9 @@ test("préstamos: prestar, listado vencido, devolución, préstamo sucesivo y co
 })
 
 test("préstamos: alias rechazado conserva el borrador y no ofrece campos de contacto", async ({ page, data }) => {
-  const shelf = await data.shelf("a", `Alias ${data.slug("alias")}`)
-  const [bookId] = await data.books("a", shelf, [{ title: "Alias privado", status: "unread" }])
+  const slug = data.slug("alias")
+  const shelf = await data.shelf("a", `Alias ${slug}`)
+  const [bookId] = await data.books("a", shelf, [{ title: `Alias privado ${slug}`, status: "unread" }])
   await page.goto(`/book/${bookId}`)
   const panel = page.getByRole("region", { name: "Préstamos", exact: true })
   const form = panel.getByRole("form", { name: "Nuevo préstamo" })
@@ -88,10 +93,11 @@ test("préstamos: alias rechazado conserva el borrador y no ofrece campos de con
 })
 
 test("préstamos: contraste, diálogos y reflujo en claro y oscuro", async ({ page, data }, info) => {
-  const directory = path.resolve("docs/validacion/2026-10-26/O14/pro-04")
+  const directory = evidenceDir("2026-10-26/O14/pro-04")
   mkdirSync(directory, { recursive: true })
-  const shelf = await data.shelf("a", `Visual ${data.slug("loans-axe")}`)
-  const [bookId] = await data.books("a", shelf, [{ title: "Préstamo de prueba visual", status: "unread" }])
+  const slug = data.slug("loans-axe")
+  const shelf = await data.shelf("a", `Visual ${slug}`)
+  const [bookId] = await data.books("a", shelf, [{ title: `Préstamo de prueba visual ${slug}`, status: "unread" }])
   await page.goto(`/book/${bookId}`)
   const panel = page.getByRole("region", { name: "Préstamos", exact: true })
   const form = panel.getByRole("form", { name: "Nuevo préstamo" })
