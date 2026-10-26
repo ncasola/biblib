@@ -1,0 +1,9 @@
+
+> biblib@1.0.0 docs:links C:\Users\ncaso\orca\workspaces\biblib\u-inf-03
+> node scripts/check-doc-links.mjs
+
+107 documento(s), 795 enlace(s) relativo(s), 0 roto(s).
+
+real	0m0.648s
+user	0m0.000s
+sys	0m0.030s

@@ -1,0 +1,98 @@
+{
+  "base": "http://127.0.0.1:3149",
+  "checks": [
+    {
+      "name": "11 resultados, página 1",
+      "url": "/books?q=QA05-PAG",
+      "expected": {
+        "range": "Mostrando 1 a 10 de 11 libros",
+        "pages": "Página 1 de 2"
+      },
+      "actual": {
+        "range": "Mostrando 1 a 10 de 11 libros",
+        "pages": "Página 1 de 2"
+      },
+      "ok": true
+    },
+    {
+      "name": "11 resultados, página 2",
+      "url": "/books?q=QA05-PAG&page=2",
+      "expected": {
+        "range": "Mostrando 11 a 11 de 11 libros",
+        "pages": "Página 2 de 2"
+      },
+      "actual": {
+        "range": "Mostrando 11 a 11 de 11 libros",
+        "pages": "Página 2 de 2"
+      },
+      "ok": true
+    },
+    {
+      "name": "filtro desde la página 2 → 1 resultado",
+      "url": "/books?q=QA05-PAG%5D+07",
+      "expected": {
+        "range": "Mostrando 1 a 1 de 1 libros",
+        "pages": "Página 1 de 1"
+      },
+      "actual": {
+        "range": "Mostrando 1 a 1 de 1 libros",
+        "pages": "Página 1 de 1"
+      },
+      "ok": true
+    },
+    {
+      "name": "10 resultados",
+      "url": "/books?q=QA05-PAG",
+      "expected": {
+        "range": "Mostrando 1 a 10 de 10 libros",
+        "pages": "Página 1 de 1"
+      },
+      "actual": {
+        "range": "Mostrando 1 a 10 de 10 libros",
+        "pages": "Página 1 de 1"
+      },
+      "ok": true
+    },
+    {
+      "name": "página 2 que deja de existir con 10",
+      "url": "/books?q=QA05-PAG&page=2",
+      "expected": {
+        "range": "Mostrando 1 a 10 de 10 libros",
+        "pages": "Página 1 de 1"
+      },
+      "actual": {
+        "range": "Mostrando 1 a 10 de 10 libros",
+        "pages": "Página 1 de 1"
+      },
+      "ok": true
+    },
+    {
+      "name": "1 resultado",
+      "url": "/books?q=QA05-PAG",
+      "expected": {
+        "range": "Mostrando 1 a 1 de 1 libros",
+        "pages": "Página 1 de 1"
+      },
+      "actual": {
+        "range": "Mostrando 1 a 1 de 1 libros",
+        "pages": "Página 1 de 1"
+      },
+      "ok": true
+    },
+    {
+      "name": "0 resultados",
+      "url": "/books?q=QA05-PAG",
+      "expected": {
+        "range": "vacío",
+        "clear": true
+      },
+      "actual": {
+        "range": "vacío",
+        "pages": null,
+        "clear": true
+      },
+      "ok": true
+    }
+  ],
+  "failures": 0
+}

@@ -1,0 +1,10 @@
+
+> biblib@1.0.0 typecheck C:\Users\ncaso\orca\workspaces\biblib\u-inf-03
+> next typegen && tsc --noEmit
+
+Generating route types...
+✓ Types generated successfully
+
+real	0m14.916s
+user	0m0.000s
+sys	0m0.015s

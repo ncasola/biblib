@@ -1,0 +1,8 @@
+
+> biblib@1.0.0 lint C:\Users\ncaso\orca\workspaces\biblib\u-inf-03
+> eslint .
+
+
+real	0m20.286s
+user	0m0.030s
+sys	0m0.045s

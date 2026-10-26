@@ -1,6 +1,6 @@
 # Tablas de la medición (generadas por `pnpm perf:local`)
 
-Generadas el 2026-10-23T21:41:20.019Z. Cifras en milisegundos salvo indicación. «p50 / p95». Ver [informe](informe.md) para el análisis.
+Generadas el 2026-10-23T21:41:20.019Z. Cifras en milisegundos salvo indicación. «p50 / p95». Ver [informe](../informe.md) para el análisis.
 
 ## 10000 ejemplares
 

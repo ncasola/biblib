@@ -4,7 +4,7 @@ Fecha: 23-10-2026. Rama: `u-inf-03`; checkout hijo de `feature/spec-pendientes`.
 
 ## Entrega
 
-Implementados `doctor`, `status`, `up`, `down` y el contrato parcial de `bootstrap`, con scripts pnpm, argumentos cerrados, salida JSON segura, timeouts, bloqueo por perfil, registro de identidad/recursos y manejo de SIGINT. Se reutilizan perfiles, códigos de salida, carga/limpieza de entorno y `checkPublishedBindings` existentes; **no se modificó environment.mjs**. La sección «Ciclo de vida del stack» de [operación](operacion.md#ciclo-de-vida-del-stack) describe fases, códigos y recuperación.
+Implementados `doctor`, `status`, `up`, `down` y el contrato parcial de `bootstrap`, con scripts pnpm, argumentos cerrados, salida JSON segura, timeouts, bloqueo por perfil, registro de identidad/recursos y manejo de SIGINT. Se reutilizan perfiles, códigos de salida, carga/limpieza de entorno y `checkPublishedBindings` existentes; **no se modificó environment.mjs**. La sección «Ciclo de vida del stack» de [operación](../../../operacion.md#ciclo-de-vida-del-stack) describe fases, códigos y recuperación.
 
 La red exige etiquetas de raíz/perfil; los recursos de Supabase, que no admiten esas etiquetas personalizadas en el CLI, se acreditan mediante proyecto, red e IDs registrados (volúmenes: nombre/fecha de creación). No se adoptan automáticamente recursos de otro checkout. El coordinador liberó explícitamente los tres recursos del antiguo ensayo U-INF-01 antes de iniciar este ensayo; este worker no eliminó recursos ajenos.
 

@@ -177,6 +177,6 @@ No implementado. Depende de U-INF-07 (descriptor remoto, identidad comprobada, p
 ## Limitaciones conocidas
 
 - Volcados, cifrado y objetos se procesan en memoria (límite de 512 MiB por volcado): suficiente en local, no para producción.
-- Mailpit no se respalda. El recibo de este comando no satisface todavía el adaptador `--backup-receipt` de `db:reset:local` (exige alcance `mailpit`, rutas relativas a la raíz y el `discardedStateHash` de su plan): su integración queda para U-INF-06/07.
+- Mailpit solo se copia en RAW (carpeta `mailpit/`) y no se reinyecta al restaurar. Desde U-INF-07, `db:backup:local` escribe además `receipt.json` (alcance con `mailpit`, rutas relativas a la raíz y `discardedStateHash`), que es el recibo que aceptan `db:reset:local --backup-receipt` y la promoción; tras un ensayo se reemite con `db:backup:local --receipt-of <carpeta>` ([Promoción](operacion.md#promoción-a-preproducción-y-producción--u-inf-07)). Comprobado en O16 ([U-QA-05](validacion/2026-10-26/O16/qa-05/informe.md)).
 - La invalidación de tablas futuras (previews, leases, idempotencia) se detecta por nombre/columnas. Cada unidad que cree una tabla de ese tipo debe ampliar `rotateRestoredTokens` (`scripts/lib/backup-db.mjs`) y su prueba.
 - La aplicación debe estar detenida durante el respaldo; la marca de estado detecta escrituras, pero no las impide.

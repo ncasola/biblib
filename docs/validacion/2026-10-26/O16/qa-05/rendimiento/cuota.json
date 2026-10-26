@@ -1,0 +1,58 @@
+{
+  "distintos": {
+    "procesos": 2,
+    "consultasPorProceso": 6,
+    "peticionesAlProveedor": 12,
+    "intervaloOLms": 1000,
+    "separacionPlazasMinimaMs": 1000,
+    "plazasReservadas": 12,
+    "separacionMinimaMs": 983,
+    "separacionMediaMs": 1000,
+    "cumpleIntervalo": true,
+    "jitterObservadoMs": 17,
+    "duracionTotalMs": 11005,
+    "latenciaConsultaMs": {
+      "n": 12,
+      "min": 109,
+      "p50": 1996,
+      "p95": 2010,
+      "p99": 2010,
+      "max": 2011,
+      "mean": 1768
+    },
+    "estados": {
+      "found": 12
+    },
+    "conexiones": {
+      "muestras": 424,
+      "conexionesMaximas": 2,
+      "activasMaximas": 2,
+      "enTransaccionInactivaMaximas": 0,
+      "transaccionMasLargaMs": 8
+    }
+  },
+  "aciertosDeCache": {
+    "consultas": 6,
+    "peticionesAlProveedor": 0,
+    "latenciaMs": {
+      "n": 6,
+      "min": 2.1,
+      "p50": 3.3,
+      "p95": 33.4,
+      "p99": 41.3,
+      "max": 43.3,
+      "mean": 9.7
+    },
+    "estados": {
+      "found": 6
+    }
+  },
+  "consultaEnVueloCompartida": {
+    "procesos": 2,
+    "peticionesAlProveedor": 1,
+    "estados": [
+      "found",
+      "found"
+    ]
+  }
+}

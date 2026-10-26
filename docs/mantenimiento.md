@@ -28,7 +28,7 @@
 | `pnpm db:generate` | `drizzle-kit generate`: genera SQL de migración. Revisar el SQL antes de aplicarlo. | — |
 | `pnpm db:migrate` | `drizzle-kit migrate`: aplica migraciones al destino configurado. Revisar el destino antes de ejecutar. | Variables de conexión. |
 
-La spec de pendientes añadirá wrappers por entorno (`db:local:*`, `test:scripts`, `test:integration:local`, …) en las olas de infraestructura; cuando existan, esta tabla se actualiza en el mismo cambio. Hoy no existe `pnpm test:scripts`.
+La spec de pendientes añadirá wrappers por entorno (`db:local:*`, `test:scripts`, `test:integration:local`, …) en las olas de infraestructura; cuando existan, esta tabla se actualiza en el mismo cambio. `pnpm test:scripts` existe desde U-INF-01; el inventario vigente de comandos está en `package.json` y en la [guía de operación](operacion.md).
 
 ## Decisiones de `allowBuilds` de pnpm
 
@@ -45,7 +45,7 @@ Cualquier autorización nueva se justifica aquí con la utilidad concreta, quié
 ## Guía breve de contribución
 
 1. **Rama y commits.** Una rama por unidad (`u-<unidad>`), commits pequeños con Conventional Commits **en español**: `feat(auth): …`, `fix(import): …`, `docs(spec): …`, `chore(deps): …`, `refactor(limpieza): …`.
-2. **Validación mínima antes de entregar:** `pnpm lint`, `pnpm typecheck`, `pnpm test` y `pnpm build` (más `pnpm test:scripts` cuando exista). Nada se da por pasado sin ejecutarlo.
+2. **Validación mínima antes de entregar:** `pnpm lint`, `pnpm typecheck`, `pnpm test` y `pnpm build` (más `pnpm test:scripts`). Nada se da por pasado sin ejecutarlo.
 3. **Código.** Textos visibles en español, TypeScript sin `any`, `pnpm` como gestor, acciones de servidor para datos de dominio y RLS por usuario.
 4. **Seguridad.** Prohibido leer, imprimir o copiar `.env*`; prohibido tocar la base remota, contenedores o volúmenes ajenos. Los respaldos y credenciales nunca entran en Git.
 5. **Datos personales.** Antes de un commit, revisa el staging: `imports/`, fotos personales y `docs/validacion/**/privado/` están ignorados a propósito. Las fotos del usuario no se borran, mueven ni publican como parte de una limpieza técnica.

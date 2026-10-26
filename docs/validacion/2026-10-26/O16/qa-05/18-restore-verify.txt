@@ -1,0 +1,70 @@
+
+> biblib@1.0.0 db:restore:verify C:\Users\ncaso\orca\workspaces\biblib\u-inf-03
+> node scripts/db/restore-verify.mjs "--backup" ".biblib/backups/20261026T075637Z-scratch-07510c" "--profile" "scratch"
+
+[ok] backup.files: 10 archivo(s) del respaldo presentes con su sha256.
+[ok] restore.receipt: Restore b150d469-9f78-4fd1-a980-de8cb2fd26e1 de este respaldo completado (18 token(s) rotados, escritura antigua rechazada: sí).
+[ok] ledger.history: Ledger con 16 migración(es) idénticas al respaldo (head 0015_reading_and_loans).
+[ok] manifest.objects: Manifest U-INF-04: 860 comprobaciones de RLS, políticas, grants, FK, índices, columnas, función y trigger conformes.
+[ok] objects.facts: Hechos de catálogo (tablas, RLS, políticas, grants, constraints, índices, columnas, función, trigger) idénticos al origen.
+[ok] table.auth.identities: auth.identities: 3 fila(s) iguales al estado tras aplicar las supresiones (4 en el recibo).
+[ok] table.auth.mfa_factors: auth.mfa_factors: 0 fila(s) y claves iguales al recibo.
+[ok] table.auth.users: auth.users: 3 fila(s) iguales al estado tras aplicar las supresiones (4 en el recibo).
+[ok] table.auth.webauthn_credentials: auth.webauthn_credentials: 0 fila(s) y claves iguales al recibo.
+[ok] table.biblib.account_deletions: biblib.account_deletions: 2 fila(s) iguales al estado tras aplicar las supresiones (0 en el recibo).
+[ok] table.biblib.account_lifecycle: biblib.account_lifecycle: 0 fila(s), claves y contenido iguales al recibo.
+[ok] table.biblib.bibliographic_evidence: biblib.bibliographic_evidence: 0 fila(s), claves y contenido iguales al recibo.
+[ok] table.biblib.books_legacy: biblib.books_legacy: 0 fila(s), claves y contenido iguales al recibo.
+[ok] table.biblib.catalogue_cache: biblib.catalogue_cache: 0 fila(s), claves y contenido iguales al recibo.
+[ok] table.biblib.catalogue_inflight: biblib.catalogue_inflight: 0 fila(s), claves y contenido iguales al recibo.
+[ok] table.biblib.catalogue_private_cache: biblib.catalogue_private_cache: 0 fila(s), claves y contenido iguales al recibo.
+[ok] table.biblib.catalogue_quota_buckets: biblib.catalogue_quota_buckets: 0 fila(s), claves y contenido iguales al recibo.
+[ok] table.biblib.catalogue_quota_reservations: biblib.catalogue_quota_reservations: 0 fila(s), claves y contenido iguales al recibo.
+[ok] table.biblib.copies: biblib.copies: 11 fila(s) iguales al estado tras aplicar las supresiones (14 en el recibo).
+[ok] table.biblib.copy_annotations: biblib.copy_annotations: 1 fila(s) iguales al estado tras aplicar las supresiones (2 en el recibo).
+[ok] table.biblib.copy_locations: biblib.copy_locations: 1 fila(s) iguales al estado tras aplicar las supresiones (2 en el recibo).
+[ok] table.biblib.copy_tags: biblib.copy_tags: 1 fila(s) iguales al estado tras aplicar las supresiones (2 en el recibo).
+[ok] table.biblib.cover_assets: biblib.cover_assets: 1 fila(s) iguales al estado tras aplicar las supresiones (2 en el recibo).
+[ok] table.biblib.csv_mapping_profiles: biblib.csv_mapping_profiles: 0 fila(s), claves y contenido iguales al recibo.
+[ok] table.biblib.editions: biblib.editions: 11 fila(s) iguales al estado tras aplicar las supresiones (14 en el recibo).
+[ok] table.biblib.import_previews: biblib.import_previews: 0 fila(s), claves y contenido iguales al recibo.
+[ok] table.biblib.import_session_chunks: biblib.import_session_chunks: 0 fila(s), claves y contenido iguales al recibo.
+[ok] table.biblib.import_session_parts: biblib.import_session_parts: 0 fila(s), claves y contenido iguales al recibo.
+[ok] table.biblib.import_session_rows: biblib.import_session_rows: 0 fila(s), claves y contenido iguales al recibo.
+[ok] table.biblib.import_sessions: biblib.import_sessions: 0 fila(s), claves y contenido iguales al recibo.
+[ok] table.biblib.library_job_items: biblib.library_job_items: 0 fila(s), claves y contenido iguales al recibo.
+[ok] table.biblib.library_jobs: biblib.library_jobs: 0 fila(s), claves y contenido iguales al recibo.
+[ok] table.biblib.library_operations: biblib.library_operations: 0 fila(s), claves y contenido iguales al recibo.
+[ok] table.biblib.library_snapshot_chunks: biblib.library_snapshot_chunks: 0 fila(s), claves y contenido iguales al recibo.
+[ok] table.biblib.library_snapshots: biblib.library_snapshots: 0 fila(s), claves y contenido iguales al recibo.
+[ok] table.biblib.library_state: biblib.library_state: 3 fila(s) iguales al estado tras aplicar las supresiones (4 en el recibo).
+[ok] table.biblib.loans: biblib.loans: 1 fila(s) iguales al estado tras aplicar las supresiones (2 en el recibo).
+[ok] table.biblib.locations: biblib.locations: 1 fila(s) iguales al estado tras aplicar las supresiones (2 en el recibo).
+[ok] table.biblib.media_assets: biblib.media_assets: 2 fila(s) iguales al estado tras aplicar las supresiones (4 en el recibo).
+[ok] table.biblib.model_migration_report: biblib.model_migration_report: 0 fila(s), claves y contenido iguales al recibo.
+[ok] table.biblib.profiles: biblib.profiles: 1 fila(s) iguales al estado tras aplicar las supresiones (2 en el recibo).
+[ok] table.biblib.reading_cycles: biblib.reading_cycles: 1 fila(s) iguales al estado tras aplicar las supresiones (2 en el recibo).
+[ok] table.biblib.reading_entries: biblib.reading_entries: 1 fila(s) iguales al estado tras aplicar las supresiones (2 en el recibo).
+[ok] table.biblib.review_decisions: biblib.review_decisions: 0 fila(s), claves y contenido iguales al recibo.
+[ok] table.biblib.review_issues: biblib.review_issues: 0 fila(s), claves y contenido iguales al recibo.
+[ok] table.biblib.saved_book_views: biblib.saved_book_views: 0 fila(s), claves y contenido iguales al recibo.
+[ok] table.biblib.series: biblib.series: 1 fila(s) iguales al estado tras aplicar las supresiones (2 en el recibo).
+[ok] table.biblib.series_editions: biblib.series_editions: 1 fila(s) iguales al estado tras aplicar las supresiones (2 en el recibo).
+[ok] table.biblib.shelves: biblib.shelves: 7 fila(s) iguales al estado tras aplicar las supresiones (8 en el recibo).
+[ok] table.biblib.tags: biblib.tags: 1 fila(s) iguales al estado tras aplicar las supresiones (2 en el recibo).
+[ok] table.biblib.works: biblib.works: 0 fila(s), claves y contenido iguales al recibo.
+[ok] table.drizzle.__drizzle_migrations: drizzle.__drizzle_migrations: 16 fila(s), claves y contenido iguales al recibo.
+[ok] table.storage.buckets: storage.buckets: 3 fila(s) y claves iguales al recibo.
+[ok] table.storage.objects: storage.objects: 4 fila(s) iguales al estado tras aplicar las supresiones (7 en el recibo).
+[ok] tokens.biblib.books.version: biblib.books.version: 11 token(s) rotados; ninguno coincide con el respaldo.
+[ok] tokens.biblib.library_state.revision: biblib.library_state.revision: 3 token(s) rotados; ninguno coincide con el respaldo.
+[ok] assets.manifest: Portadas privadas: 1 asset(s) con su clave, sha256 y tamaño (en revisión hasta revalidarse); 0 excluido(s) por su política.
+[ok] sample.books: Muestra de 3 ficha(s) idéntica salvo el token rotado.
+[ok] suppressions.applied: Supresiones: 2 cuenta(s) suprimida(s) sin identidad, filas ni objetos en el destino.
+[ok] access.a: Cuenta A: sesión GoTrue real con el ID restaurado; ve 4 libro(s) y 3 estantería(s) propias y 0 ajenas; actualizar las ajenas afecta 0 filas.
+[ok] access.b: Cuenta B: sesión GoTrue real con el ID restaurado; ve 4 libro(s) y 3 estantería(s) propias y 0 ajenas; actualizar las ajenas afecta 0 filas.
+[ok] storage.bucket.biblib-covers: Bucket biblib-covers privado con su configuración.
+[ok] storage.bucket.biblib-media: Bucket biblib-media privado con su configuración.
+[ok] storage.bucket.biblib-test-assets: Bucket biblib-test-assets privado con su configuración.
+[ok] storage.objects: 4/4 objeto(s) presentes con su sha256 (3 de cuentas suprimidas, retirados).
+Ensayo de recuperación superado · recuperación 20 s · informe .biblib/backups/20261026T075637Z-scratch-07510c/rehearsals/20261026T075840Z-scratch.json

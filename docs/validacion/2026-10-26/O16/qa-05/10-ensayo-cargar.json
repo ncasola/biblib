@@ -1,0 +1,5 @@
+(node:35952) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/ncaso/orca/workspaces/biblib/u-inf-03/lib/account-deletion/worker.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\ncaso\orca\workspaces\biblib\u-inf-03\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+{"K":{"copies":3,"media":2,"covers":1,"cycles":1,"entries":1,"loans":1,"copy_tags":1,"series_editions":1,"copy_locations":1,"avatar":1},"C":{"copies":3,"media":2,"covers":1,"cycles":1,"entries":1,"loans":1,"copy_tags":1,"series_editions":1,"copy_locations":1,"avatar":1},"objetosK":3,"objetosC":3}

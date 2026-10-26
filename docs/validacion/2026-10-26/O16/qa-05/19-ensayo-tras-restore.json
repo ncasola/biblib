@@ -1,0 +1,84 @@
+{
+  "K": {
+    "identidad": true,
+    "filas": {
+      "copies": 3,
+      "media": 2,
+      "covers": 1,
+      "cycles": 1,
+      "entries": 1,
+      "loans": 1,
+      "copy_tags": 1,
+      "series_editions": 1,
+      "copy_locations": 1,
+      "avatar": 1
+    },
+    "objetos": [
+      {
+        "bucket": "biblib-media",
+        "present": true,
+        "sha256Matches": true
+      },
+      {
+        "bucket": "biblib-media",
+        "present": true,
+        "sha256Matches": true
+      },
+      {
+        "bucket": "biblib-covers",
+        "present": true,
+        "sha256Matches": true
+      }
+    ],
+    "restos": {
+      "rows": 22,
+      "tables": {
+        "tags": 1,
+        "loans": 1,
+        "copies": 3,
+        "series": 1,
+        "shelves": 1,
+        "editions": 3,
+        "profiles": 1,
+        "copy_tags": 1,
+        "locations": 1,
+        "cover_assets": 1,
+        "media_assets": 2,
+        "library_state": 1,
+        "copy_locations": 1,
+        "reading_cycles": 1,
+        "reading_entries": 1,
+        "series_editions": 1,
+        "copy_annotations": 1
+      },
+      "account": true,
+      "objects": 3
+    }
+  },
+  "C": {
+    "identidad": false,
+    "filas": {
+      "copies": 0,
+      "media": 0,
+      "covers": 0,
+      "cycles": 0,
+      "entries": 0,
+      "loans": 0,
+      "copy_tags": 0,
+      "series_editions": 0,
+      "copy_locations": 0,
+      "avatar": 0
+    },
+    "objetosEnStorage": 0,
+    "restos": {
+      "rows": 0,
+      "tables": {},
+      "account": false,
+      "objects": 0
+    },
+    "marca": {
+      "state": "completed",
+      "step": "done"
+    }
+  }
+}

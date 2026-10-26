@@ -1,0 +1,208 @@
+{
+  "base": "http://127.0.0.1:3149",
+  "results": {
+    "anonymous": [
+      {
+        "path": "/login",
+        "status": 200,
+        "location": "",
+        "hasBibLib": true,
+        "hydrationMarker": true
+      },
+      {
+        "path": "/books",
+        "status": 307,
+        "location": "/login?redirect=%2Fbooks",
+        "hasBibLib": false,
+        "hydrationMarker": false
+      }
+    ],
+    "a": [
+      {
+        "path": "/",
+        "status": 200,
+        "location": "",
+        "hasBibLib": true,
+        "hydrationMarker": true
+      },
+      {
+        "path": "/books",
+        "status": 200,
+        "location": "",
+        "hasBibLib": true,
+        "hydrationMarker": true
+      },
+      {
+        "path": "/books/add",
+        "status": 200,
+        "location": "",
+        "hasBibLib": true,
+        "hydrationMarker": true
+      },
+      {
+        "path": "/books/search",
+        "status": 200,
+        "location": "",
+        "hasBibLib": true,
+        "hydrationMarker": true
+      },
+      {
+        "path": "/shelves",
+        "status": 200,
+        "location": "",
+        "hasBibLib": true,
+        "hydrationMarker": true
+      },
+      {
+        "path": "/shelves/3d",
+        "status": 200,
+        "location": "",
+        "hasBibLib": true,
+        "hydrationMarker": true
+      },
+      {
+        "path": "/settings",
+        "status": 200,
+        "location": "",
+        "hasBibLib": true,
+        "hydrationMarker": true
+      },
+      {
+        "path": "/locations",
+        "status": 200,
+        "location": "",
+        "hasBibLib": true,
+        "hydrationMarker": true
+      },
+      {
+        "path": "/series",
+        "status": 200,
+        "location": "",
+        "hasBibLib": true,
+        "hydrationMarker": true
+      },
+      {
+        "path": "/loans",
+        "status": 200,
+        "location": "",
+        "hasBibLib": true,
+        "hydrationMarker": true
+      },
+      {
+        "path": "/profile",
+        "status": 200,
+        "location": "",
+        "hasBibLib": true,
+        "hydrationMarker": true
+      },
+      {
+        "path": "/books/review",
+        "status": 200,
+        "location": "",
+        "hasBibLib": true,
+        "hydrationMarker": true
+      },
+      {
+        "path": "/offline",
+        "status": 200,
+        "location": "",
+        "hasBibLib": true,
+        "hydrationMarker": true
+      }
+    ],
+    "b": [
+      {
+        "path": "/",
+        "status": 200,
+        "location": "",
+        "hasBibLib": true,
+        "hydrationMarker": true
+      },
+      {
+        "path": "/books",
+        "status": 200,
+        "location": "",
+        "hasBibLib": true,
+        "hydrationMarker": true
+      },
+      {
+        "path": "/books/add",
+        "status": 200,
+        "location": "",
+        "hasBibLib": true,
+        "hydrationMarker": true
+      },
+      {
+        "path": "/books/search",
+        "status": 200,
+        "location": "",
+        "hasBibLib": true,
+        "hydrationMarker": true
+      },
+      {
+        "path": "/shelves",
+        "status": 200,
+        "location": "",
+        "hasBibLib": true,
+        "hydrationMarker": true
+      },
+      {
+        "path": "/shelves/3d",
+        "status": 200,
+        "location": "",
+        "hasBibLib": true,
+        "hydrationMarker": true
+      },
+      {
+        "path": "/settings",
+        "status": 200,
+        "location": "",
+        "hasBibLib": true,
+        "hydrationMarker": true
+      },
+      {
+        "path": "/locations",
+        "status": 200,
+        "location": "",
+        "hasBibLib": true,
+        "hydrationMarker": true
+      },
+      {
+        "path": "/series",
+        "status": 200,
+        "location": "",
+        "hasBibLib": true,
+        "hydrationMarker": true
+      },
+      {
+        "path": "/loans",
+        "status": 200,
+        "location": "",
+        "hasBibLib": true,
+        "hydrationMarker": true
+      },
+      {
+        "path": "/profile",
+        "status": 200,
+        "location": "",
+        "hasBibLib": true,
+        "hydrationMarker": true
+      },
+      {
+        "path": "/books/review",
+        "status": 200,
+        "location": "",
+        "hasBibLib": true,
+        "hydrationMarker": true
+      },
+      {
+        "path": "/offline",
+        "status": 200,
+        "location": "",
+        "hasBibLib": true,
+        "hydrationMarker": true
+      }
+    ]
+  },
+  "failures": 0
+}

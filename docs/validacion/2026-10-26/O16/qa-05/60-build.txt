@@ -1,0 +1,58 @@
+
+> biblib@1.0.0 build C:\Users\ncaso\orca\workspaces\biblib\u-inf-03
+> next build
+
+▲ Next.js 16.4.2 (Turbopack)
+✓ Running next.config.mjs took 38ms
+- Experiments (use with caution):
+  · serverActions
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 5.4s
+  Running TypeScript ...
+  Finished TypeScript in 14.4s ...
+  Collecting page data using 11 workers ...
+  Generating static pages using 11 workers (0/22) ...
+  Generating static pages using 11 workers (5/22) 
+  Generating static pages using 11 workers (10/22) 
+  Generating static pages using 11 workers (16/22) 
+✓ Generating static pages using 11 workers (22/22) in 783ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ƒ /
+├ ƒ /_not-found
+├ ƒ /api/books/add
+├ ƒ /api/books/search
+├ ƒ /api/covers/[assetId]
+├ ƒ /api/internal/jobs/run
+├ ƒ /api/library/export
+├ ƒ /api/media/[id]
+├ ƒ /auth/callback
+├ ƒ /book/[id]
+├ ƒ /books
+├ ƒ /books/add
+├ ƒ /books/print
+├ ƒ /books/review
+├ ƒ /books/review/[id]
+├ ƒ /books/search
+├ ƒ /loans
+├ ƒ /locations
+├ ƒ /login
+├ ƒ /offline
+├ ƒ /profile
+├ ƒ /series
+├ ƒ /series/[id]
+├ ƒ /settings
+├ ƒ /shelves
+└ ƒ /shelves/3d
+
+
+ƒ Proxy (Middleware)
+
+ƒ  (Dynamic)  server-rendered on demand
+
+
+real	0m24.708s
+user	0m0.030s
+sys	0m0.045s

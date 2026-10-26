@@ -43,7 +43,7 @@ El workflow `.github/workflows/ci.yml` utiliza valores públicos ficticios de Su
 
 `pnpm db:generate` genera una propuesta SQL a partir del esquema, sin conexión. Revísala junto con el historial de Drizzle. `pnpm db:migrate` ya no modifica ninguna base: es un despachador que sale con 2 y lista los comandos explícitos. En local se usa `db:status:local` → `db:plan:local` → `db:migrate:local` (ver [Migraciones](#migraciones)).
 
-**Preproducción y producción no tienen todavía comando de migración** (U-INF-07, fase F1). Hasta entonces no se aplica `0001`/`0002` a la base real. Cuando exista, el procedimiento conservará estos pasos previos a aplicar `0001_library_integrity.sql` y `0002_book_versions.sql`:
+**Preproducción y producción** tienen desde U-INF-07 `db:status|plan|migrate|adopt:<objetivo>` ([Promoción](#promoción-a-preproducción-y-producción--u-inf-07)), preparados pero **sin ejecutar contra ningún destino real**: no se ha aplicado ninguna migración a la base remota. El procedimiento conserva estos pasos previos a aplicar `0001_library_integrity.sql` y `0002_book_versions.sql` (y las posteriores):
 
 1. Identifica proyecto, entorno y versión de esquema. Confirma que la operación sobre esa base real está autorizada y acordada.
 2. Exporta las colecciones afectadas desde BibLib y crea además un respaldo de la base que incluya esquema, datos e historial de migraciones mediante el procedimiento del proveedor. El JSON de un usuario no sustituye un respaldo administrativo.
@@ -121,7 +121,7 @@ Dentro de cada bloque el orden es: shadow, API (Auth/REST/Storage), Postgres, St
 
 ### Ensayo manual (perfil `scratch`)
 
-Hasta que existan los wrappers, este es el procedimiento ensayado. En un worktree solo se usa `scratch`.
+Procedimiento histórico de U-INF-01, anterior a los wrappers. **Usa en su lugar `pnpm db:local:up|down --profile scratch`** ([Ciclo de vida del stack](#ciclo-de-vida-del-stack)): crear la red o arrancar a mano deja recursos sin registro de propiedad que los wrappers rechazan con 3. En un worktree solo se usa `scratch`.
 
 ```powershell
 node scripts/lib/profiles.mjs generate scratch
@@ -1756,3 +1756,17 @@ Antes de activar la bandera para alguien, el usuario revisa las decisiones del c
   - `tests/offline-library.test.ts`: KDF y envoltura con los parámetros fijados (las iteraciones se reducen solo por inyección), IV por escritura, lista blanca, TTL, intentos, aislamiento A/B, corrupción, cuota y borrado total.
   - `tests/offline-service-worker.test.ts`: `public/sw.js` en un contexto aislado. Comprueba qué guarda y qué no, la versión por URL, la limpieza de versiones anteriores, el modo de limpieza, la redirección sin red y las cabeceras de `sw.js` y `/offline`.
 - E2E: `tests/e2e/flujos/offline.spec.ts` (`pnpm test:e2e:local --grep "offline:"`, perfil `test`). El runner arranca la app con `BIBLIB_OFFLINE_SNAPSHOT=1`. Cubre el shell sin consentimiento, la activación con PIN, la consulta sin red, A/B en el mismo navegador, el cierre de sesión, el TTL con reloj simulado, la actualización del worker y el borrado de datos del sitio (solo en Chromium, por CDP).
+
+## Cierre verificable de la auditoría · U-QA-05 (O16)
+
+La matriz de los 35 hallazgos está en [validacion/2026-10-26/O16/matriz-auditoria.md](validacion/2026-10-26/O16/matriz-auditoria.md) y la lista de entrega de O16, en [entrega.md](validacion/2026-10-26/O16/entrega.md). Cada hallazgo tiene un único estado: `implementado-local`, `verificado-preproduccion`, `verificado-produccion`, `pendiente` o `diferido-con-decision`. Ninguna casilla remota se marca con un mock. **Cierre de código** (local) y **cierre de despliegue** (remoto) son estados distintos. Un hallazgo se reabre si un cambio invalida su evidencia; nunca se borran pruebas ni historial para presentarlo cerrado.
+
+```powershell
+pnpm docs:links                                   # enlaces relativos de docs/**/*.md, README.md y agents.md
+node docs/validacion/2026-10-26/O16/qa-05/catalogo.mjs <salida.json>          # catálogo de objetos de scratch
+node docs/validacion/2026-10-26/O16/qa-05/catalogo.mjs --diff <a.json> <b.json>
+```
+
+- `pnpm docs:links` (`scripts/check-doc-links.mjs`) comprueba sin red que cada enlace relativo apunta a un archivo o carpeta del repositorio. Ignora el código, los enlaces externos y los anclajes. Sale con **0** si no hay enlaces rotos, **11** si los hay y **2** con argumentos no admitidos. Su prueba es `tests/scripts/doc-links.test.mjs`. Ejecútalo antes de cerrar una ola que añada evidencia.
+- **Comparar el catálogo de objetos,** no solo las tablas, entre una instalación limpia, una migrada desde la versión anterior y una restaurada: `catalogo.mjs` lee `pg_catalog` en `read only` (tablas, columnas, restricciones, índices, vistas, funciones, triggers, políticas, grants efectivos y buckets), sin filas de datos. Compara ACL efectivas porque `pg_dump` omite la ACL por defecto del propietario.
+- **Migración desde la versión anterior en un worktree con `scratch`:** se hace en el mismo checkout, como el workflow `extended.yml`, porque el perfil pertenece a la raíz. La secuencia es `git checkout --detach <commit anterior>` → `pnpm install --frozen-lockfile` → `db:reset:local` (dry-run y apply) → datos → `git checkout <rama>` → `pnpm install --frozen-lockfile` → `db:plan:local` → `db:migrate:local`. El commit anterior debe pasar `node scripts/ci/previous-schema.mjs <sha>`. Un worktree temporal no puede usar `scratch` (salida 3).
