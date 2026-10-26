@@ -88,7 +88,8 @@
     "test:integration:locations": "node tests/integration/locations/run.mjs",
     "test:integration:reading-loans": "node tests/integration/reading-loans/run.mjs",
     "test:integration:reading": "node tests/integration/reading/run.mjs",
-    "test:integration:loans": "node tests/integration/loans/run.mjs"
+    "test:integration:loans": "node tests/integration/loans/run.mjs",
+    "docs:links": "node scripts/check-doc-links.mjs"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "1.1.15",
