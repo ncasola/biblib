@@ -16,7 +16,8 @@ const STATIC_PATHS = new Set(["/offline", "/logo-mark.png", "/logo.png", "/logo-
 /** Peticiones que fallan a propósito sin red (refresco de sesión, recursos de la página) y su registro en consola. */
 const OFFLINE_CONSOLE = /net::ERR_INTERNET_DISCONNECTED|Failed to fetch|AuthRetryableFetchError|ERR_NAME_NOT_RESOLVED/
 
-test.use({ account: "a" })
+// WebKit bloquea los workers en todo su proyecto (playwright.config.ts); aquí son el objeto de la prueba.
+test.use({ account: "a", serviceWorkers: "allow" })
 
 function allowOffline(guard: Guard) {
   guard.allowConsole(OFFLINE_CONSOLE)
@@ -220,22 +221,32 @@ test("offline: A y B en el mismo navegador no ven la copia del otro", async ({ p
   await expect(page.getByText(ONLY_B)).toHaveCount(0)
 })
 
-test("offline: el cierre de sesión con conexión borra la copia y su clave del dispositivo", async ({ page, stack, guard }) => {
-  test.setTimeout(120_000)
-  guard.allowConsole(SIGN_OUT_RSC_404)
-  // GoTrue responde sin revocar: las sesiones guardadas de A siguen sirviendo a los demás recorridos.
-  await page.route(`${stack.apiOrigin}/auth/v1/logout**`, (route) => route.fulfill({ status: 204, body: "" }))
-  await page.goto("/settings")
-  await workerReady(page)
-  await enableCopy(page, PIN_A)
-  expect(await offlineDatabases(page)).toHaveLength(1)
-  expect(await page.evaluate(() => localStorage.getItem("biblib-offline-cuenta"))).toMatch(/^[0-9a-f]{64}$/)
+test.describe(() => {
+  // WebKit no aplica page.route a las peticiones de una página controlada por el worker (la de GoTrue pasa
+  // por su evento fetch aunque no la responda): el logout real con scope=global revocaba las sesiones
+  // guardadas de A para el resto del proyecto (G16). La purga al cerrar sesión la hace la página, no el
+  // worker, así que en WebKit se comprueba sin worker y en Chromium/Firefox con él.
+  test.use({ serviceWorkers: async ({ browserName }, provide) => provide(browserName === "webkit" ? "block" : "allow") })
 
-  await signOut(page, stack, "a")
-  await expect.poll(() => offlineDatabases(page)).toEqual([])
-  expect(await page.evaluate(() => localStorage.getItem("biblib-offline-cuenta"))).toBeNull()
-  await page.goto("/offline")
-  await expect(page.getByText(/No hay ninguna copia de lectura disponible/)).toBeVisible()
+  test("offline: el cierre de sesión con conexión borra la copia y su clave del dispositivo", async ({ page, stack, guard, browserName }) => {
+    test.setTimeout(120_000)
+    guard.allowConsole(SIGN_OUT_RSC_404)
+    // GoTrue responde sin revocar: las sesiones guardadas de A siguen sirviendo a los demás recorridos.
+    let logouts = 0
+    await page.route(`${stack.apiOrigin}/auth/v1/logout**`, (route) => { logouts++; return route.fulfill({ status: 204, body: "" }) })
+    await page.goto("/settings")
+    if (browserName !== "webkit") await workerReady(page)
+    await enableCopy(page, PIN_A)
+    expect(await offlineDatabases(page)).toHaveLength(1)
+    expect(await page.evaluate(() => localStorage.getItem("biblib-offline-cuenta"))).toMatch(/^[0-9a-f]{64}$/)
+
+    await signOut(page, stack, "a")
+    expect(logouts, "El cierre de sesión se simula: una revocación real dejaría sin sesión al resto del proyecto").toBe(1)
+    await expect.poll(() => offlineDatabases(page)).toEqual([])
+    expect(await page.evaluate(() => localStorage.getItem("biblib-offline-cuenta"))).toBeNull()
+    await page.goto("/offline")
+    await expect(page.getByText(/No hay ninguna copia de lectura disponible/)).toBeVisible()
+  })
 })
 
 test("offline: un TTL vencido bloquea la copia sin borrarla y la validación con conexión la reabre", async ({ page, context, guard }) => {
