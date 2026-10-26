@@ -65,6 +65,9 @@ test("una ficha borrada en otra pestaña muestra el error y no rompe la pantalla
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(data.marked(`Dos pestañas ${slug}`))
   const second = await context.newPage()
   await second.goto(`/book/${id}`)
+  // El botón llega en el HTML del servidor: un clic antes de hidratar no abre el diálogo (visto en Firefox con el
+  // equipo cargado, G16). Se espera a que la pestaña quede en reposo, como antes de cerrar sesión.
+  await second.waitForLoadState("networkidle")
   await second.getByRole("button", { name: "Eliminar libro" }).click()
   await second.getByRole("alertdialog").getByRole("button", { name: "Eliminar libro" }).click()
   await second.waitForURL((url) => url.pathname === "/books")
