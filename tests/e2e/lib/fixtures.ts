@@ -158,6 +158,29 @@ export function actionRequest(stack: Stack, name: string) {
   return (request: { method(): string; headers(): Record<string, string> }) => request.method() === "POST" && request.headers()["next-action"] === id
 }
 
+/**
+ * Datos de una cuenta que obligan a exportar en v2 (`libraryRequiresV2`): préstamos, lecturas, etiquetas, notas,
+ * ubicaciones, series, evidencias, obras, identificadores de edición, varias copias por edición o fichas sin ISBN.
+ * Las pruebas que esperan una exportación v1 lo comprueban antes: si otra prueba deja restos (G16: los préstamos
+ * de prestamos.spec), el fallo nombra qué quedó en lugar de un `formatVersion` inesperado.
+ */
+export async function v2Residue(stack: Stack, account: Account): Promise<Record<string, number>> {
+  const user = stack.users[account]
+  const [row] = await stack.sql`select
+    (select count(*)::int from biblib.loans where user_id = ${user}) as "préstamos",
+    (select count(*)::int from biblib.reading_cycles where user_id = ${user}) as "lecturas",
+    (select count(*)::int from biblib.tags where user_id = ${user}) as "etiquetas",
+    (select count(*)::int from biblib.copy_annotations where user_id = ${user}) as "notas",
+    (select count(*)::int from biblib.locations where user_id = ${user}) as "ubicaciones",
+    (select count(*)::int from biblib.series where user_id = ${user}) as "series",
+    (select count(*)::int from biblib.bibliographic_evidence where user_id = ${user}) as "evidencias",
+    (select count(*)::int from biblib.works where user_id = ${user}) as "obras",
+    (select count(*)::int from biblib.editions where user_id = ${user} and (language is not null or coalesce(identifiers::text, '{}') <> '{}')) as "ediciones con identificadores",
+    (select count(*)::int from (select 1 from biblib.copies where user_id = ${user} group by edition_id having count(*) > 1) as multiple) as "ediciones con varias copias",
+    (select count(*)::int from biblib.books where user_id = ${user} and coalesce(isbn, '') = '') as "fichas sin ISBN"`
+  return Object.fromEntries(Object.entries(row).filter(([, count]) => Number(count) > 0)) as Record<string, number>
+}
+
 export const test = base.extend<{ account: Session; guard: Guard; data: Data }, { stack: Stack }>({
   account: ["a", { option: true }],
 

@@ -1,5 +1,5 @@
 import { readFile } from "node:fs/promises"
-import { expect, test } from "../lib/fixtures"
+import { expect, test, v2Residue } from "../lib/fixtures"
 
 // Escenarios heredados de scripts/smoke-app.mjs que no encajan en otro grupo: recuperación de portadas
 // sin red externa, exportación dividida en partes y nombre de perfil guardado en GoTrue (como A).
@@ -31,6 +31,7 @@ test("una colección de más de 2000 fichas se exporta en dos partes importables
   const slug = data.slug("partes")
   const shelfId = await data.shelf("a", `Partes ${slug}`)
   const prefix = data.marked(`${slug} lote `)
+  expect(await v2Residue(stack, "a"), "Precondición: la biblioteca de A no tiene datos que exijan v2").toEqual({})
   const [{ count: existing }] = await stack.sql`select count(*)::int as count from biblib.books where user_id = ${stack.users.a}`
   const extra = 2001 - Number(existing)
   await stack.sql`insert into biblib.books (user_id, isbn, title, status, shelf_id)
