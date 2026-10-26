@@ -86,7 +86,7 @@ test("estantería 3D: sacar un libro, abrir su ficha y volver con el foco en el 
   await expect(spine(page, titles[1])).toBeFocused()
 })
 
-test("estantería 3D con teclado: flechas, Intro, Tab a «Abrir ficha» y Escape devuelve el foco al lomo", async ({ page, data }) => {
+test("estantería 3D con teclado: flechas, Intro, Tab a «Abrir ficha» y Escape devuelve el foco al lomo", async ({ page, data, browserName }) => {
   const slug = data.slug("teclado")
   const { shelfId, titles } = await seedShelf(data, slug, 6)
   await openScene(page, shelfId)
@@ -109,7 +109,9 @@ test("estantería 3D con teclado: flechas, Intro, Tab a «Abrir ficha» y Escape
   await page.keyboard.press("Enter")
   await expect(third).toHaveAttribute("aria-pressed", "true")
   await expect(panel(page).getByRole("heading", { level: 2 })).toHaveText(titles[2])
-  await page.keyboard.press("Tab")
+  // Safari solo lleva Tab a los enlaces con Opción+Tab (preferencia «tabsToLinks», desactivada por defecto);
+  // el WebKit de Playwright conserva ese comportamiento. Es la tecla que usaría quien navega con teclado en Safari.
+  await page.keyboard.press(browserName === "webkit" ? "Alt+Tab" : "Tab")
   await expect(panel(page).getByRole("link", { name: "Abrir ficha" })).toBeFocused()
 
   await page.keyboard.press("Escape")
