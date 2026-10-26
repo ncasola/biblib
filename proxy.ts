@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 import { createProxyClient } from "@/lib/supabase/proxy"
+import { readProxySession } from "@/lib/supabase/proxy-session"
 import { createSessionAttestation, SESSION_ATTESTATION_HEADER, unverifiedSubject } from "@/lib/supabase/session-attestation"
 import { getSafeRedirectPath, isProtectedPath } from "@/lib/auth-navigation"
 import { buildContentSecurityPolicy, createNonce, CSP_REPORT_ONLY_HEADER, NONCE_HEADER, PRIVATE_CACHE_CONTROL } from "@/lib/security-headers"
@@ -36,32 +37,20 @@ export async function proxy(request: NextRequest) {
   if (!isProtectedPath(pathname) && !isAuthRoute) return finish(forward())
 
   let response = forward()
-  const supabase = createProxyClient(request, (cookiesToSet) => {
+  const session = await readProxySession((signal) => createProxyClient(request, (cookiesToSet) => {
     const previousCookies = response.cookies.getAll()
     cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
     response = forward()
     previousCookies.forEach((cookie) => response.cookies.set(cookie))
     cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options))
-  })
-
-  let isAuthenticated = false
-  let sessionError = false
-  try {
-    const { data: { user }, error } = await supabase.auth.getUser()
-    isAuthenticated = Boolean(user)
-    sessionError = Boolean(error && error.name !== "AuthSessionMissingError")
-    if (user && !error) {
-      // El token que GoTrue acaba de validar (ya renovado si hacía falta): no hay otra llamada de red.
-      const { data: { session } } = await supabase.auth.getSession()
-      if (session?.access_token && unverifiedSubject(session.access_token) === user.id) {
-        attestation = createSessionAttestation({ userId: user.id, accessToken: session.access_token, nonce })
-        const previousCookies = response.cookies.getAll()
-        response = forward()
-        previousCookies.forEach((cookie) => response.cookies.set(cookie))
-      }
-    }
-  } catch {
-    sessionError = true
+  }, signal))
+  const isAuthenticated = session.authenticated
+  const sessionError = session.sessionError
+  if (session.authenticated && session.accessToken && unverifiedSubject(session.accessToken) === session.userId) {
+    attestation = createSessionAttestation({ userId: session.userId, accessToken: session.accessToken, nonce })
+    const previousCookies = response.cookies.getAll()
+    response = forward()
+    previousCookies.forEach((cookie) => response.cookies.set(cookie))
   }
 
   let redirectUrl: URL | undefined

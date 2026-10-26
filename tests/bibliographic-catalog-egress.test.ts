@@ -18,8 +18,9 @@ const PROVIDER_HOST = /openlibrary\.org|catalogo\.bne\.es/i
 const IMAGE_HOST_CONFIGURATION = new Set(["next.config.mjs", "proxy.ts", "lib/security-headers.ts"])
 // Los benchmarks (U-QA-03) construyen respuestas simuladas que citan una URL de registro ficticia; no salen a la red.
 const SIMULATED_RESPONSE = (file: string, text: string) => file.startsWith("scripts/performance/") && /\bResponse\.json\(/.test(text) && !/\bfetch\s*\(/.test(text)
-// Únicos módulos con `fetch` hacia el exterior: el gateway (fetch por defecto, con reserva de cuota) y los adaptadores.
-const NETWORK_MODULES = ["lib/bibliographic-catalog/gateway.ts"]
+// Gateway, adaptadores y transporte de sesión Supabase con cancelación (sin destinos de catálogo).
+// La comprobación de hosts sigue aplicándose al transporte de sesión.
+const NETWORK_MODULES = ["lib/bibliographic-catalog/gateway.ts", "lib/supabase/proxy.ts"]
 
 export interface EgressViolation { file: string; line: number; rule: "host" | "fetch"; text: string }
 
