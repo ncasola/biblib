@@ -31,6 +31,9 @@ export function nextEnv(ctx, command) {
     // Capacidad de UI, sin credenciales: excepción explícita al filtrado de BIBLIB heredadas.
     BIBLIB_ISBN_CAMERA: process.env.BIBLIB_ISBN_CAMERA === "1" ? "1" : "",
     BIBLIB_PRIVATE_MEDIA_UPLOADS: process.env.BIBLIB_PRIVATE_MEDIA_UPLOADS === "1" ? "1" : "",
+    // U-EXP-08: banderas de la copia de lectura y del worker de limpieza; sin credenciales.
+    BIBLIB_OFFLINE_SNAPSHOT: process.env.BIBLIB_OFFLINE_SNAPSHOT === "1" ? "1" : "",
+    BIBLIB_SERVICE_WORKER: process.env.BIBLIB_SERVICE_WORKER === "limpieza" ? "limpieza" : "",
   }
 }
 
