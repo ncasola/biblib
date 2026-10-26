@@ -1,0 +1,30 @@
+
+> biblib@1.0.0 test:a11y:local C:\Users\ncaso\orca\workspaces\biblib\u-qa-01
+> node tests/accessibility/run.mjs "--profile" "test" "--reuse-build"
+
+E2E · perfil test · biblib-test · huella b831ef825c09 · run 2706eeb641b9 · chromium
+Bundle de cliente sin credenciales administrativas ni URLs privadas.
+
+Running 10 tests using 1 worker
+
+(node:35928) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok  1 [chromium-sesion] › tests\e2e\sesion.setup.ts:11:3 › acceso local: A entra por el formulario y conserva la sesión (1.4s)
+  ok  2 [chromium-sesion] › tests\e2e\sesion.setup.ts:11:3 › acceso local: B entra por el formulario y conserva la sesión (1.1s)
+(node:38852) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok  3 [chromium-flujos] › tests\accessibility\audit.spec.ts:40:3 › axe: recorridos principales y diálogos, tema light (32.4s)
+  ok  4 [chromium-flujos] › tests\accessibility\audit.spec.ts:40:3 › axe: recorridos principales y diálogos, tema dark (29.7s)
+  ok  5 [chromium-flujos] › tests\accessibility\audit.spec.ts:87:5 › login sin sesión › axe: acceso y error OAuth en tema light (1.4s)
+  ok  6 [chromium-flujos] › tests\accessibility\audit.spec.ts:87:5 › login sin sesión › axe: acceso y error OAuth en tema dark (1.4s)
+  ok  7 [chromium-flujos] › tests\accessibility\audit.spec.ts:106:1 › reflujo: 320, 375, 768, 1440 y zoom equivalente 200/400 % en ambos temas (2.3m)
+  ok  8 [chromium-flujos] › tests\accessibility\audit.spec.ts:156:1 › diálogos: atrapan/devuelven foco, menú móvil, errores únicos y movimiento reducido (9.5s)
+  ok  9 [chromium-flujos] › tests\accessibility\contrast.spec.ts:6:1 › contraste: colores compuestos, estados, componentes y foco en ambos temas (6.1s)
+(node:13060) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 10 [chromium] › tests\accessibility\keyboard.spec.ts:20:1 › teclado: alta, búsqueda, selección, movimiento, edición, foco y cierre de sesión (7.2s)
+
+  10 passed (4.1m)
+Servidor sin salidas de red externas durante el run.
+Cuentas de Auth sin cambios (2, todas @biblib.test). Datos del run limpiados y biblioteca de A restaurada si hizo falta.
+Resultado: 10 recorridos superados, 0 fallo(s) conocido(s), 0 pendientes (fixme), 0 fallidos, 0 repeticiones.

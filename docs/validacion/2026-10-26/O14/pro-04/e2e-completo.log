@@ -1,0 +1,113 @@
+
+> biblib@1.0.0 test:e2e:local C:\Users\ncaso\orca\workspaces\biblib\u-qa-01
+> node tests/e2e/run.mjs "--profile" "test" "--reuse-build"
+
+E2E · perfil test · biblib-test · huella b831ef825c09 · run ce8c6c8e914a · chromium
+Bundle de cliente sin credenciales administrativas ni URLs privadas.
+
+Running 92 tests using 1 worker
+
+(node:29988) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok  1 [chromium-sesion] › tests\e2e\sesion.setup.ts:11:3 › acceso local: A entra por el formulario y conserva la sesión (1.5s)
+  ok  2 [chromium-sesion] › tests\e2e\sesion.setup.ts:11:3 › acceso local: B entra por el formulario y conserva la sesión (2.1s)
+(node:15364) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok  3 [chromium-flujos] › tests\e2e\flujos\acceso.spec.ts:10:3 › anónimo › una ruta privada directa lleva al acceso conservando el destino interno (1.2s)
+  ok  4 [chromium-flujos] › tests\e2e\flujos\acceso.spec.ts:26:3 › anónimo › un callback OAuth inválido vuelve al acceso con error y sin destino externo (925ms)
+  ok  5 [chromium-flujos] › tests\e2e\flujos\acceso.spec.ts:43:3 › con sesión de A › /login con destino interno lleva a él; los destinos externos caen en el inicio (3.6s)
+  ok  6 [chromium-flujos] › tests\e2e\flujos\ajustes.spec.ts:10:1 › la recuperación de portadas termina en modo fixture sin salir a la red ni modificar fichas (4.1s)
+  ok  7 [chromium-flujos] › tests\e2e\flujos\ajustes.spec.ts:30:1 › una colección de más de 2000 fichas se exporta en dos partes importables (7.2s)
+  ok  8 [chromium-flujos] › tests\e2e\flujos\ajustes.spec.ts:62:1 › el perfil guarda el nombre en GoTrue y muestra la confirmación real (1.2s)
+  ok  9 [chromium-flujos] › tests\e2e\flujos\alta-consecutiva.spec.ts:6:1 › alta consecutiva: informa éxito, limpia ficha y conserva estado y estantería entre altas (2.7s)
+  ok 10 [chromium-flujos] › tests\e2e\flujos\alta-consecutiva.spec.ts:40:1 › alta consecutiva: error conserva borrador y doble toque no repite el envío (1.3s)
+  ok 11 [chromium-flujos] › tests\e2e\flujos\alta-consecutiva.spec.ts:74:1 › alta consecutiva: ISBN duplicado abre la ficha existente y no añade una copia automáticamente (1.6s)
+  ok 12 [chromium-flujos] › tests\e2e\flujos\alta-consecutiva.spec.ts:90:1 › cámara denegada permite completar y guardar un libro manualmente (2.1s)
+  ok 13 [chromium-flujos] › tests\e2e\flujos\alta-consecutiva.spec.ts:118:1 › cámara: descarta checksum inválido y requiere confirmar ISBN antes de buscar (1.9s)
+  ok 14 [chromium-flujos] › tests\e2e\flujos\alta-consecutiva.spec.ts:148:1 › cámara no compatible mantiene visible el formulario ISBN y la entrada manual (1.2s)
+  ok 15 [chromium-flujos] › tests\e2e\flujos\alta-consecutiva.spec.ts:158:1 › cámara: detener y cambiar a manual liberan la captura sin buscar un ISBN (1.2s)
+  ok 16 [chromium-flujos] › tests\e2e\flujos\alta-consecutiva.spec.ts:185:1 › cámara: la navegación cliente desde una ruta que la deniega ofrece un documento nuevo (2.8s)
+  ok 17 [chromium-flujos] › tests\e2e\flujos\avatar.spec.ts:5:1 › avatar privado: previsualizar, recortar, persistir, fallo de red, móvil y quitar (13.2s)
+  ok 18 [chromium-flujos] › tests\e2e\flujos\catalogo.spec.ts:11:1 › alta manual: un fallo de red conserva el borrador y no hay éxito antes de persistir (2.3s)
+  ok 19 [chromium-flujos] › tests\e2e\flujos\catalogo.spec.ts:60:1 › un ISBN-10 con guiones equivalente detecta la ficha ya catalogada (1.2s)
+  ok 20 [chromium-flujos] › tests\e2e\flujos\catalogo.spec.ts:68:1 › edición: el conflicto de versión conserva el borrador y la recarga es explícita (2.8s)
+  ok 21 [chromium-flujos] › tests\e2e\flujos\catalogo.spec.ts:106:1 › eliminar exige confirmación y no afecta a otras fichas (2.6s)
+  ok 22 [chromium-flujos] › tests\e2e\flujos\consulta.spec.ts:26:1 › búsqueda sin tildes ni mayúsculas, ISBN-10/13 y cero resultados (3.6s)
+  ok 23 [chromium-flujos] › tests\e2e\flujos\consulta.spec.ts:49:1 › los filtros de la URL se aplican al cargar y la página inexistente se ajusta (6.9s)
+  ok 24 [chromium-flujos] › tests\e2e\flujos\consulta.spec.ts:73:1 › retorno contextual: la ficha vuelve a filtros, página, vista y fila; atrás y adelante (6.8s)
+  ok 25 [chromium-flujos] › tests\e2e\flujos\consulta.spec.ts:116:1 › un identificador inválido muestra «Libro no encontrado» sin error de servidor (757ms)
+  ok 26 [chromium-flujos] › tests\e2e\flujos\csv.spec.ts:33:1 › CSV: mapeo, estado desconocido y fórmulas, omisión explícita e informe; seleccionar no publica (7.7s)
+  ok 27 [chromium-flujos] › tests\e2e\flujos\csv.spec.ts:63:1 › CSV: cambio en otra pestaña da CAS y remap exige una revisión nueva (6.2s)
+  ok 28 [chromium-flujos] › tests\e2e\flujos\csv.spec.ts:94:1 › CSV: otra copia se elige expresamente y conserva la verificación de la copia anterior (3.0s)
+  ok 29 [chromium-flujos] › tests\e2e\flujos\estanteria-3d.spec.ts:51:1 › estantería 3D: sacar un libro, abrir su ficha y volver con el foco en el lomo (4.2s)
+  ok 30 [chromium-flujos] › tests\e2e\flujos\estanteria-3d.spec.ts:89:1 › estantería 3D con teclado: flechas, Intro, Tab a «Abrir ficha» y Escape devuelve el foco al lomo (2.0s)
+  ok 31 [chromium-flujos] › tests\e2e\flujos\estanteria-3d.spec.ts:131:3 › movimiento reducido › estantería 3D con movimiento reducido: sin giro del mueble ni trayectorias (1.8s)
+  ok 32 [chromium-flujos] › tests\e2e\flujos\estanteria-3d.spec.ts:157:3 › móvil › estantería 3D en móvil: de frente, sin scroll horizontal y el panel debajo del mueble (1.3s)
+  ok 33 [chromium-flujos] › tests\e2e\flujos\estanteria-3d.spec.ts:186:1 › más de 48 libros: la página 3D y «Ver como tabla» contienen los mismos ids (3.4s)
+  ok 34 [chromium-flujos] › tests\e2e\flujos\estanteria-3d.spec.ts:214:1 › estantería 3D vacía: estado propio, sin mueble y con acceso al alta (1.5s)
+  -  35 [chromium-flujos] › tests\e2e\flujos\estanteria-3d.spec.ts:245:1 › capturas U-UX-02: 1440 y 375 px, ambos temas, con un libro sacado de la balda
+  ok 36 [chromium-flujos] › tests\e2e\flujos\importacion.spec.ts:48:1 › la exportación descarga un JSON v1 con la colección actual de A y la verificación del ISBN (2.2s)
+  ok 37 [chromium-flujos] › tests\e2e\flujos\importacion.spec.ts:64:1 › la revisión no escribe; si la colección cambia en otra pestaña, confirmar da conflicto sin borrar (7.1s)
+  ok 38 [chromium-flujos] › tests\e2e\flujos\importacion.spec.ts:101:1 › fusionar añade los libros nuevos y conserva los actuales (2.1s)
+  ok 39 [chromium-flujos] › tests\e2e\flujos\importacion.spec.ts:116:1 › confirmar otra vez tras perder la respuesta no duplica la importación (2.2s)
+  ok 40 [chromium-flujos] › tests\e2e\flujos\importacion.spec.ts:147:1 › reemplazar sustituye la colección (la biblioteca ficticia de A se restaura después) (2.4s)
+  ok 41 [chromium-flujos] › tests\e2e\flujos\importacion.spec.ts:184:1 › importar libros con ISBN: la revisión no consulta catálogos y sus portadas se buscan después sin bloquear (2.0s)
+  ok 42 [chromium-flujos] › tests\e2e\flujos\lectura.spec.ts:21:1 › lectura: empezar, sesiones con progreso, pausa, terminar sin fecha y relectura que conserva la primera (4.8s)
+  ok 43 [chromium-flujos] › tests\e2e\flujos\lectura.spec.ts:79:1 › lectura: sin total de páginas no hay barra ni porcentaje y un «Leído» sin lecturas no recibe fecha (3.3s)
+  ok 44 [chromium-flujos] › tests\e2e\flujos\organizacion.spec.ts:15:1 › la estantería predeterminada no se puede renombrar ni eliminar (853ms)
+  ok 45 [chromium-flujos] › tests\e2e\flujos\organizacion.spec.ts:24:1 › movimiento individual y cambio de estado desde la ficha (3.5s)
+  ok 46 [chromium-flujos] › tests\e2e\flujos\organizacion.spec.ts:41:1 › movimiento en lote de la página seleccionada (2.6s)
+  ok 47 [chromium-flujos] › tests\e2e\flujos\organizacion.spec.ts:58:1 › una ficha borrada en otra pestaña muestra el error y no rompe la pantalla (5.3s)
+  ok 48 [chromium-flujos] › tests\e2e\flujos\organizacion.spec.ts:81:1 › una estantería borrada en otra pestaña: renombrarla avisa sin recrearla (3.7s)
+  ok 49 [chromium-flujos] › tests\e2e\flujos\organizacion.spec.ts:102:1 › tras un error al mover en lote se conserva la selección (2.0s)
+  -  50 [chromium-flujos] › tests\e2e\flujos\pendientes.spec.ts:9:55 › Catálogo · modelo nuevo › dos copias de la misma edición y libro sin ISBN como ejemplares · se activa con U-DAT-06
+  -  51 [chromium-flujos] › tests\e2e\flujos\pendientes.spec.ts:9:55 › Importación · pendientes › fallo durante la publicación sin datos parciales · se activa con U-DAT-04
+  -  52 [chromium-flujos] › tests\e2e\flujos\pendientes.spec.ts:9:55 › Importación · pendientes › deshacer una importación con conflictos posteriores · se activa con U-DAT-02
+  -  53 [chromium-flujos] › tests\e2e\flujos\pendientes.spec.ts:9:55 › Trabajos › cerrar y reabrir el navegador con un trabajo en curso · se activa con U-DAT-03
+  -  54 [chromium-flujos] › tests\e2e\flujos\pendientes.spec.ts:9:55 › Trabajos › worker interrumpido y lease vencido · se activa con U-DAT-03
+  -  55 [chromium-flujos] › tests\e2e\flujos\pendientes.spec.ts:9:55 › Trabajos › pausa, cancelación y reintento idempotente · se activa con U-DAT-03
+  -  56 [chromium-flujos] › tests\e2e\flujos\pendientes.spec.ts:9:55 › Copias multipart › archivo v1 y formato nuevo en la misma restauración · se activa con U-DAT-04
+  -  57 [chromium-flujos] › tests\e2e\flujos\pendientes.spec.ts:9:55 › Copias multipart › partes fuera de orden, repetida, ausente o alterada · se activa con U-DAT-04
+  -  58 [chromium-flujos] › tests\e2e\flujos\pendientes.spec.ts:9:55 › Copias multipart › restauración sin pérdida de IDs definidos · se activa con U-DAT-04
+  -  59 [chromium-flujos] › tests\e2e\flujos\pendientes.spec.ts:9:55 › Proveedores · BNE y Google Books › edición discrepante entre proveedores · se activa con U-BIB-04
+  -  60 [chromium-flujos] › tests\e2e\flujos\pendientes.spec.ts:9:55 › Proveedores · BNE y Google Books › clave de Google Books ausente · se activa con U-BIB-03
+  -  61 [chromium-flujos] › tests\e2e\flujos\pendientes.spec.ts:9:55 › Privacidad · pendientes › objetos privados por propietario · se activa con U-DAT-10
+  -  62 [chromium-flujos] › tests\e2e\flujos\pendientes.spec.ts:9:55 › Privacidad · pendientes › borrado de cuenta · se activa con U-OPS-03
+  -  63 [chromium-flujos] › tests\e2e\flujos\pendientes.spec.ts:9:55 › Privacidad · pendientes › copia offline bloqueada para otra cuenta · se activa con U-EXP-08
+  -  64 [chromium-flujos] › tests\e2e\flujos\pendientes.spec.ts:9:55 › Producto › notas, etiquetas y valoración · se activa con U-PRO-01
+  -  65 [chromium-flujos] › tests\e2e\flujos\pendientes.spec.ts:9:55 › Producto › ubicación física · se activa con U-PRO-03
+  -  66 [chromium-flujos] › tests\e2e\flujos\pendientes.spec.ts:9:55 › Producto › series y volúmenes · se activa con U-PRO-05
+  ok 67 [chromium-flujos] › tests\e2e\flujos\personal.spec.ts:3:1 › personal: alta opcional, estrellas por teclado y siguiente alta vacía (2.6s)
+  ok 68 [chromium-flujos] › tests\e2e\flujos\personal.spec.ts:27:1 › personal: conflicto conserva borrador y exige recarga explícita (2.4s)
+  ok 69 [chromium-flujos] › tests\e2e\flujos\personal.spec.ts:46:1 › personal: OR/AND funciona en colección y búsqueda avanzada y sobrevive a recarga (5.9s)
+  ok 70 [chromium-flujos] › tests\e2e\flujos\personal.spec.ts:71:1 › personal: renombrar y borrar etiqueta conserva el libro (2.0s)
+  ok 71 [chromium-flujos] › tests\e2e\flujos\presentacion.spec.ts:9:3 › anónimo › acceso en móvil con tema oscuro, sin desbordamiento y con el error OAuth visible (621ms)
+  ok 72 [chromium-flujos] › tests\e2e\flujos\presentacion.spec.ts:20:3 › con sesión de A › inicio y colección sin botones anidados ni desbordamiento en móvil (2.0s)
+  ok 73 [chromium-flujos] › tests\e2e\flujos\prestamos.spec.ts:15:1 › préstamos: prestar, listado vencido, devolución, préstamo sucesivo y confirmaciones (7.9s)
+  ok 74 [chromium-flujos] › tests\e2e\flujos\prestamos.spec.ts:74:1 › préstamos: alias rechazado conserva el borrador y no ofrece campos de contacto (1.8s)
+  ok 75 [chromium-flujos] › tests\e2e\flujos\prestamos.spec.ts:90:1 › préstamos: contraste, diálogos y reflujo en claro y oscuro (11.8s)
+  ok 76 [chromium-flujos] › tests\e2e\flujos\privacidad.spec.ts:9:1 › los datos de A son invisibles para B (4.9s)
+  ok 77 [chromium-flujos] › tests\e2e\flujos\proveedores.spec.ts:12:1 › encontrado: la ficha del fixture se revisa y corrige antes de guardarla (1.7s)
+  ok 78 [chromium-flujos] › tests\e2e\flujos\proveedores.spec.ts:30:1 › no encontrado: el aviso ofrece el alta manual con el ISBN conservado (1.7s)
+  ok 79 [chromium-flujos] › tests\e2e\flujos\proveedores.spec.ts:45:1 › fallo del proveedor: no se confunde con «no encontrado» y conserva el alta manual (2.9s)
+  ok 80 [chromium-flujos] › tests\e2e\flujos\proveedores.spec.ts:78:1 › un proveedor vacío y otro disponible: BNE aporta la ficha que Open Library no tiene, y encontrar no guarda (1.8s)
+  ok 81 [chromium-flujos] › tests\e2e\flujos\proveedores.spec.ts:93:1 › 429, plazo agotado, 5xx y ausencia se distinguen entre sí y ninguno impide el alta manual (9.9s)
+  ok 82 [chromium-flujos] › tests\e2e\flujos\proveedores.spec.ts:124:1 › presupuesto global agotado: una sola consulta, aviso de límite y alta manual con el ISBN conservado (4.2s)
+  ok 83 [chromium-flujos] › tests\e2e\flujos\revision.spec.ts:6:1 › bandeja de revisión: filtro, vuelta desde la ficha, comparación, decisión individual y lote con vista previa (3.8s)
+  ok 84 [chromium-flujos] › tests\e2e\flujos\series.spec.ts:31:1 › crear una serie, vincular ediciones y ver el orden 1, 1.5, 2 con el orden desconocido al final (10.3s)
+  ok 85 [chromium-flujos] › tests\e2e\flujos\series.spec.ts:79:1 › una ficha sin serie no cambia y quitar la serie desde la ficha conserva el libro (2.4s)
+  ok 86 [chromium-flujos] › tests\e2e\flujos\series.spec.ts:109:1 › borrar una serie retira sus vínculos pero no borra los libros (2.4s)
+  ok 87 [chromium-flujos] › tests\e2e\flujos\series.spec.ts:132:1 › la búsqueda avanzada filtra por serie y la URL conserva el filtro (3.0s)
+  ok 88 [chromium-flujos] › tests\e2e\flujos\ubicaciones.spec.ts:41:1 › ubicaciones: mueble y balda, ejemplar situado desde la ficha, contenido filtrado y borrado con elección explícita (4.5s)
+  ok 89 [chromium-flujos] › tests\e2e\flujos\ubicaciones.spec.ts:105:1 › ubicaciones: foto de referencia con vista previa, guardada sin URL pública y quitada (2.0s)
+  ok 90 [chromium-flujos] › tests\e2e\flujos\vistas.spec.ts:3:1 › vistas guardadas: guardar, aplicar sin selección, renombrar, sobrescribir y borrar (2.5s)
+(node:38160) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 91 [chromium] › tests\e2e\cierre\acceso-sesion.spec.ts:14:1 › sesión: destino interno, renovación, cierre y cambio de cuenta A→B sin restos (9.6s)
+  ok 92 [chromium] › tests\e2e\cierre\acceso-sesion.spec.ts:82:1 › acceso local: errores genéricos y limitador de intentos fallidos (1.1m)
+
+  18 skipped
+  74 passed (6.3m)
+Servidor sin salidas de red externas durante el run.
+Cuentas de Auth sin cambios (2, todas @biblib.test). Datos del run limpiados y biblioteca de A restaurada si hizo falta.
+Resultado: 74 recorridos superados, 0 fallo(s) conocido(s), 18 pendientes (fixme), 0 fallidos, 0 repeticiones.
