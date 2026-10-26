@@ -33,8 +33,15 @@ async function summary(page) {
 
 async function expectCase(name, page, url, expected) {
   if (url) await page.goto(`${BASE}${url}`)
-  const actual = await summary(page)
-  const ok = Object.entries(expected).every(([key, value]) => actual[key] === value)
+  // La tabla carga por una Server Action: se relee hasta 15 s para no evaluar el resumen anterior a la respuesta.
+  const deadline = Date.now() + 15_000
+  let actual = await summary(page)
+  let ok = Object.entries(expected).every(([key, value]) => actual[key] === value)
+  while (!ok && Date.now() < deadline) {
+    await page.waitForTimeout(250)
+    actual = await summary(page)
+    ok = Object.entries(expected).every(([key, value]) => actual[key] === value)
+  }
   checks.push({ name, url: url ?? page.url().replace(BASE, ""), expected, actual, ok })
 }
 
