@@ -1,4 +1,4 @@
-import { writeFileSync } from "node:fs"
+import { existsSync, writeFileSync } from "node:fs"
 import path from "node:path"
 import { contractResults } from "./contract.mjs"
 
@@ -67,8 +67,20 @@ export function budgetRows(all) {
   return { scale, rows }
 }
 
+function reportLink(dir) {
+  // Un ensayo puede guardar sus tablas en subcarpetas del informe común (100/1000/10000).
+  let ancestor = path.resolve(dir)
+  while (true) {
+    const report = path.join(ancestor, "informe.md")
+    if (existsSync(report)) return path.relative(dir, report).split(path.sep).join("/")
+    const parent = path.dirname(ancestor)
+    if (parent === ancestor) return "informe.md" // El análisis se redactará junto a las tablas.
+    ancestor = parent
+  }
+}
+
 export function writeTables(dir, { manifest, all }) {
-  const lines = ["# Tablas de la medición (generadas por `pnpm perf:local`)", "", `Generadas el ${manifest.generadoEn}. Cifras en milisegundos salvo indicación. «p50 / p95». Ver [informe](informe.md) para el análisis.`, ""]
+  const lines = ["# Tablas de la medición (generadas por `pnpm perf:local`)", "", `Generadas el ${manifest.generadoEn}. Cifras en milisegundos salvo indicación. «p50 / p95». Ver [informe](${reportLink(dir)}) para el análisis.`, ""]
   for (const [scale, result] of Object.entries(all.tamanos)) {
     lines.push(`## ${scale} ejemplares`, "", `Dataset \`${result.dataset.id}\` (huella \`${result.dataset.hash.slice(0, 16)}\`): ${result.dataset.libros} libros, ${result.dataset.estanterias} estanterías, estanteria mayor ${result.dataset.estanteriaMayor} libros, ISBN manuales ${result.dataset.isbnManuales}.`, "")
     if (result.acciones) {
