@@ -1,46 +1,32 @@
-import { test } from "../lib/fixtures"
+﻿import { test } from "../lib/fixtures"
 
-// Grupos de U-QA-02 que dependen de unidades futuras. Son esqueletos `test.fixme`: aparecen como
-// pendientes en el informe, nunca como superados, y cada uno nombra la unidad que lo activará.
-// Al cerrar esa unidad se sustituye el fixme por el recorrido real (criterio de «terminada»).
-// Proveedores: «un proveedor vacío y otro disponible», «429, plazo agotado y 5xx» y «presupuesto global
-// agotado» pasaron a flujos/proveedores.spec.ts con U-BIB-05.
+// O16-FIX: correspondencia de los antiguos fixme con cobertura real de las unidades integradas.
+// U-DAT-06 (dos copias, sin ISBN): integration/model/ejemplares.test.mjs, casos 1 y 3.
+// U-DAT-04 (fallo atómico): integration/restore/conjuntos.test.mjs, «un error en la última sentencia…».
+// U-DAT-02 (deshacer con conflicto): integration/snapshots/versiones.test.mjs, «una segunda pestaña…».
+// U-DAT-03 (reabrir): integration/jobs/acciones.test.mjs, «crear, recargar y continuar…», nueva sesión GoTrue.
+// U-DAT-03 (worker/lease): integration/jobs/trabajadores.test.mjs, «matar el trabajador…» y «lease vencido…».
+// U-DAT-03 (pausa/cancelación/reintento): jobs/acciones.test.mjs + jobs/importacion.test.mjs.
+// U-DAT-04 (v1/v2): restore/conjuntos.test.mjs, «partes v1 y v2 mezcladas…»: se rechazan según contrato.
+// U-DAT-04 (orden/repetida/ausente/alterada): restore/conjuntos.test.mjs, primeros dos casos + «repetir una parte…».
+// U-DAT-04 (IDs): snapshots/versiones.test.mjs, «deshacer devuelve datos y referencias con IDs propios…»;
+//   model/ejemplares.test.mjs, «un libro sin ISBN…» e «importar un v2 con dos copias…».
+// U-DAT-10 (privacidad): integration/assets/acceso.test.mjs, «A sube y adjunta… B no puede obtenerla ni firmarla…».
+// U-OPS-03 (borrado): integration/account/worker.test.mjs + restore.test.mjs, supresión y no resurrección.
+// U-PRO-01: flujos/personal.spec.ts (4 recorridos).
+// U-PRO-03: flujos/ubicaciones.spec.ts (árbol, asignación, foto privada).
+// U-PRO-05: flujos/series.spec.ts (4 recorridos).
+// Ejecuciones y límites: docs/validacion/2026-10-26/O16/fix/informe.md.
 
-const pending = (unit: string, title: string) => test.fixme(`${title} · se activa con ${unit}`, async () => {})
-
-test.describe("Catálogo · modelo nuevo", () => {
-  pending("U-DAT-06", "dos copias de la misma edición y libro sin ISBN como ejemplares")
-})
-
-test.describe("Importación · pendientes", () => {
-  pending("U-DAT-04", "fallo durante la publicación sin datos parciales")
-  pending("U-DAT-02", "deshacer una importación con conflictos posteriores")
-})
-
-test.describe("Trabajos", () => {
-  pending("U-DAT-03", "cerrar y reabrir el navegador con un trabajo en curso")
-  pending("U-DAT-03", "worker interrumpido y lease vencido")
-  pending("U-DAT-03", "pausa, cancelación y reintento idempotente")
-})
-
-test.describe("Copias multipart", () => {
-  pending("U-DAT-04", "archivo v1 y formato nuevo en la misma restauración")
-  pending("U-DAT-04", "partes fuera de orden, repetida, ausente o alterada")
-  pending("U-DAT-04", "restauración sin pérdida de IDs definidos")
-})
-
-test.describe("Proveedores · BNE y Google Books", () => {
-  pending("U-BIB-04", "edición discrepante entre proveedores")
-  pending("U-BIB-03", "clave de Google Books ausente")
-})
-
-test.describe("Privacidad · pendientes", () => {
-  pending("U-DAT-10", "objetos privados por propietario")
-  pending("U-OPS-03", "borrado de cuenta")
-})
-
-test.describe("Producto", () => {
-  pending("U-PRO-01", "notas, etiquetas y valoración")
-  pending("U-PRO-03", "ubicación física")
-  pending("U-PRO-05", "series y volúmenes")
+test.describe("Proveedores · escenarios de configuración pendientes", () => {
+  test.fixme("edición discrepante entre proveedores · dueño U-BIB-04", async () => {
+    // No hay un fixture del servidor con dos proveedores que entreguen ediciones discrepantes para el
+    // mismo ISBN. Requiere ampliar ese contrato de fixtures; interceptar la API no acredita al orquestador.
+    // La lógica está cubierta por tests/bibliography-review.test.ts, pero eso no es un E2E.
+  })
+  test.fixme("clave de Google Books ausente · dueño U-BIB-03", async () => {
+    // El E2E arranca con catálogo fixture y Google apagado: no permite alterar la configuración del
+    // servidor por caso. Hace falta un arranque dedicado live con red simulada y Google habilitado sin
+    // clave; bibliographic-catalog-google.test.ts cubre la lógica unitaria, sin sustituir ese arranque.
+  })
 })
