@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState, useSyncExternalStore } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { BookCover } from "@/components/book-cover"
@@ -19,10 +19,17 @@ function cell(book: PrintBook, field: PrintField) {
   }
 }
 
+function subscribeDate(onChange: () => void) {
+  const timer = window.setInterval(onChange, 60_000)
+  window.addEventListener("beforeprint", onChange)
+  return () => { window.clearInterval(timer); window.removeEventListener("beforeprint", onChange) }
+}
+const localDate = () => new Date().toLocaleDateString("es-ES", { dateStyle: "long" })
+const serverDate = () => ""
+
 export function PrintCatalogueView({ catalogue, returnHref }: { catalogue: PrintCatalogue; returnHref: string }) {
   const [selected, setSelected] = useState<PrintField[]>([...DEFAULT_PRINT_FIELDS])
-  const [date, setDate] = useState("")
-  useEffect(() => { setDate(new Date().toLocaleDateString("es-ES", { dateStyle: "long" })) }, [])
+  const date = useSyncExternalStore(subscribeDate, localDate, serverDate)
   const fields = selectPrintFields(selected)
   const available = PRINT_FIELDS.filter((field) => field !== "notes" || (catalogue.kind === "ready" && catalogue.books.some((book) => book.notes)))
   return <section className="print-catalogue space-y-6" aria-labelledby="print-title">
