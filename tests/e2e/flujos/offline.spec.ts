@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs"
 import type { BrowserContext, Page, TestInfo } from "@playwright/test"
-import { capture, expect, SIGN_OUT_RSC_404, signOut, stateFile, test, type Account, type Guard } from "../lib/fixtures"
+import { alerts, capture, expect, SIGN_OUT_RSC_404, signOut, stateFile, test, type Account, type Guard } from "../lib/fixtures"
 
 // U-EXP-08 · PWA con consulta sin conexión de solo lectura (puerta G15). El worker solo funciona con el build
 // de producción que arranca el runner (la bandera BIBLIB_OFFLINE_SNAPSHOT=1 la fija tests/e2e/run.mjs). Cada
@@ -149,7 +149,7 @@ test("offline: activar con PIN y consultar sin conexión una copia de solo lectu
   await capture(page, testInfo, "offline-bloqueada-oscuro")
 
   await unlock(page, "000000")
-  await expect(page.getByRole("alert")).toContainText("Te quedan 9 intentos")
+  await expect(alerts(page)).toContainText("Te quedan 9 intentos")
   await unlock(page, PIN_A)
   const list = page.getByRole("list", { name: "Libros de la copia" })
   for (const title of BOOKS_A) await expect(list.getByRole("heading", { name: title })).toBeVisible()
@@ -201,7 +201,7 @@ test("offline: A y B en el mismo navegador no ven la copia del otro", async ({ p
   await context.setOffline(true)
   await page.goto("/offline")
   await unlock(page, PIN_A)
-  await expect(page.getByRole("alert")).toContainText("no son correctos")
+  await expect(alerts(page)).toContainText("no son correctos")
   await unlock(page, PHRASE_B)
   await expect(page.getByRole("heading", { name: ONLY_B })).toBeVisible()
   await expect(page.getByText("El cuaderno de la bruma")).toHaveCount(0)
@@ -214,7 +214,7 @@ test("offline: A y B en el mismo navegador no ven la copia del otro", async ({ p
   await context.setOffline(true)
   await page.goto("/offline")
   await unlock(page, PHRASE_B)
-  await expect(page.getByRole("alert")).toContainText("no son correctos")
+  await expect(alerts(page)).toContainText("no son correctos")
   await unlock(page, PIN_A)
   await expect(page.getByRole("heading", { name: "El cuaderno de la bruma" })).toBeVisible()
   await expect(page.getByText(ONLY_B)).toHaveCount(0)
@@ -284,7 +284,9 @@ test("offline: una versión nueva del worker borra las cachés anteriores y cons
 
   // La página vuelve a registrar la versión publicada: se instala y borra la caché de la versión de prueba.
   await page.reload()
-  await expect.poll(async () => Object.keys(await cachedEntries(page))).toEqual([current.cache])
+  // La instalación descarga /offline y sus estáticos antes de activarse: se espera al worker activo de esa versión.
+  await expect.poll(() => page.evaluate(async () => (await navigator.serviceWorker.getRegistration())?.active?.scriptURL ?? ""), { timeout: 30_000 }).toContain(`v=${current.version}`)
+  await expect.poll(async () => Object.keys(await cachedEntries(page)), { timeout: 30_000 }).toEqual([current.cache])
   await expect.poll(async () => (await workerInfo(page)).version).toBe(current.version)
   expect(await offlineDatabases(page), "Actualizar el worker no toca la copia").toHaveLength(1)
 })
