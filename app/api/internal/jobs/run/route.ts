@@ -8,6 +8,9 @@ import { isRunnerAuthorized, workerDeps } from "@/lib/jobs/server"
 
 const headers = { "Cache-Control": "private, no-store" }
 
+// El drenaje dura hasta 25 s y un paso empezado puede tardar otros 20 s en confirmar.
+export const maxDuration = 60
+
 export async function POST(request: NextRequest) {
   if (!isRunnerAuthorized(request.headers.get("authorization"))) {
     return NextResponse.json({ error: "No autorizado." }, { status: 401, headers })

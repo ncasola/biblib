@@ -2,9 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState, type ChangeEvent } from "react"
 import Link from "next/link"
-import { Download, Upload, ArrowLeft, AlertCircle, CheckCircle, LoaderCircle, RefreshCw, History, RotateCcw, Trash2, X } from "lucide-react"
+import { Download, Upload, ArrowLeft, AlertCircle, CheckCircle, LoaderCircle, RefreshCw, History, RotateCcw, Trash2, X, Archive, ImageIcon, CloudOff, type LucideIcon } from "lucide-react"
 import { Header } from "@/components/header"
 import { Button } from "@/components/ui/button"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { CoverRecoveryJobPanel } from "@/components/cover-recovery-job-panel"
 import { ImportJobPanel } from "@/components/import-job-panel"
 import { CsvImportPanel } from "@/components/csv-import-panel"
@@ -17,6 +18,7 @@ import { getBookTitlesAction, getLibraryCountsAction, prepareLibraryExportAction
 import { confirmImportAction, prepareImportAction, type PreparedImport } from "@/app/actions/import-preview"
 import { RestoreSetPanel } from "@/components/restore-set-panel"
 import { OfflineCopySettings } from "@/components/offline-copy-settings"
+import { useOfflineConfig } from "@/components/offline-runtime"
 import {
   deleteLibrarySnapshotAction, listLibrarySnapshotsAction, previewSnapshotRestoreAction, restoreSnapshotAction,
   type SnapshotRestorePreview,
@@ -230,6 +232,16 @@ function SnapshotHistory({ refreshKey, disabled, onNotice, onRestored }: {
   )
 }
 
+/** Pestañas de Ajustes. El valor va en el hash (`/settings#importar`) para recargar o enlazar una pestaña. */
+const TABS = [
+  { value: "copias", label: "Copias", icon: Archive },
+  { value: "importar", label: "Importar", icon: Upload },
+  { value: "portadas", label: "Portadas", icon: ImageIcon },
+  { value: "sin-conexion", label: "Sin conexión", icon: CloudOff },
+] as const satisfies readonly { value: string; label: string; icon: LucideIcon }[]
+type SettingsTab = (typeof TABS)[number]["value"]
+const isSettingsTab = (value: string): value is SettingsTab => TABS.some((tab) => tab.value === value)
+
 /** Descarga un archivo servido por la app sin cargar su contenido en la página. */
 function downloadLink(href: string, fileName: string) {
   const link = document.createElement("a")
@@ -262,6 +274,11 @@ export default function SettingsPage() {
   // Cambia tras un reemplazo para que el historial muestre la versión anterior recién guardada (U-DAT-02).
   const [historyKey, setHistoryKey] = useState(0)
   const [partsOpen, setPartsOpen] = useState(false)
+  const [tab, setTab] = useState<SettingsTab>("copias")
+  // Sin la copia de lectura activada, su sección no se pinta: tampoco se ofrece su pestaña.
+  const { snapshotEnabled } = useOfflineConfig()
+  const tabs = snapshotEnabled ? TABS : TABS.filter((entry) => entry.value !== "sin-conexion")
+  const activeTab = tabs.some((entry) => entry.value === tab) ? tab : "copias"
   // Una clave por revisión preparada: reintentar tras una respuesta perdida recupera el mismo resultado.
   const idempotencyKey = useRef<string>("")
   const fileInput = useRef<HTMLInputElement>(null)
@@ -280,6 +297,20 @@ export default function SettingsPage() {
   const refreshCounts = () => getLibraryCountsAction().then((loaded) => { if (loaded.ok) setCounts(loaded.value) }).catch(() => { /* Se recarga al volver. */ })
 
   useEffect(() => { void refresh() }, [refresh])
+
+  // La pestaña del hash se aplica tras hidratar: el servidor no conoce el hash y siempre pinta «Copias».
+  useEffect(() => {
+    const fromHash = () => { const value = window.location.hash.slice(1); if (isSettingsTab(value)) setTab(value) }
+    fromHash()
+    window.addEventListener("hashchange", fromHash)
+    return () => window.removeEventListener("hashchange", fromHash)
+  }, [])
+  const changeTab = (value: string) => {
+    if (!isSettingsTab(value)) return
+    setTab(value)
+    // Sin entrada nueva en el historial: «Atrás» sale de Ajustes en lugar de recorrer las pestañas.
+    window.history.replaceState(window.history.state, "", `#${value}`)
+  }
 
   const downloadPart = (part: ExportPartLink) => downloadLink(part.href, part.fileName)
   const downloadManifest = (prepared: PreparedLibraryExport) => {
@@ -463,101 +494,115 @@ export default function SettingsPage() {
         </div>
         {!counts && !loading && <Button onClick={() => { setLoading(true); void refresh() }} disabled={busy} variant="outline" className="mb-6">Reintentar carga</Button>}
 
-        <div className="space-y-6">
-          <section aria-labelledby="export-title" className="surface-card rounded-2xl p-5 md:p-8">
-            <h2 id="export-title" className="text-2xl font-bold mb-2">Exportar una copia</h2>
-            <p className="text-muted-foreground mb-4">Descarga un JSON con libros, estanterías, estado de lectura, versión del formato y fecha de exportación. La copia se prepara en el servidor con los datos actuales. Las colecciones grandes se dividen automáticamente en archivos que respetan los límites de importación, con un manifiesto que acredita qué partes forman la copia.</p>
-            {loading ? <p role="status" className="text-sm mb-4">Cargando biblioteca…</p> : counts && <p className="text-sm mb-4">Biblioteca actual: {counts.books} libros en {counts.shelves} estanterías.</p>}
-            <Button onClick={() => void handleExport()} disabled={!counts || busy || loading} className="rounded-xl">{isExporting ? <LoaderCircle aria-hidden="true" className="animate-spin" /> : <Download aria-hidden="true" />}{isExporting ? "Preparando copia…" : "Descargar copia de seguridad"}</Button>
-            {/* Espacio reservado para el estado de la última copia: aparecer no empuja las secciones siguientes. */}
-            <div className="mt-3 min-h-[4.5rem] text-xs text-muted-foreground space-y-1">
-              <p>{exportSet ? `Formato de la última copia: ${exportSet.formatVersion === 2 ? "versión 2 (conserva la procedencia por campo; solo la importan versiones de BibLib que leen el formato 2)" : "versión 1 (sin pérdida de datos)"}.` : "Todavía no has descargado ninguna copia en esta visita."}</p>
-              {exportParts.length > 1 && <Button type="button" variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => setPartsOpen(true)} disabled={busy}>Ver las {exportParts.length} partes de la última copia</Button>}
-            </div>
-          </section>
+        <Tabs value={activeTab} onValueChange={changeTab} className="gap-6">
+          {/* Sin desplazamiento lateral en móvil: cuatro pestañas en 2 × 2; tres en una fila con el icono encima. Desde `sm`, una sola fila. */}
+          <TabsList aria-label="Secciones de Ajustes" className={`grid w-full gap-1 ${tabs.length === 4 ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-3"}`}>
+            {tabs.map(({ value, label, icon: Icon }) => <TabsTrigger key={value} value={value} className={`min-h-11 px-2 py-2 ${tabs.length === 4 ? "" : "flex-col gap-1 sm:flex-row sm:gap-1.5"}`}><Icon aria-hidden="true" />{label}</TabsTrigger>)}
+          </TabsList>
 
-          <Dialog open={partsOpen && exportParts.length > 1} onOpenChange={setPartsOpen}>
-            <DialogContent className="max-h-[85vh] overflow-y-auto">
-              <DialogHeader><DialogTitle>Descarga las {exportParts.length} partes</DialogTitle><DialogDescription>Para restaurar la copia completa en una sola operación, selecciona todas las partes y el manifiesto en «Restaurar una copia por partes». Cada parte sigue siendo importable por separado.</DialogDescription></DialogHeader>
-              <ol className="space-y-2 list-decimal pl-5">{exportParts.map((part) => <li key={part.index}><Button type="button" variant="outline" disabled={busy} onClick={() => downloadPart(part)} className="h-auto whitespace-normal text-left">Descargar parte {part.index + 1} de {exportParts.length} · {part.books} libros · {part.shelves} estanterías</Button></li>)}</ol>
-              {exportSet && <Button type="button" variant="secondary" disabled={busy} onClick={() => downloadManifest(exportSet)} className="h-auto whitespace-normal text-left">Descargar el manifiesto del conjunto</Button>}
-              <p className="text-xs text-muted-foreground">Las partes comparten fecha e identificadores. El manifiesto guarda el tamaño y el hash de cada parte, en orden: si falta una o cambia un solo byte, la restauración se rechaza sin modificar tu biblioteca.</p>
-            </DialogContent>
-          </Dialog>
-
-          <section aria-labelledby="import-title" aria-busy={isImporting || isValidating || isPreparing} className="surface-card rounded-2xl p-5 md:p-8">
-            <h2 id="import-title" className="text-2xl font-bold mb-2">Importar una biblioteca</h2>
-            <p className="text-muted-foreground mb-4">Selecciona un JSON para validarlo y revisar qué cambiará en tu biblioteca. Elegir el archivo todavía no modifica tus datos.</p>
-            <p id="import-limits" className="text-sm text-muted-foreground mb-4">Formato antiguo de BibLib, versión 1 o versión 2. Máximo 8 MiB, {MAX_IMPORT_BOOKS.toLocaleString("es")} libros y {MAX_IMPORT_SHELVES} estanterías.</p>
-            <input ref={fileInput} id="import-file" type="file" accept=".json,application/json" onChange={(event) => void handleFile(event)} disabled={busy || !counts || loading} className="sr-only" tabIndex={-1} aria-label="Archivo JSON de biblioteca" aria-describedby="import-limits" />
-            <Button type="button" onClick={() => fileInput.current?.click()} disabled={busy || !counts || loading} variant="secondary" className="rounded-xl">{isValidating ? <LoaderCircle aria-hidden="true" className="animate-spin" /> : <Upload aria-hidden="true" />}{isValidating ? "Validando archivo…" : preview ? "Elegir otro archivo" : "Seleccionar archivo JSON"}</Button>
-
-            {preview && isPreparing && <p role="status" className="mt-6 flex items-start gap-2 text-sm"><LoaderCircle aria-hidden="true" className="w-4 h-4 animate-spin shrink-0 mt-0.5" />Preparando la revisión de «{preview.name}» con tu biblioteca actual. No se consulta ningún catálogo: las portadas pendientes se buscan después, en segundo plano.</p>}
-
-            {preview && stale && !isPreparing && <div role="alert" className="mt-6 rounded-xl border border-destructive bg-destructive/10 p-4 space-y-3">
-              <p className="font-medium">{stale.reason === "conflict" ? "Tu biblioteca ha cambiado" : "La revisión ya no es válida"}</p>
-              <p className="text-sm">{stale.text}</p>
-              <p className="text-sm text-muted-foreground">Se conservan el archivo «{preview.name}» y el modo «{mode === "replace" ? "Reemplazar" : "Fusionar"}». Revisa de nuevo el plan antes de confirmar.</p>
-              <div className="flex flex-wrap gap-3"><Button onClick={() => void prepare(preview.input, mode)} disabled={busy}><RefreshCw aria-hidden="true" />Volver a revisar con los datos actuales</Button><Button variant="outline" onClick={cancelImport} disabled={busy}>Cancelar importación</Button></div>
-            </div>}
-
-            {preview && prepared && plan && <div className="mt-6 space-y-5">
-              <div className="rounded-xl border border-border p-4">
-                <h3 className="font-semibold break-all">Revisión: {preview.name}</h3>
-                <p className="text-xs text-muted-foreground mt-1">Revisión preparada frente a tu biblioteca actual. Caduca a las {expiresAt}; si cambias algo en otra pestaña antes de confirmar, tendrás que volver a revisarla.</p>
-                <dl className="mt-3 grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
-                  {([
-                    ["Libros en el archivo", preview.library.books.length],
-                    ["Estanterías en el archivo", preview.library.shelves.length],
-                    ["Libros nuevos", plan.counts.added],
-                    [mode === "merge" ? "Ya presentes (se omiten)" : "Se sustituyen conservando su enlace", mode === "merge" ? plan.counts.skipped : plan.counts.overwritten],
-                    ["Libros que se eliminarán", plan.counts.deleted],
-                    ["Estanterías nuevas", plan.counts.shelvesCreated],
-                    ["Estanterías que se eliminarán", plan.counts.shelvesDeleted],
-                    ["Con identificador nuevo", plan.counts.reassigned],
-                    ["Sin portada", plan.counts.coversPending],
-                  ] as const).map(([label, count]) => <div key={label}><dt className="text-muted-foreground">{label}</dt><dd className="font-semibold text-lg">{count}</dd></div>)}
-                </dl>
-                <p className="text-sm mt-3">Tras la importación tendrás {plan.counts.booksAfter} libros en {plan.counts.shelvesAfter} estanterías.</p>
-                {skippedTitles.length > 0 && <p className="text-sm mt-3">Ya presentes: {skippedTitles.slice(0, 5).join("; ")}{skippedTitles.length > 5 ? "…" : ""}. Al fusionar se conservarán sus datos actuales.</p>}
-                {deletedTitles.total > 0 && <details className="mt-3 text-sm" open={deletedTitles.total <= 10}><summary className="cursor-pointer font-medium">Libros actuales que se eliminarán ({deletedTitles.total})</summary><ul className="list-disc pl-5 mt-2 space-y-1 max-h-64 overflow-auto">{deletedTitles.titles.map((title, index) => <li key={`${plan.books.delete[index]}`}>{title}</li>)}</ul>{deletedTitles.total > deletedTitles.titles.length && <p className="mt-1 text-muted-foreground">Y {deletedTitles.total - deletedTitles.titles.length} más.</p>}</details>}
-                {preview.library.books.length > 0 && <details className="mt-3 text-sm"><summary className="cursor-pointer font-medium">Ver libros del archivo</summary><ul className="list-disc pl-5 mt-2 space-y-1 max-h-64 overflow-auto">{preview.library.books.map((book) => <li key={book.id}>{book.title}{book.authors.length > 0 ? ` — ${book.authors.map((author) => author.name).join(", ")}` : ""}</li>)}</ul></details>}
+          {/* `forceMount` con las inactivas ocultas: cambiar de pestaña no pierde una revisión a medias ni el seguimiento de un trabajo. */}
+          <TabsContent value="copias" forceMount className="space-y-6 data-[state=inactive]:hidden">
+            <section aria-labelledby="export-title" className="surface-card rounded-2xl p-5 md:p-8">
+              <h2 id="export-title" className="text-2xl font-bold mb-2">Exportar una copia</h2>
+              <p className="text-muted-foreground mb-4">Descarga un JSON con libros, estanterías, estado de lectura, versión del formato y fecha de exportación. La copia se prepara en el servidor con los datos actuales. Las colecciones grandes se dividen automáticamente en archivos que respetan los límites de importación, con un manifiesto que acredita qué partes forman la copia.</p>
+              {loading ? <p role="status" className="text-sm mb-4">Cargando biblioteca…</p> : counts && <p className="text-sm mb-4">Biblioteca actual: {counts.books} libros en {counts.shelves} estanterías.</p>}
+              <Button onClick={() => void handleExport()} disabled={!counts || busy || loading} className="rounded-xl">{isExporting ? <LoaderCircle aria-hidden="true" className="animate-spin" /> : <Download aria-hidden="true" />}{isExporting ? "Preparando copia…" : "Descargar copia de seguridad"}</Button>
+              {/* Espacio reservado para el estado de la última copia: aparecer no empuja las secciones siguientes. */}
+              <div className="mt-3 min-h-[4.5rem] text-xs text-muted-foreground space-y-1">
+                <p>{exportSet ? `Formato de la última copia: ${exportSet.formatVersion === 2 ? "versión 2 (conserva la procedencia por campo; solo la importan versiones de BibLib que leen el formato 2)" : "versión 1 (sin pérdida de datos)"}.` : "Todavía no has descargado ninguna copia en esta visita."}</p>
+                {exportParts.length > 1 && <Button type="button" variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => setPartsOpen(true)} disabled={busy}>Ver las {exportParts.length} partes de la última copia</Button>}
               </div>
+            </section>
+  
+            <Dialog open={partsOpen && exportParts.length > 1} onOpenChange={setPartsOpen}>
+              <DialogContent className="max-h-[85vh] overflow-y-auto">
+                <DialogHeader><DialogTitle>Descarga las {exportParts.length} partes</DialogTitle><DialogDescription>Para restaurar la copia completa en una sola operación, selecciona todas las partes y el manifiesto en «Restaurar una copia por partes». Cada parte sigue siendo importable por separado.</DialogDescription></DialogHeader>
+                <ol className="space-y-2 list-decimal pl-5">{exportParts.map((part) => <li key={part.index}><Button type="button" variant="outline" disabled={busy} onClick={() => downloadPart(part)} className="h-auto whitespace-normal text-left">Descargar parte {part.index + 1} de {exportParts.length} · {part.books} libros · {part.shelves} estanterías</Button></li>)}</ol>
+                {exportSet && <Button type="button" variant="secondary" disabled={busy} onClick={() => downloadManifest(exportSet)} className="h-auto whitespace-normal text-left">Descargar el manifiesto del conjunto</Button>}
+                <p className="text-xs text-muted-foreground">Las partes comparten fecha e identificadores. El manifiesto guarda el tamaño y el hash de cada parte, en orden: si falta una o cambia un solo byte, la restauración se rechaza sin modificar tu biblioteca.</p>
+              </DialogContent>
+            </Dialog>
+  
+            <RestoreSetPanel disabled={busy || loading || !counts} onNotice={setMessage} onCommitted={() => { setResult(null); setHistoryKey((key) => key + 1); void refreshCounts() }} />
+  
+            <SnapshotHistory refreshKey={historyKey} disabled={busy} onNotice={setMessage} onRestored={() => { setResult(null); void refreshCounts() }} />
+  
+            <section className="surface-card rounded-2xl p-5 md:p-6"><h2 className="font-bold mb-3">Tus datos y copias</h2><ul className="list-disc pl-5 text-sm text-muted-foreground space-y-2"><li>Los datos están vinculados a tu cuenta y se guardan en la base de datos.</li><li>La copia JSON conserva fichas, estanterías y estado de lectura; no descarga las imágenes de las portadas.</li><li>Guarda copias periódicas y antes de reemplazar una colección.</li></ul></section>
+          </TabsContent>
 
-              <fieldset disabled={busy} className="space-y-3">
-                <legend className="font-semibold mb-2">¿Cómo quieres importar?</legend>
-                <label className="flex items-start gap-3 border border-border rounded-xl p-4 cursor-pointer"><input type="radio" name="import-mode" value="merge" checked={mode === "merge"} onChange={() => changeMode("merge")} className="mt-1" /><span><strong className="block">Fusionar con mi biblioteca</strong><span className="text-sm text-muted-foreground">Añade los libros nuevos y omite los ya presentes por ISBN o identificador. Conserva los libros actuales y une las estanterías con el mismo nombre.</span></span></label>
-                <label className="flex items-start gap-3 border border-border rounded-xl p-4 cursor-pointer"><input type="radio" name="import-mode" value="replace" checked={mode === "replace"} onChange={() => changeMode("replace")} className="mt-1" /><span><strong className="block">Reemplazar la biblioteca</strong><span className="text-sm text-muted-foreground">Sustituye tus libros actuales por los del archivo y reemplaza las estanterías personalizadas. Se conserva la estantería predeterminada de tu cuenta. Al elegirlo se prepara una revisión nueva.</span></span></label>
-              </fieldset>
+          <TabsContent value="importar" forceMount className="space-y-6 data-[state=inactive]:hidden">
+            <section aria-labelledby="import-title" aria-busy={isImporting || isValidating || isPreparing} className="surface-card rounded-2xl p-5 md:p-8">
+              <h2 id="import-title" className="text-2xl font-bold mb-2">Importar una biblioteca</h2>
+              <p className="text-muted-foreground mb-4">Selecciona un JSON para validarlo y revisar qué cambiará en tu biblioteca. Elegir el archivo todavía no modifica tus datos.</p>
+              <p id="import-limits" className="text-sm text-muted-foreground mb-4">Formato antiguo de BibLib, versión 1 o versión 2. Máximo 8 MiB, {MAX_IMPORT_BOOKS.toLocaleString("es")} libros y {MAX_IMPORT_SHELVES} estanterías.</p>
+              <input ref={fileInput} id="import-file" type="file" accept=".json,application/json" onChange={(event) => void handleFile(event)} disabled={busy || !counts || loading} className="sr-only" tabIndex={-1} aria-label="Archivo JSON de biblioteca" aria-describedby="import-limits" />
+              <Button type="button" onClick={() => fileInput.current?.click()} disabled={busy || !counts || loading} variant="secondary" className="rounded-xl">{isValidating ? <LoaderCircle aria-hidden="true" className="animate-spin" /> : <Upload aria-hidden="true" />}{isValidating ? "Validando archivo…" : preview ? "Elegir otro archivo" : "Seleccionar archivo JSON"}</Button>
+  
+              {preview && isPreparing && <p role="status" className="mt-6 flex items-start gap-2 text-sm"><LoaderCircle aria-hidden="true" className="w-4 h-4 animate-spin shrink-0 mt-0.5" />Preparando la revisión de «{preview.name}» con tu biblioteca actual. No se consulta ningún catálogo: las portadas pendientes se buscan después, en segundo plano.</p>}
+  
+              {preview && stale && !isPreparing && <div role="alert" className="mt-6 rounded-xl border border-destructive bg-destructive/10 p-4 space-y-3">
+                <p className="font-medium">{stale.reason === "conflict" ? "Tu biblioteca ha cambiado" : "La revisión ya no es válida"}</p>
+                <p className="text-sm">{stale.text}</p>
+                <p className="text-sm text-muted-foreground">Se conservan el archivo «{preview.name}» y el modo «{mode === "replace" ? "Reemplazar" : "Fusionar"}». Revisa de nuevo el plan antes de confirmar.</p>
+                <div className="flex flex-wrap gap-3"><Button onClick={() => void prepare(preview.input, mode)} disabled={busy}><RefreshCw aria-hidden="true" />Volver a revisar con los datos actuales</Button><Button variant="outline" onClick={cancelImport} disabled={busy}>Cancelar importación</Button></div>
+              </div>}
+  
+              {preview && prepared && plan && <div className="mt-6 space-y-5">
+                <div className="rounded-xl border border-border p-4">
+                  <h3 className="font-semibold break-all">Revisión: {preview.name}</h3>
+                  <p className="text-xs text-muted-foreground mt-1">Revisión preparada frente a tu biblioteca actual. Caduca a las {expiresAt}; si cambias algo en otra pestaña antes de confirmar, tendrás que volver a revisarla.</p>
+                  <dl className="mt-3 grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
+                    {([
+                      ["Libros en el archivo", preview.library.books.length],
+                      ["Estanterías en el archivo", preview.library.shelves.length],
+                      ["Libros nuevos", plan.counts.added],
+                      [mode === "merge" ? "Ya presentes (se omiten)" : "Se sustituyen conservando su enlace", mode === "merge" ? plan.counts.skipped : plan.counts.overwritten],
+                      ["Libros que se eliminarán", plan.counts.deleted],
+                      ["Estanterías nuevas", plan.counts.shelvesCreated],
+                      ["Estanterías que se eliminarán", plan.counts.shelvesDeleted],
+                      ["Con identificador nuevo", plan.counts.reassigned],
+                      ["Sin portada", plan.counts.coversPending],
+                    ] as const).map(([label, count]) => <div key={label}><dt className="text-muted-foreground">{label}</dt><dd className="font-semibold text-lg">{count}</dd></div>)}
+                  </dl>
+                  <p className="text-sm mt-3">Tras la importación tendrás {plan.counts.booksAfter} libros en {plan.counts.shelvesAfter} estanterías.</p>
+                  {skippedTitles.length > 0 && <p className="text-sm mt-3">Ya presentes: {skippedTitles.slice(0, 5).join("; ")}{skippedTitles.length > 5 ? "…" : ""}. Al fusionar se conservarán sus datos actuales.</p>}
+                  {deletedTitles.total > 0 && <details className="mt-3 text-sm" open={deletedTitles.total <= 10}><summary className="cursor-pointer font-medium">Libros actuales que se eliminarán ({deletedTitles.total})</summary><ul className="list-disc pl-5 mt-2 space-y-1 max-h-64 overflow-auto">{deletedTitles.titles.map((title, index) => <li key={`${plan.books.delete[index]}`}>{title}</li>)}</ul>{deletedTitles.total > deletedTitles.titles.length && <p className="mt-1 text-muted-foreground">Y {deletedTitles.total - deletedTitles.titles.length} más.</p>}</details>}
+                  {preview.library.books.length > 0 && <details className="mt-3 text-sm"><summary className="cursor-pointer font-medium">Ver libros del archivo</summary><ul className="list-disc pl-5 mt-2 space-y-1 max-h-64 overflow-auto">{preview.library.books.map((book) => <li key={book.id}>{book.title}{book.authors.length > 0 ? ` — ${book.authors.map((author) => author.name).join(", ")}` : ""}</li>)}</ul></details>}
+                </div>
+  
+                <fieldset disabled={busy} className="space-y-3">
+                  <legend className="font-semibold mb-2">¿Cómo quieres importar?</legend>
+                  <label className="flex items-start gap-3 border border-border rounded-xl p-4 cursor-pointer"><input type="radio" name="import-mode" value="merge" checked={mode === "merge"} onChange={() => changeMode("merge")} className="mt-1" /><span><strong className="block">Fusionar con mi biblioteca</strong><span className="text-sm text-muted-foreground">Añade los libros nuevos y omite los ya presentes por ISBN o identificador. Conserva los libros actuales y une las estanterías con el mismo nombre.</span></span></label>
+                  <label className="flex items-start gap-3 border border-border rounded-xl p-4 cursor-pointer"><input type="radio" name="import-mode" value="replace" checked={mode === "replace"} onChange={() => changeMode("replace")} className="mt-1" /><span><strong className="block">Reemplazar la biblioteca</strong><span className="text-sm text-muted-foreground">Sustituye tus libros actuales por los del archivo y reemplaza las estanterías personalizadas. Se conserva la estantería predeterminada de tu cuenta. Al elegirlo se prepara una revisión nueva.</span></span></label>
+                </fieldset>
+  
+                <p className="text-sm text-muted-foreground">Los identificadores de entidades nuevas o de otra cuenta pueden cambiar; sus enlaces antiguos pueden dejar de funcionar. Los ISBN de referencia y las portadas no confirman la edición física.</p>
+                {mode === "replace" && <div className="rounded-xl border border-destructive p-4"><p className="font-medium mb-3">El reemplazo elimina los libros actuales que no estén en el archivo. Antes de aplicarlo, BibLib guardará tu colección actual en «Versiones anteriores» (pestaña Copias) para que puedas restaurarla; si ya tienes el máximo de versiones guardadas, el reemplazo no se aplicará. También puedes descargar una copia.</p><Button variant="outline" onClick={() => void handleExport()} disabled={busy}><Download aria-hidden="true" />Descargar copia previa</Button></div>}
+                <div className="flex flex-wrap gap-3"><Button onClick={() => { setReplaceAcknowledged(false); setConfirmationOpen(true) }} disabled={busy} variant={mode === "replace" ? "destructive" : "default"}>Continuar y confirmar</Button><Button variant="outline" onClick={cancelImport} disabled={busy}>Cancelar importación</Button></div>
+              </div>}
+              {isImporting && <p role="status" className="mt-4 flex items-start gap-2 text-sm"><LoaderCircle aria-hidden="true" className="w-4 h-4 animate-spin shrink-0 mt-0.5" />Aplicando la revisión confirmada. Mantén esta página abierta hasta recibir el resultado.</p>}
+            </section>
+  
+            {result && <section aria-labelledby="result-title" className="surface-card rounded-2xl p-5 md:p-8"><h2 id="result-title" className="text-2xl font-bold mb-4">Resultado de la importación</h2><ul className="space-y-2"><li>Libros importados: <strong>{result.imported}</strong></li><li>Libros omitidos por estar presentes: <strong>{result.skipped}</strong></li><li>Libros eliminados: <strong>{result.deleted}</strong></li><li>Estanterías de la biblioteca resultante: <strong>{result.shelves}</strong></li><li>Libros importados con portada genérica, pendientes de búsqueda: <strong>{result.coversPending}</strong></li></ul>{result.coversPending > 0 && <p className="text-sm text-muted-foreground mt-4">La colección se ha importado. Las portadas pendientes se buscan en segundo plano, en pasos acotados y respetando los límites de cada catálogo; si alguna no aparece, la importación no se revierte.</p>}<Button asChild variant="outline" className="mt-4"><Link href="/books">Ver mi colección</Link></Button></section>}
+  
+            <ImportJobPanel jobId={importJobId} disabled={loading} />
+  
+            <CsvImportPanel disabled={busy || loading || !counts} onJob={setImportJobId} onCommitted={() => { setHistoryKey((key) => key + 1); void refreshCounts() }} />
+          </TabsContent>
 
-              <p className="text-sm text-muted-foreground">Los identificadores de entidades nuevas o de otra cuenta pueden cambiar; sus enlaces antiguos pueden dejar de funcionar. Los ISBN de referencia y las portadas no confirman la edición física.</p>
-              {mode === "replace" && <div className="rounded-xl border border-destructive p-4"><p className="font-medium mb-3">El reemplazo elimina los libros actuales que no estén en el archivo. Antes de aplicarlo, BibLib guardará tu colección actual en «Versiones anteriores» para que puedas restaurarla; si ya tienes el máximo de versiones guardadas, el reemplazo no se aplicará. También puedes descargar una copia.</p><Button variant="outline" onClick={() => void handleExport()} disabled={busy}><Download aria-hidden="true" />Descargar copia previa</Button></div>}
-              <div className="flex flex-wrap gap-3"><Button onClick={() => { setReplaceAcknowledged(false); setConfirmationOpen(true) }} disabled={busy} variant={mode === "replace" ? "destructive" : "default"}>Continuar y confirmar</Button><Button variant="outline" onClick={cancelImport} disabled={busy}>Cancelar importación</Button></div>
-            </div>}
-            {isImporting && <p role="status" className="mt-4 flex items-start gap-2 text-sm"><LoaderCircle aria-hidden="true" className="w-4 h-4 animate-spin shrink-0 mt-0.5" />Aplicando la revisión confirmada. Mantén esta página abierta hasta recibir el resultado.</p>}
-          </section>
+          <TabsContent value="portadas" forceMount className="space-y-6 data-[state=inactive]:hidden">
+            <CoverRecoveryJobPanel disabled={busy || loading || !counts} onRunningChange={setIsRecovering} onFinish={refresh} />
+          </TabsContent>
 
-          {result && <section aria-labelledby="result-title" className="surface-card rounded-2xl p-5 md:p-8"><h2 id="result-title" className="text-2xl font-bold mb-4">Resultado de la importación</h2><ul className="space-y-2"><li>Libros importados: <strong>{result.imported}</strong></li><li>Libros omitidos por estar presentes: <strong>{result.skipped}</strong></li><li>Libros eliminados: <strong>{result.deleted}</strong></li><li>Estanterías de la biblioteca resultante: <strong>{result.shelves}</strong></li><li>Libros importados con portada genérica, pendientes de búsqueda: <strong>{result.coversPending}</strong></li></ul>{result.coversPending > 0 && <p className="text-sm text-muted-foreground mt-4">La colección se ha importado. Las portadas pendientes se buscan en segundo plano, en pasos acotados y respetando los límites de cada catálogo; si alguna no aparece, la importación no se revierte.</p>}<Button asChild variant="outline" className="mt-4"><Link href="/books">Ver mi colección</Link></Button></section>}
-
-          <CsvImportPanel disabled={busy || loading || !counts} onJob={setImportJobId} onCommitted={() => { setHistoryKey((key) => key + 1); void refreshCounts() }} />
-
-          <ImportJobPanel jobId={importJobId} disabled={loading} />
-
-          <SnapshotHistory refreshKey={historyKey} disabled={busy} onNotice={setMessage} onRestored={() => { setResult(null); void refreshCounts() }} />
-
-          <RestoreSetPanel disabled={busy || loading || !counts} onNotice={setMessage} onCommitted={() => { setResult(null); setHistoryKey((key) => key + 1); void refreshCounts() }} />
-
-          <CoverRecoveryJobPanel disabled={busy || loading || !counts} onRunningChange={setIsRecovering} onFinish={refresh} />
-
-          <OfflineCopySettings />
-
-          <section className="surface-card rounded-2xl p-5 md:p-6"><h2 className="font-bold mb-3">Tus datos y copias</h2><ul className="list-disc pl-5 text-sm text-muted-foreground space-y-2"><li>Los datos están vinculados a tu cuenta y se guardan en la base de datos.</li><li>La copia JSON conserva fichas, estanterías y estado de lectura; no descarga las imágenes de las portadas.</li><li>Guarda copias periódicas y antes de reemplazar una colección.</li></ul></section>
-        </div>
+          {snapshotEnabled && <TabsContent value="sin-conexion" forceMount className="space-y-6 data-[state=inactive]:hidden">
+            <OfflineCopySettings />
+          </TabsContent>}
+        </Tabs>
       </main>
 
       <AlertDialog open={confirmationOpen} onOpenChange={setConfirmationOpen}>
         <AlertDialogContent>
-          <AlertDialogHeader><AlertDialogTitle>{mode === "replace" ? "Confirmar reemplazo de la biblioteca" : "Confirmar importación"}</AlertDialogTitle><AlertDialogDescription>{mode === "replace" ? `Se eliminarán ${plan?.counts.deleted ?? 0} libros actuales, se sustituirán ${plan?.counts.overwritten ?? 0} conservando su enlace y se añadirán ${plan?.counts.added ?? 0}. Antes se guardará tu colección actual como versión anterior: podrás restaurarla desde «Versiones anteriores» durante 30 días.` : `Se añadirán ${plan?.counts.added ?? 0} libros y se omitirán ${plan?.counts.skipped ?? 0} ya presentes. Tus libros actuales se conservarán.`} Solo se aplicará si tu biblioteca no ha cambiado desde esta revisión.</AlertDialogDescription></AlertDialogHeader>
+          <AlertDialogHeader><AlertDialogTitle>{mode === "replace" ? "Confirmar reemplazo de la biblioteca" : "Confirmar importación"}</AlertDialogTitle><AlertDialogDescription>{mode === "replace" ? `Se eliminarán ${plan?.counts.deleted ?? 0} libros actuales, se sustituirán ${plan?.counts.overwritten ?? 0} conservando su enlace y se añadirán ${plan?.counts.added ?? 0}. Antes se guardará tu colección actual como versión anterior: podrás restaurarla desde «Versiones anteriores», en la pestaña Copias, durante 30 días.` : `Se añadirán ${plan?.counts.added ?? 0} libros y se omitirán ${plan?.counts.skipped ?? 0} ya presentes. Tus libros actuales se conservarán.`} Solo se aplicará si tu biblioteca no ha cambiado desde esta revisión.</AlertDialogDescription></AlertDialogHeader>
           {mode === "replace" && <label className="flex items-start gap-3 text-sm"><input type="checkbox" checked={replaceAcknowledged} onChange={(event) => setReplaceAcknowledged(event.target.checked)} className="mt-1" /><span>Entiendo que se reemplazará mi colección actual.</span></label>}
           <AlertDialogFooter><AlertDialogCancel>Volver a la revisión</AlertDialogCancel><AlertDialogAction disabled={busy || !prepared || (mode === "replace" && !replaceAcknowledged)} onClick={() => void handleConfirm()}>{mode === "replace" ? "Sí, reemplazar biblioteca" : "Sí, fusionar biblioteca"}</AlertDialogAction></AlertDialogFooter>
         </AlertDialogContent>

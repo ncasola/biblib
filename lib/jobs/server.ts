@@ -71,6 +71,12 @@ export function workerDeps(): WorkerDeps {
 }
 
 /**
+ * Presupuesto de un disparo con `after()`: un paso que empieza justo antes del final puede tardar
+ * otros 20 s en confirmar, y todo cabe en el `maxDuration` de 60 s de Ajustes (app/settings/layout.tsx).
+ */
+const DRAIN_BUDGET_MS = 30_000
+
+/**
  * Ejecuta en segundo plano, tras responder, los pasos vencidos del trabajo del dueño. Si el proceso
  * se detiene, el lease caduca y otro disparo (consulta, ejecutor interno o runner) lo continúa.
  */
@@ -80,7 +86,7 @@ export function scheduleDrain(owner: string, jobId: string): void {
   draining.add(jobId)
   try {
     after(async () => {
-      try { await drainJobs(workerDeps(), { jobId, owner }, 55_000) }
+      try { await drainJobs(workerDeps(), { jobId, owner }, DRAIN_BUDGET_MS) }
       catch { /* El estado confirmado se conserva; el siguiente disparo lo reintenta. */ }
       finally { draining.delete(jobId) }
     })
