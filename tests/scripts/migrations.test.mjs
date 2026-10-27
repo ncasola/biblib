@@ -29,7 +29,8 @@ const facts0011 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrat
 const facts0012 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0012.json"), "utf8"))
 const facts0013 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0013.json"), "utf8"))
 const facts0014 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0014.json"), "utf8"))
-const facts = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0015.json"), "utf8"))
+const facts0015 = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0015.json"), "utf8"))
+const facts = JSON.parse(readFileSync(path.join(repo, "tests/fixtures/migrations/objects-0016.json"), "utf8"))
 const HEAD_0010 = MANIFEST_MIGRATIONS.slice(0, 11)
 const named = (list, name) => list.find((item) => item.name === name)
 const temporary = []
@@ -115,7 +116,7 @@ describe("ledger", () => {
     assert.deepEqual(compareLedger(entries, rowsFor(entries)).pending, [])
     const partial = compareLedger(entries, rowsFor(entries, 1))
     assert.equal(partial.appliedHead.tag, "0000_biblib_init")
-    assert.deepEqual(partial.pending, ["0001_library_integrity", "0002_book_versions", "0003_library_revision", "0004_catalogue_coordination", "0005_library_jobs", "0006_library_snapshots", "0007_saved_views", "0008_restore_sessions", "0009_cover_assets", "0010_works_editions_copies", "0011_copies_cutover", "0012_model_account_deletion", "0013_account_deletion", "0014_product_batch_o13", "0015_reading_and_loans"])
+    assert.deepEqual(partial.pending, ["0001_library_integrity", "0002_book_versions", "0003_library_revision", "0004_catalogue_coordination", "0005_library_jobs", "0006_library_snapshots", "0007_saved_views", "0008_restore_sessions", "0009_cover_assets", "0010_works_editions_copies", "0011_copies_cutover", "0012_model_account_deletion", "0013_account_deletion", "0014_product_batch_o13", "0015_reading_and_loans", "0016_jobs_scheduler"])
     assert.equal(compareLedger(entries, []).pending.length, entries.length)
   })
 
@@ -493,6 +494,22 @@ describe("manifest de objetos", () => {
     assert.deepEqual(failing(verifyManifest(capture, MANIFEST_MIGRATIONS)), ["function.library_snapshot_capture"])
     const steps = clone(facts); named(steps.functions, "account_deletion_step_tables").body = named(facts0014.functions, "account_deletion_step_tables").body
     assert.deepEqual(failing(verifyManifest(steps, MANIFEST_MIGRATIONS)), ["function.account_deletion_step_tables"])
+  })
+
+  test("0016: el programador de trabajos solo lo ejecuta el servidor, con search_path fijo y la URL del ejecutor con TLS", () => {
+    // Los metadatos reales de 0015 cumplen su head; con 0016 falta la función del programador.
+    assert.deepEqual(failing(verifyManifest(facts0015, MANIFEST_MIGRATIONS.slice(0, 16))), [])
+    assert.deepEqual(failing(verifyManifest(facts0015, MANIFEST_MIGRATIONS)), ["function.library_job_dispatch"])
+    // Lee el token de Vault como definer: anon o authenticated podrían dispararlo, o con otro search_path suplantar net/vault.
+    const callable = clone(facts); named(callable.functions, "library_job_dispatch").execute_authenticated = true
+    assert.deepEqual(failing(verifyManifest(callable, MANIFEST_MIGRATIONS)), ["function.library_job_dispatch"])
+    const anon = clone(facts); named(anon.functions, "library_job_dispatch").execute_anon = true
+    assert.deepEqual(failing(verifyManifest(anon, MANIFEST_MIGRATIONS)), ["function.library_job_dispatch"])
+    const path = clone(facts); named(path.functions, "library_job_dispatch").config = ["search_path=public"]
+    assert.deepEqual(failing(verifyManifest(path, MANIFEST_MIGRATIONS)), ["function.library_job_dispatch"])
+    // Aceptar http:// enviaría el token del ejecutor sin cifrar.
+    const plain = clone(facts); named(plain.functions, "library_job_dispatch").body = named(plain.functions, "library_job_dispatch").body.replace("^https://", "^https?://")
+    assert.deepEqual(failing(verifyManifest(plain, MANIFEST_MIGRATIONS)), ["function.library_job_dispatch"])
   })
 
   test("0014: lote de producto con RLS del dueño, cuenta activa, FK del mismo dueño, imágenes privadas y pasos de eliminación", () => {

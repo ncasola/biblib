@@ -4,8 +4,8 @@ import { EXIT } from "../lib/exit-codes.mjs"
 // Manifest de objetos deliberados de BibLib. Se comprueba con metadatos de pg_catalog e
 // information_schema y con expresiones normalizadas, nunca comparando el pretty-print.
 // `since`/`until` indican la migración que introduce o retira cada objeto.
-const M0 = "0000_biblib_init", M1 = "0001_library_integrity", M2 = "0002_book_versions", M3 = "0003_library_revision", M4 = "0004_catalogue_coordination", M5 = "0005_library_jobs", M6 = "0006_library_snapshots", M7 = "0007_saved_views", M8 = "0008_restore_sessions", M9 = "0009_cover_assets", M10 = "0010_works_editions_copies", M11 = "0011_copies_cutover", M12 = "0012_model_account_deletion", M13 = "0013_account_deletion", M14 = "0014_product_batch_o13", M15 = "0015_reading_and_loans"
-export const MANIFEST_MIGRATIONS = [M0, M1, M2, M3, M4, M5, M6, M7, M8, M9, M10, M11, M12, M13, M14, M15]
+const M0 = "0000_biblib_init", M1 = "0001_library_integrity", M2 = "0002_book_versions", M3 = "0003_library_revision", M4 = "0004_catalogue_coordination", M5 = "0005_library_jobs", M6 = "0006_library_snapshots", M7 = "0007_saved_views", M8 = "0008_restore_sessions", M9 = "0009_cover_assets", M10 = "0010_works_editions_copies", M11 = "0011_copies_cutover", M12 = "0012_model_account_deletion", M13 = "0013_account_deletion", M14 = "0014_product_batch_o13", M15 = "0015_reading_and_loans", M16 = "0016_jobs_scheduler"
+export const MANIFEST_MIGRATIONS = [M0, M1, M2, M3, M4, M5, M6, M7, M8, M9, M10, M11, M12, M13, M14, M15, M16]
 
 const own = "user_id=auth.uid"
 const ownNotDefault = "user_id=auth.uidandnotis_default"
@@ -133,6 +133,8 @@ const readingPolicies = (table) => productPolicies(table, ALL_WRITES).map((entry
 const readingFunction = (name, returns, args, { authenticated = false, securityDefiner = false } = {}) => ({ name, language: "plpgsql", returns, args, searchPath: "search_path=pg_catalog", securityDefiner, body: READING[name], execute: { authenticated, anon: false }, since: M15 })
 const readingTrigger = (table, name, fn, timing, events, level, tgtype) => ({ table, name, function: `biblib.${fn}`, timing, events, level, tgtype, since: M15 })
 const readingFk = (table, name, columns, references) => ({ table, name, type: "f", columns: ["user_id", ...columns], references: `biblib.${references}`, refColumns: ["user_id", "id"], onDelete: "c", since: M15 })
+// Programador (0016): pg_cron lo ejecuta como postgres; sin EXECUTE para anon ni authenticated.
+const SCHEDULER = migrationBodies(M16)
 const jobStateTokens = ["'queued'", "'running'", "'waiting_retry'", "'needs_review'", "'paused'", "'succeeded'", "'partially_succeeded'", "'failed'", "'cancelled'", "'expired'"]
 
 export const MANIFEST = Object.freeze({
@@ -703,6 +705,7 @@ export const MANIFEST = Object.freeze({
     { ...assetFunction("cover_asset_purge_confirm", "text[]", 3, false), until: M11 },
     assetFunction("cover_asset_quarantine_restored", "integer", 0, false),
     assetFunction("cover_storage_install", "void", 0, false, false),
+    { name: "library_job_dispatch", language: "plpgsql", returns: "boolean", args: 0, searchPath: "search_path=pg_catalog", securityDefiner: true, body: SCHEDULER.library_job_dispatch, execute: { authenticated: false, anon: false }, since: M16 },
   ],
   // tgtype: ROW(1) | BEFORE(2) | INSERT(4) | DELETE(8) | UPDATE(16). BEFORE INSERT OR UPDATE = 23; AFTER INSERT OR UPDATE OR DELETE = 29.
   triggers: [
