@@ -113,6 +113,13 @@
       "when": 1792965826611,
       "tag": "0015_reading_and_loans",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1793096046631,
+      "tag": "0016_jobs_scheduler",
+      "breakpoints": true
     }
   ]
 }

@@ -762,7 +762,7 @@ La publicación de una importación y la búsqueda de portadas son **trabajos pe
 | `pause/resume/cancelLibraryJobAction({ jobId, expectedVersion })` | Versión antigua o transición inválida: `JOB_CONFLICT` (409). Trabajo caducado: `JOB_EXPIRED` (410). Cancelar indica si llegó antes o después de publicar; durante la publicación espera a su commit. |
 
 - `confirmImportAction` conserva su contrato de U-DAT-01 y publica a través de un trabajo: crea o recupera el de la clave, ejecuta en línea el paso de publicación y devuelve `committed` con `jobId`. Si otro trabajador lo tiene, devuelve `queued` con el trabajo. Repetir la clave tras perder la respuesta devuelve el mismo `operationId` con `replayed: true`. Un conflicto deja el trabajo en `needs_review` y nunca se aplica por reintento.
-- **Ejecución**: tras responder, las acciones continúan los pasos vencidos con `after()` del servidor Next (hasta 55 s por disparo). Si el proceso cae, el lease caduca y otro disparo continúa. Para avanzar sin la página abierta existe la entrada interna `POST /api/internal/jobs/run`. Solo acepta `Authorization: Bearer <token>`, no lee cuerpo ni sesión y responde 401 a cualquier otra petición. El token es `BIBLIB_JOBS_RUNNER_SECRET` (al menos 32 caracteres) o, si falta, un HMAC derivado de `SUPABASE_DB_URL`. El scheduler de despliegue pertenece a F4.
+- **Ejecución**: tras responder, las acciones continúan los pasos vencidos con `after()` del servidor Next (hasta 30 s por disparo, más lo que tarde en confirmar el último paso). `after()` vive dentro del `maxDuration` de la ruta: Ajustes y la entrada interna lo fijan en 60 s, porque con el plazo por defecto de Vercel (10 s) cada paso de portadas se cortaba antes de confirmar y el trabajo quedaba `running` sin avanzar. Si el proceso cae, el lease caduca y otro disparo continúa. Para avanzar sin la página abierta existe la entrada interna `POST /api/internal/jobs/run`. Solo acepta `Authorization: Bearer <token>`, no lee cuerpo ni sesión y responde 401 a cualquier otra petición. El token es `BIBLIB_JOBS_RUNNER_SECRET` (al menos 32 caracteres) o, si falta, un HMAC derivado de `SUPABASE_DB_URL`. En el despliegue la llama el programador de `0016` (siguiente apartado).
 
 ```powershell
 pnpm dev:local --profile scratch                 # o start:local, en otra terminal
@@ -770,6 +770,33 @@ pnpm jobs:run:local --profile scratch            # [--once] [--interval-ms 5000]
 ```
 
 `jobs:run:local` sale con **3** si la app rechaza el token y con **8** si la app no responde (`--once`); en bucle registra la caída y reintenta.
+
+### Programador `0016_jobs_scheduler`
+
+En Vercel Hobby un cron solo puede ejecutarse una vez al día, así que el programador vive en Postgres. `pg_cron` ejecuta cada minuto `biblib.library_job_dispatch()` (trabajo `biblib-library-jobs`). Si hay algún paso que el ejecutor sin sesión pueda reclamar (misma condición que `library_job_claim`), llama con `pg_net` a `POST /api/internal/jobs/run` con `Authorization: Bearer <token>` y un plazo de 60 s. Si no hay pasos vencidos, no llama a nada y no consume invocaciones de Vercel. La URL y el token se leen de Supabase Vault:
+
+- `biblib_jobs_runner_url`: URL completa de la entrada, solo `https://<host>/api/internal/jobs/run`. Una URL `http://` o de otra ruta se ignora para no enviar el token sin TLS.
+- `biblib_jobs_runner_token`: el mismo valor que `BIBLIB_JOBS_RUNNER_SECRET` en Vercel.
+
+Sin los dos secretos la función no llama a nada, así que en local y en pruebas el programador está instalado pero inactivo; ahí se sigue usando `jobs:run:local`. La función es `SECURITY DEFINER` con `search_path` fijo y sin `EXECUTE` para `anon` ni `authenticated`, y el manifest la verifica como las demás. Si el Postgres no ofrece `pg_cron` y `pg_net`, como el remoto simulado de las pruebas de promoción, la migración crea la función y avisa con un `NOTICE`, sin programar nada.
+
+Activación en producción, una sola vez:
+
+1. Genera un token de al menos 32 caracteres: `node -e "console.log(require('node:crypto').randomBytes(32).toString('base64url'))"`.
+2. En Vercel, añade `BIBLIB_JOBS_RUNNER_SECRET` con ese valor al entorno Production y vuelve a desplegar.
+3. Aplica `0016` con el flujo de promoción (`db:plan:prod` → `db:backup:prod` → `db:migrate:prod`).
+4. En el editor SQL de Supabase:
+
+   ```sql
+   select vault.create_secret('<token>', 'biblib_jobs_runner_token');
+   select vault.create_secret('https://<dominio>/api/internal/jobs/run', 'biblib_jobs_runner_url');
+   ```
+
+5. Comprueba la ejecución con `select status, return_message, start_time from cron.job_run_details order by start_time desc limit 5;` y la respuesta de la app con `select status_code, timed_out, error_msg, created from net._http_response order by created desc limit 5;`. Debe ser 200, no 401.
+
+Para rotar el token, cámbialo en Vercel, despliega y actualízalo con `vault.update_secret`. Para pausar el programador sin migración, usa `select cron.alter_job((select jobid from cron.job where jobname = 'biblib-library-jobs'), active := false);`.
+
+`pnpm test:scripts` verifica el manifest con los hechos reales de `objects-0016.json` y detecta como drift que la función se pueda ejecutar desde el cliente, que cambie su `search_path` o que acepte URLs `http://`.
 
 ### Migración `0005_library_jobs`, rollout y recuperación
 
