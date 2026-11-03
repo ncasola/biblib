@@ -275,6 +275,11 @@ async function browserChecks(cdp) {
     await cdp.call("Input.dispatchMouseEvent", { type: "mousePressed", ...point, button: "left", clickCount: 1 })
     await cdp.call("Input.dispatchMouseEvent", { type: "mouseReleased", ...point, button: "left", clickCount: 1 })
   }
+  // Ajustes va en pestañas (#4): las inactivas siguen montadas pero ocultas, fuera de innerText y sin clic.
+  const tab = async (label) => {
+    await click(label)
+    await wait(`document.querySelector('[role=tab][aria-selected=true]')?.textContent.trim() === ${JSON.stringify(label)}`, `pestaña ${label}`)
+  }
   const field = async (label, value) => {
     await evaluate(`(() => { const label = [...document.querySelectorAll('label')].find((element) => element.textContent.replace('*','').trim() === ${JSON.stringify(label)}); const element = label && document.getElementById(label.htmlFor); if (!element) throw new Error('Campo no encontrado: ' + ${JSON.stringify(label)}); const prototype = element.tagName === 'SELECT' ? HTMLSelectElement.prototype : HTMLInputElement.prototype; Object.getOwnPropertyDescriptor(prototype,'value').set.call(element,${JSON.stringify(value)}); element.dispatchEvent(new Event('input',{bubbles:true})); element.dispatchEvent(new Event('change',{bubbles:true})); return true })()`)
   }
@@ -361,6 +366,7 @@ async function browserChecks(cdp) {
   assert.ok(backup.books.some((book) => book.id === initialBookId))
   await copyFile(path.join(downloads, downloaded), path.join(artifacts, "fixture-backup.json"))
   record("Exportación descarga JSON versionado con datos actuales y verificación ISBN")
+  await tab("Importar")
   const { root } = await cdp.call("DOM.getDocument")
   const { nodeId } = await cdp.call("DOM.querySelector", { nodeId: root.nodeId, selector: "#import-file" })
   await cdp.call("DOM.setFileInputFiles", { nodeId, files: [importPath] })
@@ -384,6 +390,7 @@ async function browserChecks(cdp) {
   record("Eliminación confirmada sin afectar otros libros")
 
   await navigate("/settings", "document.querySelector('#import-file') && !document.querySelector('#import-file').disabled")
+  await tab("Portadas")
   await click("Recuperar portadas pendientes")
   await wait("document.body.innerText.includes('Búsqueda terminada. Las portadas encontradas ya están guardadas.')", "recuperación de portadas sin ISBN")
   assert.deepEqual(await evaluate("[...document.querySelector('[aria-labelledby=covers-title]').querySelectorAll('dl > div')].map((element) => [element.querySelector('dt').textContent, element.querySelector('dd').textContent])"), [["Revisados", "2"], ["Portadas recuperadas", "0"], ["Sin resultado", "0"], ["Omitidos", "2"]])
@@ -403,6 +410,7 @@ async function browserChecks(cdp) {
     const multipartDownloads = path.join(workspace, "multipart-downloads")
     await mkdir(multipartDownloads)
     await cdp.call("Browser.setDownloadBehavior", { behavior: "allow", downloadPath: multipartDownloads })
+    await tab("Copias")
     await click("Descargar copia de seguridad")
     await wait("document.body.innerText.includes('Copia dividida en 2 archivos importables')", "exportación multipart")
     const labels = await evaluate("[...document.querySelectorAll('button')].map(element => element.textContent.trim()).filter(text => text.startsWith('Descargar parte '))")
