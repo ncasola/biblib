@@ -24,7 +24,6 @@
 | `pnpm test` | Compila y ejecuta las 50 pruebas unitarias con `node --test`; usan respuestas simuladas de Open Library. | — |
 | `pnpm test:import` | Solo la suite de importación (`library-import.test.js`). | — |
 | `pnpm test:db` | `scripts/test-database.mjs`: crea un contenedor Postgres temporal propio, aplica migraciones, prueba RLS con dos usuarios, restricciones y rollback, y lo elimina. No usa `.env.local` ni bases reales. | Docker; puede descargar `postgres:17-alpine`. |
-| `pnpm test:smoke` | `scripts/smoke-app.mjs`: construye en carpeta temporal sin `.env`, con Auth simulado y Postgres efímero, y comprueba los recorridos principales. | Docker y Chrome (`CHROME_BIN` opcional). |
 | `pnpm db:generate` | `drizzle-kit generate`: genera SQL de migración. Revisar el SQL antes de aplicarlo. | — |
 | `pnpm db:migrate` | `drizzle-kit migrate`: aplica migraciones al destino configurado. Revisar el destino antes de ejecutar. | Variables de conexión. |
 

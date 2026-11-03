@@ -7,10 +7,10 @@ import { REPO_ROOT } from "../../../scripts/lib/profiles.mjs"
 import { checkClientBundle } from "../../../scripts/check-client-bundle.mjs"
 
 // Comprueba que un `next build` sin BIBLIB_TARGET (el equivalente a `pnpm build`) no contiene el formulario
-// de acceso local. Se compila en una carpeta temporal, como scripts/smoke-app.mjs, para no leer ni
+// de acceso local. Se compila en una carpeta temporal para no leer ni
 // arrastrar archivos .env del checkout ni pisar `.next`. Se hereda a propósito
 // NEXT_PUBLIC_BIBLIB_LOCAL_LOGIN=1: next.config.mjs debe ignorarla sin objetivo. Se compila con webpack,
-// como el smoke: Turbopack no resuelve el node_modules enlazado fuera de la raíz temporal.
+// porque Turbopack no resuelve el node_modules enlazado fuera de la raíz temporal.
 
 const LINKED = ["app", "components", "hooks", "lib", "public", "scripts", "tests/fixtures", "node_modules"]
 const COPIED = ["package.json", "next.config.mjs", "postcss.config.mjs", "tsconfig.json", "next-env.d.ts", "proxy.ts", "supabase/profiles.json"]

@@ -16,7 +16,7 @@ Los jobs locales no tienen `environment`, referencias a `secrets`, `supabase lin
 
 ## Orden y aislamiento de PR
 
-`.github/workflows/ci.yml` ejecuta: `pnpm install --frozen-lockfile` → lint → typecheck → test → test:scripts → contratos CI → build sin objetivo → `check:bundle --forbid-local-login` → identificar artefacto → bootstrap `test` → test:db → test:integration:local → Chromium → test:smoke. `test:db` usa su Postgres efímero propio; integración/E2E usan los servicios Supabase reales del perfil `test`. El smoke conserva sus escenarios complementarios y usa Auth simulado, sin sustituir los E2E reales.
+`.github/workflows/ci.yml` ejecuta: `pnpm install --frozen-lockfile` → lint → typecheck → test → test:scripts → contratos CI → build sin objetivo → `check:bundle --forbid-local-login` → identificar artefacto → bootstrap `test` → test:db → test:integration:local → Chromium. `test:db` usa su Postgres efímero propio; integración/E2E usan los servicios Supabase reales del perfil `test`.
 
 Node 24.11.1, pnpm 10.32.1 (`packageManager`), Supabase CLI **2.117.0** y Playwright **1.64.1** proceden de las versiones fijadas del repositorio. Chromium usa el canal `chrome`: se instala Chrome, no solo el navegador Chromium de Playwright. Se respeta una ventana de 310 s entre integración y E2E por el limitador GoTrue; no se desactiva la limitación para pasar CI.
 

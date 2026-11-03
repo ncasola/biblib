@@ -85,13 +85,12 @@ pnpm typecheck
 pnpm test
 pnpm test:import
 pnpm test:db
-pnpm test:smoke
 pnpm build
 ```
 
 `test:db` requiere Docker y puede descargar `postgres:17-alpine`. Crea un contenedor temporal propio, prueba migraciones, RLS con dos usuarios, restricciones y rollback, y después lo elimina. No utiliza `.env.local` ni una base real. Las pruebas unitarias usan respuestas simuladas para Open Library.
 
-`test:smoke` requiere además Chrome (puedes indicar `CHROME_BIN`). Construye en una carpeta temporal sin `.env`, usa Auth simulado y Postgres efímero y comprueba los recorridos principales sin datos reales. El [resumen de implementación](docs/implementacion-2026-10-22.md) detalla lo aplicado y lo pendiente del roadmap.
+Los recorridos en navegador los cubren los E2E (`pnpm test:e2e:local`) contra el stack local. El [resumen de implementación](docs/implementacion-2026-10-22.md) detalla lo aplicado y lo pendiente del roadmap.
 
 GitHub Actions ejecuta instalación con lockfile congelado, lint, tipos, pruebas, build y pruebas Postgres aisladas. Este flujo no publica la aplicación ni ejecuta migraciones en Supabase.
 
