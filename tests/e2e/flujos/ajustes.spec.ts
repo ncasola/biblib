@@ -1,17 +1,19 @@
 import { readFile } from "node:fs/promises"
-import { expect, test, v2Residue } from "../lib/fixtures"
+import { expect, openSettings, test, v2Residue } from "../lib/fixtures"
 
-// Escenarios heredados de scripts/smoke-app.mjs que no encajan en otro grupo: recuperación de portadas
+// Escenarios heredados del antiguo smoke (scripts/smoke-app.mjs) que no encajan en otro grupo: recuperación de portadas
 // sin red externa, exportación dividida en partes y nombre de perfil guardado en GoTrue (como A).
 
 // Recuperación de portadas (U-DAT-03 + U-BIB-05): el trabajo consulta el orquestador en modo fixture, sin
 // salir de loopback (lo vigilan el guard del servidor y el runner). Los fixtures no aportan imágenes: todo
-// libro con ISBN válido y portada genérica termina «sin resultado» y ninguno se modifica.
-test("la recuperación de portadas termina en modo fixture sin salir a la red ni modificar fichas", async ({ page, stack }) => {
+// libro con ISBN válido y portada genérica termina «sin resultado», el manual sin ISBN se omite sin consultar
+// y ninguno se modifica.
+test("la recuperación de portadas termina en modo fixture sin salir a la red ni modificar fichas", async ({ page, stack, data }) => {
+  const [manual] = await data.books("a", await data.defaultShelf("a"), [{ title: `Manual sin ISBN ${data.slug("portadas")}` }])
   const [{ started }] = await stack.sql`select clock_timestamp() as started`
   const coversBefore = await stack.sql`select id, version, cover_large from biblib.books where user_id = ${stack.users.a} order by id`
   try {
-    await page.goto("/settings")
+    await openSettings(page, "portadas")
     await page.getByRole("button", { name: /^(Recuperar portadas pendientes|Buscar portadas de nuevo)$/ }).click()
     const panel = page.locator("[aria-labelledby=covers-title]")
     await expect(panel.getByText("Búsqueda terminada. Las portadas encontradas ya están guardadas.")).toBeVisible({ timeout: 30_000 })
@@ -20,6 +22,8 @@ test("la recuperación de portadas termina en modo fixture sin salir a la red ni
     expect(job.state).toBe("succeeded")
     const states = await stack.sql`select state, count(*)::int as n from biblib.library_job_items where job_id = ${job.id} group by state`
     expect(states.every((row) => ["not_found", "skipped"].includes(String(row.state))), "Sin fuente de imágenes en fixture: sin portadas recuperadas ni fallos").toBe(true)
+    const [manualItem] = await stack.sql`select state, error_code from biblib.library_job_items where job_id = ${job.id} and item_key = ${manual}`
+    expect(manualItem, "El manual sin ISBN se omite sin consultar catálogos").toEqual({ state: "skipped", error_code: "NO_ISBN" })
     expect(await stack.sql`select id, version, cover_large from biblib.books where user_id = ${stack.users.a} order by id`, "Ninguna ficha cambia").toEqual(coversBefore)
   } finally {
     // Los trabajos del ensayo no son datos del censo: se retiran para no acumularlos entre ejecuciones.

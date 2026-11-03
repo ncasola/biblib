@@ -159,7 +159,8 @@ describe("vista del trabajo", () => {
     const expired = jobView(row, new Date("2026-11-01T00:00:00Z"))
     assert.equal(expired.state, "expired")
     assert.equal(expired.errorCode, "JOB_EXPIRED")
-    assert.equal(jobView({ ...row, state: "waiting_retry" }).nextAttemptAt, "2026-10-23T10:00:00.000Z")
+    // Con fecha fija: con el reloj real, a partir del 30-10-2026 el trabajo ya habría caducado.
+    assert.equal(jobView({ ...row, state: "waiting_retry" }, new Date("2026-10-23T12:00:00Z")).nextAttemptAt, "2026-10-23T10:00:00.000Z")
   })
 })
 

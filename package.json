@@ -14,7 +14,6 @@
     "typecheck": "next typegen && tsc --noEmit",
     "test": "tsc -p tsconfig.tests.json && node --test .next/tests/tests/*.test.js",
     "test:db": "node scripts/test-database.mjs",
-    "test:smoke": "node scripts/smoke-app.mjs",
     "test:import": "tsc -p tsconfig.tests.json && node --test .next/tests/tests/library-import.test.js",
     "start": "next start",
     "db:generate": "drizzle-kit generate",

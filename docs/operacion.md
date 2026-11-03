@@ -41,7 +41,7 @@ pnpm build
 
 Estas pruebas no comprueban Google OAuth real, configuración del alojamiento ni un Supabase productivo. Tras desplegar en un entorno de prueba, recorre alta, edición, movimiento, búsqueda, importación y exportación con cuentas de prueba. Comprueba móvil, teclado, ambos temas y mensajes de error; una compilación correcta no sustituye esos recorridos.
 
-El workflow `.github/workflows/ci.yml` utiliza valores públicos ficticios de Supabase únicamente para construir la aplicación. No recibe `SUPABASE_DB_URL` ni secretos de Google; las pruebas SQL y de navegador crean su propio Docker. `test:smoke` requiere Chrome y un build temporal adicional con Auth simulado, y bloquea solicitudes externas. No contiene publicación ni migraciones remotas.
+El workflow `.github/workflows/ci.yml` utiliza valores públicos ficticios de Supabase únicamente para construir la aplicación. No recibe `SUPABASE_DB_URL` ni secretos de Google; las pruebas SQL y de navegador crean su propio Docker. No contiene publicación ni migraciones remotas.
 
 ## Migraciones y recuperación
 
@@ -437,7 +437,7 @@ La reconstrucción física del wrapper usa exclusivamente los IDs previamente re
 
 ## Integración Supabase real · U-QA-01
 
-`pnpm test:integration:local` ejecuta la suite `tests/integration/{auth,rls,storage}` contra los servicios reales del perfil **`test`** (`biblib-test`, puertos 55330–55339) y la app compilada para ese perfil en `127.0.0.1:3148`. Para identidad, cookies, permisos y Storage sustituye a los sustitutos de Auth de `test:db`/`test:smoke`. Esos dos comandos se conservan: son rápidos y no necesitan el stack.
+`pnpm test:integration:local` ejecuta la suite `tests/integration/{auth,rls,storage}` contra los servicios reales del perfil **`test`** (`biblib-test`, puertos 55330–55339) y la app compilada para ese perfil en `127.0.0.1:3148`. Para identidad, cookies, permisos y Storage sustituye al sustituto de Auth de `test:db`, que se conserva porque es rápido y no necesita el stack.
 
 ```powershell
 pnpm db:local:bootstrap --profile test   # o db:local:up + db:plan:local/db:migrate:local + db:seed:local, todos con --profile test
@@ -509,7 +509,6 @@ Diferencia con las suites existentes:
 | Suite | Auth | Datos | Necesita |
 | --- | --- | --- | --- |
 | `pnpm test:db` | Sustituto mínimo (`auth.uid()` simulado) | Postgres efímero en Docker | Docker |
-| `pnpm test:smoke` | Simulado en un build temporal, con red externa bloqueada | Sustitutos de la app | Chrome |
 | `pnpm test:integration:local` | GoTrue real, cookies `@supabase/ssr`, sesiones A/B | Postgres, PostgREST, Storage y Kong del perfil `test`; app compilada | Docker y perfil `test` preparado |
 
 Evidencia del ensayo: [validacion/2026-10-23/O06/qa-01](validacion/2026-10-23/O06/qa-01/informe.md).
@@ -673,7 +672,7 @@ Los grupos de unidades futuras (Trabajos, Copias multipart, Proveedores BNE/Goog
 - GoTrue limita `sign_in_sign_ups` a 30 cada 5 minutos por IP y cada navegador hace 11 intentos: caben dos ejecuciones de Chromium seguidas. Antes de Firefox + WebKit o de `test:integration:local`, espera 5 minutos. El limitador del acceso local es por proceso; el recorrido espera 61 s a que se libere.
 - `test:e2e:external` no arranca el stack: usa el servicio de catálogo en modo `live` con un ISBN público. Sin red falla con un mensaje explícito, distinto de «no encontrado».
 - `--check-untargeted-build` compila sin `BIBLIB_TARGET` en una carpeta temporal (webpack, sin `.env`, con `NEXT_PUBLIC_BIBLIB_LOCAL_LOGIN=1` heredada a propósito) y aplica `check-client-bundle --forbid-local-login`.
-- `scripts/smoke-app.mjs` se conserva: la correspondencia escenario → recorrido y lo que queda solo en el smoke están en el README del E2E.
+- El antiguo `scripts/smoke-app.mjs` se retiró (11-2026) cuando todos sus escenarios tuvieron equivalente E2E; la correspondencia está en el README del E2E.
 - Hallazgos abiertos que no corrige esta unidad (detalle en el README): la recuperación de portadas, «Buscar portada» y el enriquecimiento de la importación llaman a Open Library con `fetch` directo aunque el modo sea `fixture` (pendiente de U-BIB-05); un id de ficha que no es UUID responde 500 y muestra un error de conexión; cerrar sesión produce una petición RSC 404 inocua en `/login`.
 
 Evidencia del ensayo: [validacion/2026-10-23/O07/qa-02](validacion/2026-10-23/O07/qa-02/informe.md).

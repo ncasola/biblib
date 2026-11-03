@@ -76,7 +76,7 @@ pnpm db:local:down --profile test
 
 ## Correspondencia con `scripts/smoke-app.mjs`
 
-El smoke se conserva (rápido, Auth simulado, Postgres efímero) hasta que todos sus escenarios tengan equivalente E2E.
+El smoke (Auth simulado, Postgres efímero) se retiró en 11-2026: todos sus escenarios tienen equivalente E2E contra GoTrue real.
 
 | Escenario del smoke | Equivalente E2E |
 | --- | --- |
@@ -92,7 +92,7 @@ El smoke se conserva (rápido, Auth simulado, Postgres efímero) hasta que todos
 | Exportación de 2001 libros en dos partes importables | `ajustes › una colección de más de 2000 fichas…` |
 | Perfil guarda nombre en Auth y muestra confirmación real | `ajustes › el perfil guarda el nombre en GoTrue…` |
 | Colección móvil sin desbordamiento; sin excepciones JS | `presentacion › …`; guard de cada recorrido |
-| Recuperación de portadas omite manuales sin ISBN y no realiza HTTP externo | `ajustes › la recuperación de portadas termina en modo fixture sin salir a la red ni modificar fichas` (U-BIB-05). El smoke conserva su propia comprobación. |
+| Recuperación de portadas omite manuales sin ISBN y no realiza HTTP externo | `ajustes › la recuperación de portadas termina en modo fixture sin salir a la red ni modificar fichas` (U-BIB-05), que también comprueba que el manual sin ISBN se omite con `NO_ISBN`. |
 
 ## Límites conocidos
 

@@ -7,7 +7,10 @@ import { catalogueContext, fakeIsbn, policyVersion, runWorker, startAt } from ".
 // peticiones; ninguna prueba sale a Internet.
 
 let ctx
-const TOLERANCE_MS = 30
+// El intervalo lo garantiza la base al repartir plazas (`slot_at`), y eso se comprueba sin margen. Cada proceso
+// envía su petición al llegar su plaza, con algo de retraso variable: entre dos envíos reales solo se exige
+// que haya habido espera (sin coordinación saldrían casi a la vez), con margen para ese retraso.
+const SEND_JITTER_MS = 150
 const sleep = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds))
 
 before(async () => { ctx = await catalogueContext() })
@@ -15,6 +18,9 @@ beforeEach(async () => { await ctx.cleanup() })
 after(async () => { if (ctx) { await ctx.cleanup(); await ctx.close() } })
 
 const gaps = (times) => times.slice(1).map((time, i) => time - times[i])
+/** Separación en ms entre plazas consecutivas reservadas en la base para un proveedor (cálculo exacto en SQL). */
+const slotGaps = async (provider) => (await ctx.sql`select extract(epoch from slot_at - lag(slot_at) over (order by slot_at)) * 1000 as gap
+  from biblib.catalogue_quota_reservations where provider = ${provider} and credential_scope = ${ctx.scope} order by slot_at`).slice(1).map((row) => Number(row.gap))
 const cacheRows = (isbn) => ctx.sql`select status, payload, provenance, fence, policy_version, schema_version, extract(epoch from expires_at - fetched_at)::int as ttl from biblib.catalogue_cache where credential_scope = ${ctx.scope} and canonical_key = ${isbn}`
 
 test("dos procesos piden a la vez el mismo ISBN: una única consulta en vuelo y resultado equivalente", async () => {
@@ -46,7 +52,10 @@ test("ISBN distintos desde búsqueda, importación y portada respetan el interva
   ])
   const times = [...search.calls, ...batch.calls, ...cover.calls].filter((call) => call.host === "openlibrary.org").map((call) => call.at).sort((x, y) => x - y)
   assert.equal(times.length, 5, "Cada ISBN distinto produce una petición")
-  for (const gap of gaps(times)) assert.ok(gap >= 1000 - TOLERANCE_MS, `Dos peticiones OL separadas ${gap} ms`)
+  const slots = await slotGaps("open-library")
+  assert.equal(slots.length, 4, "Una plaza por petición")
+  for (const gap of slots) assert.ok(gap >= 1000, `Dos plazas OL separadas ${gap} ms`)
+  for (const gap of gaps(times)) assert.ok(gap >= 1000 - SEND_JITTER_MS, `Dos peticiones OL separadas ${gap} ms`)
   assert.ok(search.results.every((r) => r.status === "found"))
   assert.ok(batch.results.every((r) => r.status === 200), "El lote espera su turno en lugar de fallar")
   assert.equal(cover.results[0].status, "notFound", "La ficha ficticia no tiene portada; no es una caída")
@@ -66,7 +75,8 @@ test("OL y BNE no comparten reserva: cada proveedor tiene su cubo y su intervalo
   const ol = result.calls.filter((c) => c.host === "openlibrary.org").map((c) => c.at).sort((x, y) => x - y)
   const [bne] = result.calls.filter((c) => c.host.endsWith("bne.es")).map((c) => c.at)
   assert.equal(ol.length, 2)
-  assert.ok(ol[1] - ol[0] >= 1000 - TOLERANCE_MS, "OL mantiene su intervalo")
+  assert.ok((await slotGaps("open-library")).every((gap) => gap >= 1000), "OL reserva sus plazas con su intervalo")
+  assert.ok(ol[1] - ol[0] >= 1000 - SEND_JITTER_MS, "OL espera su plaza")
   assert.ok(Math.abs(bne - ol[0]) < 900, "BNE no espera la plaza de OL")
   const buckets = await ctx.sql`select provider, interval_ms from biblib.catalogue_quota_buckets where credential_scope = ${ctx.scope} order by provider`
   assert.deepEqual(buckets.map((b) => [b.provider, b.interval_ms]), [["bne", 2000], ["open-library", 1000]])

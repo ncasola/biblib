@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto"
 import { readFile } from "node:fs/promises"
 import type { Page } from "@playwright/test"
-import { capture, expect, test, type Stack } from "../lib/fixtures"
+import { capture, expect, openSettings, test, type Stack } from "../lib/fixtures"
 
 const hash = (buffer: Buffer) => createHash("sha256").update(buffer).digest("hex")
 const file = (slug: string, text: string) => ({ name: `${slug}.csv`, mimeType: "text/csv", buffer: Buffer.from(text, "utf8") })
@@ -17,7 +17,7 @@ async function cleanCsv(stack: Stack, inputHash: string) {
   }
 }
 async function openCsv(page: Page, input: ReturnType<typeof file>, targets: Record<string, string>) {
-  await page.goto("/settings")
+  await openSettings(page, "importar")
   await expect(page.getByRole("button", { name: "Seleccionar archivo CSV", exact: true })).toBeEnabled()
   await page.locator("#csv-file").setInputFiles(input)
   const panel = csvPanel(page)

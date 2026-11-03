@@ -64,7 +64,6 @@ writeFileSync(`${output}/pruebas.json`, `${JSON.stringify(result, null, 2)}\n`)
 screenshots(".biblib/e2e/capturas", `${output}/capturas`)
 screenshots(".biblib/ci/firefox-capturas", `${output}/firefox-capturas`)
 screenshots(".biblib/e2e/artefactos", `${output}/capturas-fallos`)
-screenshots(".biblib/ci/smoke", `${output}/smoke`)
 const checksums = []
 function hashFiles(directory) {
   for (const entry of readdirSync(directory, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {

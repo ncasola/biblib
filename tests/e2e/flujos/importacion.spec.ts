@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto"
 import { readFile } from "node:fs/promises"
 import type { Page } from "@playwright/test"
 import { forgetSnapshot, recordSnapshot, restoreLibrary, snapshotLibrary } from "../lib/e2e-manifest.mjs"
-import { actionRequest, alerts, capture, type Data, expect, type Stack, test, v2Residue } from "../lib/fixtures"
+import { actionRequest, alerts, capture, type Data, expect, openSettings, type Stack, test, v2Residue } from "../lib/fixtures"
 
 // Importación (U-DAT-01) en Ajustes como A: exportación, revisión sin escrituras, colección cambiada en
 // otra pestaña → conflicto sin borrar y con el archivo conservado, fusión, confirmación repetida tras
@@ -33,8 +33,8 @@ async function fixtureBooksPresent(stack: Stack): Promise<number> {
   return (await stack.sql`select id from biblib.books where id in ${stack.sql(ids)} and user_id = ${stack.users.a}`).length
 }
 
-async function openSettings(page: Page) {
-  await page.goto("/settings")
+async function openImport(page: Page) {
+  await openSettings(page, "importar")
   await expect(page).toHaveTitle("Ajustes · BibLib")
   await expect(page.getByRole("button", { name: "Seleccionar archivo JSON" })).toBeEnabled()
 }
@@ -49,7 +49,8 @@ test("la exportación descarga un JSON v1 con la colección actual de A y la ver
   const slug = data.slug("exportar")
   expect(await v2Residue(stack, "a"), "Precondición: la biblioteca de A no tiene datos que exijan v2").toEqual({})
   const [verified] = await data.books("a", await data.defaultShelf("a"), [{ title: `Verificado ${slug}`, isbn: "9780131103627", verified: true }])
-  await openSettings(page)
+  await openSettings(page, "copias")
+  await expect(page.getByRole("button", { name: "Descargar copia de seguridad" })).toBeEnabled()
   const download = page.waitForEvent("download")
   await page.getByRole("button", { name: "Descargar copia de seguridad" }).click()
   const backup = JSON.parse(await readFile(String(await (await download).path()), "utf8"))
@@ -67,7 +68,7 @@ test("la revisión no escribe; si la colección cambia en otra pestaña, confirm
   const file = libraryFile(data, slug, 2)
   const before = await libraryCount(stack)
   const revisionBefore = await revision(stack)
-  await openSettings(page)
+  await openImport(page)
 
   await page.locator("#import-file").setInputFiles(file)
   await expect(page.getByRole("heading", { name: `Revisión: ${file.name}` })).toBeVisible()
@@ -103,7 +104,7 @@ test("fusionar añade los libros nuevos y conserva los actuales", async ({ page,
   const slug = data.slug("fusion")
   const file = libraryFile(data, slug, 2)
   const before = await libraryCount(stack)
-  await openSettings(page)
+  await openImport(page)
   await page.locator("#import-file").setInputFiles(file)
   await expect(page.getByRole("heading", { name: `Revisión: ${file.name}` })).toBeVisible()
   await page.getByRole("button", { name: "Continuar y confirmar" }).click()
@@ -119,7 +120,7 @@ test("confirmar otra vez tras perder la respuesta no duplica la importación", a
   const file = libraryFile(data, slug, 3)
   const before = await libraryCount(stack)
   const isConfirm = actionRequest(stack, "confirmImportAction")
-  await openSettings(page)
+  await openImport(page)
   await page.locator("#import-file").setInputFiles(file)
   await expect(page.getByRole("heading", { name: `Revisión: ${file.name}` })).toBeVisible()
 
@@ -153,7 +154,7 @@ test("reemplazar sustituye la colección (la biblioteca ficticia de A se restaur
   const [{ started }] = await stack.sql`select clock_timestamp() as started`
   try {
     const before = await libraryCount(stack)
-    await openSettings(page)
+    await openImport(page)
     await page.locator("#import-file").setInputFiles(file)
     await expect(page.getByRole("heading", { name: `Revisión: ${file.name}` })).toBeVisible()
     await page.getByLabel("Reemplazar la biblioteca").check()
@@ -192,7 +193,7 @@ test("importar libros con ISBN: la revisión no consulta catálogos y sus portad
   const [{ started }] = await stack.sql`select clock_timestamp() as started`
   const jobsSince = async () => Number((await stack.sql`select count(*)::int as count from biblib.library_jobs where user_id = ${stack.users.a} and created_at >= ${started}`)[0].count)
   try {
-    await openSettings(page)
+    await openImport(page)
     await page.locator("#import-file").setInputFiles(file)
     await expect(page.getByRole("heading", { name: `Revisión: ${file.name}` })).toBeVisible()
     await expect(planValue(page, "Libros nuevos")).toHaveText("2")

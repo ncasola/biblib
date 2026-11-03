@@ -92,9 +92,6 @@ jobs:
       - name: Chromium con GoTrue, RLS y Storage locales
         id: chromium
         run: pnpm test:e2e:local --project chromium --reuse-build
-      - name: Smoke complementario con servicios temporales
-        id: smoke
-        run: pnpm test:smoke --artifacts=.biblib/ci/smoke
       - name: Guardar solo imágenes reutilizables
         if: steps.images.outputs.cache-hit != 'true'
         run: |
