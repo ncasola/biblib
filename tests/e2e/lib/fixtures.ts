@@ -137,11 +137,14 @@ const SETTINGS_TABS = { copias: "Copias", importar: "Importar", portadas: "Porta
 export type SettingsTab = keyof typeof SETTINGS_TABS
 
 /**
- * Ajustes se organiza en pestañas (#4) y las inactivas siguen montadas pero ocultas. La pestaña del hash se
- * aplica tras hidratar: se espera a que quede seleccionada para no actuar sobre la pestaña «Copias» del servidor.
+ * Ajustes se organiza en pestañas (#4) y las inactivas siguen montadas pero ocultas. Se navega sin hash para
+ * cargar siempre un documento nuevo (ir a la misma URL con hash solo salta al fragmento y conservaría, por
+ * ejemplo, la sesión anterior tras cambiar de cuenta) y luego se fija el hash, que la página aplica al hidratar
+ * o con `hashchange`. Se espera a que la pestaña quede seleccionada para no actuar sobre «Copias».
  */
 export async function openSettings(page: Page, tab: SettingsTab): Promise<void> {
-  await page.goto(`/settings#${tab}`)
+  await page.goto("/settings")
+  await page.evaluate((hash) => { window.location.hash = hash }, tab)
   await expect(page.getByRole("tab", { name: SETTINGS_TABS[tab], selected: true })).toBeVisible()
 }
 
