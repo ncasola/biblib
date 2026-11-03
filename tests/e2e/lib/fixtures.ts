@@ -139,13 +139,17 @@ export type SettingsTab = keyof typeof SETTINGS_TABS
 /**
  * Ajustes se organiza en pestañas (#4) y las inactivas siguen montadas pero ocultas. Se navega sin hash para
  * cargar siempre un documento nuevo (ir a la misma URL con hash solo salta al fragmento y conservaría, por
- * ejemplo, la sesión anterior tras cambiar de cuenta) y luego se fija el hash, que la página aplica al hidratar
- * o con `hashchange`. Se espera a que la pestaña quede seleccionada para no actuar sobre «Copias».
+ * ejemplo, la sesión anterior tras cambiar de cuenta) y se pulsa la pestaña como haría una persona. Antes de
+ * hidratar el clic no hace nada (y fijar el hash a mano compite con el router de Next), así que se reintenta
+ * hasta que la pestaña queda seleccionada.
  */
 export async function openSettings(page: Page, tab: SettingsTab): Promise<void> {
   await page.goto("/settings")
-  await page.evaluate((hash) => { window.location.hash = hash }, tab)
-  await expect(page.getByRole("tab", { name: SETTINGS_TABS[tab], selected: true })).toBeVisible()
+  const trigger = page.getByRole("tab", { name: SETTINGS_TABS[tab], exact: true })
+  await expect(async () => {
+    await trigger.click()
+    await expect(trigger).toHaveAttribute("aria-selected", "true", { timeout: 1_000 })
+  }).toPass({ timeout: 15_000 })
 }
 
 /**
