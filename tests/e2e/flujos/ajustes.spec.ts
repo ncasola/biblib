@@ -1,5 +1,5 @@
 import { readFile } from "node:fs/promises"
-import { expect, test, v2Residue } from "../lib/fixtures"
+import { expect, openSettings, test, v2Residue } from "../lib/fixtures"
 
 // Escenarios heredados de scripts/smoke-app.mjs que no encajan en otro grupo: recuperación de portadas
 // sin red externa, exportación dividida en partes y nombre de perfil guardado en GoTrue (como A).
@@ -11,7 +11,7 @@ test("la recuperación de portadas termina en modo fixture sin salir a la red ni
   const [{ started }] = await stack.sql`select clock_timestamp() as started`
   const coversBefore = await stack.sql`select id, version, cover_large from biblib.books where user_id = ${stack.users.a} order by id`
   try {
-    await page.goto("/settings")
+    await openSettings(page, "portadas")
     await page.getByRole("button", { name: /^(Recuperar portadas pendientes|Buscar portadas de nuevo)$/ }).click()
     const panel = page.locator("[aria-labelledby=covers-title]")
     await expect(panel.getByText("Búsqueda terminada. Las portadas encontradas ya están guardadas.")).toBeVisible({ timeout: 30_000 })

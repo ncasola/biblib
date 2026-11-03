@@ -133,6 +133,18 @@ export function accountMenu(page: Page, stack: Stack, account: Account): Locator
   return page.getByRole("button", { name: `Abrir menú de cuenta de ${stack.displayName(account)}` })
 }
 
+const SETTINGS_TABS = { copias: "Copias", importar: "Importar", portadas: "Portadas", "sin-conexion": "Sin conexión" } as const
+export type SettingsTab = keyof typeof SETTINGS_TABS
+
+/**
+ * Ajustes se organiza en pestañas (#4) y las inactivas siguen montadas pero ocultas. La pestaña del hash se
+ * aplica tras hidratar: se espera a que quede seleccionada para no actuar sobre la pestaña «Copias» del servidor.
+ */
+export async function openSettings(page: Page, tab: SettingsTab): Promise<void> {
+  await page.goto(`/settings#${tab}`)
+  await expect(page.getByRole("tab", { name: SETTINGS_TABS[tab], selected: true })).toBeVisible()
+}
+
 /**
  * Hallazgo QA-02 (23-10-2026): al cerrar sesión, Header hace `router.replace("/login")` y `router.refresh()`;
  * el refresco RSC de la página privada pasa por el proxy, que lo redirige a `/login?redirect=…`, y esa

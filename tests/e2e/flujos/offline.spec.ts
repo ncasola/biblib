@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs"
 import type { BrowserContext, Page, TestInfo } from "@playwright/test"
-import { alerts, capture, expect, SIGN_OUT_RSC_404, signOut, stateFile, test, type Account, type Guard } from "../lib/fixtures"
+import { alerts, capture, expect, openSettings, SIGN_OUT_RSC_404, signOut, stateFile, test, type Account, type Guard } from "../lib/fixtures"
 
 // U-EXP-08 · PWA con consulta sin conexión de solo lectura (puerta G15). El worker solo funciona con el build
 // de producción que arranca el runner (la bandera BIBLIB_OFFLINE_SNAPSHOT=1 la fija tests/e2e/run.mjs). Cada
@@ -53,7 +53,7 @@ function copySection(page: Page) {
 }
 
 async function enableCopy(page: Page, secret: string): Promise<void> {
-  await page.goto("/settings")
+  await openSettings(page, "sin-conexion")
   const section = copySection(page)
   await expect(section).toHaveAttribute("data-offline-copy", "none")
   await section.getByLabel("PIN o frase", { exact: true }).fill(secret)
@@ -150,7 +150,7 @@ test("offline: activar con PIN y consultar sin conexión una copia de solo lectu
   test.setTimeout(120_000)
   allowOffline(guard)
   await page.emulateMedia({ colorScheme: "light" })
-  await page.goto("/settings")
+  await openSettings(page, "sin-conexion")
   await workerReady(page)
   await expect(copySection(page)).toHaveAttribute("data-offline-copy", "none")
   await copySection(page).getByLabel("PIN o frase", { exact: true }).fill("12345")
@@ -202,7 +202,7 @@ test("offline: activar con PIN y consultar sin conexión una copia de solo lectu
 
   // Con red otra vez, la copia se renueva con el mismo PIN y conserva una sola base.
   await context.setOffline(false)
-  await page.goto("/settings")
+  await openSettings(page, "sin-conexion")
   await copySection(page).getByRole("button", { name: "Renovar copia" }).click()
   await copySection(page).getByLabel("PIN o frase de esta copia").fill(PIN_A)
   await copySection(page).getByRole("button", { name: "Descargar datos actuales" }).click()
@@ -214,13 +214,13 @@ test("offline: A y B en el mismo navegador no ven la copia del otro", async ({ p
   test.skip(browserName === "firefox", FIREFOX_OFFLINE)
   test.setTimeout(150_000)
   allowOffline(guard)
-  await page.goto("/settings")
+  await openSettings(page, "sin-conexion")
   await workerReady(page)
   await enableCopy(page, PIN_A)
 
   // B entra en el mismo navegador: la vista sin conexión pasa a ser la de B y la de A queda bloqueada.
   await useSessionOf(context, testInfo, "b")
-  await page.goto("/settings")
+  await openSettings(page, "sin-conexion")
   await expect(copySection(page)).toHaveAttribute("data-offline-copy", "none")
   await context.setOffline(true)
   await page.goto("/offline")
@@ -245,7 +245,7 @@ test("offline: A y B en el mismo navegador no ven la copia del otro", async ({ p
   // Vuelve A con conexión: la vista de B se bloquea y solo el PIN de A abre la de A.
   await context.setOffline(false)
   await useSessionOf(context, testInfo, "a")
-  await page.goto("/settings")
+  await openSettings(page, "sin-conexion")
   await expect(copySection(page)).toHaveAttribute("data-offline-copy", "locked")
   await context.setOffline(true)
   await page.goto("/offline")
@@ -271,7 +271,7 @@ test.describe(() => {
     // GoTrue responde sin revocar: las sesiones guardadas de A siguen sirviendo a los demás recorridos.
     let logouts = 0
     await page.route(`${stack.apiOrigin}/auth/v1/logout**`, (route) => { logouts++; return route.fulfill({ status: 204, body: "" }) })
-    await page.goto("/settings")
+    await openSettings(page, "sin-conexion")
     if (browserName !== "webkit") await workerReady(page)
     await enableCopy(page, PIN_A)
     expect(await offlineDatabases(page)).toHaveLength(1)
@@ -290,7 +290,7 @@ test("offline: un TTL vencido bloquea la copia sin borrarla y la validación con
   test.skip(browserName === "firefox", FIREFOX_OFFLINE)
   test.setTimeout(120_000)
   allowOffline(guard)
-  await page.goto("/settings")
+  await openSettings(page, "sin-conexion")
   await workerReady(page)
   await enableCopy(page, PIN_A)
 
@@ -308,7 +308,7 @@ test("offline: un TTL vencido bloquea la copia sin borrarla y la validación con
   await page.goto("/offline")
   await expect(page.getByText("Copia bloqueada por caducidad")).toBeVisible()
   await context.setOffline(false)
-  await page.goto("/settings")
+  await openSettings(page, "sin-conexion")
   await expect(copySection(page)).toHaveAttribute("data-offline-copy", "locked")
   await context.setOffline(true)
   await page.goto("/offline")
@@ -318,7 +318,7 @@ test("offline: un TTL vencido bloquea la copia sin borrarla y la validación con
 
 test("offline: una versión nueva del worker borra las cachés anteriores y conserva la copia", async ({ page }) => {
   test.setTimeout(120_000)
-  await page.goto("/settings")
+  await openSettings(page, "sin-conexion")
   await workerReady(page)
   await enableCopy(page, PIN_A)
   const current = await workerInfo(page)
@@ -348,7 +348,7 @@ test("offline: una versión nueva del worker borra las cachés anteriores y cons
 test("offline: borrar los datos del sitio elimina copia, cachés y worker sin afectar al acceso con conexión", async ({ page, context, stack, browserName }) => {
   test.skip(browserName !== "chromium", "El borrado de datos del sitio se simula con CDP (solo Chromium).")
   test.setTimeout(120_000)
-  await page.goto("/settings")
+  await openSettings(page, "sin-conexion")
   await workerReady(page)
   await enableCopy(page, PIN_A)
   const cdp = await context.newCDPSession(page)
